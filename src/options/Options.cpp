@@ -16,28 +16,17 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.02.25
 
-// main.cpp
+// Options.cpp
 
 
-#include <iostream>
-#include "../src/thread/ThreadPool.hpp"
-#include "../src/options/Options.hpp"
-#include "../src/configs/Configs.hpp"
-#include "../src/server/Server.hpp"
+#include "Options.hpp"
 
-int main(int argc, char *argv[])
+Options::Options(int argc, char **argv)
 {
-	ThreadPool::setThreadNum(2);
 
-	Options::Ptr options(new Options(argc, argv));
+}
 
-	Configs::Ptr configs(new Configs(options));
-
-	Server::Ptr server(new Server(configs));
-
-	server->start();
-
-	server->wait();
-
-	exit(EXIT_SUCCESS);
+const std::string Options::getConfig() const
+{
+	return "etc/config.conf";
 }

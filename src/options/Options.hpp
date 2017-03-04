@@ -16,28 +16,21 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.02.25
 
-// main.cpp
+// Options.hpp
 
 
-#include <iostream>
-#include "../src/thread/ThreadPool.hpp"
-#include "../src/options/Options.hpp"
-#include "../src/configs/Configs.hpp"
-#include "../src/server/Server.hpp"
+#pragma once
 
-int main(int argc, char *argv[])
+#include <memory>
+#include <string>
+
+class Options
 {
-	ThreadPool::setThreadNum(2);
+public:
+	typedef std::shared_ptr<Options> Ptr;
 
-	Options::Ptr options(new Options(argc, argv));
+public:
+	Options(int argc, char *argv[]);
 
-	Configs::Ptr configs(new Configs(options));
-
-	Server::Ptr server(new Server(configs));
-
-	server->start();
-
-	server->wait();
-
-	exit(EXIT_SUCCESS);
-}
+	const std::string getConfig() const;
+};

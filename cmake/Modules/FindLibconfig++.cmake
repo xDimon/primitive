@@ -1,0 +1,25 @@
+find_path(LIBCONFIG++_INCLUDE_DIR libconfig.h++ /usr/include /usr/local/include)
+
+find_library(LIBCONFIG++_LIBRARY NAMES config++ PATH /usr/lib /usr/local/lib)
+
+if (LIBCONFIG++_INCLUDE_DIR AND LIBCONFIG++_LIBRARY)
+	set(LIBCONFIG++_FOUND TRUE)
+	set(LIBCONFIG++_INCLUDE_DIRS  ${LIBCONFIG++_INCLUDE_DIR})
+	set(LIBCONFIG++_LIBRARIES  ${LIBCONFIG++_LIBRARY})
+endif (LIBCONFIG++_INCLUDE_DIR AND LIBCONFIG++_LIBRARY)
+
+if (LIBCONFIG++_FOUND)
+	if (NOT LIBCONFIG++_FIND_QUIETLY)
+		message(STATUS "Found Config++: ${LIBCONFIG++_LIBRARY}")
+	endif (NOT LIBCONFIG++_FIND_QUIETLY)
+else (LIBCONFIG++_FOUND)
+	if (Libconfig++_FIND_REQUIRED)
+		if (NOT LIBCONFIG++_INCLUDE_DIR)
+			message(FATAL_ERROR "Could not find LibConfig++ header file!")
+		endif (NOT LIBCONFIG++_INCLUDE_DIR)
+
+		if (NOT LIBCONFIG++_LIBRARY)
+			message(FATAL_ERROR "Could not find LibConfig++ library file!")
+		endif (NOT LIBCONFIG++_LIBRARY)
+	endif (Libconfig++_FIND_REQUIRED)
+endif (LIBCONFIG++_FOUND)

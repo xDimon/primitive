@@ -16,28 +16,14 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.02.25
 
-// main.cpp
+// Configs.cpp
 
 
-#include <iostream>
-#include "../src/thread/ThreadPool.hpp"
-#include "../src/options/Options.hpp"
-#include "../src/configs/Configs.hpp"
-#include "../src/server/Server.hpp"
+#include "Configs.hpp"
 
-int main(int argc, char *argv[])
+Configs::Configs(Options::Ptr &options)
+: _options(options)
 {
-	ThreadPool::setThreadNum(2);
+	auto &configPath = _options->getConfig();
 
-	Options::Ptr options(new Options(argc, argv));
-
-	Configs::Ptr configs(new Configs(options));
-
-	Server::Ptr server(new Server(configs));
-
-	server->start();
-
-	server->wait();
-
-	exit(EXIT_SUCCESS);
 }

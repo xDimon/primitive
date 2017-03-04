@@ -21,7 +21,8 @@
 
 #include "Server.hpp"
 
-Server::Server()
+Server::Server(Configs::Ptr &configs)
+: _configs(configs)
 {
 }
 

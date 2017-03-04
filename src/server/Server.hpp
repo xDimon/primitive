@@ -24,17 +24,19 @@
 #include <memory>
 #include <vector>
 #include "../transport/Transport.hpp"
-#include <map>
+#include "../configs/Configs.hpp"
 
 class Server
 {
-private:
-	std::vector<std::shared_ptr<Transport>> _transports;
-
 public:
 	typedef std::shared_ptr<Server> Ptr;
 
-	Server();
+private:
+	Configs::Ptr _configs;
+	std::vector<std::shared_ptr<Transport>> _transports;
+
+public:
+	Server(Configs::Ptr &configs);
 	virtual ~Server();
 
 	void start();
