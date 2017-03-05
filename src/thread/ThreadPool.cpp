@@ -41,9 +41,9 @@ ThreadPool::~ThreadPool()
 	_condition.notify_all();
 
 	// Wait end all threads
-	for (std::thread &worker: _workers)
+	for (auto i : _workers)
 	{
-		worker.join();
+		i.second->join();
 	}
 }
 
@@ -63,7 +63,7 @@ void ThreadPool::setThreadNum(size_t num)
 
 void ThreadPool::createThread()
 {
-	_workers.emplace_back([this](){
+	auto thread = new Thread([this](){
 		for (;;)
 		{
 			std::function<void()> task;
@@ -75,9 +75,11 @@ void ThreadPool::createThread()
 				std::unique_lock<std::mutex> lock(_queue_mutex);
 
 				// Condition for run thread
-				this->_condition.wait(lock, [this](){
+				_condition.wait(lock, [this](){
 					return _workerNum == 0 || !_tasks.empty();
 				});
+
+//				std::cout << "Thread#" << std::this_thread::get_id() << ": _workerNum=" << _workerNum << " empty=" << _tasks.empty() << std::endl;
 
 				// Condition for end thread
 				if (_workerNum == 0 && _tasks.empty())
@@ -87,7 +89,7 @@ void ThreadPool::createThread()
 
 				// Get task from queue
 				task = std::move(_tasks.front());
-				this->_tasks.pop();
+				_tasks.pop();
 			}
 
 			std::cout << "Thread#" << std::this_thread::get_id() << ": Execute ThreadPool task" << std::endl;
@@ -96,26 +98,30 @@ void ThreadPool::createThread()
 			task();
 		}
 	});
+
+	_workers.emplace(thread->get_id(), thread);
 }
 
 void ThreadPool::wait()
 {
-	for(;;)
-	{
-		std::cout << "Thread#" << std::this_thread::get_id() << ": Wait ThreadPool close" << std::endl;
+	std::cout << "Thread#" << std::this_thread::get_id() << ": Wait ThreadPool close" << std::endl;
 
-		std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
+	std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
 
-		// Condition for close pool
-		getInstance()._condition.wait(
-			lock, [pool = &getInstance()]()->bool {
-				return !pool->_workerNum || !pool->_tasks.empty();
-			}
-		);
-
-		if (!getInstance()._workerNum && getInstance()._tasks.empty())
-		{
-			return;
+	// Condition for close pool
+	getInstance()._condition.wait(
+		lock, [pool = &getInstance()]()->bool {
+			return !pool->_workerNum && pool->_tasks.empty();
 		}
+	);
+}
+
+Thread *ThreadPool::getCurrent()
+{
+	auto i = getInstance()._workers.find(std::this_thread::get_id());
+	if (i == getInstance()._workers.end())
+	{
+		throw std::runtime_error("Unrecognized thread");
 	}
+	return i->second;
 }

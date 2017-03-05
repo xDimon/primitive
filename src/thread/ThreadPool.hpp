@@ -26,6 +26,8 @@
 #include <queue>
 #include <condition_variable>
 #include <future>
+#include <map>
+#include "Thread.hpp"
 
 class ThreadPool
 {
@@ -52,11 +54,13 @@ public:
 
 	static void wait();
 
+	static Thread *getCurrent();
+
 private:
 	size_t _workerNum;
 
 	// need to keep track of threads so we can join them
-	std::vector<std::thread> _workers;
+	std::map<std::thread::id, Thread*> _workers;
 
 	// the task queue
 	std::queue<std::function<void()>> _tasks;
@@ -78,7 +82,7 @@ auto ThreadPool::enqueue(F &&f, Args &&... args)->std::future<typename std::resu
 		std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 	);
 
-	std::future<return_type> res = task->get_future();
+	std::future<return_type> res = task.get()->get_future();
 	{
 		std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
 
@@ -90,7 +94,7 @@ auto ThreadPool::enqueue(F &&f, Args &&... args)->std::future<typename std::resu
 
 		getInstance()._tasks.emplace(
 			[task]() {
-				(*task)();
+				task.get()->operator()();
 			}
 		);
 	}

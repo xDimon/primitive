@@ -14,32 +14,23 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.02.25
+// File created on: 2017.02.28
 
-// Server.hpp
+// Thread.hpp
 
 
 #pragma once
 
+#include <thread>
+#include <event2/event.h>
 #include <memory>
-#include <vector>
-#include "../transport/Transport.hpp"
-#include "../configs/Configs.hpp"
-#include "../transport/Transport.hpp"
+#include <evhttp.h>
 
-class Server
+class Thread: public std::thread
 {
 public:
-	typedef std::shared_ptr<Server> Ptr;
+	Thread(std::function<void()>);
+	virtual ~Thread();
 
-private:
-	Configs::Ptr _configs;
-	std::vector<std::shared_ptr<Transport>> _transports;
-
-public:
-	Server(Configs::Ptr &configs);
-	virtual ~Server();
-
-	void start();
-	void wait();
+	static Thread * self();
 };

@@ -14,32 +14,24 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.02.25
+// File created on: 2017.02.28
 
-// Server.hpp
+// Thread.cpp
 
 
-#pragma once
+#include "Thread.hpp"
+#include "ThreadPool.hpp"
 
-#include <memory>
-#include <vector>
-#include "../transport/Transport.hpp"
-#include "../configs/Configs.hpp"
-#include "../transport/Transport.hpp"
-
-class Server
+Thread::Thread(std::function<void()> loop)
+: std::thread(loop)
 {
-public:
-	typedef std::shared_ptr<Server> Ptr;
+}
 
-private:
-	Configs::Ptr _configs;
-	std::vector<std::shared_ptr<Transport>> _transports;
+Thread::~Thread()
+{
+}
 
-public:
-	Server(Configs::Ptr &configs);
-	virtual ~Server();
-
-	void start();
-	void wait();
-};
+Thread *Thread::self()
+{
+	return ThreadPool::getCurrent();
+}
