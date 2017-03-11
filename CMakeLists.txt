@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5)
 
 # Имя проекта
 set(CODENAME "primitive")
@@ -6,12 +6,18 @@ project(${CODENAME})
 
 # Запрещаем сборку не на линукс
 if (NOT UNIX)
-    message(FATAL_ERROR "Not Unix!")
+	message(FATAL_ERROR "Not Unix!")
 endif ()
 
 # Подключаем внешние модули cmake
-list(APPEND CMAKE_MODULE_PATH /usr/share/cmake-?.?/Modules/)
-list(APPEND CMAKE_MODULE_PATH cmake/Modules/)
+list(APPEND CMAKE_MODULE_PATH /usr/share/cmake-3.5/Modules/)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/)
+
+message(STATUS "Module paths:")
+foreach(F ${CMAKE_MODULE_PATH})
+    message(STATUS "  ${F}")
+endforeach()
+
 
 # Включаем использование ccache, если установлен
 find_program(CCACHE_FOUND ccache)
@@ -30,18 +36,28 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 set(${CODENAME}_LIBRARIES)
 
-find_package(Libconfig++)
-if (LIBCONFIG++_FOUND)
-	include_directories(${LIBCONFIG++_INCLUDE_DIR})
-	list(APPEND "${CODENAME}_LIBRARIES" ${LIBCONFIG++_LIBRARIES})
-else (LIBCONFIG++_FOUND)
-    include_directories(lib/cxxopts/include)
-endif (LIBCONFIG++_FOUND)
+# Подключаем cxxopts
+include_directories(lib/cxxopts/include)
 
+# Подключаем libconfig++
+find_package(Libconfig++)
+if (NOT LIBCONFIG++_FOUND)
+    message(FATAL_ERROR "libconfig++ not found")
+endif ()
+include_directories(${LIBCONFIG++_INCLUDE_DIR})
+list(APPEND "${CODENAME}_LIBRARIES" ${LIBCONFIG++_LIBRARIES})
+
+# Подключаем spdlog
+find_package(Spdlog)
+if (NOT SPDLOG_FOUND)
+    message(FATAL_ERROR "Spdlog not found")
+endif ()
+include_directories(${SPDLOG_INCLUDE_DIR})
+
+# Подключаем многопоточность
 list(APPEND "${CODENAME}_LIBRARIES" pthread)
 
 add_subdirectory(src)
-
 
 list(APPEND SOURCE_FILES test/main.cpp)
 
