@@ -20,6 +20,7 @@
 
 
 #include <iostream>
+#include "../log/Log.hpp"
 #include "ThreadPool.hpp"
 
 // the constructor just launches some amount of _workers
@@ -63,15 +64,19 @@ void ThreadPool::setThreadNum(size_t num)
 
 void ThreadPool::createThread()
 {
+	Log().debug("Create new thread");
+
 	auto thread = new Thread([this](){
+		Log().debug("Start new thread");
+
 		for (;;)
 		{
 			std::function<void()> task;
 
+			Log().debug("Wait task on thread");
+
 			// Try to get or wait task
 			{
-				std::cout << "Thread#" << std::this_thread::get_id() << ": Wait ThreadPool task" << std::endl;
-
 				std::unique_lock<std::mutex> lock(_queue_mutex);
 
 				// Condition for run thread
@@ -79,20 +84,21 @@ void ThreadPool::createThread()
 					return _workerNum == 0 || !_tasks.empty();
 				});
 
-//				std::cout << "Thread#" << std::this_thread::get_id() << ": _workerNum=" << _workerNum << " empty=" << _tasks.empty() << std::endl;
-
 				// Condition for end thread
 				if (_workerNum == 0 && _tasks.empty())
 				{
+					Log().debug("End thread");
 					return;
 				}
+
+				Log().debug("Get task from queue");
 
 				// Get task from queue
 				task = std::move(_tasks.front());
 				_tasks.pop();
 			}
 
-			std::cout << "Thread#" << std::this_thread::get_id() << ": Execute ThreadPool task" << std::endl;
+			Log().debug("Execute task on thread");
 
 			// Execute task
 			task();
@@ -104,7 +110,7 @@ void ThreadPool::createThread()
 
 void ThreadPool::wait()
 {
-	std::cout << "Thread#" << std::this_thread::get_id() << ": Wait ThreadPool close" << std::endl;
+	Log().debug("Wait threadpool close");
 
 	std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
 
