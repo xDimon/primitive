@@ -19,6 +19,7 @@
 // Server.cpp
 
 
+#include "../thread/ThreadPool.hpp"
 #include "Server.hpp"
 
 Server::Server(Configs::Ptr &configs)
@@ -30,10 +31,74 @@ Server::~Server()
 {
 }
 
-void Server::start()
-{
-}
-
 void Server::wait()
 {
+	ThreadPool::wait();
+}
+
+bool Server::addTransport(const std::string name, Transport *transport)
+{
+	std::lock_guard<std::mutex> guard(_mutex);
+	auto i = _transports.find(name);
+	if (i != _transports.end())
+	{
+		return false;
+	}
+	_transports.emplace(name, Transport::Ptr(transport));
+	return true;
+}
+
+void Server::enableTransport(const std::string name)
+{
+	std::lock_guard<std::mutex> guard(_mutex);
+	auto i = _transports.find(name);
+	if (i == _transports.end())
+	{
+		return;
+	}
+	auto& transport = i->second;
+	transport->enable();
+}
+
+void Server::disableTransport(const std::string name)
+{
+	std::lock_guard<std::mutex> guard(_mutex);
+	auto i = _transports.find(name);
+	if (i == _transports.end())
+	{
+		return;
+	}
+	auto& transport = i->second;
+	transport->disable();
+}
+
+void Server::removeTransport(const std::string name)
+{
+	std::lock_guard<std::mutex> guard(_mutex);
+	auto i = _transports.find(name);
+	if (i == _transports.end())
+	{
+		return;
+	}
+	auto& transport = i->second;
+	transport->disable();
+	_transports.erase(i);
+}
+
+void Server::start()
+{
+	std::lock_guard<std::mutex> guard(_mutex);
+	for (auto &&item : _transports)
+	{
+		item.second->enable();
+	}
+}
+
+void Server::stop()
+{
+	std::lock_guard<std::mutex> guard(_mutex);
+	for (auto &&item : _transports)
+	{
+		item.second->disable();
+	}
 }

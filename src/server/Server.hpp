@@ -33,13 +33,27 @@ public:
 	typedef std::shared_ptr<Server> Ptr;
 
 private:
+
+	std::mutex _mutex;
+
 	Configs::Ptr _configs;
-	std::vector<std::shared_ptr<Transport>> _transports;
+
+	std::map<const std::string, Transport::Ptr> _transports;
 
 public:
 	Server(Configs::Ptr &configs);
 	virtual ~Server();
 
+	bool addTransport(const std::string name, Transport *transport);
+
+	void enableTransport(const std::string name);
+
+	void disableTransport(const std::string name);
+
+	void removeTransport(const std::string name);
+
 	void start();
+	void stop();
+
 	void wait();
 };

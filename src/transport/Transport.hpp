@@ -21,7 +21,14 @@
 
 #pragma once
 
+#include <memory>
+
 class Transport
 {
 public:
+	typedef std::shared_ptr<Transport> Ptr;
+
+public:
+	virtual bool enable() = 0;
+	virtual bool disable() = 0;
 };
