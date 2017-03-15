@@ -1,0 +1,270 @@
+// Copyright © 2017 Dmitriy Khaustov
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Author: Dmitriy Khaustov aka xDimon
+// Contacts: khaustov.dm@gmail.com
+// File created on: 2017.03.09
+
+// TcpConnection.cpp
+
+
+#include "TcpConnection.hpp"
+#include "ConnectionManager.hpp"
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <cstring>
+#include <sstream>
+#include <unistd.h>
+#include "../log/Log.hpp"
+
+TcpConnection::TcpConnection(int sock, const sockaddr_in &sockaddr)
+: ConnectionBase()
+, _noRead(false)
+, _noWrite(false)
+, _error(false)
+, _closed(false)
+{
+	_sock = sock;
+	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
+
+	Log().debug("Create {}", name());
+}
+
+TcpConnection::~TcpConnection()
+{
+	Log().debug("Destroy {}", name());
+
+	shutdown(_sock, SHUT_RD);
+}
+
+const std::string& TcpConnection::name()
+{
+	if (_name.empty())
+	{
+		std::stringstream ss;
+		ss << "TcpConnection [" << _sock << "] [" << inet_ntoa(_sockaddr.sin_addr) << ":" << htons(_sockaddr.sin_port) << "]";
+		_name = ss.str();
+	}
+	return _name;
+}
+
+void TcpConnection::watch(epoll_event &ev)
+{
+	ev.data.ptr = this;
+	ev.events = 0;
+
+	if (_closed)
+	{
+		return;
+	}
+
+	ev.events |= EPOLLERR;
+
+	if (!_noRead)
+	{
+		ev.events |= EPOLLIN | EPOLLRDNORM;
+	}
+
+	ev.events |= EPOLLRDHUP;
+	ev.events |= EPOLLHUP;
+
+	if (!_error)
+	{
+		if (_outBuff.dataLen() > 0)
+		{
+			ev.events |= EPOLLOUT | EPOLLWRNORM;
+		}
+	}
+}
+
+bool TcpConnection::processing()
+{
+	Log().debug("Processing on {}", name());
+
+	do
+	{
+		if (wasFailure())
+		{
+			_closed = true;
+			break;
+		}
+
+		if (isReadyForWrite())
+		{
+			writeToSocket();
+		}
+
+		if (isReadyForRead())
+		{
+			readFromSocket();
+		}
+
+		if (_outBuff.dataLen() > 0)
+		{
+			writeToSocket();
+		}
+
+		ConnectionManager::rotateEvents(this);
+	}
+	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()));
+
+	if (_noRead)
+	{
+		if (!_outBuff.dataLen())
+		{
+			shutdown(_sock, SHUT_WR);
+			_noWrite = true;
+		}
+	}
+
+	if (_noRead && _noWrite)
+	{
+		_closed = true;
+	}
+
+	if (_closed)
+	{
+		ConnectionManager::remove(this);
+
+		return true;
+	}
+
+	ConnectionManager::watch(this);
+
+	return true;
+}
+
+bool TcpConnection::writeToSocket()
+{
+	Log().trace("Write into socket on {}", name());
+
+	// Отправляем данные
+	for (;;)
+	{
+		std::lock_guard<std::recursive_mutex> guard(_outBuff.mutex());
+
+		// Нечего отправлять
+		if (_outBuff.dataLen() == 0)
+		{
+			break;
+		}
+
+		int n = ::write(_sock, _outBuff.dataPtr(), _outBuff.dataLen());
+		if (n == -1)
+		{
+			// Повторяем вызов прерваный сигналом
+			if (errno == EINTR)
+			{
+				continue;
+			}
+
+			// Нет возможности отправить сейчас
+			if (errno == EAGAIN)
+			{
+				return true;
+			}
+
+			// Ошибка записи
+			Log().debug("Fail writing data (error: '')", strerror(errno));
+
+			_error = true;
+
+			return false;
+		}
+
+		_outBuff.skip(n);
+	}
+
+	// Установлен флаг "Закрыть соединение после отправки"
+//	if (isFinaly())
+//	{
+//		return false;
+//	}
+
+	return true;
+}
+
+bool TcpConnection::readFromSocket()
+{
+	Log().debug("readFromSocket() on {}", name());
+
+	// Пытаемся полностью заполнить буфер
+	for (;;)
+	{
+		size_t bytes_available = 0;
+		ioctl(_sock, FIONREAD, &bytes_available);
+
+		// Нет данных на сокете
+		if (!bytes_available)
+		{
+			// И больше не будет
+			if (isHalfHup() || isHup())
+			{
+				_noRead = true;
+			}
+			break;
+		}
+
+		std::lock_guard<std::recursive_mutex> guard(_inBuff.mutex());
+
+		_inBuff.prepare(bytes_available);
+
+		int n = ::read(_sock, _inBuff.spacePtr(), _inBuff.spaceLen());
+		if (n == -1)
+		{
+			// Повторяем вызов прерваный сигналом
+			if (errno == EINTR)
+			{
+				continue;
+			}
+
+			// Нет готовых данных - продолжаем ждать
+			if (errno == EAGAIN)
+			{
+				Log().debug("No more read on {}", name());
+				break;
+			}
+
+			// Ошибка чтения
+			Log().debug("Error '{}' while read on {}", strerror(errno), name());
+
+			return false;
+		}
+		if (n == 0)
+		{
+			// Клиент отключился
+			Log().debug("Client disconnected on {}", name());
+
+			return false;
+		}
+
+		_inBuff.forward(n);
+
+		char buff[1<<12];
+		size_t len = std::min(_inBuff.dataLen(), sizeof(buff)-1);
+		_inBuff.read(buff, len);
+		buff[len] = 0;
+		std::string b(buff);
+
+		Log().debug("Read {} bytes `{}` on {}", len, b, name());
+	}
+
+	return true;
+}
+
+void TcpConnection::close()
+{
+	shutdown(_sock, SHUT_RD);
+	_noRead = true;
+}

@@ -21,10 +21,14 @@
 
 #include "../thread/ThreadPool.hpp"
 #include "Server.hpp"
+#include "../net/ConnectionManager.hpp"
 
 Server::Server(Configs::Ptr &configs)
 : _configs(configs)
 {
+	ThreadPool::enqueue([](){
+		ConnectionManager::dispatch();
+	});
 }
 
 Server::~Server()
