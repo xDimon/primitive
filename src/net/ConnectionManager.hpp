@@ -49,13 +49,13 @@ private:
 	std::mutex _epool_mutex;
 
 	/// Реестр подключений
-	std::set<ConnectionBase *> _aConns;
+	std::set<ConnectionBase::Ptr> _aConns;
 
 	/// Захваченные подключения
-	std::set<ConnectionBase *> _capturedConnections;
+	std::set<ConnectionBase::Ptr> _capturedConnections;
 
 	/// Готовые подключения (имеющие необработанные события)
-	std::set<ConnectionBase *> _readyConnections;
+	std::set<ConnectionBase::Ptr> _readyConnections;
 
 	uint32_t _accepted;
 	uint32_t _established;
@@ -71,23 +71,23 @@ private:
 	void wait();
 
 	/// Захватить соединение
-	ConnectionBase * capture();
+	ConnectionBase::Ptr capture();
 
 	/// Освободить соединение
-	void release(ConnectionBase *conn);
+	void release(ConnectionBase::Ptr conn);
 
 public:
 	/// Добавить соединение для наблюдения
-	static void watch(ConnectionBase *connection);
+	static void watch(ConnectionBase::Ptr connection);
 
 	/// Зарегистрировать соединение
-	static void add(ConnectionBase *conn);
+	static void add(ConnectionBase::Ptr connection);
 
 	/// Удалить регистрацию соединения
-	static bool remove(ConnectionBase *conn);
+	static bool remove(ConnectionBase::Ptr connection);
 
 	/// Проверить и вернуть отложенные события
-	static uint32_t rotateEvents(ConnectionBase *connection);
+	static uint32_t rotateEvents(ConnectionBase::Ptr connection);
 
 	/// Обработка событий
 	static void dispatch();

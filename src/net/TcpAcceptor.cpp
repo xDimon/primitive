@@ -20,15 +20,15 @@
 
 
 #include <arpa/inet.h>
-#include <fcntl.h>
 #include <netinet/tcp.h>
+#include <sstream>
+#include <fcntl.h>
 #include <cstring>
-#include <zconf.h>
-#include "../log/Log.hpp"
 
 #include "TcpAcceptor.hpp"
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"
+#include "../log/Log.hpp"
 
 TcpAcceptor::TcpAcceptor(std::string host, std::uint16_t port)
 : ConnectionBase()
@@ -105,7 +105,7 @@ const std::string& TcpAcceptor::name()
 {
 	if (_name.empty())
 	{
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "TcpAcceptor [" << _sock << "] [" << _host << ":" << _port << "]";
 		_name = ss.str();
 	}
@@ -114,7 +114,7 @@ const std::string& TcpAcceptor::name()
 
 void TcpAcceptor::watch(epoll_event &ev)
 {
-	ev.data.ptr = this;
+	ev.data.ptr = new std::shared_ptr<ConnectionBase>(shared_from_this());
 	ev.events = 0;
 
 	ev.events |= EPOLLERR;
@@ -130,7 +130,9 @@ bool TcpAcceptor::processing()
 	{
 		if (wasFailure())
 		{
-			ConnectionManager::remove(this);
+			_closed = true;
+
+			ConnectionManager::remove(this->ptr());
 
 			throw std::runtime_error("Error on TcpAcceptor");
 		}
@@ -178,9 +180,9 @@ bool TcpAcceptor::processing()
 
 		try
 		{
-			TcpConnection *newConnection = new TcpConnection(sock, cliaddr);
+			auto connection = std::shared_ptr<ConnectionBase>(new TcpConnection(sock, cliaddr));
 
-			ConnectionManager::add(newConnection);
+			ConnectionManager::add(connection);
 		}
 		catch (std::exception exception)
 		{
@@ -189,7 +191,7 @@ bool TcpAcceptor::processing()
 		}
 	}
 
-	ConnectionManager::watch(this);
+	ConnectionManager::watch(this->ptr());
 
 	return true;
 }

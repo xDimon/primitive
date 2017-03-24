@@ -23,9 +23,10 @@
 #include <unistd.h>
 
 ConnectionBase::ConnectionBase()
+: _sock(-1)
+, _closed(true)
+, _error(false)
 {
-	_sock = -1;
-
 	_captured = false;
 	_events = 0;
 	_postponedEvents = 0;

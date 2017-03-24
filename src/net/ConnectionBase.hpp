@@ -21,16 +21,20 @@
 
 #pragma once
 
-
 #include <cstdint>
 #include <string>
+#include <memory>
 #include "ConnectionEvent.hpp"
 #include <sys/epoll.h>
 
 struct sockaddr_in;
 
-class ConnectionBase
+class ConnectionBase: public std::enable_shared_from_this<ConnectionBase>
 {
+public:
+	typedef std::shared_ptr<ConnectionBase> Ptr;
+	typedef std::weak_ptr<ConnectionBase> WPtr;
+
 private:
 	bool _captured;
 	uint32_t _events;
@@ -38,7 +42,16 @@ private:
 
 protected:
 	int _sock;
+
+	/// Соединение готово
 	bool _ready;
+
+	/// Соединение закрыто
+	bool _closed;
+
+	/// Ошибка соединения
+	bool _error;
+
 	std::string _name;
 
 public:
@@ -48,6 +61,11 @@ public:
 	ConnectionBase();
 	virtual ~ConnectionBase();
 
+	Ptr ptr()
+	{
+		return shared_from_this();
+	}
+
 	virtual const std::string& name() = 0;
 
 	inline int fd() const
@@ -55,6 +73,10 @@ public:
 		return _sock;
 	}
 
+	inline bool isClosed() const
+	{
+		return _closed;
+	}
 	inline bool isReady() const
 	{
 		return _ready;

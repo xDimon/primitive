@@ -22,18 +22,8 @@
 #include <cstring>
 #include "ConnectionManager.hpp"
 
-#include <stddef.h>
-#include <unistd.h>
-#include <cerrno>
-#include <chrono>
-#include <cstdio>
-#include <map>
-#include <thread>
-#include <utility>
 #include "../thread/ThreadPool.hpp"
-#include "../log/Log.hpp"
 
-#include "TcpAcceptor.hpp"
 #include "TcpConnection.hpp"
 #include <unistd.h>
 
@@ -63,7 +53,7 @@ ConnectionManager::~ConnectionManager()
 }
 
 /// Зарегистрировать соединение
-void ConnectionManager::add(ConnectionBase *connection)
+void ConnectionManager::add(ConnectionBase::Ptr connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
@@ -89,7 +79,7 @@ void ConnectionManager::add(ConnectionBase *connection)
 }
 
 /// Удалить регистрацию соединения
-bool ConnectionManager::remove(ConnectionBase *connection)
+bool ConnectionManager::remove(ConnectionBase::Ptr connection)
 {
 	if (!connection)
 	{
@@ -100,9 +90,11 @@ bool ConnectionManager::remove(ConnectionBase *connection)
 
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
+	Log().debug("Count of use for {} before ConnectionManager::remove(): {}", connection->name(), connection.use_count());
+
 	if (getInstance()._aConns.erase(connection))
 	{
-		if (dynamic_cast<TcpConnection *>(connection))
+		if (std::dynamic_pointer_cast<TcpConnection>(connection))
 		{
 			getInstance()._established--;
 		}
@@ -118,17 +110,19 @@ bool ConnectionManager::remove(ConnectionBase *connection)
 
 	getInstance()._capturedConnections.erase(connection);
 
+	Log().debug("Count of use for {} after ConnectionManager::remove(): {}", connection->name(), connection.use_count());
+
 	return true;
 }
 
-uint32_t ConnectionManager::rotateEvents(ConnectionBase *connection)
+uint32_t ConnectionManager::rotateEvents(ConnectionBase::Ptr connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 	uint32_t events = connection->rotateEvents();
 	return events;
 }
 
-void ConnectionManager::watch(ConnectionBase *connection)
+void ConnectionManager::watch(ConnectionBase::Ptr connection)
 {
 	// Для известных соенинений проверяем состояние захваченности
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
@@ -156,7 +150,7 @@ void ConnectionManager::watch(ConnectionBase *connection)
 /// Ожидать события на соединениях
 void ConnectionManager::wait()
 {
-	ConnectionBase *connection;
+	ConnectionBase::Ptr connection;
 
 	// Если набор готовых соединений не пустой, то выходим
 	if (!_readyConnections.empty())
@@ -196,7 +190,7 @@ void ConnectionManager::wait()
 	// Перебираем полученые события
 	for (int i = 0; i < n; i++)
 	{
-		connection = static_cast<ConnectionBase *>(_epev[i].data.ptr);
+		connection = *static_cast<std::shared_ptr<ConnectionBase> *>(_epev[i].data.ptr);
 
 		if (!connection)
 		{
@@ -251,6 +245,8 @@ void ConnectionManager::wait()
 
 			// ...добавляем в список готовых
 			_readyConnections.insert(connection);
+
+			Log().debug("Count of use {} after ConnectionManager::wait(): {}", connection->name(), connection.use_count());
 		}
 		else
 		{
@@ -264,7 +260,7 @@ void ConnectionManager::wait()
 }
 
 /// Захватить соединение
-ConnectionBase * ConnectionManager::capture()
+ConnectionBase::Ptr ConnectionManager::capture()
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 
@@ -289,7 +285,7 @@ ConnectionBase * ConnectionManager::capture()
 	// Берем соединение из набора готовых к обработке
 	auto it = _readyConnections.begin();
 
-	ConnectionBase *connection = *it;
+	ConnectionBase::Ptr connection = *it;
 
 //	Log().trace("Move {} from ready into captured connection list in ConnectionManager::captured()", connection->name());
 
@@ -305,7 +301,7 @@ ConnectionBase * ConnectionManager::capture()
 }
 
 /// Освободить соединение
-void ConnectionManager::release(ConnectionBase *connection)
+void ConnectionManager::release(ConnectionBase::Ptr connection)
 {
 //	Log().trace("Enter into ConnectionManager::release() for {}", connection->name());
 
@@ -315,14 +311,14 @@ void ConnectionManager::release(ConnectionBase *connection)
 
 	_capturedConnections.erase(connection);
 
+	Log().debug("Count of use {} after ConnectionManager::relese(): {}", connection->name(), connection.use_count());
+
 	connection->setReleased();
 
-//	if (!connection->isClosed())
-//	{
+	if (!connection->isClosed())
+	{
 		watch(connection);
-//	}
-
-//	Log().trace("Return from ConnectionManager::release() for {}", connection->name());
+	}
 }
 
 /// Обработка событий
@@ -332,7 +328,7 @@ void ConnectionManager::dispatch()
 
 	for (;;)
 	{
-		auto connection = getInstance().capture();
+		ConnectionBase::Ptr connection = getInstance().capture();
 
 		if (!connection)
 		{
@@ -348,7 +344,7 @@ void ConnectionManager::dispatch()
 
 			getInstance().release(connection);
 
-			Log().trace("End processing for {}", connection->name());
+			Log().debug("End processing for {}", connection->name());
 		});
 	}
 }

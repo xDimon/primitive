@@ -36,6 +36,7 @@ TcpConnection::TcpConnection(int sock, const sockaddr_in &sockaddr)
 , _closed(false)
 {
 	_sock = sock;
+
 	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
 
 	Log().debug("Create {}", name());
@@ -52,7 +53,7 @@ const std::string& TcpConnection::name()
 {
 	if (_name.empty())
 	{
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "TcpConnection [" << _sock << "] [" << inet_ntoa(_sockaddr.sin_addr) << ":" << htons(_sockaddr.sin_port) << "]";
 		_name = ss.str();
 	}
@@ -61,7 +62,7 @@ const std::string& TcpConnection::name()
 
 void TcpConnection::watch(epoll_event &ev)
 {
-	ev.data.ptr = this;
+	ev.data.ptr = new std::shared_ptr<ConnectionBase>(shared_from_this());
 	ev.events = 0;
 
 	if (_closed)
@@ -97,7 +98,8 @@ bool TcpConnection::processing()
 		if (wasFailure())
 		{
 			_closed = true;
-			break;
+			ConnectionManager::remove(this->ptr());
+			return true;
 		}
 
 		if (isReadyForWrite())
@@ -115,7 +117,7 @@ bool TcpConnection::processing()
 			writeToSocket();
 		}
 
-		ConnectionManager::rotateEvents(this);
+		ConnectionManager::rotateEvents(this->ptr());
 	}
 	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()));
 
@@ -135,12 +137,12 @@ bool TcpConnection::processing()
 
 	if (_closed)
 	{
-		ConnectionManager::remove(this);
+		ConnectionManager::remove(this->ptr());
 
 		return true;
 	}
 
-	ConnectionManager::watch(this);
+	ConnectionManager::watch(this->ptr());
 
 	return true;
 }

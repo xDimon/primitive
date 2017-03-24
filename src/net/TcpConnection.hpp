@@ -21,16 +21,10 @@
 
 #pragma once
 
-#include <netinet/in.h>
-#include <stddef.h>
-#include <sys/time.h>
-
 #include "ConnectionBase.hpp"
-#include "../utils/Buffer.hpp"
 
-class RequestBase;
-class ISession;
-struct json_t;
+#include "../utils/Buffer.hpp"
+#include <netinet/in.h>
 
 class TcpConnection: public ConnectionBase
 {
