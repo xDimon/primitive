@@ -23,13 +23,22 @@
 
 #include <memory>
 
-class Transport
+class Connection;
+
+class Transport: public std::enable_shared_from_this<Transport>
 {
 public:
 	typedef std::shared_ptr<Transport> Ptr;
 	typedef std::weak_ptr<Transport> WPtr;
 
+	inline Ptr ptr()
+	{
+		return shared_from_this();
+	}
+
 public:
 	virtual bool enable() = 0;
 	virtual bool disable() = 0;
+
+	virtual bool processing(std::shared_ptr<Connection> connection) = 0;
 };
