@@ -19,19 +19,21 @@
 // TcpAcceptor.cpp
 
 
-#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <sstream>
-#include <fcntl.h>
 #include <cstring>
-
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <zconf.h>
+#include <sstream>
 #include "TcpAcceptor.hpp"
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"
 #include "../log/Log.hpp"
 
-TcpAcceptor::TcpAcceptor(std::string host, std::uint16_t port)
-: ConnectionBase()
+TcpAcceptor::TcpAcceptor(Transport::Ptr transport, std::string host, std::uint16_t port)
+: Connection(transport)
 , _host(host)
 , _port(port)
 {
@@ -114,8 +116,10 @@ const std::string& TcpAcceptor::name()
 
 void TcpAcceptor::watch(epoll_event &ev)
 {
-	ev.data.ptr = new std::shared_ptr<ConnectionBase>(shared_from_this());
+	ev.data.ptr = new std::shared_ptr<Connection>(shared_from_this());
 	ev.events = 0;
+
+	ev.events |= EPOLLET; // Ждем появления НОВЫХ событий
 
 	ev.events |= EPOLLERR;
 	ev.events |= EPOLLIN;
@@ -180,9 +184,9 @@ bool TcpAcceptor::processing()
 
 		try
 		{
-			auto connection = std::shared_ptr<ConnectionBase>(new TcpConnection(sock, cliaddr));
+			auto connection = std::shared_ptr<Connection>(new TcpConnection(_transport.lock(), sock, cliaddr));
 
-			ConnectionManager::add(connection);
+			ConnectionManager::add(connection->ptr());
 		}
 		catch (std::exception exception)
 		{

@@ -24,12 +24,10 @@
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include <cstring>
-#include <sstream>
-#include <unistd.h>
 #include "../log/Log.hpp"
 
-TcpConnection::TcpConnection(int sock, const sockaddr_in &sockaddr)
-: ConnectionBase()
+TcpConnection::TcpConnection(Transport::Ptr transport, int sock, const sockaddr_in &sockaddr)
+: Connection(transport)
 , _noRead(false)
 , _noWrite(false)
 , _error(false)
@@ -62,8 +60,10 @@ const std::string& TcpConnection::name()
 
 void TcpConnection::watch(epoll_event &ev)
 {
-	ev.data.ptr = new std::shared_ptr<ConnectionBase>(shared_from_this());
+	ev.data.ptr = new std::shared_ptr<Connection>(shared_from_this());
 	ev.events = 0;
+
+	ev.events |= EPOLLET; // Ждем появления НОВЫХ событий
 
 	if (_closed)
 	{
@@ -149,7 +149,7 @@ bool TcpConnection::processing()
 
 bool TcpConnection::writeToSocket()
 {
-	Log().trace("Write into socket on {}", name());
+	Log().debug("Write into socket on {}", name());
 
 	// Отправляем данные
 	for (;;)
@@ -188,18 +188,12 @@ bool TcpConnection::writeToSocket()
 		_outBuff.skip(n);
 	}
 
-	// Установлен флаг "Закрыть соединение после отправки"
-//	if (isFinaly())
-//	{
-//		return false;
-//	}
-
 	return true;
 }
 
 bool TcpConnection::readFromSocket()
 {
-	Log().debug("readFromSocket() on {}", name());
+	Log().debug("Read from into socket on {}", name());
 
 	// Пытаемся полностью заполнить буфер
 	for (;;)
@@ -260,6 +254,12 @@ bool TcpConnection::readFromSocket()
 		std::string b(buff);
 
 		Log().debug("Read {} bytes `{}` on {}", len, b, name());
+	}
+
+	auto transport = _transport.lock();
+	if (transport)
+	{
+		Log().debug("Processing");
 	}
 
 	return true;

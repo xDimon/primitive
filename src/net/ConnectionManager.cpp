@@ -23,7 +23,6 @@
 #include "ConnectionManager.hpp"
 
 #include "../thread/ThreadPool.hpp"
-
 #include "TcpConnection.hpp"
 #include <unistd.h>
 
@@ -53,7 +52,7 @@ ConnectionManager::~ConnectionManager()
 }
 
 /// Зарегистрировать соединение
-void ConnectionManager::add(ConnectionBase::Ptr connection)
+void ConnectionManager::add(Connection::Ptr connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
@@ -79,18 +78,14 @@ void ConnectionManager::add(ConnectionBase::Ptr connection)
 }
 
 /// Удалить регистрацию соединения
-bool ConnectionManager::remove(ConnectionBase::Ptr connection)
+bool ConnectionManager::remove(Connection::Ptr connection)
 {
 	if (!connection)
 	{
 		return false;
 	}
 
-	Log().debug("Remove {} in ConnectionManager::remove()", connection->name());
-
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
-
-	Log().debug("Count of use for {} before ConnectionManager::remove(): {}", connection->name(), connection.use_count());
 
 	if (getInstance()._aConns.erase(connection))
 	{
@@ -107,22 +102,19 @@ bool ConnectionManager::remove(ConnectionBase::Ptr connection)
 	}
 
 	getInstance()._readyConnections.erase(connection);
-
 	getInstance()._capturedConnections.erase(connection);
-
-	Log().debug("Count of use for {} after ConnectionManager::remove(): {}", connection->name(), connection.use_count());
 
 	return true;
 }
 
-uint32_t ConnectionManager::rotateEvents(ConnectionBase::Ptr connection)
+uint32_t ConnectionManager::rotateEvents(Connection::Ptr connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 	uint32_t events = connection->rotateEvents();
 	return events;
 }
 
-void ConnectionManager::watch(ConnectionBase::Ptr connection)
+void ConnectionManager::watch(Connection::Ptr connection)
 {
 	// Для известных соенинений проверяем состояние захваченности
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
@@ -130,11 +122,11 @@ void ConnectionManager::watch(ConnectionBase::Ptr connection)
 	// Те, что в обработке, не трогаем
 	if (connection->isCaptured())
 	{
-//		Log().trace("Skip watch for {} in ConnectionManager::watch() because already captured", connection->name());
+//		Log().debug("Skip watch for {} in ConnectionManager::watch() because already captured", connection->name());
 		return;
 	}
 
-//	Log().trace("Watch for {} in ConnectionManager::watch()", connection->name());
+//	Log().debug("Watch for {} in ConnectionManager::watch()", connection->name());
 
 	epoll_event ev;
 
@@ -150,8 +142,6 @@ void ConnectionManager::watch(ConnectionBase::Ptr connection)
 /// Ожидать события на соединениях
 void ConnectionManager::wait()
 {
-	ConnectionBase::Ptr connection;
-
 	// Если набор готовых соединений не пустой, то выходим
 	if (!_readyConnections.empty())
 	{
@@ -190,7 +180,13 @@ void ConnectionManager::wait()
 	// Перебираем полученые события
 	for (int i = 0; i < n; i++)
 	{
-		connection = *static_cast<std::shared_ptr<ConnectionBase> *>(_epev[i].data.ptr);
+		Connection::Ptr connection = std::move(*static_cast<std::shared_ptr<Connection> *>(_epev[i].data.ptr));
+
+		if (!connection)
+		{
+			Log().debug("Skip nullptr in ConnectionManager::wait()");
+			continue;
+		}
 
 		if (!connection)
 		{
@@ -245,12 +241,6 @@ void ConnectionManager::wait()
 
 			// ...добавляем в список готовых
 			_readyConnections.insert(connection);
-
-			Log().debug("Count of use {} after ConnectionManager::wait(): {}", connection->name(), connection.use_count());
-		}
-		else
-		{
-			Log().debug("{} found in captured connection list and will be processed later in ConnectionManager::wait()", connection->name());
 		}
 	}
 
@@ -260,7 +250,7 @@ void ConnectionManager::wait()
 }
 
 /// Захватить соединение
-ConnectionBase::Ptr ConnectionManager::capture()
+Connection::Ptr ConnectionManager::capture()
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 
@@ -282,10 +272,15 @@ ConnectionBase::Ptr ConnectionManager::capture()
 		return nullptr;
 	}
 
+	if (_readyConnections.empty())
+	{
+		return nullptr;
+	}
+
 	// Берем соединение из набора готовых к обработке
 	auto it = _readyConnections.begin();
 
-	ConnectionBase::Ptr connection = *it;
+	auto connection = *it;
 
 //	Log().trace("Move {} from ready into captured connection list in ConnectionManager::captured()", connection->name());
 
@@ -301,23 +296,27 @@ ConnectionBase::Ptr ConnectionManager::capture()
 }
 
 /// Освободить соединение
-void ConnectionManager::release(ConnectionBase::Ptr connection)
+void ConnectionManager::release(Connection::Ptr connection)
 {
-//	Log().trace("Enter into ConnectionManager::release() for {}", connection->name());
+//	Log().debug("Release {} in ConnectionManager::release()", connection->name());
 
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 
-//	Log().trace("Remove {} from captured connection list in ConnectionManager::captured()", connection->name());
+//	Log().debug("Remove {} from captured connection list in ConnectionManager::captured()", connection->name());
 
 	_capturedConnections.erase(connection);
 
-	Log().debug("Count of use {} after ConnectionManager::relese(): {}", connection->name(), connection.use_count());
+//	Log().debug("In ConnectionManager::relese()");
 
 	connection->setReleased();
 
 	if (!connection->isClosed())
 	{
+//		Log().debug("Before call watch in ConnectionManager::relese()");
+
 		watch(connection);
+
+//		Log().debug("After call watch in ConnectionManager::relese()");
 	}
 }
 
@@ -328,7 +327,11 @@ void ConnectionManager::dispatch()
 
 	for (;;)
 	{
-		ConnectionBase::Ptr connection = getInstance().capture();
+//		Log().debug("Before call capture in ConnectionManager::dispatch()");
+
+		Connection::Ptr connection = getInstance().capture();
+
+//		Log().debug("After call capture in ConnectionManager::dispatch()");
 
 		if (!connection)
 		{
@@ -346,5 +349,7 @@ void ConnectionManager::dispatch()
 
 			Log().debug("End processing for {}", connection->name());
 		});
+
+//		Log().debug("After call ThreadPool::enqueue()");
 	}
 }

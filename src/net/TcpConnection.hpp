@@ -21,12 +21,11 @@
 
 #pragma once
 
-#include "ConnectionBase.hpp"
-
+#include "Connection.hpp"
 #include "../utils/Buffer.hpp"
 #include <netinet/in.h>
 
-class TcpConnection: public ConnectionBase
+class TcpConnection: public Connection
 {
 private:
 	sockaddr_in _sockaddr;
@@ -58,7 +57,7 @@ public:
 	TcpConnection(const TcpConnection&) = delete;
 	void operator= (TcpConnection const&) = delete;
 
-	TcpConnection(int fd, const sockaddr_in &cliaddr);
+	TcpConnection(Transport::Ptr transport, int fd, const sockaddr_in &cliaddr);
 	virtual ~TcpConnection();
 
 	bool noRead() const

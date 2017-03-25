@@ -16,7 +16,7 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.09
 
-// ConnectionBase.hpp
+// Connection.hpp
 
 
 #pragma once
@@ -24,16 +24,18 @@
 #include <cstdint>
 #include <string>
 #include <memory>
-#include "ConnectionEvent.hpp"
+#include <type_traits>
 #include <sys/epoll.h>
+#include "../transport/Transport.hpp"
+#include "ConnectionEvent.hpp"
 
 struct sockaddr_in;
 
-class ConnectionBase: public std::enable_shared_from_this<ConnectionBase>
+class Connection: public std::enable_shared_from_this<Connection>
 {
 public:
-	typedef std::shared_ptr<ConnectionBase> Ptr;
-	typedef std::weak_ptr<ConnectionBase> WPtr;
+	typedef std::shared_ptr<Connection> Ptr;
+	typedef std::weak_ptr<Connection> WPtr;
 
 private:
 	bool _captured;
@@ -41,6 +43,8 @@ private:
 	uint32_t _postponedEvents;
 
 protected:
+	Transport::WPtr _transport;
+
 	int _sock;
 
 	/// Соединение готово
@@ -55,13 +59,13 @@ protected:
 	std::string _name;
 
 public:
-	ConnectionBase(const ConnectionBase&) = delete;
-	void operator= (ConnectionBase const&) = delete;
+	Connection(const Connection&) = delete;
+	void operator= (Connection const&) = delete;
 
-	ConnectionBase();
-	virtual ~ConnectionBase();
+	explicit Connection(Transport::Ptr transport);
+	virtual ~Connection();
 
-	Ptr ptr()
+	inline Ptr ptr()
 	{
 		return shared_from_this();
 	}
@@ -73,7 +77,7 @@ public:
 		return _sock;
 	}
 
-	inline bool isClosed() const
+	virtual bool isClosed() const
 	{
 		return _closed;
 	}

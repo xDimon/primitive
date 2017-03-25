@@ -16,14 +16,17 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.09
 
-// ConnectionBase.cpp
+// Connection.cpp
 
 
-#include "ConnectionBase.hpp"
+#include <unistd.h>
+#include "Connection.hpp"
+
 #include <unistd.h>
 
-ConnectionBase::ConnectionBase()
-: _sock(-1)
+Connection::Connection(Transport::Ptr transport)
+: _transport(transport)
+, _sock(-1)
 , _closed(true)
 , _error(false)
 {
@@ -34,7 +37,7 @@ ConnectionBase::ConnectionBase()
 	_ready = false;
 }
 
-ConnectionBase::~ConnectionBase()
+Connection::~Connection()
 {
 	if (_sock != -1)
 	{

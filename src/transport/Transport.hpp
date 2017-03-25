@@ -27,6 +27,7 @@ class Transport
 {
 public:
 	typedef std::shared_ptr<Transport> Ptr;
+	typedef std::weak_ptr<Transport> WPtr;
 
 public:
 	virtual bool enable() = 0;

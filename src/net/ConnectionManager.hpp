@@ -25,7 +25,7 @@
 #include <set>
 #include <string>
 #include <mutex>
-#include "ConnectionBase.hpp"
+#include "Connection.hpp"
 
 class ConnectionManager
 {
@@ -49,13 +49,13 @@ private:
 	std::mutex _epool_mutex;
 
 	/// Реестр подключений
-	std::set<ConnectionBase::Ptr> _aConns;
+	std::set<Connection::Ptr> _aConns;
 
 	/// Захваченные подключения
-	std::set<ConnectionBase::Ptr> _capturedConnections;
+	std::set<Connection::Ptr> _capturedConnections;
 
 	/// Готовые подключения (имеющие необработанные события)
-	std::set<ConnectionBase::Ptr> _readyConnections;
+	std::set<Connection::Ptr> _readyConnections;
 
 	uint32_t _accepted;
 	uint32_t _established;
@@ -71,23 +71,23 @@ private:
 	void wait();
 
 	/// Захватить соединение
-	ConnectionBase::Ptr capture();
+	Connection::Ptr capture();
 
 	/// Освободить соединение
-	void release(ConnectionBase::Ptr conn);
+	void release(Connection::Ptr conn);
 
 public:
 	/// Добавить соединение для наблюдения
-	static void watch(ConnectionBase::Ptr connection);
+	static void watch(Connection::Ptr connection);
 
 	/// Зарегистрировать соединение
-	static void add(ConnectionBase::Ptr connection);
+	static void add(Connection::Ptr connection);
 
 	/// Удалить регистрацию соединения
-	static bool remove(ConnectionBase::Ptr connection);
+	static bool remove(Connection::Ptr connection);
 
 	/// Проверить и вернуть отложенные события
-	static uint32_t rotateEvents(ConnectionBase::Ptr connection);
+	static uint32_t rotateEvents(Connection::Ptr connection);
 
 	/// Обработка событий
 	static void dispatch();

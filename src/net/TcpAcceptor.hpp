@@ -22,11 +22,11 @@
 #pragma once
 
 #include <mutex>
-#include "ConnectionBase.hpp"
+#include "Connection.hpp"
 
 struct sockaddr_in;
 
-class TcpAcceptor : public ConnectionBase
+class TcpAcceptor : public Connection
 {
 private:
 	std::string _host;
@@ -34,7 +34,7 @@ private:
 	std::mutex _mutex;
 
 public:
-	TcpAcceptor(std::string host, std::uint16_t port);
+	TcpAcceptor(Transport::Ptr transport, std::string host, std::uint16_t port);
 	virtual ~TcpAcceptor();
 
 	virtual const std::string& name();
