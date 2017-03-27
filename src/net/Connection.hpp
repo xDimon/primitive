@@ -26,12 +26,13 @@
 #include <memory>
 #include <type_traits>
 #include <sys/epoll.h>
+#include "../log/Log.hpp"
 #include "../transport/Transport.hpp"
 #include "ConnectionEvent.hpp"
 
 struct sockaddr_in;
 
-class Connection: public std::enable_shared_from_this<Connection>
+class Connection: public std::enable_shared_from_this<Connection>, public virtual Log
 {
 public:
 	typedef std::shared_ptr<Connection> Ptr;

@@ -22,10 +22,9 @@
 #include <unistd.h>
 #include "Connection.hpp"
 
-#include <unistd.h>
-
 Connection::Connection(Transport::Ptr transport)
-: _transport(transport)
+: Log("Conn")
+, _transport(transport)
 , _sock(-1)
 , _closed(true)
 , _error(false)

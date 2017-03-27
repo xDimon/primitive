@@ -33,7 +33,8 @@
 #include "../log/Log.hpp"
 
 TcpAcceptor::TcpAcceptor(Transport::Ptr transport, std::string host, std::uint16_t port)
-: Connection(transport)
+: Log("TcpAcceptor")
+, Connection(transport)
 , _host(host)
 , _port(port)
 {
@@ -62,7 +63,7 @@ TcpAcceptor::TcpAcceptor(Transport::Ptr transport, std::string host, std::uint16
 	{
 		if (!inet_aton(_host.c_str(), &servaddr.sin_addr))
 		{
-			Log().debug("Can't convert host to binary IPv4 address (error '{}'). I'll use universal address.", strerror(errno));
+			log().debug("Can't convert host to binary IPv4 address (error '{}'). I'll use universal address.", strerror(errno));
 
 			// Задаем хост (INADDR_ANY - универсальный)
 			servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -95,12 +96,12 @@ TcpAcceptor::TcpAcceptor(Transport::Ptr transport, std::string host, std::uint16
 	int rrc = fcntl(_sock, F_GETFL, 0);
 	fcntl(_sock, F_SETFL, rrc | O_NONBLOCK);
 
-	Log().debug("Create {}", name());
+	log().debug("Create {}", name());
 }
 
 TcpAcceptor::~TcpAcceptor()
 {
-	Log().debug("Destroy {}", name());
+	log().debug("Destroy {}", name());
 }
 
 const std::string& TcpAcceptor::name()
@@ -127,7 +128,7 @@ void TcpAcceptor::watch(epoll_event &ev)
 
 bool TcpAcceptor::processing()
 {
-	Log().debug("Processing on {}", name());
+	log().debug("Processing on {}", name());
 
 	std::lock_guard<std::mutex> guard(_mutex);
 	for (;;)
@@ -157,12 +158,12 @@ bool TcpAcceptor::processing()
 			// Нет подключений - на этом все
 			if (errno == EAGAIN)
 			{
-				Log().debug("No more accept on {}", name());
+				log().debug("No more accept on {}", name());
 				break;
 			}
 
 			// Ошибка установления соединения
-			Log().debug("Error '{}' at accept on {}", strerror(errno), name());
+			log().debug("Error '{}' at accept on {}", strerror(errno), name());
 			return false;
 		}
 

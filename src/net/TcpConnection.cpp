@@ -24,10 +24,10 @@
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include <cstring>
-#include "../log/Log.hpp"
 
 TcpConnection::TcpConnection(Transport::Ptr transport, int sock, const sockaddr_in &sockaddr)
-: Connection(transport)
+: Log("TcpConnection")
+, Connection(transport)
 , ReaderConnection()
 , WriterConnection()
 , _noRead(false)
@@ -39,12 +39,12 @@ TcpConnection::TcpConnection(Transport::Ptr transport, int sock, const sockaddr_
 
 	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
 
-	Log().debug("Create {}", name());
+	log().debug("Create {}", name());
 }
 
 TcpConnection::~TcpConnection()
 {
-	Log().debug("Destroy {}", name());
+	log().debug("Destroy {}", name());
 
 	shutdown(_sock, SHUT_RD);
 }
@@ -93,7 +93,7 @@ void TcpConnection::watch(epoll_event &ev)
 
 bool TcpConnection::processing()
 {
-	Log().debug("Processing on {}", name());
+	log().debug("Processing on {}", name());
 
 	do
 	{
@@ -151,7 +151,7 @@ bool TcpConnection::processing()
 
 bool TcpConnection::writeToSocket()
 {
-	Log().debug("Write into socket on {}", name());
+	log().debug("Write into socket on {}", name());
 
 	// Отправляем данные
 	for (;;)
@@ -180,7 +180,7 @@ bool TcpConnection::writeToSocket()
 			}
 
 			// Ошибка записи
-			Log().debug("Fail writing data (error: '')", strerror(errno));
+			log().debug("Fail writing data (error: '')", strerror(errno));
 
 			_error = true;
 
@@ -195,7 +195,7 @@ bool TcpConnection::writeToSocket()
 
 bool TcpConnection::readFromSocket()
 {
-	Log().debug("Read from into socket on {}", name());
+	log().debug("Read from into socket on {}", name());
 
 	// Пытаемся полностью заполнить буфер
 	for (;;)
@@ -230,38 +230,38 @@ bool TcpConnection::readFromSocket()
 			// Нет готовых данных - продолжаем ждать
 			if (errno == EAGAIN)
 			{
-				Log().debug("No more read on {}", name());
+				log().debug("No more read on {}", name());
 				break;
 			}
 
 			// Ошибка чтения
-			Log().debug("Error '{}' while read on {}", strerror(errno), name());
+			log().debug("Error '{}' while read on {}", strerror(errno), name());
 
 			return false;
 		}
 		if (n == 0)
 		{
 			// Клиент отключился
-			Log().debug("Client disconnected on {}", name());
+			log().debug("Client disconnected on {}", name());
 
 			return false;
 		}
 
 		_inBuff.forward(n);
 
-		char buff[1<<12];
-		size_t len = std::min(_inBuff.dataLen(), sizeof(buff)-1);
-		_inBuff.read(buff, len);
-		buff[len] = 0;
-		std::string b(buff);
+//		char buff[1<<12];
+//		size_t len = std::min(_inBuff.dataLen(), sizeof(buff)-1);
+//		_inBuff.show(buff, len);
+//		buff[len] = 0;
+//		std::string b(buff);
 
-		Log().debug("Read {} bytes `{}` on {}", len, b, name());
+		log().debug("Read {} bytes (summary {}) on {}", n, _inBuff.dataLen(), name());
 	}
 
 	auto transport = _transport.lock();
 	if (transport)
 	{
-		Log().debug("Processing");
+		transport->processing(ptr());
 	}
 
 	return true;

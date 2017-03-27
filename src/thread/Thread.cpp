@@ -23,7 +23,8 @@
 #include "ThreadPool.hpp"
 
 Thread::Thread(std::function<void()> loop)
-: std::thread(loop)
+: Log("Thread")
+, std::thread(loop)
 {
 }
 

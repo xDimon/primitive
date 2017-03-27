@@ -27,7 +27,7 @@
 #include <mutex>
 #include "Connection.hpp"
 
-class ConnectionManager
+class ConnectionManager: public Log
 {
 private:
 	ConnectionManager();

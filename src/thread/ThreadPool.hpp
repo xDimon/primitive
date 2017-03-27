@@ -30,7 +30,7 @@
 #include "Thread.hpp"
 #include "../log/Log.hpp"
 
-class ThreadPool
+class ThreadPool: public Log
 {
 private:
 	ThreadPool();
@@ -99,7 +99,6 @@ auto ThreadPool::enqueue(F &&f, Args &&... args)->std::future<typename std::resu
 			}
 		);
 	}
-
 
 	getInstance()._condition.notify_all();
 	return res;

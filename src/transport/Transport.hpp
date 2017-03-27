@@ -23,9 +23,11 @@
 
 #include <memory>
 
+#include "../log/Log.hpp"
+
 class Connection;
 
-class Transport: public std::enable_shared_from_this<Transport>
+class Transport: public std::enable_shared_from_this<Transport>, public virtual Log
 {
 public:
 	typedef std::shared_ptr<Transport> Ptr;

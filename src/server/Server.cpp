@@ -24,7 +24,8 @@
 #include "../net/ConnectionManager.hpp"
 
 Server::Server(Configs::Ptr &configs)
-: _configs(configs)
+: Log("Server")
+, _configs(configs)
 {
 	ThreadPool::enqueue([](){
 		ConnectionManager::dispatch();

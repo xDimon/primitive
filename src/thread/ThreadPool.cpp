@@ -20,12 +20,12 @@
 
 
 #include <iostream>
-#include "../log/Log.hpp"
 #include "ThreadPool.hpp"
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
-: _workerNum(0)
+: Log("ThreadPool")
+, _workerNum(0)
 {
 }
 
@@ -64,16 +64,16 @@ void ThreadPool::setThreadNum(size_t num)
 
 void ThreadPool::createThread()
 {
-	Log().debug("Create new thread");
+	log().debug("Create new thread");
 
 	auto thread = new Thread([this](){
-		Log().debug("Start new thread");
+		log().debug("Start new thread");
 
 		for (;;)
 		{
 			std::function<void()> task;
 
-			Log().debug("Wait task on thread");
+			log().trace("Wait task on thread");
 
 			// Try to get or wait task
 			{
@@ -87,18 +87,18 @@ void ThreadPool::createThread()
 				// Condition for end thread
 				if (_workerNum == 0 && _tasks.empty())
 				{
-					Log().debug("End thread");
+					log().debug("End thread");
 					return;
 				}
 
-				Log().debug("Get task from queue");
+				log().trace("Get task from queue");
 
 				// Get task from queue
 				task = std::move(_tasks.front());
 				_tasks.pop();
 			}
 
-			Log().debug("Execute task on thread");
+			log().debug("Execute task on thread");
 
 			// Execute task
 			task();
@@ -110,7 +110,7 @@ void ThreadPool::createThread()
 
 void ThreadPool::wait()
 {
-	Log().debug("Wait threadpool close");
+	getInstance().log().debug("Wait threadpool close");
 
 	std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
 

@@ -26,7 +26,9 @@
 #include <memory>
 #include <evhttp.h>
 
-class Thread: public std::thread
+#include "../log/Log.hpp"
+
+class Thread: public std::thread, public virtual Log
 {
 public:
 	Thread(std::function<void()>);

@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 ConnectionManager::ConnectionManager()
+: Log("ConnectionManager")
 {
 	_epfd = epoll_create(poolSize);
 
@@ -58,11 +59,11 @@ void ConnectionManager::add(Connection::Ptr connection)
 
 	if (getInstance()._aConns.find(connection) != getInstance()._aConns.end())
 	{
-		Log().debug("Fail of add {} in ConnectionManager::add()", connection->name());
+		getInstance().log().debug("Fail of add {} in ConnectionManager::add()", connection->name());
 		return;
 	}
 
-	Log().debug("Add {} in ConnectionManager::add()", connection->name());
+	getInstance().log().debug("Add {} in ConnectionManager::add()", connection->name());
 
 	getInstance()._aConns.insert(connection);
 
@@ -73,7 +74,7 @@ void ConnectionManager::add(Connection::Ptr connection)
 	// Включаем наблюдение
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_ADD, connection->fd(), &ev) == -1)
 	{
-		Log().debug("Fail call `epoll_ctl(ADD)` for {} (error: '{}') in ConnectionManager::add()", connection->name(), strerror(errno));
+		getInstance().log().debug("Fail call `epoll_ctl(ADD)` for {} (error: '{}') in ConnectionManager::add()", connection->name(), strerror(errno));
 	}
 }
 
@@ -98,7 +99,7 @@ bool ConnectionManager::remove(Connection::Ptr connection)
 	// Удаляем из очереди событий
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_DEL, connection->fd(), nullptr) == -1)
 	{
-		Log().debug("Fail call `epoll_ctl(DEL)` for {} (error: '{}') in ConnectionManager::add()", connection->name(), strerror(errno));
+		getInstance().log().debug("Fail call `epoll_ctl(DEL)` for {} (error: '{}') in ConnectionManager::add()", connection->name(), strerror(errno));
 	}
 
 	getInstance()._readyConnections.erase(connection);
@@ -122,11 +123,11 @@ void ConnectionManager::watch(Connection::Ptr connection)
 	// Те, что в обработке, не трогаем
 	if (connection->isCaptured())
 	{
-//		Log().debug("Skip watch for {} in ConnectionManager::watch() because already captured", connection->name());
+//		getInstance().log().debug("Skip watch for {} in ConnectionManager::watch() because already captured", connection->name());
 		return;
 	}
 
-//	Log().debug("Watch for {} in ConnectionManager::watch()", connection->name());
+//	getInstance().log().debug("Watch for {} in ConnectionManager::watch()", connection->name());
 
 	epoll_event ev;
 
@@ -135,7 +136,7 @@ void ConnectionManager::watch(Connection::Ptr connection)
 	// Включаем наблюдение
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_MOD, connection->fd(), &ev) == -1)
 	{
-		Log().debug("Fail call `epoll_ctl(MOD)` for {} (error: '{}') in ConnectionManager::add()", connection->name(), strerror(errno));
+		getInstance().log().debug("Fail call `epoll_ctl(MOD)` for {} (error: '{}') in ConnectionManager::add()", connection->name(), strerror(errno));
 	}
 }
 
@@ -145,7 +146,7 @@ void ConnectionManager::wait()
 	// Если набор готовых соединений не пустой, то выходим
 	if (!_readyConnections.empty())
 	{
-//		Log().trace("No wait in ConnectionManager::wait() because have ready connection");
+//		log().trace("No wait in ConnectionManager::wait() because have ready connection");
 		return;
 	}
 
@@ -153,7 +154,7 @@ void ConnectionManager::wait()
 
 	_epool_mutex.lock();
 
-//	Log().trace("Begin waiting in ConnectionManager::wait()");
+//	log().trace("Begin waiting in ConnectionManager::wait()");
 
 	int n;
 
@@ -164,13 +165,13 @@ void ConnectionManager::wait()
 		{
 			if (errno != EINTR)
 			{
-				Log().warn("epoll_wait error ({}) in ConnectionManager::wait()", strerror(errno));
+				log().warn("epoll_wait error ({}) in ConnectionManager::wait()", strerror(errno));
 			}
 			continue;
 		}
 		if (n > 0)
 		{
-			Log().trace("Catch event(s) on {} connection(s) in ConnectionManager::wait()", n);
+			log().trace("Catch event(s) on {} connection(s) in ConnectionManager::wait()", n);
 			break;
 		}
 	}
@@ -184,22 +185,16 @@ void ConnectionManager::wait()
 
 		if (!connection)
 		{
-			Log().debug("Skip nullptr in ConnectionManager::wait()");
+			log().trace("Skip nullptr in ConnectionManager::wait()");
 			continue;
 		}
 
-		if (!connection)
-		{
-			Log().trace("Skip nullptr in ConnectionManager::wait(): {:p}", _epev[i].data.ptr);
-			continue;
-		}
-
-		Log().trace("Catch event(s) `{}` on {} in ConnectionManager::wait()", _epev[i].events, connection->name());
+		log().trace("Catch event(s) `{}` on {} in ConnectionManager::wait()", _epev[i].events, connection->name());
 
 		// Игнорируем незарегистрированные соединения
 		if (_aConns.find(connection) == _aConns.end())
 		{
-			Log().warn("Skip {} in ConnectionManager::wait() because connection unregistered", connection->name());
+			log().warn("Skip {} in ConnectionManager::wait() because connection unregistered", connection->name());
 			continue;
 		}
 
@@ -208,27 +203,27 @@ void ConnectionManager::wait()
 		uint32_t events = 0;
 		if (fdEvent & (EPOLLIN | EPOLLRDNORM))
 		{
-			Log().trace("Catch event EPOLLIN on {} in ConnectionManager::wait()", connection->name());
+			log().trace("Catch event EPOLLIN on {} in ConnectionManager::wait()", connection->name());
 			events |= static_cast<uint32_t>(ConnectionEvent::READ);
 		}
 		if (fdEvent & (EPOLLOUT | EPOLLWRNORM))
 		{
-			Log().trace("Catch event EPOLLOUT on {} in ConnectionManager::wait()", connection->name());
+			log().trace("Catch event EPOLLOUT on {} in ConnectionManager::wait()", connection->name());
 			events |= static_cast<uint32_t>(ConnectionEvent::WRITE);
 		}
 		if (fdEvent & EPOLLHUP)
 		{
-			Log().trace("Catch event EPOLLEHUP on {} in ConnectionManager::wait()", connection->name());
+			log().trace("Catch event EPOLLEHUP on {} in ConnectionManager::wait()", connection->name());
 			events |= static_cast<uint32_t>(ConnectionEvent::HUP);
 		}
 		if (fdEvent & EPOLLRDHUP)
 		{
-			Log().trace("Catch event EPOLLERDHUP on {} in ConnectionManager::wait()", connection->name());
+			log().trace("Catch event EPOLLERDHUP on {} in ConnectionManager::wait()", connection->name());
 			events |= static_cast<uint32_t>(ConnectionEvent::HALFHUP);
 		}
 		if (fdEvent & EPOLLERR)
 		{
-			Log().trace("Catch event EPOLLERR on {} in ConnectionManager::wait()", connection->name());
+			log().trace("Catch event EPOLLERR on {} in ConnectionManager::wait()", connection->name());
 			events |= static_cast<uint32_t>(ConnectionEvent::ERROR);
 		}
 
@@ -237,14 +232,14 @@ void ConnectionManager::wait()
 		// Если не в списке захваченых...
 		if (_capturedConnections.find(connection) == _capturedConnections.end())
 		{
-			Log().trace("Insert {} into ready connection list and will be processed now in ConnectionManager::wait()", connection->name());
+			log().trace("Insert {} into ready connection list and will be processed now in ConnectionManager::wait()", connection->name());
 
 			// ...добавляем в список готовых
 			_readyConnections.insert(connection);
 		}
 	}
 
-//	Log().trace("End waiting in ConnectionManager::wait()");
+//	log().trace("End waiting in ConnectionManager::wait()");
 
 	_epool_mutex.unlock();
 }
@@ -254,23 +249,18 @@ Connection::Ptr ConnectionManager::capture()
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 
-//	Log().trace("Try capture connection in ConnectionManager::capture()");
+//	log().trace("Try capture connection in ConnectionManager::capture()");
 
 	// Если нет готовых...
 	while (_readyConnections.empty())
 	{
-		Log().trace("Not found ready connection in ConnectionManager::capture()");
+		log().trace("Not found ready connection in ConnectionManager::capture()");
 
 		// а в штатном режиме ожидаем появления готового соединения
 		wait();
 	}
 
-	Log().trace("Found ready connection in ConnectionManager::capture()");
-
-	if (_readyConnections.empty())
-	{
-		return nullptr;
-	}
+	log().trace("Found ready connection in ConnectionManager::capture()");
 
 	if (_readyConnections.empty())
 	{
@@ -282,13 +272,13 @@ Connection::Ptr ConnectionManager::capture()
 
 	auto connection = *it;
 
-//	Log().trace("Move {} from ready into captured connection list in ConnectionManager::captured()", connection->name());
+//	log().trace("Move {} from ready into captured connection list in ConnectionManager::captured()", connection->name());
 
 	// Перемещаем соединение из набора готовых к обработке в набор захваченных
 	_readyConnections.erase(it);
 	_capturedConnections.insert(connection);
 
-	Log().trace("Capture {} in ConnectionManager::capture()", connection->name());
+//	log().trace("Capture {} in ConnectionManager::capture()", connection->name());
 
 	connection->setCaptured();
 
@@ -298,58 +288,56 @@ Connection::Ptr ConnectionManager::capture()
 /// Освободить соединение
 void ConnectionManager::release(Connection::Ptr connection)
 {
-//	Log().debug("Release {} in ConnectionManager::release()", connection->name());
+//	log().debug("Release {} in ConnectionManager::release()", connection->name());
 
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 
-//	Log().debug("Remove {} from captured connection list in ConnectionManager::captured()", connection->name());
+//	log().debug("Remove {} from captured connection list in ConnectionManager::captured()", connection->name());
 
 	_capturedConnections.erase(connection);
 
-//	Log().debug("In ConnectionManager::relese()");
+//	log().debug("In ConnectionManager::relese()");
 
 	connection->setReleased();
 
 	if (!connection->isClosed())
 	{
-//		Log().debug("Before call watch in ConnectionManager::relese()");
+//		log().debug("Before call watch in ConnectionManager::relese()");
 
 		watch(connection);
 
-//		Log().debug("After call watch in ConnectionManager::relese()");
+//		log().debug("After call watch in ConnectionManager::relese()");
 	}
 }
 
 /// Обработка событий
 void ConnectionManager::dispatch()
 {
-	Log().debug("Start dispatching in ConnectionManager::dispatch()");
+	getInstance().log().debug("Start dispatching in ConnectionManager::dispatch()");
 
 	for (;;)
 	{
-//		Log().debug("Before call capture in ConnectionManager::dispatch()");
+//		log().debug("Before call capture in ConnectionManager::dispatch()");
 
 		Connection::Ptr connection = getInstance().capture();
 
-//		Log().debug("After call capture in ConnectionManager::dispatch()");
+//		log().debug("After call capture in ConnectionManager::dispatch()");
 
 		if (!connection)
 		{
 			break;
 		}
 
-//		Log().trace("Enqueue {} into ThreadPool for procession ConnectionManager::dispatch()", connection->name());
+//		log().trace("Enqueue {} into ThreadPool for procession ConnectionManager::dispatch()", connection->name());
 
 		ThreadPool::enqueue([connection](){
-			Log().trace("Begin processing for {}", connection->name());
+			getInstance().log().debug("Begin processing for {}", connection->name());
 
 			connection->processing();
 
 			getInstance().release(connection);
 
-			Log().debug("End processing for {}", connection->name());
+			getInstance().log().debug("End processing for {}", connection->name());
 		});
-
-//		Log().debug("After call ThreadPool::enqueue()");
 	}
 }

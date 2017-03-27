@@ -27,7 +27,7 @@
 #include "../configs/Configs.hpp"
 #include "../transport/Transport.hpp"
 
-class Server
+class Server: public Log
 {
 public:
 	typedef std::shared_ptr<Server> Ptr;
