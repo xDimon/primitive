@@ -23,18 +23,14 @@
 
 #include "Connection.hpp"
 #include "../utils/Buffer.hpp"
+#include "ReaderConnection.hpp"
+#include "WriterConnection.hpp"
 #include <netinet/in.h>
 
-class TcpConnection: public Connection
+class TcpConnection: public Connection, public ReaderConnection, public WriterConnection
 {
 private:
 	sockaddr_in _sockaddr;
-
-	/// Буфер ввода
-	Buffer _inBuff;
-
-	/// Буфер вывода
-	Buffer _outBuff;
 
 	/// Данных больше не будет
 	bool _noRead;
@@ -70,6 +66,4 @@ public:
 	virtual void watch(epoll_event &ev);
 
 	virtual bool processing();
-
-	void close();
 };

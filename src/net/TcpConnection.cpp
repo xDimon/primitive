@@ -28,6 +28,8 @@
 
 TcpConnection::TcpConnection(Transport::Ptr transport, int sock, const sockaddr_in &sockaddr)
 : Connection(transport)
+, ReaderConnection()
+, WriterConnection()
 , _noRead(false)
 , _noWrite(false)
 , _error(false)
@@ -263,10 +265,4 @@ bool TcpConnection::readFromSocket()
 	}
 
 	return true;
-}
-
-void TcpConnection::close()
-{
-	shutdown(_sock, SHUT_RD);
-	_noRead = true;
 }

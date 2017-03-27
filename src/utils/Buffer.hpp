@@ -21,25 +21,16 @@
 
 #pragma once
 
+#include "Reader.hpp"
+#include "Writer.hpp"
+
 #include <cstddef>
 #include <mutex>
 #include <vector>
 
-class Buffer
+class Buffer: public Reader, public Writer
 {
-public:
-	class Chunk
-	{
-	public:
-		char * data;
-		size_t length;
-		Chunk(char *data, size_t length)
-			: data(data)
-			, length(length)
-		{};
-	};
-
-private:
+protected:
 	/// Мютекс защиты буфера ввода
 	mutable std::recursive_mutex _mutex;
 
@@ -58,23 +49,21 @@ public:
 
 	inline auto& mutex() { return _mutex; }
 
-	const char * dataPtr() const;
-	size_t dataLen() const;
-//	const Chunk data() const;
-
-	char * spacePtr() const;
-	size_t spaceLen() const;
-//	const Chunk space() const;
-
-	bool empty() const;
 	size_t size() const;
 
-	bool show(char *data, size_t length) const;
-	bool skip(size_t length);
-	bool read(char *data, size_t length);
+	const std::vector<char>& data();
 
-	bool prepare(size_t length);
-	bool forward(size_t length);
-	bool write(const char *data, size_t length);
+	virtual const char * dataPtr() const;
+	virtual size_t dataLen() const;
 
+	virtual bool show(void *data, size_t length) const;
+	virtual bool skip(size_t length);
+	virtual bool read(void *data, size_t length);
+
+	virtual char * spacePtr() const;
+	virtual size_t spaceLen() const;
+
+	virtual bool prepare(size_t length);
+	virtual bool forward(size_t length);
+	virtual bool write(const void *data, size_t length);
 };

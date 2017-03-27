@@ -35,6 +35,26 @@ Buffer::~Buffer()
 {
 }
 
+const std::vector<char>& Buffer::data()
+{
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
+
+	// Если есть прочитанные данные в начале буффера
+	if (_getPosition > 0)
+	{
+		// Смещаем непрочитанные данные в начало буффера
+		std::copy_n(_data.cbegin() + _getPosition, _putPosition - _getPosition, _data.begin());
+
+		_putPosition -= _getPosition;
+		_getPosition = 0;
+	}
+
+	// Отбрасываем неиспользуемое пространство
+	_data.resize(_putPosition);
+
+	return _data;
+}
+
 const char *Buffer::dataPtr() const
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
@@ -46,12 +66,6 @@ size_t Buffer::dataLen() const
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	return _putPosition - _getPosition;
 }
-
-//const Buffer::Chunk Buffer::data() const
-//{
-//	std::lock_guard<std::recursive_mutex> guard(_mutex);
-//	return Chunk(const_cast<char *>(_data.data()) + _getPosition, _putPosition - _getPosition);
-//}
 
 char *Buffer::spacePtr() const
 {
@@ -65,19 +79,13 @@ size_t Buffer::spaceLen() const
 	return _data.size() - _putPosition;
 }
 
-//const Buffer::Chunk Buffer::space() const
-//{
-//	std::lock_guard<std::recursive_mutex> guard(_mutex);
-//	return Chunk(const_cast<char *>(_data.data()) + _putPosition, _data.size() - _putPosition);
-//}
-
 size_t Buffer::size() const
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	return _data.size();
 }
 
-bool Buffer::show(char *data, size_t length) const
+bool Buffer::show(void *data, size_t length) const
 {
 	if (length == 0)
 	{
@@ -107,7 +115,7 @@ bool Buffer::skip(size_t length)
 	return true;
 }
 
-bool Buffer::read(char *data, size_t length)
+bool Buffer::read(void *data_, size_t length)
 {
 	if (length == 0)
 	{
@@ -118,6 +126,8 @@ bool Buffer::read(char *data, size_t length)
 	{
 		return false;
 	}
+
+	char *data = static_cast<char *>(data_);
 
 	while (length--)
 	{
@@ -162,7 +172,7 @@ bool Buffer::forward(size_t length)
 		return true;
 	}
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	if (_putPosition + length > spaceLen())
+	if (length > spaceLen())
 	{
 		return false;
 	}
@@ -172,7 +182,7 @@ bool Buffer::forward(size_t length)
 	return true;
 }
 
-bool Buffer::write(const char *data, size_t length)
+bool Buffer::write(const void *data_, size_t length)
 {
 	if (length == 0)
 	{
@@ -182,6 +192,8 @@ bool Buffer::write(const char *data, size_t length)
 
 	prepare(length);
 
+
+	const char *data = static_cast<const char *>(data_);
 
 	while (length--)
 	{
