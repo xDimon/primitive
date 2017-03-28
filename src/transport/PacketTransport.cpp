@@ -23,6 +23,7 @@
 #include "../net/ConnectionManager.hpp"
 #include "PacketTransport.hpp"
 #include "../net/TcpConnection.hpp"
+#include "../utils/Packet.hpp"
 
 PacketTransport::PacketTransport(std::string host, uint16_t port)
 : Log("PacketTransport")
@@ -87,7 +88,58 @@ bool PacketTransport::processing(std::shared_ptr<Connection> connection_)
 		throw std::runtime_error("Bad connection-type for this transport");
 	}
 
-	// TODO Implement processing
+	int n = 0;
+
+	// Цикл извлечения пакетов
+	for (;;)
+	{
+		uint16_t packetSize;
+
+		// Недостаточно данных для чтения размера пакета
+		if (!connection->show(&packetSize, sizeof(packetSize)))
+		{
+			if (connection->dataLen())
+			{
+				log().debug("Not anough data for read packet size (%zu < 2)", connection->dataLen());
+			}
+			else
+			{
+				log().debug("No more data");
+			}
+			break;
+		}
+		log().debug("Read 2 bytes of packet size: %hu bytes", packetSize);
+
+		// Недостаточно данных для формирования пакета (не все данные получены)
+		if (connection->dataLen() < sizeof(packetSize) + packetSize)
+		{
+			log().debug("Not anough data for read packet body (%zu < %hu)", connection->dataLen() - sizeof(packetSize), packetSize);
+			break;
+		}
+		log().debug("Read %hu bytes of packet body", packetSize);
+
+		// Пропускаем байты размера пакета
+		connection->skip(sizeof(packetSize));
+
+		// Читаем пакет
+		Packet request(connection->dataPtr(), packetSize);
+
+		// Пропускаем байты тела пакета
+		connection->skip(packetSize);
+
+		std::stringstream ss;
+		ss << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Processed packet (len=" << packetSize << ")\r\n";
+
+		// Формируем пакет
+		Packet response(ss.str().c_str(), ss.str().size());
+
+		// Отправляем
+		connection->write(response.data(), response.size());
+
+		n++;
+	}
+
+	log().debug("Processed %d packets, remain %zu bytes", n, connection->dataLen());
 
 	return false;
 }
