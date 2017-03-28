@@ -19,6 +19,7 @@
 // Server.cpp
 
 
+#include "../transport/PacketTransport.hpp"
 #include "../thread/ThreadPool.hpp"
 #include "Server.hpp"
 #include "../net/ConnectionManager.hpp"
@@ -27,6 +28,8 @@ Server::Server(Configs::Ptr &configs)
 : Log("Server")
 , _configs(configs)
 {
+	addTransport("0.0.0.0:1234", new PacketTransport("0.0.0.0", 1234));
+
 	ThreadPool::enqueue([](){
 		ConnectionManager::dispatch();
 	});
