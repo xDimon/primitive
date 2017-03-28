@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include "Connection.hpp"
 
-Connection::Connection(Transport::Ptr transport)
+Connection::Connection(Transport::Ptr& transport)
 : Log("Conn")
 , _transport(transport)
 , _sock(-1)

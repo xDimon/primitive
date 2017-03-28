@@ -53,7 +53,7 @@ public:
 	TcpConnection(const TcpConnection&) = delete;
 	void operator= (TcpConnection const&) = delete;
 
-	TcpConnection(Transport::Ptr transport, int fd, const sockaddr_in &cliaddr);
+	TcpConnection(Transport::Ptr& transport, int fd, const sockaddr_in &cliaddr);
 	virtual ~TcpConnection();
 
 	bool noRead() const

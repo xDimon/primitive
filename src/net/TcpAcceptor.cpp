@@ -32,7 +32,7 @@
 #include "TcpConnection.hpp"
 #include "../log/Log.hpp"
 
-TcpAcceptor::TcpAcceptor(Transport::Ptr transport, std::string host, std::uint16_t port)
+TcpAcceptor::TcpAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port)
 : Log("TcpAcceptor")
 , Connection(transport)
 , _host(host)
@@ -185,7 +185,9 @@ bool TcpAcceptor::processing()
 
 		try
 		{
-			auto connection = std::shared_ptr<Connection>(new TcpConnection(_transport.lock(), sock, cliaddr));
+			Transport::Ptr transport = _transport.lock();
+
+			auto connection = std::shared_ptr<Connection>(new TcpConnection(transport, sock, cliaddr));
 
 			ConnectionManager::add(connection->ptr());
 		}

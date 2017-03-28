@@ -25,7 +25,7 @@
 #include <sys/ioctl.h>
 #include <cstring>
 
-TcpConnection::TcpConnection(Transport::Ptr transport, int sock, const sockaddr_in &sockaddr)
+TcpConnection::TcpConnection(Transport::Ptr& transport, int sock, const sockaddr_in &sockaddr)
 : Log("TcpConnection")
 , Connection(transport)
 , ReaderConnection()

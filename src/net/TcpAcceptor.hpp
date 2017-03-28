@@ -34,7 +34,7 @@ private:
 	std::mutex _mutex;
 
 public:
-	TcpAcceptor(Transport::Ptr transport, std::string host, std::uint16_t port);
+	TcpAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port);
 	virtual ~TcpAcceptor();
 
 	virtual const std::string& name();

@@ -46,7 +46,9 @@ bool PacketTransport::enable()
 	log().debug("Enable transport 'PacketTransport({}:{})'", _host, _port);
 	try
 	{
-		auto acceptor = std::shared_ptr<Connection>(new TcpAcceptor(ptr(), _host, _port));
+		Transport::Ptr transport = ptr();
+
+		auto acceptor = std::shared_ptr<Connection>(new TcpAcceptor(transport, _host, _port));
 
 		_acceptor = acceptor->ptr();
 

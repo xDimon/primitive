@@ -63,7 +63,7 @@ public:
 	Connection(const Connection&) = delete;
 	void operator= (Connection const&) = delete;
 
-	explicit Connection(Transport::Ptr transport);
+	explicit Connection(Transport::Ptr& transport);
 	virtual ~Connection();
 
 	inline Ptr ptr()
