@@ -19,10 +19,13 @@
 // HttpTransport.cpp
 
 
+#include <sstream>
+#include "../utils/Packet.hpp"
 #include "HttpTransport.hpp"
 
 #include "../net/ConnectionManager.hpp"
 #include "../net/TcpConnection.hpp"
+#include "http/HttpRequest.hpp"
 
 HttpTransport::HttpTransport(std::string host, uint16_t port)
 : Log("HttpTransport")
@@ -87,7 +90,89 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 		throw std::runtime_error("Bad connection-type for this transport");
 	}
 
-	// TODO Implement processing
+	int n = 0;
+
+	// Цикл обработки запросов
+	for (;;)
+	{
+		// Проверка готовности заголовков
+		auto endHeaders = static_cast<const char *>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
+
+		if (!endHeaders && connection->dataLen() < (1 << 12))
+		{
+			log().debug("Not anough data for read headers ({} bytes)", connection->dataLen());
+			break;
+		}
+
+		if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
+		{
+			log().debug("Headers part of request too large ({} bytes)", endHeaders - connection->dataPtr());
+
+			std::stringstream ss;
+			ss << "HTTP/1.0 400 Bad request\r\n"
+			   << "\r\n"
+			   << "Headers data too large";
+
+			// Формируем пакет
+			Packet response(ss.str().c_str(), ss.str().size());
+
+			// Отправляем
+			connection->write(response.data(), response.size());
+
+			connection->close();
+
+			break;
+		}
+
+		size_t headersSize = endHeaders - connection->dataPtr() + 4;
+
+		log().debug("Read {} bytes of HTTP headers", headersSize);
+
+		HttpRequest *request;
+
+		try
+		{
+			// Читаем запрос
+			request = new HttpRequest(connection->dataPtr(), connection->dataPtr() + headersSize);
+		}
+		catch (std::runtime_error& exception)
+		{
+			std::stringstream ss;
+			ss << "HTTP/1.0 400 Bad request\r\n"
+			   << "\r\n"
+			   << exception.what();
+
+			// Формируем пакет
+			Packet response(ss.str().c_str(), ss.str().size());
+
+			// Отправляем
+			connection->write(response.data(), response.size());
+
+			connection->close();
+
+			break;
+		}
+
+		// Пропускаем байты заголовка
+		connection->skip(headersSize);
+
+		std::stringstream ss;
+		ss << "HTTP/1.0 200 OK\r\n"
+		   << "\r\n"
+		   << "Processed successfuly";
+
+		// Формируем пакет
+		Packet response(ss.str().c_str(), ss.str().size());
+
+		// Отправляем
+		connection->write(response.data(), response.size());
+
+		connection->close();
+
+		n++;
+	}
+
+	log().debug("Processed {} request, remain {} bytes", n, connection->dataLen());
 
 	return false;
 }

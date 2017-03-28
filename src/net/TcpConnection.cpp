@@ -266,3 +266,9 @@ bool TcpConnection::readFromSocket()
 
 	return true;
 }
+
+void TcpConnection::close()
+{
+	shutdown(_sock, SHUT_RD);
+	_noRead = true;
+}

@@ -66,4 +66,6 @@ public:
 	virtual void watch(epoll_event &ev);
 
 	virtual bool processing();
+
+	void close();
 };
