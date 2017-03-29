@@ -20,12 +20,12 @@
 
 
 #include <sstream>
+#include <memory>
+#include "http/HttpContext.hpp"
 #include "../utils/Packet.hpp"
-#include "HttpTransport.hpp"
-
 #include "../net/ConnectionManager.hpp"
 #include "../net/TcpConnection.hpp"
-#include "http/HttpRequest.hpp"
+#include "HttpTransport.hpp"
 
 HttpTransport::HttpTransport(std::string host, uint16_t port)
 : Log("HttpTransport")
@@ -95,71 +95,125 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 	// Цикл обработки запросов
 	for (;;)
 	{
-		// Проверка готовности заголовков
-		auto endHeaders = static_cast<const char *>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
-
-		if (!endHeaders && connection->dataLen() < (1 << 12))
+		if (!connection->getContext())
 		{
-			log().debug("Not anough data for read headers ({} bytes)", connection->dataLen());
-			break;
+			auto context = HttpContext::Ptr(new HttpContext());
+
+			connection->setContext(context);
+		}
+		auto context = std::dynamic_pointer_cast<HttpContext>(connection->getContext());
+		if (!context)
+		{
+			throw std::runtime_error("Bad context-type for this transport");
 		}
 
-		if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
+		// Незавершенного запроса нет
+		if (!context->getRequest())
 		{
-			log().debug("Headers part of request too large ({} bytes)", endHeaders - connection->dataPtr());
+			// Проверка готовности заголовков
+			auto endHeaders = static_cast<const char *>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
 
-			std::stringstream ss;
-			ss << "HTTP/1.0 400 Bad request\r\n"
-			   << "\r\n"
-			   << "Headers data too large";
+			if (!endHeaders && connection->dataLen() < (1 << 12))
+			{
+				log().debug("Not anough data for read headers ({} bytes)", connection->dataLen());
+				break;
+			}
 
-			// Формируем пакет
-			Packet response(ss.str().c_str(), ss.str().size());
+			if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
+			{
+				log().debug("Headers part of request too large ({} bytes)", endHeaders - connection->dataPtr());
 
-			// Отправляем
-			connection->write(response.data(), response.size());
+				std::stringstream ss;
+				ss << "HTTP/1.0 400 Bad request\r\n"
+				   << "\r\n"
+				   << "Headers data too large" << "\r\n";
 
-			connection->close();
+				// Формируем пакет
+				Packet response(ss.str().c_str(), ss.str().size());
 
-			break;
+				// Отправляем
+				connection->write(response.data(), response.size());
+
+				connection->close();
+
+				break;
+			}
+
+			size_t headersSize = endHeaders - connection->dataPtr() + 4;
+
+			log().debug("Read {} bytes of request headers", headersSize);
+
+			try
+			{
+				// Читаем запрос
+				auto request = std::make_shared<HttpRequest>(connection->dataPtr(), connection->dataPtr() + headersSize);
+
+				context->setRequest(request);
+			}
+			catch (std::runtime_error& exception)
+			{
+				std::stringstream ss;
+				ss << "HTTP/1.0 400 Bad request\r\n"
+				   << "\r\n"
+				   << exception.what() << "\r\n";
+
+				// Формируем пакет
+				Packet response(ss.str().c_str(), ss.str().size());
+
+				// Отправляем
+				connection->write(response.data(), response.size());
+
+				connection->close();
+
+				break;
+			}
+
+			// Пропускаем байты заголовка
+			connection->skip(headersSize);
 		}
 
-		size_t headersSize = endHeaders - connection->dataPtr() + 4;
-
-		log().debug("Read {} bytes of HTTP headers", headersSize);
-
-		HttpRequest *request;
-
-		try
+		// Читаем тело запроса
+		if (context->getRequest()->method() == HttpRequest::Method::POST)
 		{
-			// Читаем запрос
-			request = new HttpRequest(connection->dataPtr(), connection->dataPtr() + headersSize);
+			if (context->getRequest()->hasContentLength())
+			{
+				if (context->getRequest()->contentLength() > context->getRequest()->dataLen())
+				{
+					size_t len = std::min(context->getRequest()->contentLength(), context->getRequest()->dataLen());
+
+					context->getRequest()->write(connection->dataPtr(), len);
+
+					connection->skip(len);
+
+					if (context->getRequest()->contentLength() > context->getRequest()->dataLen())
+					{
+						log().debug("Not anough data for read request body ({} < {})", context->getRequest()->dataLen(), context->getRequest()->contentLength());
+						break;
+					}
+				}
+			}
+			else
+			{
+				context->getRequest()->write(connection->dataPtr(), connection->dataLen());
+
+				connection->skip(connection->dataLen());
+
+				if (!connection->noRead())
+				{
+					log().debug("Not read all request body yet (read {})", context->getRequest()->dataLen());
+					break;
+				}
+			}
 		}
-		catch (std::runtime_error& exception)
-		{
-			std::stringstream ss;
-			ss << "HTTP/1.0 400 Bad request\r\n"
-			   << "\r\n"
-			   << exception.what();
 
-			// Формируем пакет
-			Packet response(ss.str().c_str(), ss.str().size());
+		log().debug("REQUEST: {} {} {}", context->getRequest()->method_s(), context->getRequest()->uri_s(), context->getRequest()->hasContentLength() ? context->getRequest()->contentLength() : 0);
 
-			// Отправляем
-			connection->write(response.data(), response.size());
-
-			connection->close();
-
-			break;
-		}
-
-		// Пропускаем байты заголовка
-		connection->skip(headersSize);
+		context->getRequest().reset();
 
 		std::stringstream ss;
 		ss << "HTTP/1.0 200 OK\r\n"
 		   << "\r\n"
-		   << "Processed successfuly";
+		   << "Processed successfuly\r\n";
 
 		// Формируем пакет
 		Packet response(ss.str().c_str(), ss.str().size());
