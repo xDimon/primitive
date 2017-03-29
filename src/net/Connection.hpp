@@ -28,6 +28,7 @@
 #include <sys/epoll.h>
 #include "../log/Log.hpp"
 #include "../transport/Transport.hpp"
+#include "../utils/Context.hpp"
 #include "ConnectionEvent.hpp"
 
 struct sockaddr_in;
@@ -45,6 +46,7 @@ private:
 
 protected:
 	Transport::WPtr _transport;
+	Context::Ptr _context;
 
 	int _sock;
 
@@ -65,6 +67,15 @@ public:
 
 	explicit Connection(Transport::Ptr& transport);
 	virtual ~Connection();
+
+	void setContext(Context::Ptr& context)
+	{
+		_context = context;
+	}
+	Context::Ptr& getContext()
+	{
+		return _context;
+	}
 
 	inline Ptr ptr()
 	{
