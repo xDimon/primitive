@@ -23,18 +23,29 @@
 
 #include "../../utils/Context.hpp"
 #include "../http/HttpRequest.hpp"
+#include "WsFrame.hpp"
 #include <memory>
 
 class WsContext: public Context
 {
 private:
-	bool _established;
 	HttpRequest::Ptr _request;
+	bool _established;
+	WsFrame::Ptr _frame;
 
 public:
 	WsContext(): _established(false) {};
 	virtual ~WsContext() {};
 
+	void setEstablished()
+	{
+		_established = true;
+		_frame.reset();
+	}
+	bool established()
+	{
+		return _established;
+	}
 
 	void setRequest(HttpRequest::Ptr& request)
 	{
@@ -45,13 +56,12 @@ public:
 		return _request;
 	}
 
-	void setEstablished()
+	void setFrame(WsFrame::Ptr& frame)
 	{
-		_established = true;
-		_request.reset();
+		_frame = frame;
 	}
-	bool established()
+	WsFrame::Ptr& getFrame()
 	{
-		return _established;
+		return _frame;
 	}
 };
