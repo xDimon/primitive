@@ -44,6 +44,11 @@ public:
 	Server(Configs::Ptr &configs);
 	virtual ~Server();
 
+	static std::string httpName()
+	{
+		return "Primitive";
+	}
+
 	bool addTransport(const std::string name, Transport *transport);
 
 	void enableTransport(const std::string name);
