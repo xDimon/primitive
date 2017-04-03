@@ -30,9 +30,9 @@ Server::Server(Configs::Ptr &configs)
 : Log("Server")
 , _configs(configs)
 {
-	addTransport("0.0.0.0:1234", new PacketTransport("0.0.0.0", 1234));
-	addTransport("0.0.0.0:8080", new HttpTransport("0.0.0.0", 8080));
-	addTransport("0.0.0.0:8000", new WsTransport("0.0.0.0", 8000));
+//	addTransport("0.0.0.0:1234", new PacketTransport("0.0.0.0", 1234));
+//	addTransport("0.0.0.0:8080", new HttpTransport("0.0.0.0", 8080));
+//	addTransport("0.0.0.0:8000", new WsTransport("0.0.0.0", 8000));
 
 	ThreadPool::enqueue([](){
 		ConnectionManager::dispatch();

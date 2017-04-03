@@ -28,7 +28,7 @@ struct sockaddr_in;
 
 class TcpAcceptor : public Connection
 {
-private:
+protected:
 	std::string _host;
 	std::uint16_t _port;
 	std::mutex _mutex;
@@ -41,5 +41,12 @@ public:
 
 	virtual void watch(epoll_event &ev);
 
+	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
+
 	virtual bool processing();
+
+	static TcpAcceptor::Ptr create(Transport::Ptr& transport, std::string host, std::uint16_t port)
+	{
+		return std::make_shared<TcpAcceptor>(transport, host, port);
+	}
 };

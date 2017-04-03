@@ -25,12 +25,11 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <zconf.h>
 #include <sstream>
 #include "TcpAcceptor.hpp"
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"
-#include "../log/Log.hpp"
+#include <unistd.h>
 
 TcpAcceptor::TcpAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port)
 : Log("TcpAcceptor")
@@ -81,15 +80,15 @@ TcpAcceptor::TcpAcceptor(Transport::Ptr& transport, std::string host, std::uint1
 	// Связываем сокет с локальным адресом протокола
 	if (bind(_sock, (struct sockaddr *) &servaddr, addrlen) != 0)
 	{
-		close(_sock);
-		throw std::runtime_error("Can't bind socket");
+		::close(_sock);
+		throw std::runtime_error(std::string("Can't bind socket: ") + strerror(errno));
 	}
 
 	// Преобразуем сокет в пассивный (слушающий) и устанавливаем длину очереди соединений
 	if (listen(_sock, 16) != 0)
 	{
-		close(_sock);
-		throw std::runtime_error("Can't listen port");
+		::close(_sock);
+		throw std::runtime_error(std::string("Can't listen port: ") + strerror(errno));
 	}
 
 	// Включем неблокирующий режим
@@ -146,7 +145,7 @@ bool TcpAcceptor::processing()
 		socklen_t clilen = sizeof(cliaddr);
 		memset(&cliaddr, 0, clilen);
 
-		int sock = accept(fd(), (sockaddr *)&cliaddr, &clilen);
+		int sock = ::accept(fd(), (sockaddr *)&cliaddr, &clilen);
 		if (sock == -1)
 		{
 			// Вызов прерван сигналом - повторяем
@@ -171,34 +170,27 @@ bool TcpAcceptor::processing()
 		int val = fcntl(sock, F_GETFL, 0);
 		fcntl(sock, F_SETFL, val | O_NONBLOCK);
 
-		// Включаем keep-alive на сокете
-		val = 1; setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,  &val, sizeof(val));
-
-		// Время до начала отправки keep-alive пакетов
-		val = 5; setsockopt(sock, SOL_TCP,    TCP_KEEPIDLE,  &val, sizeof(val));
-
-		// Количество keep-alive пакетов
-		val = 1; setsockopt(sock, SOL_TCP,    TCP_KEEPCNT,   &val, sizeof(val));
-
-		// Время между отправками
-		val = 1; setsockopt(sock, SOL_TCP,    TCP_KEEPINTVL, &val, sizeof(val));
-
 		try
 		{
-			Transport::Ptr transport = _transport.lock();
-
-			auto connection = std::shared_ptr<Connection>(new TcpConnection(transport, sock, cliaddr));
-
-			ConnectionManager::add(connection->ptr());
+			createConnection(sock, cliaddr);
 		}
 		catch (std::exception exception)
 		{
 			shutdown(sock, SHUT_RDWR);
-			close(sock);
+			::close(sock);
 		}
 	}
 
 	ConnectionManager::watch(this->ptr());
 
 	return true;
+}
+
+void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
+{
+	Transport::Ptr transport = _transport.lock();
+
+	auto connection = std::shared_ptr<Connection>(new TcpConnection(transport, sock, cliaddr));
+
+	ConnectionManager::add(connection->ptr());
 }

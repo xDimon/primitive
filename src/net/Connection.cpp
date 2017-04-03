@@ -40,6 +40,6 @@ Connection::~Connection()
 {
 	if (_sock != -1)
 	{
-		close(_sock);
+		::close(_sock);
 	}
 }

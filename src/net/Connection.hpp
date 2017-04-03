@@ -159,4 +159,10 @@ public:
 	virtual void watch(epoll_event &ev) = 0;
 
 	virtual bool processing() = 0;
+
+	void close()
+	{
+		::close(_sock);
+		_sock = -1;
+	}
 };

@@ -29,7 +29,7 @@
 
 class TcpConnection: public Connection, public ReaderConnection, public WriterConnection
 {
-private:
+protected:
 	sockaddr_in _sockaddr;
 
 	/// Данных больше не будет
@@ -44,9 +44,9 @@ private:
 	/// Соединение закрыто
 	bool _closed;
 
-	bool writeToSocket();
-
 	bool readFromSocket();
+
+	bool writeToSocket();
 
 public:
 	TcpConnection() = delete;
