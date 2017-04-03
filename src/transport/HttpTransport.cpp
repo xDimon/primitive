@@ -25,6 +25,7 @@
 #include "../net/TcpConnection.hpp"
 #include "../server/Server.hpp"
 #include "../utils/Packet.hpp"
+#include "../utils/Time.hpp"
 #include "http/HttpContext.hpp"
 #include "HttpTransport.hpp"
 
@@ -127,6 +128,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 				std::stringstream ss;
 				ss << "HTTP/1.0 400 Bad request\r\n"
 					<< "Server: " << Server::httpName() << "\r\n"
+					<< "Date: " << Time::httpDate() << "\r\n"
 					<< "X-Transport: http\r\n"
 				   << "\r\n"
 				   << "Headers data too large" << "\r\n";
@@ -158,6 +160,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 				std::stringstream ss;
 				ss << "HTTP/1.0 400 Bad request\r\n"
 					<< "Server: " << Server::httpName() << "\r\n"
+					<< "Date: " << Time::httpDate() << "\r\n"
 					<< "X-Transport: http\r\n"
 				   << "\r\n"
 				   << exception.what() << "\r\n";
@@ -218,6 +221,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 		std::stringstream ss;
 		ss << "HTTP/1.0 200 OK\r\n"
 			<< "Server: " << Server::httpName() << "\r\n"
+			<< "Date: " << Time::httpDate() << "\r\n"
 			<< "X-Transport: http\r\n"
 		   << "\r\n"
 		   << "Processed successfuly\r\n";

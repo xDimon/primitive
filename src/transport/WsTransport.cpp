@@ -27,6 +27,7 @@
 #include "../utils/Base64.hpp"
 #include "../utils/Packet.hpp"
 #include "../utils/SHA1.hpp"
+#include "../utils/Time.hpp"
 #include "websocket/WsContext.hpp"
 #include "websocket/WsFrame.hpp"
 #include "WsTransport.hpp"
@@ -124,6 +125,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			std::stringstream ss;
 			ss << "HTTP/1.0 400 Bad request\r\n"
 				<< "Server: " << Server::httpName() << "\r\n"
+				<< "Date: " << Time::httpDate() << "\r\n"
 				<< "X-Transport: websocket\r\n"
 				<< "\r\n"
 				<< "Headers data too large" << "\r\n";
@@ -174,6 +176,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			std::stringstream ss;
 			ss << "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
 				<< "Server: " << Server::httpName() << "\r\n"
+				<< "Date: " << Time::httpDate() << "\r\n"
 				<< "X-Transport: websocket\r\n"
 				<< "Upgrade: websocket\r\n"
 				<< "Connection: Upgrade\r\n"
@@ -199,6 +202,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			std::stringstream ss;
 			ss << "HTTP/1.0 400 Bad request\r\n"
 				<< "Server: " << Server::httpName() << "\r\n"
+				<< "Date: " << Time::httpDate() << "\r\n"
 				<< "X-Transport: websocket\r\n"
 				<< "\r\n"
 				<< exception.what() << "\r\n";
