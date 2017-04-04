@@ -28,6 +28,9 @@ struct sockaddr_in;
 
 class TcpAcceptor : public Connection
 {
+private:
+	std::string _name;
+
 protected:
 	std::string _host;
 	std::uint16_t _port;

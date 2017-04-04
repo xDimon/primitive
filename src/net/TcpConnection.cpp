@@ -63,6 +63,7 @@ const std::string& TcpConnection::name()
 void TcpConnection::watch(epoll_event &ev)
 {
 	ev.data.ptr = new std::shared_ptr<Connection>(shared_from_this());
+
 	ev.events = 0;
 
 	ev.events |= EPOLLET; // Ждем появления НОВЫХ событий
@@ -183,7 +184,6 @@ bool TcpConnection::writeToSocket()
 			log().debug("Fail writing data (error: '')", strerror(errno));
 
 			_error = true;
-
 			return false;
 		}
 
@@ -237,6 +237,7 @@ bool TcpConnection::readFromSocket()
 			// Ошибка чтения
 			log().debug("Error '{}' while read on {}", strerror(errno), name());
 
+			_error = true;
 			return false;
 		}
 		if (n == 0)
@@ -244,24 +245,22 @@ bool TcpConnection::readFromSocket()
 			// Клиент отключился
 			log().debug("Client disconnected on {}", name());
 
+			_noRead = true;
 			return false;
 		}
 
 		_inBuff.forward(n);
 
-//		char buff[1<<12];
-//		size_t len = std::min(_inBuff.dataLen(), sizeof(buff)-1);
-//		_inBuff.show(buff, len);
-//		buff[len] = 0;
-//		std::string b(buff);
-
 		log().debug("Read {} bytes (summary {}) on {}", n, _inBuff.dataLen(), name());
 	}
 
-	auto transport = _transport.lock();
-	if (transport)
+	if (_inBuff.dataLen())
 	{
-		transport->processing(ptr());
+		auto transport = _transport.lock();
+		if (transport)
+		{
+			transport->processing(ptr());
+		}
 	}
 
 	return true;

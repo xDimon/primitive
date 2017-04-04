@@ -59,8 +59,6 @@ protected:
 	/// Ошибка соединения
 	bool _error;
 
-	std::string _name;
-
 public:
 	Connection(const Connection&) = delete;
 	void operator= (Connection const&) = delete;
