@@ -20,6 +20,7 @@
 
 
 #include <iostream>
+#include <signal.h>
 #include "ThreadPool.hpp"
 
 // the constructor just launches some amount of _workers
@@ -68,6 +69,11 @@ void ThreadPool::createThread()
 
 	auto thread = new Thread([this](){
 		log().debug("Start new thread");
+
+		// Блокируем реакцию на все сигналы
+		sigset_t sig;
+		sigfillset(&sig);
+		sigprocmask(SIG_BLOCK, &sig, nullptr);
 
 		for (;;)
 		{
