@@ -34,12 +34,17 @@ private:
 	TcpAcceptor::WPtr _acceptor;
 
 public:
-	WsTransport(std::string host, uint16_t port);
-
-	virtual ~WsTransport();
-
-	virtual bool enable();
-	virtual bool disable();
+	template<class F, class... Args>
+	WsTransport(F &&f, Args &&... args)
+	: Log("WsTransport")
+	, Transport(f, args...)
+	{
+		log().debug("Create '{}'", name());
+	}
+	virtual ~WsTransport()
+	{
+		log().debug("Destroy '{}'", name());
+	}
 
 	virtual bool processing(std::shared_ptr<Connection> connection);
 };

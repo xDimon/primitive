@@ -14,58 +14,51 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.09
+// File created on: 2017.02.25
 
-// TcpConnection.hpp
+// SslConnection.hpp
 
 
 #pragma once
 
 #include "Connection.hpp"
+
 #include "../utils/Buffer.hpp"
 #include "ReaderConnection.hpp"
 #include "WriterConnection.hpp"
+#include "TcpConnection.hpp"
+
 #include <netinet/in.h>
+#include <openssl/ssl.h>
 
-class TcpConnection: public Connection, public ReaderConnection, public WriterConnection
+/**
+ * Подключение
+ */
+class SslConnection: public TcpConnection
 {
-protected:
-	sockaddr_in _sockaddr;
+private:
+	std::string _name;
 
-	/// Данных больше не будет
-	bool _noRead;
+	std::shared_ptr<SSL_CTX> _sslContext;
+	SSL *_sslConnect;
 
-	/// Писать больше не будем
-	bool _noWrite;
+	bool _sslEstablished;
 
-	/// Ошибка соединения
-	bool _error;
-
-	/// Соединение закрыто
-	bool _closed;
-
-	virtual bool readFromSocket();
-
-	virtual bool writeToSocket();
+	bool readFromSocket() override;
+	bool writeToSocket() override;
 
 public:
-	TcpConnection() = delete;
-	TcpConnection(const TcpConnection&) = delete;
-	void operator= (TcpConnection const&) = delete;
+	SslConnection() = delete;
+	SslConnection(const SslConnection&) = delete;
+	void operator= (SslConnection const&) = delete;
 
-	TcpConnection(Transport::Ptr& transport, int fd, const sockaddr_in &cliaddr);
-	virtual ~TcpConnection();
-
-	bool noRead() const
-	{
-		return _noRead;
-	}
+	SslConnection(Transport::Ptr& transport, int fd, const sockaddr_in& cliaddr, std::shared_ptr<SSL_CTX> sslContext);
+	virtual ~SslConnection();
 
 	virtual const std::string& name();
 
-	virtual void watch(epoll_event &ev);
-
 	virtual bool processing();
 
-	void close();
+	static void InitSSL();
+	static void DestroySSL();
 };

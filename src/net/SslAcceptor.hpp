@@ -14,37 +14,33 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.27
+// File created on: 2017.02.25
 
-// HttpTransport.hpp
+// SslAcceptor.hpp
 
 
 #pragma once
 
-#include <string>
-#include "../net/TcpAcceptor.hpp"
-#include "Transport.hpp"
+#include "TcpAcceptor.hpp"
 
-class HttpTransport : public Transport
+#include <openssl/ssl.h>
+
+class SslAcceptor : public TcpAcceptor
 {
 private:
-	std::string _host;
-	uint16_t _port;
+	std::string _name;
 
-	TcpAcceptor::WPtr _acceptor;
+protected:
+	std::shared_ptr<SSL_CTX> _sslContext;
 
 public:
-	template<class F, class... Args>
-	HttpTransport(F &&f, Args &&... args)
-	: Log("HttpTransport")
-	, Transport(f, args...)
-	{
-		log().debug("Create '{}'", name());
-	}
-	virtual ~HttpTransport()
-	{
-		log().debug("Destroy '{}'", name());
-	}
+	SslAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port, std::string certificate, std::string key);
+	virtual ~SslAcceptor() {};
 
-	virtual bool processing(std::shared_ptr<Connection> connection);
+	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
+
+	static SslAcceptor::Ptr create(Transport::Ptr& transport, std::string host, std::uint16_t port, std::string certificate, std::string key)
+	{
+		return std::make_shared<SslAcceptor>(transport, host, port, certificate, key);
+	}
 };

@@ -23,8 +23,6 @@
 
 #include <memory>
 
-#include "../log/Log.hpp"
-
 class Connection;
 
 class Transport: public std::enable_shared_from_this<Transport>, public virtual Log
@@ -38,9 +36,21 @@ public:
 		return shared_from_this();
 	}
 
+private:
+	std::shared_ptr<std::function<std::shared_ptr<Connection>()>> _acceptorCreator;
+	std::weak_ptr<Connection> _acceptor;
+
 public:
-	virtual bool enable() = 0;
-	virtual bool disable() = 0;
+	template<class F, class... Args>
+	Transport(F &&f, Args &&... args)
+	{
+		_acceptorCreator = std::make_shared<std::function<std::shared_ptr<Connection>()>>(
+			std::bind(std::forward<F>(f), std::shared_ptr<Transport>(this), std::forward<Args>(args)...)
+		);
+	}
+
+	virtual bool enable();
+	virtual bool disable();
 
 	virtual bool processing(std::shared_ptr<Connection> connection) = 0;
 };

@@ -29,61 +29,6 @@
 #include "http/HttpContext.hpp"
 #include "HttpTransport.hpp"
 
-HttpTransport::HttpTransport(std::string host, uint16_t port)
-: Log("HttpTransport")
-, _host(host)
-, _port(port)
-, _acceptor(TcpAcceptor::Ptr())
-{
-	log().debug("Create transport 'HttpTransport({}:{})'", _host, _port);
-}
-
-HttpTransport::~HttpTransport()
-{
-}
-
-bool HttpTransport::enable()
-{
-	if (!_acceptor.expired())
-	{
-		return true;
-	}
-	log().debug("Enable transport 'HttpTransport({}:{})'", _host, _port);
-	try
-	{
-		Transport::Ptr transport = ptr();
-
-		auto acceptor = std::shared_ptr<Connection>(new TcpAcceptor(transport, _host, _port));
-
-		_acceptor = acceptor->ptr();
-
-		ConnectionManager::add(_acceptor.lock());
-
-		return true;
-	}
-	catch(std::runtime_error exception)
-	{
-		log().debug("Can't create Acceptor for transport 'HttpTransport({}:{})': {}", _host, _port, exception.what());
-
-		return false;
-	}
-}
-
-bool HttpTransport::disable()
-{
-	if (_acceptor.expired())
-	{
-		return true;
-	}
-	log().debug("Disable transport 'HttpTransport({}:{})'", _host, _port);
-
-	ConnectionManager::remove(_acceptor.lock());
-
-	_acceptor.reset();
-
-	return true;
-}
-
 bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);

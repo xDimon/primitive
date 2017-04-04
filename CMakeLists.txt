@@ -54,8 +54,17 @@ if (NOT SPDLOG_FOUND)
 endif ()
 include_directories(${SPDLOG_INCLUDE_DIR})
 
+# Подключаем openssl
+find_package(OpenSSL)
+if (NOT OPENSSL_FOUND)
+    message(FATAL_ERROR "ssl not found")
+endif ()
+include_directories(${OPENSSL_INCLUDE_DIR})
+list(APPEND "${CODENAME}_LIBRARIES" ${OPENSSL_LIBRARIES})
+
 # Подключаем многопоточность
 list(APPEND "${CODENAME}_LIBRARIES" pthread)
+
 
 add_subdirectory(src)
 

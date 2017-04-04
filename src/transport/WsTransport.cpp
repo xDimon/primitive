@@ -29,63 +29,7 @@
 #include "../utils/SHA1.hpp"
 #include "../utils/Time.hpp"
 #include "websocket/WsContext.hpp"
-#include "websocket/WsFrame.hpp"
 #include "WsTransport.hpp"
-
-WsTransport::WsTransport(std::string host, uint16_t port)
-: Log("WsTransport")
-, _host(host)
-, _port(port)
-, _acceptor(TcpAcceptor::Ptr())
-{
-	log().debug("Create transport 'WsTransport({}:{})'", _host, _port);
-}
-
-WsTransport::~WsTransport()
-{
-}
-
-bool WsTransport::enable()
-{
-	if (!_acceptor.expired())
-	{
-		return true;
-	}
-	log().debug("Enable transport 'WsTransport({}:{})'", _host, _port);
-	try
-	{
-		Transport::Ptr transport = ptr();
-
-		auto acceptor = std::shared_ptr<Connection>(new TcpAcceptor(transport, _host, _port));
-
-		_acceptor = acceptor->ptr();
-
-		ConnectionManager::add(_acceptor.lock());
-
-		return true;
-	}
-	catch(std::runtime_error exception)
-	{
-		log().debug("Can't create Acceptor for transport 'WsTransport({}:{})': {}", _host, _port, exception.what());
-
-		return false;
-	}
-}
-
-bool WsTransport::disable()
-{
-	if (_acceptor.expired())
-	{
-		return true;
-	}
-	log().debug("Disable transport 'WsTransport({}:{})'", _host, _port);
-
-	ConnectionManager::remove(_acceptor.lock());
-
-	_acceptor.reset();
-
-	return true;
-}
 
 bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 {
