@@ -21,18 +21,10 @@
 
 #pragma once
 
-#include <string>
-#include "../net/TcpAcceptor.hpp"
 #include "Transport.hpp"
 
 class PacketTransport : public Transport
 {
-private:
-	std::string _host;
-	uint16_t _port;
-
-	TcpAcceptor::WPtr _acceptor;
-
 public:
 	template<class F, class... Args>
 	PacketTransport(F &&f, Args &&... args)

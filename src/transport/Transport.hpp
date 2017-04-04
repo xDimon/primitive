@@ -22,29 +22,25 @@
 #pragma once
 
 #include <memory>
+#include "../log/Log.hpp"
 
 class Connection;
 
-class Transport: public std::enable_shared_from_this<Transport>, public virtual Log
+class Transport: public virtual Log
 {
 public:
 	typedef std::shared_ptr<Transport> Ptr;
 	typedef std::weak_ptr<Transport> WPtr;
 
-	inline Ptr ptr()
-	{
-		return shared_from_this();
-	}
-
 private:
-	std::shared_ptr<std::function<std::shared_ptr<Connection>()>> _acceptorCreator;
+	std::unique_ptr<std::function<std::shared_ptr<Connection>()>> _acceptorCreator;
 	std::weak_ptr<Connection> _acceptor;
 
 public:
 	template<class F, class... Args>
 	Transport(F &&f, Args &&... args)
 	{
-		_acceptorCreator = std::make_shared<std::function<std::shared_ptr<Connection>()>>(
+		_acceptorCreator = std::make_unique<std::function<std::shared_ptr<Connection>()>>(
 			std::bind(std::forward<F>(f), std::shared_ptr<Transport>(this), std::forward<Args>(args)...)
 		);
 	}

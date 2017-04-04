@@ -19,6 +19,7 @@
 // Transport.cpp
 
 
+#include "Transport.hpp"
 #include "../net/ConnectionManager.hpp"
 
 bool Transport::enable()
@@ -32,8 +33,6 @@ bool Transport::enable()
 
 	try
 	{
-		Transport::Ptr transport = ptr();
-
 		auto acceptor = (*_acceptorCreator)();
 
 		_acceptor = acceptor->ptr();
