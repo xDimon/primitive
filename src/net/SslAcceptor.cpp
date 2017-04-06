@@ -23,29 +23,10 @@
 #include "SslConnection.hpp"
 #include "ConnectionManager.hpp"
 
-SslAcceptor::SslAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port, std::string certificate, std::string key)
+SslAcceptor::SslAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& context)
 : TcpAcceptor(transport, host, port)
+, _sslContext(context)
 {
-	BIO *cbio = BIO_new_mem_buf(certificate.data(), -1);
-	X509 *cert = PEM_read_bio_X509(cbio, NULL, 0, NULL);
-	assert(cert != NULL);
-
-	BIO *kbio = BIO_new_mem_buf(key.data(), -1);
-	RSA *rsa = PEM_read_bio_RSAPrivateKey(kbio, NULL, 0, NULL);
-	assert(rsa != NULL);
-
-	struct D {
-		void operator()(SSL_CTX* ctx) const {
-			SSL_CTX_free(ctx);
-		}
-	};
-
-	_sslContext = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_server_method()), D());
-
-	SSL_CTX_set_options(_sslContext.get(), SSL_OP_SINGLE_DH_USE);
-
-	SSL_CTX_use_certificate(_sslContext.get(), cert);
-	SSL_CTX_use_RSAPrivateKey(_sslContext.get(), rsa);
 }
 
 void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)

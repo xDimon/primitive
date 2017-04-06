@@ -14,31 +14,36 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.02.25
+// File created on: 2017.04.06
 
-// SslAcceptor.hpp
+// SslHelper.hpp
 
 
 #pragma once
 
-#include "TcpAcceptor.hpp"
+#include <openssl/ossl_typ.h>
+#include <memory>
 
-#include <openssl/ssl.h>
-
-class SslAcceptor : public TcpAcceptor
+class SslHelper
 {
 private:
-	std::string _name;
-	std::shared_ptr<SSL_CTX>& _sslContext;
+	SslHelper();
+	virtual ~SslHelper();
+
+	SslHelper(SslHelper const&) = delete;
+	void operator= (SslHelper const&) = delete;
+
+	static SslHelper &getInstance()
+	{
+		static SslHelper instance;
+		return instance;
+	}
+
+	std::shared_ptr<SSL_CTX> _context;
 
 public:
-	SslAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext);
-	virtual ~SslAcceptor() {};
-
-	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
-
-	static SslAcceptor::Ptr create(Transport::Ptr& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext)
+	static std::shared_ptr<SSL_CTX> context()
 	{
-		return std::make_shared<SslAcceptor>(transport, host, port, sslContext);
+		return getInstance()._context;
 	}
 };

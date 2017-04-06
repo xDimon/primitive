@@ -58,7 +58,4 @@ public:
 	virtual const std::string& name();
 
 	virtual bool processing();
-
-	static void InitSSL();
-	static void DestroySSL();
 };

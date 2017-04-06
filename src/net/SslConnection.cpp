@@ -69,8 +69,6 @@ bool SslConnection::processing()
 
 	do
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
 		if (wasFailure())
 		{
 			_closed = true;
@@ -88,7 +86,7 @@ bool SslConnection::processing()
 				{
 					if (isHalfHup() || isHup())
 					{
-						log().trace("Can't complete SSL-handshake: already closed {}", name());
+						log().trace("Can't complete SslHelper-handshake: already closed {}", name());
 						_noRead = true;
 						_noWrite = true;
 						break;
@@ -96,30 +94,30 @@ bool SslConnection::processing()
 
 					if (errno)
 					{
-						log().debug("SSL_ERROR_SYSCALL while SSL-handshake on {}: {}", name(), strerror(errno));
+						log().debug("SSL_ERROR_SYSCALL while SslHelper-handshake on {}: {}", name(), strerror(errno));
 						break;
 					}
 
-					log().debug("SSL_ERROR_SYSCALL with errno=0 while SSL-handshake on {}", name());
+					log().debug("SSL_ERROR_SYSCALL with errno=0 while SslHelper-handshake on {}", name());
 					break;
 				}
 				if (e == SSL_ERROR_WANT_READ || e == SSL_ERROR_WANT_WRITE)
 				{
-					log().trace("SSL-handshake incomplete yet on {}", name());
+					log().trace("SslHelper-handshake incomplete yet on {}", name());
 					break;
 				}
 
 				char err[1<<12];
 				ERR_error_string_n(ERR_get_error(), err, sizeof(err));
 
-				log().trace("Fail SSL-handshake on {}: {}", name(), err);
+				log().trace("Fail SslHelper-handshake on {}: {}", name(), err);
 				_error = true;
 				break;
 			}
 
 			_sslEstablished = true;
 
-			log().trace("Success SSL-handshake on {}", name());
+			log().trace("Success SslHelper-handshake on {}", name());
 		}
 
 		if (isReadyForWrite())
@@ -225,22 +223,22 @@ bool SslConnection::writeToSocket()
 
 			if (errno)
 			{
-				log().debug("SSL_ERROR_SYSCALL while SSL-write on {}: {}", name(), strerror(errno));
+				log().debug("SSL_ERROR_SYSCALL while SslHelper-write on {}: {}", name(), strerror(errno));
 				break;
 			}
 
-			log().debug("SSL_ERROR_SYSCALL with errno=0 while SSL-write on {}", name());
+			log().debug("SSL_ERROR_SYSCALL with errno=0 while SslHelper-write on {}", name());
 			break;
 		}
 		else if (e == SSL_ERROR_SSL)
 		{
-			log().trace("SSL_ERROR_SSL while SSL-write on {}", name());
+			log().trace("SSL_ERROR_SSL while SslHelper-write on {}", name());
 			_error = true;
 			return false;
 		}
 		else
 		{
-			log().trace("SSL_ERROR_? while SSL-write on {}", name());
+			log().trace("SSL_ERROR_? while SslHelper-write on {}", name());
 			_error = true;
 			return false;
 		}
@@ -305,23 +303,22 @@ bool SslConnection::readFromSocket()
 
 			if (errno)
 			{
-				log().debug("SSL_ERROR_SYSCALL while SSL-read on {}: {}", name(), strerror(errno));
+				log().debug("SSL_ERROR_SYSCALL while SslHelper-read on {}: {}", name(), strerror(errno));
 				break;
 			}
 
-			log().trace("SSL_ERROR_SYSCALL with errno=0 while SSL-read on {}", name());
+			log().trace("SSL_ERROR_SYSCALL with errno=0 while SslHelper-read on {}", name());
 			break;
 		}
 		else if (e == SSL_ERROR_SSL)
 		{
-			log().debug("SSL_ERROR_SSL while SSL-read on {}", name());
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			log().debug("SSL_ERROR_SSL while SslHelper-read on {}", name());
 			_error = true;
 			return false;
 		}
 		else
 		{
-			log().debug("SSL_ERROR_? while SSL-read on {}", name());
+			log().debug("SSL_ERROR_? while SslHelper-read on {}", name());
 			_error = true;
 			return false;
 		}
