@@ -29,5 +29,15 @@ private:
 	bool _val;
 
 public:
-	SBool(bool val): _val(val) {};
+	SBool(bool val)
+	: _val(val)
+	{
+	};
+	SBool(const SBool& that)
+	: _val(that._val)
+	{
+	};
+	virtual ~SBool()
+	{
+	};
 };

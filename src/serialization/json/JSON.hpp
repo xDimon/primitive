@@ -35,21 +35,21 @@ class JSON
 private:
 	static void skipSpaces(std::istringstream &ss);
 
-	static SNull& decodeNull(std::istringstream &ss);
-	static SBool& decodeBool(std::istringstream &ss);
+	static SNull decodeNull(std::istringstream &ss);
+	static SBool decodeBool(std::istringstream &ss);
 
 	static uint32_t decodeEscaped(std::istringstream &ss);
-	static SStr& decodeString(std::istringstream &ss);
+	static SStr decodeString(std::istringstream &ss);
 
-	static SNum& decodeNumber(std::istringstream &ss);
+	static SNum decodeNumber(std::istringstream &ss);
 
-	static SArr& decodeArray(std::istringstream &ss);
-	static SObj& decodeObject(std::istringstream &ss);
+	static SArr decodeArray(std::istringstream &ss);
+	static SObj decodeObject(std::istringstream &ss);
 
-	static SVal& decodeValue(std::istringstream &ss);
+	static SVal decodeValue(std::istringstream &ss);
 
 public:
-	static SVal& decode(std::string &data);
+	static SVal decode(std::string &data);
 
 	static std::string encode(SVal &obj);
 };

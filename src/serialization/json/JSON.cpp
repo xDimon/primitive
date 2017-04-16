@@ -25,11 +25,11 @@
 #include "JSON.hpp"
 #include "../../utils/literals.hpp"
 
-SVal& JSON::decode(std::string &data)
+SVal JSON::decode(std::string &data)
 {
 	std::istringstream iss(data);
 
-	SVal& value = decodeValue(iss);
+	SVal value = decodeValue(iss);
 
 	// Проверяем лишние символы в конце
 	skipSpaces(iss);
@@ -60,7 +60,7 @@ void JSON::skipSpaces(std::istringstream& iss)
 	}
 }
 
-SVal& JSON::decodeValue(std::istringstream& iss)
+SVal JSON::decodeValue(std::istringstream& iss)
 {
 	skipSpaces(iss);
 
@@ -102,9 +102,9 @@ SVal& JSON::decodeValue(std::istringstream& iss)
 	}
 }
 
-SObj& JSON::decodeObject(std::istringstream& iss)
+SObj JSON::decodeObject(std::istringstream& iss)
 {
-	auto obj = std::make_unique<SObj>();
+	SObj obj;
 
 	auto c = iss.get();
 	if (c != '{')
@@ -119,10 +119,10 @@ SObj& JSON::decodeObject(std::istringstream& iss)
 		if (iss.peek() == '}')
 		{
 			iss.ignore();
-			return *obj.release();
+			return std::move(obj);
 		}
 
-		SStr& key = decodeString(iss);
+		SStr key = decodeString(iss);
 
 		skipSpaces(iss);
 
@@ -134,9 +134,9 @@ SObj& JSON::decodeObject(std::istringstream& iss)
 
 		skipSpaces(iss);
 
-		SVal& value = decodeValue(iss);
+		SVal value = decodeValue(iss);
 
-		obj->insert(key, value);
+		obj.insert(key, value);
 
 		skipSpaces(iss);
 
@@ -147,7 +147,7 @@ SObj& JSON::decodeObject(std::istringstream& iss)
 		}
 		else if (c == '}')
 		{
-			return *obj.release();
+			return std::move(obj);
 		}
 
 		throw std::runtime_error("Wrong token");
@@ -156,9 +156,9 @@ SObj& JSON::decodeObject(std::istringstream& iss)
 	throw std::runtime_error("Unexpect out of data");
 }
 
-SArr& JSON::decodeArray(std::istringstream& iss)
+SArr JSON::decodeArray(std::istringstream& iss)
 {
-	auto arr = std::make_unique<SArr>();
+	SArr arr;
 
 	auto c = iss.get();
 	if (c != '[')
@@ -173,12 +173,12 @@ SArr& JSON::decodeArray(std::istringstream& iss)
 		if (iss.peek() == ']')
 		{
 			iss.ignore();
-			return *arr.release();
+			return std::move(arr);
 		}
 
-		SVal& value = decodeValue(iss);
+		SVal value = decodeValue(iss);
 
-		arr->insert(value);
+		arr.insert(value);
 
 		skipSpaces(iss);
 
@@ -189,7 +189,7 @@ SArr& JSON::decodeArray(std::istringstream& iss)
 		}
 		else if (c == ']')
 		{
-			return *arr.release();
+			return std::move(arr);
 		}
 
 		throw std::runtime_error("Wrong token");
@@ -198,10 +198,9 @@ SArr& JSON::decodeArray(std::istringstream& iss)
 	throw std::runtime_error("Unexpect out of data");
 }
 
-SStr& JSON::decodeString(std::istringstream& iss)
+SStr JSON::decodeString(std::istringstream& iss)
 {
-	std::unique_ptr<SStr> str(new SStr);
-//	auto str = std::make_unique<SStr>();
+	SStr str;
 
 	auto c = iss.get();
 	if (c != '"')
@@ -215,12 +214,12 @@ SStr& JSON::decodeString(std::istringstream& iss)
 		// Конец строки
 		if (c == '"')
 		{
-			return *str.release();
+			return std::move(str);
 		}
 		// Экранированный сивол
 		else if (c == '\\')
 		{
-			str->insert(decodeEscaped(iss));
+			str.insert(decodeEscaped(iss));
 		}
 		// Управляющий символ
 		else if (c < ' ' && c != '\t' && c != '\r' && c != '\n')
@@ -235,7 +234,7 @@ SStr& JSON::decodeString(std::istringstream& iss)
 		// Однобайтовый символ
 		else if (c < 0b1000'0000)
 		{
-			str->insert(static_cast<uint8_t>(c));
+			str.insert(static_cast<uint8_t>(c));
 		}
 		else
 		{
@@ -283,14 +282,14 @@ SStr& JSON::decodeString(std::istringstream& iss)
 				}
 				chr = (chr << 6) | (c & 0b0011'1111);
 			}
-			str->insert(chr);
+			str.insert(chr);
 		}
 	}
 
 	throw std::runtime_error("Unexpect out of data");
 }
 
-SBool& JSON::decodeBool(std::istringstream& iss)
+SBool JSON::decodeBool(std::istringstream& iss)
 {
 	auto c = iss.get();
 	if (c == 't')
@@ -298,7 +297,7 @@ SBool& JSON::decodeBool(std::istringstream& iss)
 		if (!iss.eof() && iss.get() == 'r')
 			if (!iss.eof() && iss.get() == 'u')
 				if (!iss.eof() && iss.get() == 'e')
-					return *new SBool(true);
+					return SBool(true);
 	}
 	else if (c == 'f')
 	{
@@ -306,7 +305,7 @@ SBool& JSON::decodeBool(std::istringstream& iss)
 			if (!iss.eof() && iss.get() == 'l')
 				if (!iss.eof() && iss.get() == 's')
 					if (!iss.eof() && iss.get() == 'e')
-						return *new SBool(false);
+						return SBool(false);
 	}
 	if (iss.eof())
 	{
@@ -316,13 +315,13 @@ SBool& JSON::decodeBool(std::istringstream& iss)
 	throw std::runtime_error("Wrong token");
 }
 
-SNull& JSON::decodeNull(std::istringstream& iss)
+SNull JSON::decodeNull(std::istringstream& iss)
 {
 	if (!iss.eof() && iss.get() == 'n')
 		if (!iss.eof() && iss.get() == 'u')
 			if (!iss.eof() && iss.get() == 'l')
 				if (!iss.eof() && iss.get() == 'l')
-					return *new SNull();
+					return SNull();
 	if (iss.eof())
 	{
 		throw std::runtime_error("Unxpected end of data");
@@ -381,7 +380,7 @@ uint32_t JSON::decodeEscaped(std::istringstream& iss)
 	return val;
 }
 
-SNum& JSON::decodeNumber(std::istringstream& iss)
+SNum JSON::decodeNumber(std::istringstream& iss)
 {
 	bool negInt = false;
 	int64_t integer = 0;
@@ -399,7 +398,7 @@ SNum& JSON::decodeNumber(std::istringstream& iss)
 		throw std::runtime_error("Unxpected end of data");
 	}
 
-	while (!iss.eof())
+	while (iss.eof())
 	{
 		auto c = iss.peek();
 		if (c >= '0' && c <= '9')
@@ -416,13 +415,13 @@ SNum& JSON::decodeNumber(std::istringstream& iss)
 		{
 			break;
 		}
-		else if (c != ',' && c != '}' && c != ']' && c != ' ' && c != '\t' && c != '\r' && c != '\n')
+		else if (c != ',' && c != '}' && c != ']' && c != ' ' && c != '\t' && c != '\r' && c != '\n' && c != -1)
 		{
 			throw std::runtime_error("Wrong token");
 		}
 		else
 		{
-			return *new SNum((negInt ? -1 : 1) * integer);
+			return SNum((negInt ? -1 : 1) * integer);
 		}
 	}
 
@@ -440,13 +439,13 @@ SNum& JSON::decodeNumber(std::istringstream& iss)
 			iss.ignore();
 			break;
 		}
-		else if (c != ',' && c != '}' && c != ']' && c != ' ' && c != '\t' && c != '\r' && c != '\n')
+		else if (c != ',' && c != '}' && c != ']' && c != ' ' && c != '\t' && c != '\r' && c != '\n' && c != -1)
 		{
 			throw std::runtime_error("Wrong token");
 		}
 		else
 		{
-			return *new SNum((negInt ? -1 : 1) * pow10(exp0) * integer);
+			return SNum((negInt ? -1 : 1) * pow10(exp0) * integer);
 		}
 	}
 
@@ -468,7 +467,7 @@ SNum& JSON::decodeNumber(std::istringstream& iss)
 			exp = exp * 10 + (c - '0');
 			iss.ignore();
 		}
-		else if (c != ',' && c != '}' && c != ']' && c != ' ' && c != '\t' && c != '\r' && c != '\n')
+		else if (c != ',' && c != '}' && c != ']' && c != ' ' && c != '\t' && c != '\r' && c != '\n' && c != -1)
 		{
 			throw std::runtime_error("Wrong token");
 		}
@@ -478,5 +477,5 @@ SNum& JSON::decodeNumber(std::istringstream& iss)
 		}
 	}
 
-	return *new SNum((negInt ? -1 : 1) * pow10(exp0 + (negExp ? -1 : 1) * exp) * integer);
+	return SNum((negInt ? -1 : 1) * pow10(exp0 + (negExp ? -1 : 1) * exp) * integer);
 }

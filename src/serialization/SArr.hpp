@@ -28,30 +28,34 @@
 class SArr: public SVal
 {
 private:
-	std::vector<std::reference_wrapper<SVal>> _elements;
+	std::vector<SVal> _elements;
 
 public:
 	SArr()
 	{
+		std::cout << "SArr() ";
 	};
 	virtual ~SArr()
 	{
+		std::cout << "~SArr() ";
 	};
 
 	SArr(SArr&& tmp)
 	{
+		std::cout << "SArr(&&) ";
 		_elements.swap(tmp._elements);
 	}
 
 	SArr& operator=(SArr&& tmp)
 	{
+		std::cout << "SArr(=) ";
 		_elements.swap(tmp._elements);
 		return *this;
 	}
 
 	void insert(SVal& value)
 	{
-		_elements.emplace_back(value);
+		_elements.emplace_back(std::move(value));
 	}
 
 };

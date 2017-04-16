@@ -25,5 +25,15 @@
 
 class SNull: public SVal
 {
+public:
+	SNull()
+	{
+	};
+	SNull(const SNull& that)
+	{
+	};
+	virtual ~SNull()
+	{
 
+	};
 };

@@ -33,18 +33,22 @@ private:
 public:
 	SObj()
 	{
+		std::cout << "SObj() ";
 	};
 	virtual ~SObj()
 	{
+		std::cout << "~SObj() ";
 	};
 
 	SObj(SObj&& tmp)
 	{
+		std::cout << "SObj(&&) ";
 		_elements.swap(tmp._elements);
 	}
 
 	SObj& operator=(SObj&& tmp)
 	{
+		std::cout << "SObj(=) ";
 		_elements.swap(tmp._elements);
 		return *this;
 	}

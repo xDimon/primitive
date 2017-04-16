@@ -14,16 +14,23 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.04.07
+// File created on: 2017.04.08
 
-// SInt.hpp
+// SVal.cpp
 
-
-#pragma once
 
 #include "SVal.hpp"
 
-class SInt: public SVal
+SVal::SVal()
 {
-
+	std::cout << "SVal() ";
 };
+SVal::~SVal()
+{
+	std::cout << "~SVal() ";
+};
+
+SVal::SVal(SVal&& tmp)
+{
+	std::cout << "SVal(&&) ";
+}

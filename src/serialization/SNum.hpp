@@ -30,10 +30,17 @@ private:
 
 public:
 	SNum(long double val)
-	: SVal()
-	, _val(val)
+	: _val(val)
 	{
+		std::cout << "SNum() ";
 	}
-	virtual ~SNum() {};
-
+	SNum(const SNum& that)
+	: _val(that._val)
+	{
+		std::cout << "SNum(&) ";
+	};
+	virtual ~SNum()
+	{
+		std::cout << "~SNum() ";
+	};
 };

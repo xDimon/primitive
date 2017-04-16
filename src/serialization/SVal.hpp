@@ -22,6 +22,7 @@
 #pragma once
 
 #include <utility>
+#include <iostream>
 
 class SVal
 {
@@ -30,25 +31,22 @@ private:
 	static constexpr bool is_derived = std::is_base_of<SVal, T>::value;
 
 public:
-	SVal()
-	{
-	};
-	virtual ~SVal()
-	{
-	};
+	SVal();
+	virtual ~SVal();
 
-	template<class T, class=std::enable_if_t<is_derived<T>>>
-	SVal(T&& tmp)
-	{
-		static_cast<SVal>(*this) = std::move(tmp);
-	}
-	SVal(SVal&& tmp)
-	{
-	}
+	SVal(SVal&& tmp);
 
-	template<class T, class=std::enable_if_t<is_derived<T>>>
-	T& operator=(T&& tmp) // = default;
-	{
-		return *this;
-	}
+//	template<class T, class=std::enable_if_t<is_derived<T>>>
+//	SVal(T&& tmp)
+//	{
+//		std::cout << "SVal(&&:) ";
+//		static_cast<SVal>(*this) = std::move(tmp);
+//	}
+//
+//	template<class T, class=std::enable_if_t<is_derived<T>>>
+//	T& operator=(T&& tmp)
+//	{
+//		std::cout << "SVal(=:) ";
+//		return *this;
+//	}
 };
