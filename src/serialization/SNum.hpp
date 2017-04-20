@@ -25,22 +25,4 @@
 
 class SNum: public SVal
 {
-private:
-	long double _val;
-
-public:
-	SNum(long double val)
-	: _val(val)
-	{
-		std::cout << "SNum() ";
-	}
-	SNum(const SNum& that)
-	: _val(that._val)
-	{
-		std::cout << "SNum(&) ";
-	};
-	virtual ~SNum()
-	{
-		std::cout << "~SNum() ";
-	};
 };

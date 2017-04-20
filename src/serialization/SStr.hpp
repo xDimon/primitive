@@ -31,23 +31,16 @@ private:
 	std::string _value;
 
 public:
-	SStr()
-	{
-	};
-	virtual ~SStr()
-	{
-	};
+	SStr() = default;
 
 	SStr(SStr&& tmp)
-	: _value(std::move(tmp._value))
 	{
-//		_value.swap(tmp._value);
+		_value.swap(tmp._value);
 	}
 
 	SStr& operator=(SStr&& tmp)
 	{
-//		_value.swap(tmp._value);
-		_value = std::move(tmp._value);
+		_value.swap(tmp._value);
 		return *this;
 	}
 
@@ -59,5 +52,10 @@ public:
 	bool operator <(const SStr& that) const
 	{
 		return _value < that._value;
+	}
+
+	const std::string& value() const
+	{
+		return _value;
 	}
 };

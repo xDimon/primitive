@@ -23,39 +23,43 @@
 
 #include <vector>
 #include <functional>
+#include <algorithm>
 #include "SVal.hpp"
 
 class SArr: public SVal
 {
 private:
-	std::vector<SVal> _elements;
+	std::vector<const SVal*> _elements;
 
 public:
-	SArr()
-	{
-		std::cout << "SArr() ";
-	};
+	SArr() = default;
+
 	virtual ~SArr()
 	{
-		std::cout << "~SArr() ";
+		for (auto element : _elements)
+		{
+			delete const_cast<SVal*>(element);
+		}
 	};
 
 	SArr(SArr&& tmp)
 	{
-		std::cout << "SArr(&&) ";
 		_elements.swap(tmp._elements);
 	}
 
 	SArr& operator=(SArr&& tmp)
 	{
-		std::cout << "SArr(=) ";
 		_elements.swap(tmp._elements);
 		return *this;
 	}
 
-	void insert(SVal& value)
+	void insert(SVal* value)
 	{
-		_elements.emplace_back(std::move(value));
+		_elements.emplace_back(value);
 	}
 
+	void forEach(std::function<void (const SVal*)> handler) const
+	{
+		std::for_each(_elements.begin(), _elements.end(), handler);
+	}
 };

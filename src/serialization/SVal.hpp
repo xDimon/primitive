@@ -26,27 +26,6 @@
 
 class SVal
 {
-private:
-	template<typename T>
-	static constexpr bool is_derived = std::is_base_of<SVal, T>::value;
-
 public:
-	SVal();
-	virtual ~SVal();
-
-	SVal(SVal&& tmp);
-
-//	template<class T, class=std::enable_if_t<is_derived<T>>>
-//	SVal(T&& tmp)
-//	{
-//		std::cout << "SVal(&&:) ";
-//		static_cast<SVal>(*this) = std::move(tmp);
-//	}
-//
-//	template<class T, class=std::enable_if_t<is_derived<T>>>
-//	T& operator=(T&& tmp)
-//	{
-//		std::cout << "SVal(=:) ";
-//		return *this;
-//	}
+	virtual ~SVal() {};
 };

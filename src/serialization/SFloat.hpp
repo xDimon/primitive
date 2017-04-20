@@ -14,23 +14,23 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.04.08
+// File created on: 2017.04.17
 
-// SVal.cpp
+// SFloat.hpp
 
 
-#include "SVal.hpp"
+#pragma once
 
-SVal::SVal()
+class SFloat: public SNum
 {
-	std::cout << "SVal() ";
+private:
+	long double _value;
+
+public:
+	SFloat(long double value): _value(value) {}
+
+	auto value() const
+	{
+		return _value;
+	}
 };
-SVal::~SVal()
-{
-	std::cout << "~SVal() ";
-};
-
-SVal::SVal(SVal&& tmp)
-{
-	std::cout << "SVal(&&) ";
-}

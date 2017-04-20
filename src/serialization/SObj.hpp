@@ -22,39 +22,60 @@
 #pragma once
 
 #include <map>
+#include <algorithm>
+#include <functional>
 #include "SStr.hpp"
 #include "SVal.hpp"
 
 class SObj: public SVal
 {
 private:
-	std::map<SStr, SVal&> _elements;
+	std::map<const SStr*, SVal*> _elements;
 
 public:
-	SObj()
-	{
-		std::cout << "SObj() ";
-	};
+	SObj() = default;
+
 	virtual ~SObj()
 	{
-		std::cout << "~SObj() ";
+		while (!_elements.empty())
+		{
+			auto i = _elements.begin();
+			auto key = const_cast<SStr*>(i->first);
+			auto value = const_cast<SVal*>(i->second);
+			_elements.erase(i);
+			delete key;
+			delete value;
+		}
 	};
 
 	SObj(SObj&& tmp)
 	{
-		std::cout << "SObj(&&) ";
 		_elements.swap(tmp._elements);
 	}
 
 	SObj& operator=(SObj&& tmp)
 	{
-		std::cout << "SObj(=) ";
 		_elements.swap(tmp._elements);
 		return *this;
 	}
 
-	void insert(SStr &key, SVal &value)
+	void insert(SStr *key, SVal *value)
 	{
-		_elements.emplace(std::move(key), value);
+		auto i = _elements.find(key);
+		if (i != _elements.end())
+		{
+			auto i = _elements.begin();
+			auto key = const_cast<SStr*>(i->first);
+			auto value = const_cast<SVal*>(i->second);
+			_elements.erase(i);
+			delete key;
+			delete value;
+		}
+		_elements.emplace(key, value);
+	}
+
+	void forEach(std::function<void (const std::pair<const SStr* const, SVal*>&)> handler) const
+	{
+		std::for_each(_elements.begin(), _elements.end(), handler);
 	}
 };

@@ -14,22 +14,20 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.04.08
+// File created on: 2017.04.17
 
-// SBool.hpp
+// SInt.hpp
 
 
 #pragma once
 
-#include "SVal.hpp"
-
-class SBool: public SVal
+class SInt: public SNum
 {
 private:
-	bool _value;
+	int64_t _value;
 
 public:
-	SBool(bool value): _value(value) {};
+	SInt(int64_t value): _value(value) {}
 
 	auto value() const
 	{
