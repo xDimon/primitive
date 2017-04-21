@@ -21,60 +21,89 @@
 
 #pragma once
 
-#include <string>
-#include <spdlog/spdlog.h>
-#include <spdlog/logger.h>
-
 #define LOG_TRACE_ON
 
-class Log: protected spdlog::logger
+#include <string>
+#include <thread>
+#include <P7_Client.h>
+#include <P7_Trace.h>
+
+struct IP7_Trace_Deleter
 {
+	void operator()(IP7_Trace* logTrace)
+	{
+		logTrace->Release();
+	}
+};
+
+class Log
+{
+private:
+	std::string _name;
+
+	std::unique_ptr<IP7_Trace, IP7_Trace_Deleter> _logTrace;
+	IP7_Trace::hModule _logModule;
+
 public:
 	Log();
+
 	explicit Log(std::string name);
+
 	virtual ~Log();
 
-	virtual Log& log()
+	virtual Log &log()
 	{
 		return *this;
 	}
-	template <typename... Args>
-	void trace(const char* fmt, const Args&... args)
+
+	virtual const std::string& name() const
+	{
+		return _name;
+	}
+
+	template<typename... Args>
+	void trace(const char *fmt, const Args &... args)
 	{
 #if defined(LOG_TRACE_ON)
-		spdlog::logger::trace(fmt, args...);
+		_logTrace->P7_TRACE(_logModule, fmt, args...);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif // defined(LOG_TRACE_ON)
 	}
 
-	template <typename... Args>
-	void debug(const char* fmt, const Args&... args)
+	template<typename... Args>
+	void debug(const char *fmt, const Args &... args)
 	{
 #if defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
-		spdlog::logger::debug(fmt, args...);
+		_logTrace->P7_DEBUG(_logModule, fmt, args...);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif // defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
 	}
 
-	template <typename... Args>
-	void info(const char* fmt, const Args&... args)
+	template<typename... Args>
+	void info(const char *fmt, const Args &... args)
 	{
-		spdlog::logger::info(fmt, args...);
+		_logTrace->P7_INFO(_logModule, fmt, args...);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
-	template <typename... Args>
-	void warn(const char* fmt, const Args&... args)
+	template<typename... Args>
+	void warn(const char *fmt, const Args &... args)
 	{
-		spdlog::logger::warn(fmt, args...);
+		_logTrace->P7_WARNING(_logModule, fmt, args...);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
-	template <typename... Args>
-	void error(const char* fmt, const Args&... args)
+	template<typename... Args>
+	void error(const char *fmt, const Args &... args)
 	{
-		spdlog::logger::error(fmt, args...);
+		_logTrace->P7_ERROR(_logModule, fmt, args...);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
-	template <typename... Args>
-	void critical(const char* fmt, const Args&... args)
+	template<typename... Args>
+	void critical(const char *fmt, const Args &... args)
 	{
-		spdlog::logger::critical(fmt, args...);
+		_logTrace->P7_CRITICAL(_logModule, fmt, args...);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 };

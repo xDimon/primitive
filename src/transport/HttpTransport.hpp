@@ -31,11 +31,11 @@ public:
 	: Log("HttpTransport")
 	, Transport(f, args...)
 	{
-		log().debug("Create '{}'", name());
+		log().debug("Create '%s'", name().c_str());
 	}
 	virtual ~HttpTransport()
 	{
-		log().debug("Destroy '{}'", name());
+		log().debug("Destroy '%s'", name().c_str());
 	}
 
 	virtual bool processing(std::shared_ptr<Connection> connection);

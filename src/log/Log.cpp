@@ -20,12 +20,21 @@
 
 
 #include "Log.hpp"
+#include "LoggerManager.hpp"
 
 Log::Log(std::string name)
-: spdlog::logger([](std::string name){name.resize(15, ' '); return name;}(name), spdlog::sink_ptr(new spdlog::sinks::stdout_sink_mt()))
+: _name([](std::string name){name.resize(18, ' '); return name;}(name))
 {
-	set_pattern("%Y-%m-%d %T.%f\t%t\t%n\t[%L] %v");
-	set_level(spdlog::level::debug);
+	//get shared P7 trace object 1
+	_logTrace.reset(LoggerManager::getLogTrace());
+	if (!_logTrace)
+	{
+		throw std::runtime_error("Can't get shared p7-channel");
+	}
+
+	_logModule = nullptr;
+
+	_logTrace->Register_Module(_name.c_str(), &_logModule);
 }
 
 Log::Log()
@@ -35,5 +44,4 @@ Log::Log()
 
 Log::~Log()
 {
-
 }

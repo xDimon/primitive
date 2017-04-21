@@ -58,13 +58,13 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 		if (!endHeaders && connection->dataLen() < (1 << 12))
 		{
-			log().debug("Not anough data for read headers ({} bytes)", connection->dataLen());
+			log().debug("Not anough data for read headers (%zu bytes)", connection->dataLen());
 			return true;
 		}
 
 		if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
 		{
-			log().debug("Headers part of request too large ({} bytes)", endHeaders - connection->dataPtr());
+			log().debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
 
 			std::stringstream ss;
 			ss << "HTTP/1.0 400 Bad request\r\n"
@@ -87,7 +87,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 		size_t headersSize = endHeaders - connection->dataPtr() + 4;
 
-		log().debug("Read {} bytes of request headers", headersSize);
+		log().debug("Read %zu bytes of request headers", headersSize);
 
 		try
 		{
@@ -177,7 +177,14 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			// Недостаточно данных для получения размера заголовка фрейма
 			if (connection->dataLen() < 2)
 			{
-				log().debug("Not anough data for calc frame header size ({} < 2)", connection->dataLen());
+				if (connection->dataLen())
+				{
+					log().debug("Not anough data for calc frame header size (%zu < 2)", connection->dataLen());
+				}
+				else
+				{
+					log().debug("No more data");
+				}
 				break;
 			}
 
@@ -185,13 +192,13 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			size_t headerSize = WsFrame::calcHeaderSize(connection->dataPtr());
 			if (connection->dataLen() < headerSize)
 			{
-				log().debug("Not anough data for get frame header ({} < {})", connection->dataLen(), headerSize);
+				log().debug("Not anough data for get frame header (%zu < %zu)", connection->dataLen(), headerSize);
 				break;
 			}
 
 			auto frame = WsFrame::Ptr(new WsFrame(connection->dataPtr(), connection->dataPtr() + connection->dataLen()));
 
-			log().debug("Read {} bytes of frame header. Size of data: {} bytes", headerSize, frame->contentLength());
+			log().debug("Read %zu bytes of frame header. Size of data: %zu bytes", headerSize, frame->contentLength());
 
 			context->setFrame(frame);
 
@@ -210,7 +217,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 			if (context->getFrame()->contentLength() > context->getFrame()->dataLen())
 			{
-				log().debug("Not anough data for read frame body ({} < {})", context->getFrame()->dataLen(), context->getFrame()->contentLength());
+				log().debug("Not anough data for read frame body (%zu < %zu)", context->getFrame()->dataLen(), context->getFrame()->contentLength());
 				break;
 			}
 		}
@@ -220,7 +227,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 		if (context->getFrame()->opcode() == WsFrame::Opcode::Text)
 		{
-			log().debug("FRAME-TEXT: \"{}\" {} bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+			log().debug("FRAME-TEXT: \"%s\" %zu bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
 			WsFrame::send(connection, WsFrame::Opcode::Text, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
 			context->getFrame().reset();
 			n++;
@@ -228,7 +235,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 		}
 		else if (context->getFrame()->opcode() == WsFrame::Opcode::Binary)
 		{
-			log().debug("FRAME-BINARY: {} bytes", context->getFrame()->dataLen());
+			log().debug("FRAME-BINARY: %zu bytes", context->getFrame()->dataLen());
 			WsFrame::send(connection, WsFrame::Opcode::Text, "Received binary data", 21);
 			context->getFrame().reset();
 			n++;
@@ -237,14 +244,14 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 		else if (context->getFrame()->opcode() == WsFrame::Opcode::Ping)
 		{
 			WsFrame::send(connection, WsFrame::Opcode::Pong, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
-			log().debug("FRAME-PING: {} bytes", context->getFrame()->dataLen());
+			log().debug("FRAME-PING: %zu bytes", context->getFrame()->dataLen());
 			context->getFrame().reset();
 			n++;
 			continue;
 		}
 		else if (context->getFrame()->opcode() == WsFrame::Opcode::Close)
 		{
-			log().debug("FRAME-CLOSE: {} bytes", context->getFrame()->dataLen());
+			log().debug("FRAME-CLOSE: %zu bytes", context->getFrame()->dataLen());
 			WsFrame::send(connection, WsFrame::Opcode::Close, "Bye!", 4);
 			context.reset();
 			n++;
@@ -252,7 +259,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 		}
 		else
 		{
-			log().debug("FRAME-UNSUPPORTED(#{}): {} bytes", static_cast<int>(context->getFrame()->opcode()), context->getFrame()->dataLen());
+			log().debug("FRAME-UNSUPPORTED(#%d): %zu bytes", static_cast<int>(context->getFrame()->opcode()), context->getFrame()->dataLen());
 			WsFrame::send(connection, WsFrame::Opcode::Close, "Unsupported opcode", 21);
 			context.reset();
 			n++;
@@ -260,7 +267,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 		}
 	}
 
-	log().debug("Processed {} request, remain {} bytes", n, connection->dataLen());
+	log().debug("Processed %d request, remain %zu bytes", n, connection->dataLen());
 
 	return true;
 }

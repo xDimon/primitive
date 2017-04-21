@@ -42,12 +42,12 @@ TcpConnection::TcpConnection(Transport::Ptr& transport, int sock, const sockaddr
 
 	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
 
-	log().debug("Create {}", name());
+	log().debug("Create %s", name().c_str());
 }
 
 TcpConnection::~TcpConnection()
 {
-	log().debug("Destroy {}", name());
+	log().debug("Destroy %s", name().c_str());
 
 	shutdown(_sock, SHUT_RD);
 }
@@ -97,7 +97,7 @@ void TcpConnection::watch(epoll_event &ev)
 
 bool TcpConnection::processing()
 {
-	log().debug("Processing on {}", name());
+	log().debug("Processing on %s", name().c_str());
 
 	do
 	{
@@ -155,7 +155,7 @@ bool TcpConnection::processing()
 
 bool TcpConnection::writeToSocket()
 {
-	log().debug("Write into socket on {}", name());
+	log().trace("Write into socket on %s", name().c_str());
 
 	// Отправляем данные
 	for (;;)
@@ -184,7 +184,7 @@ bool TcpConnection::writeToSocket()
 			}
 
 			// Ошибка записи
-			log().debug("Fail writing data (error: '')", strerror(errno));
+			log().debug("Fail writing data (error: '%s')", strerror(errno));
 
 			_error = true;
 			return false;
@@ -198,7 +198,7 @@ bool TcpConnection::writeToSocket()
 
 bool TcpConnection::readFromSocket()
 {
-	log().debug("Read from into socket on {}", name());
+	log().trace("Read from socket on %s", name().c_str());
 
 	// Пытаемся полностью заполнить буфер
 	for (;;)
@@ -233,12 +233,12 @@ bool TcpConnection::readFromSocket()
 			// Нет готовых данных - продолжаем ждать
 			if (errno == EAGAIN)
 			{
-				log().debug("No more read on {}", name());
+				log().debug("No more read on %s", name().c_str());
 				break;
 			}
 
 			// Ошибка чтения
-			log().debug("Error '{}' while read on {}", strerror(errno), name());
+			log().debug("Error '%s' while read on %s", strerror(errno), name().c_str());
 
 			_error = true;
 			return false;
@@ -246,7 +246,7 @@ bool TcpConnection::readFromSocket()
 		if (n == 0)
 		{
 			// Клиент отключился
-			log().debug("Client disconnected on {}", name());
+			log().debug("Client disconnected on %s", name().c_str());
 
 			_noRead = true;
 			return false;
@@ -254,7 +254,7 @@ bool TcpConnection::readFromSocket()
 
 		_inBuff.forward(n);
 
-		log().debug("Read {} bytes (summary {}) on {}", n, _inBuff.dataLen(), name());
+		log().debug("Read %d bytes (summary %d) on %s", n, _inBuff.dataLen(), name().c_str());
 	}
 
 	if (_inBuff.dataLen())

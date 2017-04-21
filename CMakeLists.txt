@@ -47,12 +47,13 @@ endif ()
 include_directories(${LIBCONFIG++_INCLUDE_DIR})
 list(APPEND "${CODENAME}_LIBRARIES" ${LIBCONFIG++_LIBRARIES})
 
-# Подключаем spdlog
-find_package(Spdlog)
-if (NOT SPDLOG_FOUND)
-    message(FATAL_ERROR "Spdlog not found")
+# Подключаем p7
+find_package(P7)
+if (NOT P7_FOUND)
+    add_subdirectory(lib/p7)
 endif ()
-include_directories(${SPDLOG_INCLUDE_DIR})
+include_directories(${P7_INCLUDE_DIR})
+list(APPEND "${CODENAME}_LIBRARIES" ${P7_LIBRARIES})
 
 # Подключаем openssl
 find_package(OpenSSL)

@@ -30,6 +30,7 @@
 #include "../transport/Transport.hpp"
 #include "../utils/Context.hpp"
 #include "ConnectionEvent.hpp"
+#include <unistd.h>
 
 struct sockaddr_in;
 

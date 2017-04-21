@@ -31,9 +31,6 @@
 #include <netinet/in.h>
 #include <openssl/ssl.h>
 
-/**
- * Подключение
- */
 class SslConnection: public TcpConnection
 {
 private:

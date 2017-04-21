@@ -62,13 +62,20 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 			if (!endHeaders && connection->dataLen() < (1 << 12))
 			{
-				log().debug("Not anough data for read headers ({} bytes)", connection->dataLen());
+				if (connection->dataLen())
+				{
+					log().debug("Not anough data for read headers (%zu bytes)", connection->dataLen());
+				}
+				else
+				{
+					log().debug("No more data");
+				}
 				break;
 			}
 
 			if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
 			{
-				log().debug("Headers part of request too large ({} bytes)", endHeaders - connection->dataPtr());
+				log().debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
 
 				std::stringstream ss;
 				ss << "HTTP/1.0 400 Bad request\r\n"
@@ -91,7 +98,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 			size_t headersSize = endHeaders - connection->dataPtr() + 4;
 
-			log().debug("Read {} bytes of request headers", headersSize);
+			log().debug("Read %zu bytes of request headers", headersSize);
 
 			try
 			{
@@ -140,7 +147,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 					if (context->getRequest()->contentLength() > context->getRequest()->dataLen())
 					{
-						log().debug("Not anough data for read request body ({} < {})", context->getRequest()->dataLen(), context->getRequest()->contentLength());
+						log().debug("Not anough data for read request body ({%zu < %zu)", context->getRequest()->dataLen(), context->getRequest()->contentLength());
 						break;
 					}
 				}
@@ -153,13 +160,13 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 				if (!connection->noRead())
 				{
-					log().debug("Not read all request body yet (read {})", context->getRequest()->dataLen());
+					log().debug("Not read all request body yet (read %zu)", context->getRequest()->dataLen());
 					break;
 				}
 			}
 		}
 
-		log().debug("REQUEST: {} {} {}", context->getRequest()->method_s(), context->getRequest()->uri_s(), context->getRequest()->hasContentLength() ? context->getRequest()->contentLength() : 0);
+		log().debug("REQUEST: %s %s %zu", context->getRequest()->method_s().c_str(), context->getRequest()->uri_s().c_str(), context->getRequest()->hasContentLength() ? context->getRequest()->contentLength() : 0);
 
 		context->getRequest().reset();
 
@@ -182,7 +189,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 		n++;
 	}
 
-	log().debug("Processed {} request, remain {} bytes", n, connection->dataLen());
+	log().debug("Processed %d request, remain %zu bytes", n, connection->dataLen());
 
 	return false;
 }

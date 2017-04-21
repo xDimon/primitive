@@ -1,0 +1,25 @@
+find_path(P7_INCLUDE_DIR P7_*.h /usr/include /usr/local/include)
+
+find_library(P7_LIBRARY NAMES p7 PATH /usr/lib /usr/local/lib)
+
+if (P7_INCLUDE_DIR AND P7_LIBRARY)
+	set(P7_FOUND TRUE)
+	set(P7_INCLUDE_DIRS  ${P7_INCLUDE_DIR})
+	set(P7_LIBRARIES  ${P7_LIBRARY})
+endif ()
+
+if (P7_FOUND)
+	if (NOT P7_FIND_QUIETLY)
+		message(STATUS "Found P7: ${P7_LIBRARY}")
+	endif ()
+else ()
+	if (P7_FIND_REQUIRED)
+		if (NOT P7_INCLUDE_DIR)
+			message(FATAL_ERROR "Could not find P7 header file!")
+		endif ()
+
+		if (NOT P7_LIBRARY)
+			message(FATAL_ERROR "Could not find P7 library file!")
+		endif ()
+	endif ()
+endif ()

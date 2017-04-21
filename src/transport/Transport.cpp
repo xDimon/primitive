@@ -29,7 +29,7 @@ bool Transport::enable()
 		return true;
 	}
 
-	log().debug("Enable '{}'", name());
+	log().debug("Enable '%s'", name().c_str());
 
 	try
 	{
@@ -43,7 +43,7 @@ bool Transport::enable()
 	}
 	catch(std::runtime_error exception)
 	{
-		log().debug("Can't create Acceptor for '{}': {}", name(), exception.what());
+		log().debug("Can't create Acceptor for '%s': %s", name().c_str(), exception.what());
 
 		return false;
 	}
@@ -56,7 +56,7 @@ bool Transport::disable()
 		return true;
 	}
 
-	log().debug("Disable '{}'", name());
+	log().debug("Disable '%s'", name().c_str());
 
 	ConnectionManager::remove(_acceptor.lock());
 

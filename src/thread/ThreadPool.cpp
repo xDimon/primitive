@@ -22,6 +22,7 @@
 #include <iostream>
 #include <signal.h>
 #include "ThreadPool.hpp"
+#include "../log/LoggerManager.hpp"
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
@@ -66,7 +67,13 @@ void ThreadPool::createThread()
 {
 	log().debug("Create new thread");
 
-	auto thread = new Thread([this](){
+	static size_t _workerCounter = 0;
+	char buff[32];
+	snprintf(buff, sizeof(buff), "Worker#%zu", ++_workerCounter);
+
+	auto thread = new Thread([this,buff](){
+		LoggerManager::regThread(buff);
+
 		log().debug("Start new thread");
 
 		// Блокируем реакцию на все сигналы
@@ -108,6 +115,8 @@ void ThreadPool::createThread()
 			// Execute task
 			task();
 		}
+
+		LoggerManager::unregThread();
 	});
 
 	_workers.emplace(thread->get_id(), thread);
