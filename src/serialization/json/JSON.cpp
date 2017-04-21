@@ -223,7 +223,7 @@ SStr* JSON::decodeString(std::istringstream& iss)
 		throw std::runtime_error("Wrong token");
 	}
 
-	while (!iss.eof())
+	while (iss.peek() != -1)
 	{
 		c = iss.peek();
 		// Конец строки
@@ -236,6 +236,21 @@ SStr* JSON::decodeString(std::istringstream& iss)
 		else if (c == '\\')
 		{
 			uint32_t symbol = decodeEscaped(iss);
+
+			if (symbol >= 0xD800 && symbol <= 0xDFFF) // Суррогатная пара UTF16
+			{
+				if ((symbol & 0b1111'1100'0000'0000) != 0b1101'1000'0000'0000)
+				{
+					throw std::runtime_error("Bad escaped symbol: wrong for first byte of utf-16 surrogate pair");
+				}
+				uint32_t symbol2 = decodeEscaped(iss);
+				if ((symbol2 & 0b1111'1100'0000'0000) != 0b1101'1100'0000'0000)
+				{
+					throw std::runtime_error("Bad escaped symbol: wrong for second byte of utf-16 surrogate pair");
+				}
+				symbol = ((((symbol >> 6) & 0b1111) + 1) << 16) | ((symbol & 0b11'1111) << 10) | (symbol2 & 0b0011'1111'1111);
+			}
+
 			putUtf8Symbol(*str, symbol);
 		}
 		// Управляющий символ
@@ -384,15 +399,15 @@ uint32_t JSON::decodeEscaped(std::istringstream& iss)
 		c = iss.get();
 		if (c >= '0' && c <= '9')
 		{
-			val = (val << 4) | ((c & 0x0F) - '0');
+			val = (val << 4) | ((c - '0') & 0x0F);
 		}
 		else if (c >= 'A' && c <= 'F')
 		{
-			val = (val << 4) | ((c & 0x0F) - 'A');
+			val = (val << 4) | ((10 + c - 'A') & 0x0F);
 		}
 		else if (c >= 'a' && c <= 'f')
 		{
-			val = (val << 4) | ((c & 0x0F) - 'a');
+			val = (val << 4) | ((10 + c - 'a') & 0x0F);
 		}
 		else
 		{
@@ -402,8 +417,6 @@ uint32_t JSON::decodeEscaped(std::istringstream& iss)
 
 	return val;
 }
-
-
 
 SNum* JSON::decodeNumber(std::istringstream& iss)
 {
