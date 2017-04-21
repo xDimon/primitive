@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <sstream>
+#include "../log/Log.hpp"
 #include "TcpAcceptor.hpp"
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"

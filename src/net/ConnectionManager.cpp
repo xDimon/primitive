@@ -22,6 +22,8 @@
 #include <cstring>
 #include "ConnectionManager.hpp"
 
+#include <unistd.h>
+#include <cstring>
 #include "../thread/ThreadPool.hpp"
 #include "TcpConnection.hpp"
 #include <unistd.h>

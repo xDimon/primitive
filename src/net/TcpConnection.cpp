@@ -23,7 +23,10 @@
 #include "ConnectionManager.hpp"
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <sstream>
 #include <cstring>
+#include <unistd.h>
+
 
 TcpConnection::TcpConnection(Transport::Ptr& transport, int sock, const sockaddr_in &sockaddr)
 : Log("TcpConnection")

@@ -22,6 +22,8 @@
 #include <unistd.h>
 #include "Connection.hpp"
 
+#include <unistd.h>
+
 Connection::Connection(Transport::Ptr& transport)
 : Log("Conn")
 , _transport(transport)

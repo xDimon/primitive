@@ -19,6 +19,7 @@
 // PacketTransport.cpp
 
 
+#include <sstream>
 #include "PacketTransport.hpp"
 #include "../net/TcpConnection.hpp"
 #include "../utils/Packet.hpp"

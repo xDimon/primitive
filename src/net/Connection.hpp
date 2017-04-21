@@ -158,9 +158,5 @@ public:
 
 	virtual bool processing() = 0;
 
-	void close()
-	{
-		::close(_sock);
-		_sock = -1;
-	}
+	void close();
 };
