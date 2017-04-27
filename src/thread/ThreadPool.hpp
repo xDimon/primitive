@@ -58,7 +58,8 @@ public:
 	static Thread *getCurrent();
 
 private:
-	size_t _workerNum;
+	size_t _workerCounter;
+	size_t _workerNumber;
 
 	// need to keep track of threads so we can join them
 	std::map<std::thread::id, Thread*> _workers;
@@ -88,7 +89,7 @@ auto ThreadPool::enqueue(F &&f, Args &&... args)->std::future<typename std::resu
 		std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
 
 		// don't allow enqueueing after stopping the pool
-		if (getInstance()._workerNum == 0)
+		if (getInstance()._workerNumber == 0)
 		{
 			throw std::runtime_error("enqueue on stopped ThreadPool");
 		}

@@ -26,7 +26,8 @@
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
 : Log("ThreadPool")
-, _workerNum(0)
+, _workerCounter(0)
+, _workerNumber(0)
 {
 }
 
@@ -36,7 +37,7 @@ ThreadPool::~ThreadPool()
 	// Switch to stop
 	{
 		std::unique_lock<std::mutex> lock(_queue_mutex);
-		_workerNum = 0;
+		_workerNumber = 0;
 	}
 
 	// Talk to stop threads
@@ -51,10 +52,8 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::setThreadNum(size_t num)
 {
-	{
-		std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
-		getInstance()._workerNum = num;
-	}
+	std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
+	getInstance()._workerNumber = num;
 
 	size_t remain = (num < getInstance()._workers.size()) ? 0 : (num - getInstance()._workers.size());
 	while (remain--)
@@ -87,14 +86,14 @@ void ThreadPool::createThread()
 
 				// Condition for run thread
 				_condition.wait(lock, [this](){
-					return _workerNum == 0 || !_tasks.empty();
+					return _workerNumber == 0 || !_tasks.empty();
 				});
 
 				// Condition for end thread
-				if (_workerNum == 0 && _tasks.empty())
+				if (_workerNumber == 0 && _tasks.empty())
 				{
 					log().debug("End thread");
-					return;
+					break;
 				}
 
 				log().trace("Get task from queue");
@@ -123,7 +122,7 @@ void ThreadPool::wait()
 	// Condition for close pool
 	getInstance()._condition.wait(
 		lock, [pool = &getInstance()]()->bool {
-			return !pool->_workerNum && pool->_tasks.empty();
+			return !pool->_workerNumber && pool->_tasks.empty();
 		}
 	);
 }
