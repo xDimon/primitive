@@ -69,7 +69,7 @@ void ThreadPool::createThread()
 
 	static size_t _workerCounter = 0;
 	char buff[32];
-	snprintf(buff, sizeof(buff), "Worker#%zu", ++_workerCounter);
+	snprintf(buff, sizeof(buff), "Worker_%zu", ++_workerCounter);
 
 	auto thread = new Thread([this,buff](){
 		LoggerManager::regThread(buff);

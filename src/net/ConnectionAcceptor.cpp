@@ -14,42 +14,19 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.09
+// File created on: 2017.04.28
 
-// TcpAcceptor.hpp
+// ConnectionAcceptor.cpp
 
 
-#pragma once
-
-#include <mutex>
 #include "ConnectionAcceptor.hpp"
 
-struct sockaddr_in;
-
-class TcpAcceptor : public ConnectionAcceptor
+ConnectionAcceptor::ConnectionAcceptor(Transport::Ptr& transport)
+: Log("ConnectionAcceptor")
+, Connection(transport)
 {
-private:
-	std::string _name;
+}
 
-protected:
-	std::string _host;
-	std::uint16_t _port;
-	std::mutex _mutex;
-
-public:
-	TcpAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port);
-	virtual ~TcpAcceptor();
-
-	virtual const std::string& name();
-
-	virtual void watch(epoll_event &ev);
-
-	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
-
-	virtual bool processing();
-
-	static TcpAcceptor::Ptr create(Transport::Ptr& transport, std::string host, std::uint16_t port)
-	{
-		return std::make_shared<TcpAcceptor>(transport, host, port);
-	}
-};
+ConnectionAcceptor::~ConnectionAcceptor()
+{
+}
