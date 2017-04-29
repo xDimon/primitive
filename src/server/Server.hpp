@@ -23,8 +23,8 @@
 
 #include <memory>
 #include <map>
+#include "../configs/Config.hpp"
 #include "../transport/Transport.hpp"
-#include "../configs/Configs.hpp"
 
 class Server: public Log
 {
@@ -35,12 +35,12 @@ private:
 
 	std::mutex _mutex;
 
-	Configs::Ptr _configs;
+	Config::Ptr _configs;
 
 	std::map<const std::string, Transport::Ptr> _transports;
 
 public:
-	Server(Configs::Ptr &configs);
+	Server(Config::Ptr &configs);
 	virtual ~Server();
 
 	static std::string httpName()

@@ -22,7 +22,7 @@
 #include <iostream>
 #include "../src/thread/ThreadPool.hpp"
 #include "../src/options/Options.hpp"
-#include "../src/configs/Configs.hpp"
+#include "../src/configs/Config.hpp"
 #include "../src/server/Server.hpp"
 
 int main(int argc, char *argv[])
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
 	Options::Ptr options(new Options(argc, argv));
 
-	Configs::Ptr configs(new Configs(options));
+	Config::Ptr configs(new Config(options));
 
 	Server::Ptr server(new Server(configs));
 

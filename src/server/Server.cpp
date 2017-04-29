@@ -28,7 +28,7 @@
 #include "Server.hpp"
 #include "../net/ConnectionManager.hpp"
 
-Server::Server(Configs::Ptr &configs)
+Server::Server(Config::Ptr &configs)
 : Log("Server")
 , _configs(configs)
 {

@@ -16,14 +16,24 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.02.25
 
-// Configs.cpp
+// Config.hpp
 
 
-#include "Configs.hpp"
+#pragma once
 
-Configs::Configs(Options::Ptr &options)
-: _options(options)
+#include <memory>
+#include "../options/Options.hpp"
+#include <libconfig.h++>
+
+class Config: public libconfig::Config
 {
-	auto &configPath = _options->getConfig();
+public:
+	typedef std::shared_ptr<Config> Ptr;
 
-}
+private:
+	Options::Ptr _options;
+
+public:
+	Config(Options::Ptr &options);
+	virtual ~Config();
+};
