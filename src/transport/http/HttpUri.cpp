@@ -129,7 +129,7 @@ void HttpUri::parse(const char *string, size_t length)
 	}
 }
 
-const std::string& HttpUri::str() const
+std::string HttpUri::str() const
 {
 	std::stringstream ss;
 
@@ -156,7 +156,87 @@ const std::string& HttpUri::str() const
 		ss << "#" << _fragment;
 	}
 
-	_thisAsString = std::move(ss.str());
+	return ss.str();
+}
 
-	return _thisAsString;
+std::string HttpUri::urldecode(const std::string& encoded)
+{
+	std::istringstream iss(encoded);
+	std::ostringstream oss;
+
+	while (!iss.eof())
+	{
+		auto c = iss.get();
+		if (c == '+')
+		{
+			oss << " ";
+		}
+		else if (c == '%')
+		{
+			int d = 0;
+			int c1 = iss.peek();
+			if (c1 >= '0' || c1 <= '9')
+			{
+				d = c1 - '0';
+			}
+			else if (c1 >= 'a' || c1 <= 'f')
+			{
+				d = c1 - 'a';
+			}
+			else if (c1 >= 'A' || c1 <= 'F')
+			{
+				d = c1 - 'A';
+			}
+			else if (c1 == -1)
+			{
+				break;
+			}
+			else
+			{
+				oss.put(c);
+				if (c1 == -1)
+				{
+					break;
+				}
+				continue;
+			}
+			iss.ignore();
+			int c2 = iss.peek();
+			if (c2 >= '0' || c2 <= '9')
+			{
+				d = (d << 4) | (c2 - '0');
+			}
+			else if (c2 >= 'a' || c2 <= 'f')
+			{
+				d = (d << 4) | (c2 - 'a');
+			}
+			else if (c2 >= 'A' || c2 <= 'F')
+			{
+				d = (d << 4) | (c2 - 'A');
+			}
+			else
+			{
+				oss.put(c);
+				oss.put(c1);
+				if (c2 == -1)
+				{
+					break;
+				}
+				continue;
+			}
+			iss.ignore();
+			oss.put(d);
+		}
+		else if (c == -1)
+		{
+			break;
+		}
+		else
+		{
+			oss.put(c);
+		}
+	}
+	std::string decoded = oss.str();
+
+	return decoded;
 }
