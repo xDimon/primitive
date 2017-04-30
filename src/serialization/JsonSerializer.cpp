@@ -21,10 +21,13 @@
 
 #include <cmath>
 #include <memory>
+#include <limits>
+#include <iomanip>
 #include "JsonSerializer.hpp"
 #include "SInt.hpp"
 #include "SFloat.hpp"
 #include "../utils/literals.hpp"
+
 
 SVal* JsonSerializer::decode(const std::string &data)
 {
@@ -45,7 +48,7 @@ SVal* JsonSerializer::decode(const std::string &data)
 	skipSpaces();
 	if (!_iss.eof())
 	{
-		throw std::runtime_error("Redundant data");
+		throw std::runtime_error("Redundant bytes after parsed data");
 	}
 
 	return value;
@@ -114,7 +117,7 @@ SVal* JsonSerializer::decodeValue()
 			return decodeNull();
 
 		default:
-			throw std::runtime_error("Unknown token");
+			throw std::runtime_error("Unknown token at parse value");
 	}
 }
 
@@ -125,38 +128,54 @@ SObj* JsonSerializer::decodeObject()
 	auto c = _iss.get();
 	if (c != '{')
 	{
-		throw std::runtime_error("Wrong token");
+		throw std::runtime_error("Wrong token for open object");
+	}
+
+	skipSpaces();
+
+	if (_iss.peek() == '}')
+	{
+		_iss.ignore();
+		return obj.release();
 	}
 
 	while (!_iss.eof())
 	{
-		skipSpaces();
-
-		if (_iss.peek() == '}')
+		std::unique_ptr<SStr> key;
+		try
 		{
-			_iss.ignore();
-			return obj.release();
+			key.reset(decodeString());
 		}
-
-		auto key = std::unique_ptr<SStr>(decodeString());
+		catch (const std::runtime_error& exception)
+		{
+			throw std::runtime_error(std::string("Can't parse field-key of object: ") + exception.what());
+		}
 
 		skipSpaces();
 
 		c = _iss.get();
 		if (c != ':')
 		{
-			throw std::runtime_error("Wrong token");
+			throw std::runtime_error("Wrong token after field-key of object");
 		}
 
 		skipSpaces();
 
-		obj->insert(key.release(), decodeValue());
+		try
+		{
+			obj->insert(key.release(), decodeValue());
+		}
+		catch (const std::runtime_error& exception)
+		{
+			throw std::runtime_error(std::string("Can't parse field-value of object: ") + exception.what());
+		}
 
 		skipSpaces();
 
 		c = _iss.get();
 		if (c == ',')
 		{
+			skipSpaces();
 			continue;
 		}
 		else if (c == '}')
@@ -164,10 +183,10 @@ SObj* JsonSerializer::decodeObject()
 			return obj.release();
 		}
 
-		throw std::runtime_error("Wrong token");
+		throw std::runtime_error("Wrong token after field-value of object");
 	}
 
-	throw std::runtime_error("Unexpect out of data");
+	throw std::runtime_error("Unexpect out of data during parse object");
 }
 
 SArr* JsonSerializer::decodeArray()
@@ -177,26 +196,34 @@ SArr* JsonSerializer::decodeArray()
 	auto c = _iss.get();
 	if (c != '[')
 	{
-		throw std::runtime_error("Wrong token");
+		throw std::runtime_error("Wrong token for open array");
+	}
+
+	skipSpaces();
+
+	if (_iss.peek() == ']')
+	{
+		_iss.ignore();
+		return arr.release();
 	}
 
 	while (!_iss.eof())
 	{
-		skipSpaces();
-
-		if (_iss.peek() == ']')
+		try
 		{
-			_iss.ignore();
-			return arr.release();
+			arr->insert(decodeValue());
 		}
-
-		arr->insert(decodeValue());
+		catch (const std::runtime_error& exception)
+		{
+			throw std::runtime_error(std::string("Can't parse element of array: ") + exception.what());
+		}
 
 		skipSpaces();
 
 		c = _iss.get();
 		if (c == ',')
 		{
+			skipSpaces();
 			continue;
 		}
 		else if (c == ']')
@@ -204,10 +231,10 @@ SArr* JsonSerializer::decodeArray()
 			return arr.release();
 		}
 
-		throw std::runtime_error("Wrong token");
+		throw std::runtime_error("Wrong token after element of array");
 	}
 
-	throw std::runtime_error("Unexpect out of data");
+	throw std::runtime_error("Unexpect out of data during parse array");
 }
 
 SStr* JsonSerializer::decodeString()
@@ -217,7 +244,7 @@ SStr* JsonSerializer::decodeString()
 	auto c = _iss.get();
 	if (c != '"')
 	{
-		throw std::runtime_error("Wrong token");
+		throw std::runtime_error("Wrong token for open string");
 	}
 
 	while (_iss.peek() != -1)
@@ -304,7 +331,7 @@ SStr* JsonSerializer::decodeString()
 			{
 				if (_iss.eof())
 				{
-					throw std::runtime_error("Unxpected end of data");
+					throw std::runtime_error("Unxpected end of data during parse utf8 symbol");
 				}
 				c = _iss.get();
 				if ((c & 0b11000000) != 0b10000000)
@@ -317,7 +344,7 @@ SStr* JsonSerializer::decodeString()
 		}
 	}
 
-	throw std::runtime_error("Unexpect out of data");
+	throw std::runtime_error("Unexpect out of data during parse string value");
 }
 
 SBool* JsonSerializer::decodeBool()
@@ -340,10 +367,10 @@ SBool* JsonSerializer::decodeBool()
 	}
 	if (_iss.eof())
 	{
-		throw std::runtime_error("Unxpected end of data");
+		throw std::runtime_error("Unxpected end of data during try parse boolean value");
 	}
 
-	throw std::runtime_error("Wrong token");
+	throw std::runtime_error("Wrong token for boolean value");
 }
 
 SNull* JsonSerializer::decodeNull()
@@ -355,10 +382,10 @@ SNull* JsonSerializer::decodeNull()
 					return new SNull();
 	if (_iss.eof())
 	{
-		throw std::runtime_error("Unxpected end of data");
+		throw std::runtime_error("Unxpected end of data during try parse null value");
 	}
 
-	throw std::runtime_error("Wrong token");
+	throw std::runtime_error("Wrong token for null value");
 }
 
 uint32_t JsonSerializer::decodeEscaped()
@@ -366,11 +393,11 @@ uint32_t JsonSerializer::decodeEscaped()
 	auto c = _iss.get();
 	if (c != '\\')
 	{
-		throw std::runtime_error("Isn't escaped symbol");
+		throw std::runtime_error("Wrong token for start escaped-sequence");
 	}
 	if (_iss.eof())
 	{
-		throw std::runtime_error("Unxpected end of data");
+		throw std::runtime_error("Unxpected end of data during try parse escaped symbol");
 	}
 	c = _iss.get();
 	switch (c)
@@ -384,14 +411,14 @@ uint32_t JsonSerializer::decodeEscaped()
 		case 't': return '\t';
 		case 'r': return '\r';
 		case 'u': break;
-		default: throw std::runtime_error("Wrong token");
+		default: throw std::runtime_error("Wrong token for escaped-sequece");
 	}
 	uint32_t val = 0;
 	for (int i = 0; i < 4; i++)
 	{
 		if (_iss.eof())
 		{
-			throw std::runtime_error("Unxpected end of data");
+			throw std::runtime_error("Unxpected end of data during parse escaped-sequence of utf8 symbol");
 		}
 		c = _iss.get();
 		if (c >= '0' && c <= '9')
@@ -408,7 +435,7 @@ uint32_t JsonSerializer::decodeEscaped()
 		}
 		else
 		{
-			throw std::runtime_error("Wrong token");
+			throw std::runtime_error("Wrong token for escaped-sequece of utf8 symbol");
 		}
 	}
 
@@ -428,6 +455,10 @@ SNum* JsonSerializer::decodeNumber()
 			long double value = 0;
 			_iss >> value;
 			return new SFloat(value);
+		}
+		else if (!isdigit(c) && c != '-')
+		{
+			break;
 		}
 	}
 
@@ -449,7 +480,24 @@ void JsonSerializer::encodeBool(const SBool *value)
 
 void JsonSerializer::encodeString(const SStr *value)
 {
-	_oss << '"' << value->value() << '"';
+	_oss.put('"');
+	for (size_t i = 0; i < value->value().length(); i++)
+	{
+		auto c = value->value()[i];
+		switch (c)
+		{
+			case '"':	_oss.put('\\');	_oss.put('"');	break;
+			case '\\':	_oss.put('\\');	_oss.put('\\');	break;
+			case '/':	_oss.put('\\');	_oss.put('/');	break;
+			case '\b':	_oss.put('\\');	_oss.put('b');	break;
+			case '\f':	_oss.put('\\');	_oss.put('f');	break;
+			case '\n':	_oss.put('\\');	_oss.put('n');	break;
+			case '\t':	_oss.put('\\');	_oss.put('t');	break;
+			case '\r':	_oss.put('\\');	_oss.put('r');	break;
+			default: _oss.put(c);
+		}
+	}
+	_oss.put('"');
 }
 
 void JsonSerializer::encodeNumber(const SNum *value)
@@ -463,7 +511,7 @@ void JsonSerializer::encodeNumber(const SNum *value)
 	const SFloat *floatVal = dynamic_cast<const SFloat*>(value);
 	if (floatVal)
 	{
-		_oss << floatVal->value();
+		_oss << std::setprecision(15) << floatVal->value();
 		return;
 	}
 }
@@ -512,29 +560,29 @@ void JsonSerializer::encodeObject(const SObj *value)
 
 void JsonSerializer::encodeValue(const SVal *value)
 {
-	if (auto p = dynamic_cast<const SStr *>(value))
+	if (auto pStr = dynamic_cast<const SStr *>(value))
 	{
-		encodeString(p);
+		encodeString(pStr);
 	}
-	else if (auto p = dynamic_cast<const SNum *>(value))
+	else if (auto pNum = dynamic_cast<const SNum *>(value))
 	{
-		encodeNumber(p);
+		encodeNumber(pNum);
 	}
-	else if (auto p = dynamic_cast<const SObj *>(value))
+	else if (auto pObj = dynamic_cast<const SObj *>(value))
 	{
-		encodeObject(p);
+		encodeObject(pObj);
 	}
-	else if (auto p = dynamic_cast<const SArr *>(value))
+	else if (auto pArr = dynamic_cast<const SArr *>(value))
 	{
-		encodeArray(p);
+		encodeArray(pArr);
 	}
-	else if (auto p = dynamic_cast<const SBool *>(value))
+	else if (auto pBool = dynamic_cast<const SBool *>(value))
 	{
-		encodeBool(p);
+		encodeBool(pBool);
 	}
-	else if (auto p = dynamic_cast<const SNull *>(value))
+	else if (auto pNull = dynamic_cast<const SNull *>(value))
 	{
-		encodeNull(p);
+		encodeNull(pNull);
 	}
 	else
 	{
