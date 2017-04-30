@@ -28,6 +28,7 @@
 #include "../utils/Time.hpp"
 #include "http/HttpContext.hpp"
 #include "HttpTransport.hpp"
+#include "../serialization/SObj.hpp"
 
 bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 {
@@ -168,23 +169,65 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 		log().debug("REQUEST: %s %s %zu", context->getRequest()->method_s().c_str(), context->getRequest()->uri_s().c_str(), context->getRequest()->hasContentLength() ? context->getRequest()->contentLength() : 0);
 
+		try
+		{
+			std::shared_ptr<SVal> input;
+
+			if (context->getRequest()->dataLen())
+			{
+				auto data = context->getRequest()->data();
+				input.reset(serializer()->decode({data.begin(), data.end()}));
+			}
+			else if (context->getRequest()->uri().hasQuery())
+			{
+				auto data = HttpUri::urldecode(context->getRequest()->uri().query());
+				input.reset(serializer()->decode(data));
+			}
+			else
+			{
+				throw std::runtime_error("No data for parsing");
+			}
+
+			std::ostringstream body;
+			body << "Received:\r\n"
+				 << serializer()->encode(input.get()) << "\r\n";
+
+			std::stringstream ss;
+			ss << "HTTP/1.0 200 OK\r\n"
+			   << "Server: " << Server::httpName() << "\r\n"
+			   << "Date: " << Time::httpDate() << "\r\n"
+			   << "X-Transport: http\r\n"
+			   << "Content-Length: " << body.str().length() << "\r\n"
+			   << "\r\n"
+			   << body.str();
+
+			// Отправляем
+			connection->write(ss.str().c_str(), ss.str().length());
+		}
+		catch (const std::exception& exception)
+		{
+			SObj output;
+			output.insert(new SStr("status"), new SStr("error"));
+			output.insert(new SStr("error"), new SStr(exception.what()));
+
+			auto body = serializer()->encode(&output);
+
+			std::ostringstream ss;
+			ss << "HTTP/1.0 400 OK\r\n"
+			   << "Server: " << Server::httpName() << "\r\n"
+			   << "Date: " << Time::httpDate() << "\r\n"
+			   << "X-Transport: http\r\n"
+			   << "Content-Length: " << body.length() << "\r\n"
+			   << "\r\n"
+			   << body;
+
+			// Отправляем
+			connection->write(ss.str().c_str(), ss.str().length());
+
+			connection->close();
+		}
+
 		context->getRequest().reset();
-
-		std::stringstream ss;
-		ss << "HTTP/1.0 200 OK\r\n"
-			<< "Server: " << Server::httpName() << "\r\n"
-			<< "Date: " << Time::httpDate() << "\r\n"
-			<< "X-Transport: http\r\n"
-		   << "\r\n"
-		   << "Processed successfuly\r\n";
-
-		// Формируем пакет
-		Packet response(ss.str().c_str(), ss.str().size());
-
-		// Отправляем
-		connection->write(response.data(), response.size());
-
-		connection->close();
 
 		n++;
 	}
