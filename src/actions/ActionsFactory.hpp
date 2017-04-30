@@ -39,17 +39,17 @@ private:
 		return instance;
 	}
 
-	std::map<const std::string, RequestBase *(*)(Connection::Ptr&, const void *)> _requests;
+	std::map<const std::string, RequestBase *(*)(std::shared_ptr<Connection>&, const void *)> _requests;
 
-	std::string _regRequest(const std::string& name, RequestBase *(*creator)(Connection::Ptr&, const void *));
-	RequestBase *_createRequest(const std::string& name, Connection::Ptr& connection, const void *request);
+	std::string _regRequest(const std::string& name, RequestBase *(*creator)(std::shared_ptr<Connection>&, const void *));
+	RequestBase *_createRequest(const std::string& name, std::shared_ptr<Connection>& connection, const void *request);
 
 public:
-	static const std::string regRequest(const std::string& name, RequestBase *(*creator)(Connection::Ptr&, const void *))
+	static const std::string regRequest(const std::string& name, RequestBase *(*creator)(std::shared_ptr<Connection>&, const void *))
 	{
 		return getInstance()._regRequest(name, creator);
 	}
-	static RequestBase *createRequest(const std::string& name, Connection::Ptr& connection, const void *data)
+	static RequestBase *createRequest(const std::string& name, std::shared_ptr<Connection>& connection, const void *data)
 	{
 		return getInstance()._createRequest(name, connection, data);
 	}

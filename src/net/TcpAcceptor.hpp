@@ -37,7 +37,7 @@ protected:
 	std::mutex _mutex;
 
 public:
-	TcpAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port);
+	TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& host, std::uint16_t port);
 	virtual ~TcpAcceptor();
 
 	virtual const std::string& name();
@@ -48,7 +48,7 @@ public:
 
 	virtual bool processing();
 
-	static TcpAcceptor::Ptr create(Transport::Ptr& transport, std::string host, std::uint16_t port)
+	static std::shared_ptr<TcpAcceptor> create(std::shared_ptr<Transport>& transport, std::string& host, std::uint16_t port)
 	{
 		return std::make_shared<TcpAcceptor>(transport, host, port);
 	}

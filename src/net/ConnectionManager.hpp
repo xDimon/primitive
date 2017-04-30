@@ -49,13 +49,13 @@ private:
 	std::mutex _epool_mutex;
 
 	/// Реестр подключений
-	std::set<Connection::Ptr> _aConns;
+	std::set<std::shared_ptr<Connection>> _aConns;
 
 	/// Захваченные подключения
-	std::set<Connection::Ptr> _capturedConnections;
+	std::set<std::shared_ptr<Connection>> _capturedConnections;
 
 	/// Готовые подключения (имеющие необработанные события)
-	std::set<Connection::Ptr> _readyConnections;
+	std::set<std::shared_ptr<Connection>> _readyConnections;
 
 	uint32_t _accepted;
 	uint32_t _established;
@@ -71,23 +71,23 @@ private:
 	void wait();
 
 	/// Захватить соединение
-	Connection::Ptr capture();
+	std::shared_ptr<Connection> capture();
 
 	/// Освободить соединение
-	void release(Connection::Ptr conn);
+	void release(std::shared_ptr<Connection> conn);
 
 public:
 	/// Добавить соединение для наблюдения
-	static void watch(Connection::Ptr connection);
+	static void watch(std::shared_ptr<Connection> connection);
 
 	/// Зарегистрировать соединение
-	static void add(Connection::Ptr connection);
+	static void add(std::shared_ptr<Connection> connection);
 
 	/// Удалить регистрацию соединения
-	static bool remove(Connection::Ptr connection);
+	static bool remove(std::shared_ptr<Connection> connection);
 
 	/// Проверить и вернуть отложенные события
-	static uint32_t rotateEvents(Connection::Ptr connection);
+	static uint32_t rotateEvents(std::shared_ptr<Connection> connection);
 
 	/// Обработка событий
 	static void dispatch();

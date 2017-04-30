@@ -30,9 +30,6 @@
 
 class Transport : public Shareable<Transport>, public virtual Log
 {
-public:
-	typedef std::shared_ptr<Transport> Ptr;
-	typedef std::weak_ptr<Transport> WPtr;
 protected:
 	std::string _name;
 

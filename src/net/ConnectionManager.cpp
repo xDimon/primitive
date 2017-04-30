@@ -55,7 +55,7 @@ ConnectionManager::~ConnectionManager()
 }
 
 /// Зарегистрировать соединение
-void ConnectionManager::add(Connection::Ptr connection)
+void ConnectionManager::add(std::shared_ptr<Connection> connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
@@ -81,7 +81,7 @@ void ConnectionManager::add(Connection::Ptr connection)
 }
 
 /// Удалить регистрацию соединения
-bool ConnectionManager::remove(Connection::Ptr connection)
+bool ConnectionManager::remove(std::shared_ptr<Connection> connection)
 {
 	if (!connection)
 	{
@@ -110,14 +110,14 @@ bool ConnectionManager::remove(Connection::Ptr connection)
 	return true;
 }
 
-uint32_t ConnectionManager::rotateEvents(Connection::Ptr connection)
+uint32_t ConnectionManager::rotateEvents(std::shared_ptr<Connection> connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 	uint32_t events = connection->rotateEvents();
 	return events;
 }
 
-void ConnectionManager::watch(Connection::Ptr connection)
+void ConnectionManager::watch(std::shared_ptr<Connection> connection)
 {
 	// Для известных соенинений проверяем состояние захваченности
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
@@ -183,7 +183,7 @@ void ConnectionManager::wait()
 	// Перебираем полученые события
 	for (int i = 0; i < n; i++)
 	{
-		Connection::Ptr connection = std::move(*static_cast<std::shared_ptr<Connection> *>(_epev[i].data.ptr));
+		std::shared_ptr<Connection> connection = std::move(*static_cast<std::shared_ptr<Connection> *>(_epev[i].data.ptr));
 
 		if (!connection)
 		{
@@ -248,7 +248,7 @@ void ConnectionManager::wait()
 }
 
 /// Захватить соединение
-Connection::Ptr ConnectionManager::capture()
+std::shared_ptr<Connection> ConnectionManager::capture()
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 
@@ -289,7 +289,7 @@ Connection::Ptr ConnectionManager::capture()
 }
 
 /// Освободить соединение
-void ConnectionManager::release(Connection::Ptr connection)
+void ConnectionManager::release(std::shared_ptr<Connection> connection)
 {
 //	log().trace("Enter into ConnectionManager::release() for %s", connection->name().c_str());
 
@@ -318,11 +318,7 @@ void ConnectionManager::dispatch()
 
 	for (;;)
 	{
-//		log().debug("Before call capture in ConnectionManager::dispatch()");
-
-		Connection::Ptr connection = getInstance().capture();
-
-//		log().debug("After call capture in ConnectionManager::dispatch()");
+		std::shared_ptr<Connection> connection = getInstance().capture();
 
 		if (!connection)
 		{

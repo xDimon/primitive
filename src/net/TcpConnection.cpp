@@ -26,9 +26,11 @@
 #include <sstream>
 #include <cstring>
 #include <unistd.h>
+#include "../transport/Transport.hpp"
 
-TcpConnection::TcpConnection(Transport::Ptr& transport, int sock, const sockaddr_in &sockaddr)
-: Connection(transport)
+TcpConnection::TcpConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr)
+: Log("TcpConnection")
+, Connection(transport)
 , ReaderConnection()
 , WriterConnection()
 , _noRead(false)

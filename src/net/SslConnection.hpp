@@ -49,7 +49,7 @@ public:
 	SslConnection(const SslConnection&) = delete;
 	void operator= (SslConnection const&) = delete;
 
-	SslConnection(Transport::Ptr& transport, int fd, const sockaddr_in& cliaddr, std::shared_ptr<SSL_CTX> sslContext);
+	SslConnection(std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, std::shared_ptr<SSL_CTX> sslContext);
 	virtual ~SslConnection();
 
 	virtual const std::string& name();

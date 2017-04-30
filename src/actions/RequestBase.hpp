@@ -32,20 +32,20 @@ private:
 	const void *_data;
 
 protected:
-	Connection::Ptr _connection;
-	Session::Ptr _session;
+	std::shared_ptr<Connection> _connection;
+	std::shared_ptr<Session> _session;
 
 public:
 	RequestBase() = delete;
 	RequestBase(const RequestBase&) = delete;
 	void operator= (RequestBase const&) = delete;
 
-	RequestBase(Connection::Ptr& connection, const void *data);
+	RequestBase(std::shared_ptr<Connection>& connection, const void *data);
 	virtual ~RequestBase();
 
 	const char *getName() const;
 
-	inline Session::Ptr getSession() const
+	inline std::shared_ptr<Session> getSession() const
 	{
 		return _session;
 	}
@@ -73,7 +73,7 @@ private:																						\
 	Request(const Request&) = delete;															\
 	void operator= (Request const&) = delete;													\
 																								\
-	Request(Connection::Ptr& connection, const void *request);								\
+	Request(std::shared_ptr<Connection>& connection, const void *request);								\
 																								\
 public:																							\
 	virtual ~Request() {};																		\
@@ -82,7 +82,7 @@ public:																							\
 	virtual bool execute();																		\
 																								\
 private:																						\
-	static RequestBase *create(Connection::Ptr& connection, const void *request)			\
+	static RequestBase *create(std::shared_ptr<Connection>& connection, const void *request)			\
 	{																							\
 		return new Request(connection, request);												\
 	}																							\

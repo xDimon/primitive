@@ -27,28 +27,24 @@
 #include <type_traits>
 #include <sys/epoll.h>
 #include "../log/Log.hpp"
-#include "../transport/Transport.hpp"
-#include "../utils/Context.hpp"
 #include "ConnectionEvent.hpp"
 #include <unistd.h>
 #include "../utils/Shareable.hpp"
 
 struct sockaddr_in;
+class Transport;
+class Context;
 
 class Connection: public Shareable<Connection>, public virtual Log
 {
-public:
-	typedef std::shared_ptr<Connection> Ptr;
-	typedef std::weak_ptr<Connection> WPtr;
-
 private:
 	bool _captured;
 	uint32_t _events;
 	uint32_t _postponedEvents;
 
 protected:
-	Transport::WPtr _transport;
-	Context::Ptr _context;
+	std::weak_ptr<Transport> _transport;
+	std::shared_ptr<Context> _context;
 
 	int _sock;
 
@@ -65,14 +61,14 @@ public:
 	Connection(const Connection&) = delete;
 	void operator= (Connection const&) = delete;
 
-	explicit Connection(Transport::Ptr& transport);
+	explicit Connection(std::shared_ptr<Transport>& transport);
 	virtual ~Connection();
 
-	void setContext(Context::Ptr& context)
+	void setContext(std::shared_ptr<Context>& context)
 	{
 		_context = context;
 	}
-	Context::Ptr& getContext()
+	std::shared_ptr<Context> getContext()
 	{
 		return _context;
 	}

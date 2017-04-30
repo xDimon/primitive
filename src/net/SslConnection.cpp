@@ -28,9 +28,11 @@
 #include <openssl/err.h>
 
 #include "ConnectionManager.hpp"
+#include "../transport/Transport.hpp"
 
-SslConnection::SslConnection(Transport::Ptr& transport, int sock, const sockaddr_in& sockaddr, std::shared_ptr<SSL_CTX> sslContext)
-: TcpConnection(transport, sock, sockaddr)
+SslConnection::SslConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in& sockaddr, std::shared_ptr<SSL_CTX> sslContext)
+: Log("SslConnection")
+, TcpConnection(transport, sock, sockaddr)
 , _sslEstablished(false)
 {
 	_sslContext = sslContext;

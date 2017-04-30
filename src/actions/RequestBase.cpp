@@ -21,7 +21,7 @@
 
 #include "RequestBase.hpp"
 
-RequestBase::RequestBase(Connection::Ptr& connection, const void *data)
+RequestBase::RequestBase(std::shared_ptr<Connection>& connection, const void *data)
 : _data(data)
 {
 	_name = nullptr;

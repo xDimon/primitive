@@ -45,7 +45,7 @@ private:
 	std::mutex _mutexSid2uid;
 
 	/// Пул сессий
-	std::map<Session::UID, Session::Ptr> _sessions;
+	std::map<Session::UID, std::shared_ptr<Session>> _sessions;
 	std::recursive_mutex _mutexSessions;
 
 public:
@@ -53,7 +53,7 @@ public:
 	static Session::UID getUid(const Session::SID& sid);
 
 	/// Получить/загрузить сессию по UID
-	static Session::Ptr getSession(Session::UID uid, bool load = false);
+	static std::shared_ptr<Session> getSession(Session::UID uid, bool load = false);
 
 	/// Закрыть сессию
 	static void closeSession(Session::UID uid);

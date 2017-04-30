@@ -23,7 +23,7 @@
 
 REGISTER_REQUEST(Ping)
 
-Ping::Ping(Connection::Ptr& connection, const void *request)
+Ping::Ping(std::shared_ptr<Connection>& connection, const void *request)
 : RequestBase(connection, request)
 {
 }

@@ -37,7 +37,7 @@ private:
 
 	Config::Ptr _configs;
 
-	std::map<const std::string, Transport::Ptr> _transports;
+	std::map<const std::string, std::shared_ptr<Transport>> _transports;
 
 public:
 	Server(Config::Ptr &configs);

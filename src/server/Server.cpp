@@ -67,7 +67,7 @@ bool Server::addTransport(const std::string& name, std::shared_ptr<Transport>& t
 	{
 		return false;
 	}
-	_transports.emplace(name, Transport::Ptr(transport));
+	_transports.emplace(name, transport->ptr());
 	return true;
 }
 

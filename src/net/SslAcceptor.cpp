@@ -23,7 +23,7 @@
 #include "SslConnection.hpp"
 #include "ConnectionManager.hpp"
 
-SslAcceptor::SslAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& context)
+SslAcceptor::SslAcceptor(std::shared_ptr<Transport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& context)
 : TcpAcceptor(transport, host, port)
 , _sslContext(context)
 {
@@ -31,7 +31,7 @@ SslAcceptor::SslAcceptor(Transport::Ptr& transport, std::string host, std::uint1
 
 void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 {
-	Transport::Ptr transport = _transport.lock();
+	std::shared_ptr<Transport> transport = _transport.lock();
 
 	auto connection = std::shared_ptr<Connection>(new SslConnection(transport, sock, cliaddr, _sslContext));
 

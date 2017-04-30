@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <utility>
 
-std::string ActionsFactory::_regRequest(const std::string& name, RequestBase *(*creator)(Connection::Ptr&, const void *))
+std::string ActionsFactory::_regRequest(const std::string& name, RequestBase *(*creator)(std::shared_ptr<Connection>&, const void *))
 {
 	auto i = _requests.find(name);
 	assert(i == _requests.end());
@@ -36,7 +36,7 @@ std::string ActionsFactory::_regRequest(const std::string& name, RequestBase *(*
 	return name;
 }
 
-RequestBase *ActionsFactory::_createRequest(const std::string& name, Connection::Ptr& connection, const void *data)
+RequestBase *ActionsFactory::_createRequest(const std::string& name, std::shared_ptr<Connection>& connection, const void *data)
 {
 	auto i = _requests.find(name);
 	if (i == _requests.end())

@@ -24,7 +24,7 @@
 
 #include <unistd.h>
 
-Connection::Connection(Transport::Ptr& transport)
+Connection::Connection(std::shared_ptr<Transport>& transport)
 : Log("Conn")
 , _transport(transport)
 , _sock(-1)

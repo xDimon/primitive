@@ -26,7 +26,6 @@
 class Session
 {
 public:
-	typedef std::shared_ptr<Session> Ptr;
 	typedef std::string SID;
 	typedef uint64_t UID;
 

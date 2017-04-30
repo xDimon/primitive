@@ -38,7 +38,7 @@ Session::UID SessionManager::getUid(const Session::SID& sid)
 	return (i != getInstance()._sid2uid.end()) ? i->second : 0;
 }
 
-Session::Ptr SessionManager::getSession(Session::UID uid, bool load)
+std::shared_ptr<Session> SessionManager::getSession(Session::UID uid, bool load)
 {
 	{
 		std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
@@ -51,14 +51,14 @@ Session::Ptr SessionManager::getSession(Session::UID uid, bool load)
 
 		if (!load)
 		{
-			return std::move(Session::Ptr());
+			return std::move(std::shared_ptr<Session>());
 		}
 	}
 
 	auto session = std::make_shared<Session>(uid);
 	if (!session->isReady())
 	{
-		return std::move(Session::Ptr());
+		return std::shared_ptr<Session>();
 	}
 
 	{
@@ -73,7 +73,7 @@ Session::Ptr SessionManager::getSession(Session::UID uid, bool load)
 		getInstance()._sessions.emplace(uid, session);
 	}
 
-	return std::move(session);
+	return session;
 }
 
 void SessionManager::closeSession(Session::UID uid)
