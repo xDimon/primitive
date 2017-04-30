@@ -23,10 +23,11 @@
 
 #include <memory>
 #include "../log/Log.hpp"
+#include "../utils/Shareable.hpp"
 
 class Connection;
 
-class Transport: public virtual Log
+class Transport : public Shareable<Transport>, public virtual Log
 {
 public:
 	typedef std::shared_ptr<Transport> Ptr;

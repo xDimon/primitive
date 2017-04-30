@@ -31,10 +31,11 @@
 #include "../utils/Context.hpp"
 #include "ConnectionEvent.hpp"
 #include <unistd.h>
+#include "../utils/Shareable.hpp"
 
 struct sockaddr_in;
 
-class Connection: public std::enable_shared_from_this<Connection>, public virtual Log
+class Connection: public Shareable<Connection>, public virtual Log
 {
 public:
 	typedef std::shared_ptr<Connection> Ptr;
@@ -74,11 +75,6 @@ public:
 	Context::Ptr& getContext()
 	{
 		return _context;
-	}
-
-	inline Ptr ptr()
-	{
-		return shared_from_this();
 	}
 
 	virtual const std::string& name() = 0;
