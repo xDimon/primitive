@@ -47,10 +47,10 @@ const std::vector<char>& Buffer::data()
 
 		_putPosition -= _getPosition;
 		_getPosition = 0;
-	}
 
-	// Отбрасываем неиспользуемое пространство
-	_data.resize(_putPosition);
+		// Отбрасываем неиспользуемое пространство
+		_data.resize(_putPosition);
+	}
 
 	return _data;
 }

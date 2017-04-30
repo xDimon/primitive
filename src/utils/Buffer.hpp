@@ -28,7 +28,7 @@
 #include <mutex>
 #include <vector>
 
-class Buffer: public Reader, public Writer
+class Buffer : public Reader, public Writer
 {
 protected:
 	/// Мютекс защиты буфера ввода
@@ -45,25 +45,27 @@ protected:
 
 public:
 	Buffer();
+
 	virtual ~Buffer();
 
-	inline auto& mutex() { return _mutex; }
+	inline auto& mutex()
+	{ return _mutex; }
 
 	size_t size() const;
 
-	const std::vector<char>& data();
-
-	virtual const char * dataPtr() const;
+	virtual const std::vector<char>& data();
+	virtual const char* dataPtr() const;
 	virtual size_t dataLen() const;
 
-	virtual bool show(void *data, size_t length) const;
+	virtual bool show(void* data, size_t length) const;
 	virtual bool skip(size_t length);
-	virtual bool read(void *data, size_t length);
+	virtual bool read(void* data, size_t length);
 
-	virtual char * spacePtr() const;
+//	virtual std::vector<char>& space() const;
+	virtual char* spacePtr() const;
 	virtual size_t spaceLen() const;
 
 	virtual bool prepare(size_t length);
 	virtual bool forward(size_t length);
-	virtual bool write(const void *data, size_t length);
+	virtual bool write(const void* data, size_t length);
 };
