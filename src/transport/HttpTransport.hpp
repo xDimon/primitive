@@ -26,17 +26,17 @@
 class HttpTransport : public Transport
 {
 public:
-	template<class F, class... Args>
-	HttpTransport(F &&f, Args &&... args)
+	HttpTransport(const Setting& setting)
 	: Log("HttpTransport")
-	, Transport(f, args...)
+	, Transport(setting)
 	{
-		log().debug("Create '%s'", name().c_str());
-	}
-	virtual ~HttpTransport()
-	{
-		log().debug("Destroy '%s'", name().c_str());
+		log().debug("Create '%s'", _name.c_str());
 	}
 
-	virtual bool processing(std::shared_ptr<Connection> connection);
+	virtual ~HttpTransport()
+	{
+		log().debug("Destroy '%s'", _name.c_str());
+	}
+
+	virtual bool processing(std::shared_ptr<Connection> connection) override;
 };

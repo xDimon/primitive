@@ -48,13 +48,13 @@ public:
 		return "Primitive";
 	}
 
-	bool addTransport(const std::string name, Transport *transport);
+	bool addTransport(const std::string& name, std::shared_ptr<Transport>& transport);
 
-	void enableTransport(const std::string name);
+	void enableTransport(const std::string& name);
 
-	void disableTransport(const std::string name);
+	void disableTransport(const std::string& name);
 
-	void removeTransport(const std::string name);
+	void removeTransport(const std::string& name);
 
 	void start();
 	void stop();

@@ -26,12 +26,11 @@
 class PacketTransport : public Transport
 {
 public:
-	template<class F, class... Args>
-	PacketTransport(F &&f, Args &&... args)
+	PacketTransport(const Setting& setting)
 	: Log("PacketTransport")
-	, Transport(f, args...)
+	, Transport(setting)
 	{
-		log().debug("Create '%s'", name().c_str());
+		log().debug("Create '%s'", _name.c_str());
 	}
 	virtual ~PacketTransport()
 	{

@@ -21,23 +21,29 @@
 
 #include "../net/SslAcceptor.hpp"
 #include "../thread/ThreadPool.hpp"
-#include "../transport/HttpTransport.hpp"
-#include "../transport/PacketTransport.hpp"
-#include "../transport/WsTransport.hpp"
-#include "../utils/SslHelper.hpp"
 #include "Server.hpp"
+#include "../transport/TransportFactory.hpp"
 #include "../net/ConnectionManager.hpp"
 
 Server::Server(Config::Ptr &configs)
 : Log("Server")
 , _configs(configs)
 {
-	addTransport("0.0.0.0:8000", new HttpTransport(TcpAcceptor::create, "0.0.0.0", 8000));
-	addTransport("0.0.0.0:8001", new PacketTransport(TcpAcceptor::create, "0.0.0.0", 8001));
-	addTransport("0.0.0.0:8002", new WsTransport(TcpAcceptor::create, "0.0.0.0", 8002));
-	addTransport("0.0.0.0:4430", new HttpTransport(SslAcceptor::create, "0.0.0.0", 4430, SslHelper::context()));
-	addTransport("0.0.0.0:4301", new PacketTransport(SslAcceptor::create, "0.0.0.0", 4431, SslHelper::context()));
-	addTransport("0.0.0.0:4432", new WsTransport(SslAcceptor::create, "0.0.0.0", 4432, SslHelper::context()));
+	try
+	{
+		const auto& settings = _configs->getRoot()["transports"];
+
+		for (const auto& setting : settings)
+		{
+			auto transport = TransportFactory::create(setting);
+
+			addTransport(transport->name(), transport);
+		}
+	}
+	catch (const std::runtime_error& exception)
+	{
+		log().error("Can't add transport: %s", exception.what());
+	}
 
 	ThreadPool::enqueue([](){
 		ConnectionManager::dispatch();
@@ -53,7 +59,7 @@ void Server::wait()
 	ThreadPool::wait();
 }
 
-bool Server::addTransport(const std::string name, Transport *transport)
+bool Server::addTransport(const std::string& name, std::shared_ptr<Transport>& transport)
 {
 	std::lock_guard<std::mutex> guard(_mutex);
 	auto i = _transports.find(name);
@@ -65,7 +71,7 @@ bool Server::addTransport(const std::string name, Transport *transport)
 	return true;
 }
 
-void Server::enableTransport(const std::string name)
+void Server::enableTransport(const std::string& name)
 {
 	std::lock_guard<std::mutex> guard(_mutex);
 	auto i = _transports.find(name);
@@ -77,7 +83,7 @@ void Server::enableTransport(const std::string name)
 	transport->enable();
 }
 
-void Server::disableTransport(const std::string name)
+void Server::disableTransport(const std::string& name)
 {
 	std::lock_guard<std::mutex> guard(_mutex);
 	auto i = _transports.find(name);
@@ -89,7 +95,7 @@ void Server::disableTransport(const std::string name)
 	transport->disable();
 }
 
-void Server::removeTransport(const std::string name)
+void Server::removeTransport(const std::string& name)
 {
 	std::lock_guard<std::mutex> guard(_mutex);
 	auto i = _transports.find(name);

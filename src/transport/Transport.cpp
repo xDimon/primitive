@@ -19,8 +19,28 @@
 // Transport.cpp
 
 
+#include <sstream>
 #include "Transport.hpp"
 #include "../net/ConnectionManager.hpp"
+
+Transport::Transport(const Setting& setting)
+{
+	std::string name;
+	if (setting.exists("name"))
+	{
+		setting.lookupValue("name", name);
+	}
+	else
+	{
+		std::ostringstream ss(name);
+		ss << "_transport#" << this;
+	}
+
+	_name = std::move(name);
+
+	_acceptorCreator = AcceptorFactory::creator(setting);
+	_serializerCreator = SerializerFactory::creator(setting);
+}
 
 bool Transport::enable()
 {
@@ -33,7 +53,8 @@ bool Transport::enable()
 
 	try
 	{
-		auto acceptor = (*_acceptorCreator)();
+		auto t = this->ptr();
+		auto acceptor = (*_acceptorCreator)(t);
 
 		_acceptor = acceptor->ptr();
 
@@ -41,7 +62,7 @@ bool Transport::enable()
 
 		return true;
 	}
-	catch(std::runtime_error exception)
+	catch (std::runtime_error exception)
 	{
 		log().debug("Can't create Acceptor for '%s': %s", name().c_str(), exception.what());
 

@@ -14,29 +14,42 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.29
+// File created on: 2017.04.29
 
-// WsTransport.hpp
+// TransportFactory.hpp
 
 
 #pragma once
 
-#include "Transport.hpp"
+#include <memory>
+#include "../net/Connection.hpp"
+#include "../configs/Setting.hpp"
 
-class WsTransport : public Transport
+class TransportFactory
 {
+private:
+	TransportFactory()
+	{};
+
+	virtual ~TransportFactory()
+	{};
+
+	TransportFactory(TransportFactory const&) = delete;
+
+	void operator=(TransportFactory const&) = delete;
+
+	static TransportFactory& getInstance()
+	{
+		static TransportFactory instance;
+		return instance;
+	}
+
+	std::shared_ptr<Transport> createHttp(const Setting& setting);
+
+	std::shared_ptr<Transport> createWs(const Setting& setting);
+
+	std::shared_ptr<Transport> createPacket(const Setting& setting);
+
 public:
-	WsTransport(const Setting& setting)
-	: Log("WsTransport")
-	, Transport(setting)
-	{
-		log().debug("Create '%s'", _name.c_str());
-	}
-
-	virtual ~WsTransport()
-	{
-		log().debug("Destroy '%s'", name().c_str());
-	}
-
-	virtual bool processing(std::shared_ptr<Connection> connection) override;
+	static std::shared_ptr<Transport> create(const Setting& setting);
 };

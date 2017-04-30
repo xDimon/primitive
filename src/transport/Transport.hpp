@@ -24,30 +24,46 @@
 #include <memory>
 #include "../log/Log.hpp"
 #include "../utils/Shareable.hpp"
-
-class Connection;
+#include "../net/AcceptorFactory.hpp"
+#include "../configs/Setting.hpp"
+#include "../serialization/SerializerFactory.hpp"
 
 class Transport : public Shareable<Transport>, public virtual Log
 {
 public:
 	typedef std::shared_ptr<Transport> Ptr;
 	typedef std::weak_ptr<Transport> WPtr;
+protected:
+	std::string _name;
 
 private:
-	std::unique_ptr<std::function<std::shared_ptr<Connection>()>> _acceptorCreator;
+	std::shared_ptr<AcceptorFactory::Creator> _acceptorCreator;
 	std::weak_ptr<Connection> _acceptor;
 
+	std::shared_ptr<SerializerFactory::Creator> _serializerCreator;
+
 public:
-	template<class F, class... Args>
-	Transport(F &&f, Args &&... args)
+	Transport(const std::string& name, std::shared_ptr<AcceptorFactory::Creator>& creator)
+	: _name(name)
+	, _acceptorCreator(creator)
 	{
-		_acceptorCreator = std::make_unique<std::function<std::shared_ptr<Connection>()>>(
-			std::bind(std::forward<F>(f), std::shared_ptr<Transport>(this), std::forward<Args>(args)...)
-		);
 	}
 
-	virtual bool enable();
-	virtual bool disable();
+	Transport(const Setting& setting);
+
+	const std::string& name() const
+	{
+		return _name;
+	}
+
+	virtual bool enable() final;
+
+	virtual bool disable() final;
 
 	virtual bool processing(std::shared_ptr<Connection> connection) = 0;
+
+	virtual std::shared_ptr<Serializer> serializer() const
+	{
+		return (*_serializerCreator)();
+	}
 };
