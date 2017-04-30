@@ -73,9 +73,13 @@ public:
 		}
 		_elements.emplace(key, value);
 	}
+	void insert(SStr& key, SVal& value)
+	{
+		insert(&key, &value);
+	}
 
 	void forEach(std::function<void (const std::pair<const SStr* const, SVal*>&)> handler) const
 	{
-		std::for_each(_elements.begin(), _elements.end(), handler);
+		std::for_each(_elements.cbegin(), _elements.cend(), handler);
 	}
 };

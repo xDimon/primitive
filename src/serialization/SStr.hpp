@@ -25,13 +25,17 @@
 #include <string>
 #include "SVal.hpp"
 
-class SStr: public SVal
+class SStr : public SVal
 {
 private:
 	std::string _value;
 
 public:
 	SStr() = default;
+
+	SStr(std::string value)
+	: _value(value)
+	{}
 
 	SStr(SStr&& tmp)
 	{
@@ -49,7 +53,7 @@ public:
 		_value.push_back(symbol);
 	}
 
-	bool operator <(const SStr& that) const
+	bool operator<(const SStr& that) const
 	{
 		return _value < that._value;
 	}

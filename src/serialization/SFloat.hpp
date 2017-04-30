@@ -23,11 +23,14 @@
 
 class SFloat: public SNum
 {
+public:
+	typedef __long_double_t type;
+
 private:
-	long double _value;
+	type _value;
 
 public:
-	SFloat(long double value): _value(value) {}
+	SFloat(type value): _value(value) {}
 
 	auto value() const
 	{
