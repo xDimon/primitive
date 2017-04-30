@@ -16,26 +16,25 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.04.07
 
-// JSON.cpp
+// JsonSerializer.cpp
 
 
-#include <sstream>
 #include <cmath>
 #include <memory>
-#include "JSON.hpp"
-#include "../SInt.hpp"
-#include "../SFloat.hpp"
-#include "../../utils/literals.hpp"
+#include "JsonSerializer.hpp"
+#include "SInt.hpp"
+#include "SFloat.hpp"
+#include "../utils/literals.hpp"
 
-SVal* JSON::decode(std::string &data)
+SVal* JsonSerializer::decode(const std::string &data)
 {
-	std::istringstream iss(data);
+	_iss.str(data);
 
 	SVal* value = nullptr;
 
 	try
 	{
-		value = decodeValue(iss);
+		value = decodeValue();
 	}
 	catch (std::runtime_error& exception)
 	{
@@ -43,8 +42,8 @@ SVal* JSON::decode(std::string &data)
 	}
 
 	// Проверяем лишние символы в конце
-	skipSpaces(iss);
-	if (!iss.eof())
+	skipSpaces();
+	if (!_iss.eof())
 	{
 		throw std::runtime_error("Redundant data");
 	}
@@ -52,40 +51,38 @@ SVal* JSON::decode(std::string &data)
 	return value;
 }
 
-std::string JSON::encode(const SVal* value)
+std::string JsonSerializer::encode(const SVal* value)
 {
-	std::ostringstream oss;
-
 	try
 	{
-		encodeValue(value, oss);
+		encodeValue(value);
 	}
 	catch (std::runtime_error& exception)
 	{
 		throw std::runtime_error(std::string("Can't encode value: ") + exception.what());
 	}
 
-	return std::move(oss.str());
+	return std::move(_oss.str());
 }
 
-void JSON::skipSpaces(std::istringstream& iss)
+void JsonSerializer::skipSpaces()
 {
-	while (!iss.eof())
+	while (!_iss.eof())
 	{
-		auto c = iss.peek();
+		auto c = _iss.peek();
 		if (c != ' ' && c != '\t' && c != '\r' && c != '\n')
 		{
 			return;
 		}
-		iss.ignore();
+		_iss.ignore();
 	}
 }
 
-SVal* JSON::decodeValue(std::istringstream& iss)
+SVal* JsonSerializer::decodeValue()
 {
-	skipSpaces(iss);
+	skipSpaces();
 
-	switch (iss.peek())
+	switch (_iss.peek())
 	{
 		case '-':
 		case '0':
@@ -98,66 +95,66 @@ SVal* JSON::decodeValue(std::istringstream& iss)
 		case '7':
 		case '8':
 		case '9':
-			return decodeNumber(iss);
+			return decodeNumber();
 
 		case '"':
-			return decodeString(iss);
+			return decodeString();
 
 		case 't':
 		case 'f':
-			return decodeBool(iss);
+			return decodeBool();
 
 		case '{':
-			return decodeObject(iss);
+			return decodeObject();
 
 		case '[':
-			return decodeArray(iss);
+			return decodeArray();
 
 		case 'n':
-			return decodeNull(iss);
+			return decodeNull();
 
 		default:
 			throw std::runtime_error("Unknown token");
 	}
 }
 
-SObj* JSON::decodeObject(std::istringstream& iss)
+SObj* JsonSerializer::decodeObject()
 {
 	auto obj = std::make_unique<SObj>();
 
-	auto c = iss.get();
+	auto c = _iss.get();
 	if (c != '{')
 	{
 		throw std::runtime_error("Wrong token");
 	}
 
-	while (!iss.eof())
+	while (!_iss.eof())
 	{
-		skipSpaces(iss);
+		skipSpaces();
 
-		if (iss.peek() == '}')
+		if (_iss.peek() == '}')
 		{
-			iss.ignore();
+			_iss.ignore();
 			return obj.release();
 		}
 
-		auto key = std::unique_ptr<SStr>(decodeString(iss));
+		auto key = std::unique_ptr<SStr>(decodeString());
 
-		skipSpaces(iss);
+		skipSpaces();
 
-		c = iss.get();
+		c = _iss.get();
 		if (c != ':')
 		{
 			throw std::runtime_error("Wrong token");
 		}
 
-		skipSpaces(iss);
+		skipSpaces();
 
-		obj->insert(key.release(), decodeValue(iss));
+		obj->insert(key.release(), decodeValue());
 
-		skipSpaces(iss);
+		skipSpaces();
 
-		c = iss.get();
+		c = _iss.get();
 		if (c == ',')
 		{
 			continue;
@@ -173,31 +170,31 @@ SObj* JSON::decodeObject(std::istringstream& iss)
 	throw std::runtime_error("Unexpect out of data");
 }
 
-SArr* JSON::decodeArray(std::istringstream& iss)
+SArr* JsonSerializer::decodeArray()
 {
 	auto arr = std::make_unique<SArr>();
 
-	auto c = iss.get();
+	auto c = _iss.get();
 	if (c != '[')
 	{
 		throw std::runtime_error("Wrong token");
 	}
 
-	while (!iss.eof())
+	while (!_iss.eof())
 	{
-		skipSpaces(iss);
+		skipSpaces();
 
-		if (iss.peek() == ']')
+		if (_iss.peek() == ']')
 		{
-			iss.ignore();
+			_iss.ignore();
 			return arr.release();
 		}
 
-		arr->insert(decodeValue(iss));
+		arr->insert(decodeValue());
 
-		skipSpaces(iss);
+		skipSpaces();
 
-		c = iss.get();
+		c = _iss.get();
 		if (c == ',')
 		{
 			continue;
@@ -213,29 +210,29 @@ SArr* JSON::decodeArray(std::istringstream& iss)
 	throw std::runtime_error("Unexpect out of data");
 }
 
-SStr* JSON::decodeString(std::istringstream& iss)
+SStr* JsonSerializer::decodeString()
 {
 	auto str = std::make_unique<SStr>();
 
-	auto c = iss.get();
+	auto c = _iss.get();
 	if (c != '"')
 	{
 		throw std::runtime_error("Wrong token");
 	}
 
-	while (iss.peek() != -1)
+	while (_iss.peek() != -1)
 	{
-		c = iss.peek();
+		c = _iss.peek();
 		// Конец строки
 		if (c == '"')
 		{
-			iss.ignore();
+			_iss.ignore();
 			return str.release();
 		}
 		// Экранированный сивол
 		else if (c == '\\')
 		{
-			uint32_t symbol = decodeEscaped(iss);
+			uint32_t symbol = decodeEscaped();
 
 			if (symbol >= 0xD800 && symbol <= 0xDFFF) // Суррогатная пара UTF16
 			{
@@ -243,7 +240,7 @@ SStr* JSON::decodeString(std::istringstream& iss)
 				{
 					throw std::runtime_error("Bad escaped symbol: wrong for first byte of utf-16 surrogate pair");
 				}
-				uint32_t symbol2 = decodeEscaped(iss);
+				uint32_t symbol2 = decodeEscaped();
 				if ((symbol2 & 0b1111'1100'0000'0000) != 0b1101'1100'0000'0000)
 				{
 					throw std::runtime_error("Bad escaped symbol: wrong for second byte of utf-16 surrogate pair");
@@ -266,12 +263,12 @@ SStr* JSON::decodeString(std::istringstream& iss)
 		// Однобайтовый символ
 		else if (c < 0b1000'0000)
 		{
-			iss.ignore();
+			_iss.ignore();
 			str->insert(static_cast<uint8_t>(c));
 		}
 		else
 		{
-			iss.ignore();
+			_iss.ignore();
 			int bytes;
 			uint32_t chr = 0;
 			if ((c & 0b11111100) == 0b11111100)
@@ -305,11 +302,11 @@ SStr* JSON::decodeString(std::istringstream& iss)
 			}
 			while (--bytes)
 			{
-				if (iss.eof())
+				if (_iss.eof())
 				{
 					throw std::runtime_error("Unxpected end of data");
 				}
-				c = iss.get();
+				c = _iss.get();
 				if ((c & 0b11000000) != 0b10000000)
 				{
 					throw std::runtime_error("Bad symbol in string value");
@@ -323,25 +320,25 @@ SStr* JSON::decodeString(std::istringstream& iss)
 	throw std::runtime_error("Unexpect out of data");
 }
 
-SBool* JSON::decodeBool(std::istringstream& iss)
+SBool* JsonSerializer::decodeBool()
 {
-	auto c = iss.get();
+	auto c = _iss.get();
 	if (c == 't')
 	{
-		if (!iss.eof() && iss.get() == 'r')
-			if (!iss.eof() && iss.get() == 'u')
-				if (!iss.eof() && iss.get() == 'e')
+		if (!_iss.eof() && _iss.get() == 'r')
+			if (!_iss.eof() && _iss.get() == 'u')
+				if (!_iss.eof() && _iss.get() == 'e')
 					return new SBool(true);
 	}
 	else if (c == 'f')
 	{
-		if (!iss.eof() && iss.get() == 'a')
-			if (!iss.eof() && iss.get() == 'l')
-				if (!iss.eof() && iss.get() == 's')
-					if (!iss.eof() && iss.get() == 'e')
+		if (!_iss.eof() && _iss.get() == 'a')
+			if (!_iss.eof() && _iss.get() == 'l')
+				if (!_iss.eof() && _iss.get() == 's')
+					if (!_iss.eof() && _iss.get() == 'e')
 						return new SBool(false);
 	}
-	if (iss.eof())
+	if (_iss.eof())
 	{
 		throw std::runtime_error("Unxpected end of data");
 	}
@@ -349,14 +346,14 @@ SBool* JSON::decodeBool(std::istringstream& iss)
 	throw std::runtime_error("Wrong token");
 }
 
-SNull* JSON::decodeNull(std::istringstream& iss)
+SNull* JsonSerializer::decodeNull()
 {
-	if (!iss.eof() && iss.get() == 'n')
-		if (!iss.eof() && iss.get() == 'u')
-			if (!iss.eof() && iss.get() == 'l')
-				if (!iss.eof() && iss.get() == 'l')
+	if (!_iss.eof() && _iss.get() == 'n')
+		if (!_iss.eof() && _iss.get() == 'u')
+			if (!_iss.eof() && _iss.get() == 'l')
+				if (!_iss.eof() && _iss.get() == 'l')
 					return new SNull();
-	if (iss.eof())
+	if (_iss.eof())
 	{
 		throw std::runtime_error("Unxpected end of data");
 	}
@@ -364,18 +361,18 @@ SNull* JSON::decodeNull(std::istringstream& iss)
 	throw std::runtime_error("Wrong token");
 }
 
-uint32_t JSON::decodeEscaped(std::istringstream& iss)
+uint32_t JsonSerializer::decodeEscaped()
 {
-	auto c = iss.get();
+	auto c = _iss.get();
 	if (c != '\\')
 	{
 		throw std::runtime_error("Isn't escaped symbol");
 	}
-	if (iss.eof())
+	if (_iss.eof())
 	{
 		throw std::runtime_error("Unxpected end of data");
 	}
-	c = iss.get();
+	c = _iss.get();
 	switch (c)
 	{
 		case '"': return '"';
@@ -392,11 +389,11 @@ uint32_t JSON::decodeEscaped(std::istringstream& iss)
 	uint32_t val = 0;
 	for (int i = 0; i < 4; i++)
 	{
-		if (iss.eof())
+		if (_iss.eof())
 		{
 			throw std::runtime_error("Unxpected end of data");
 		}
-		c = iss.get();
+		c = _iss.get();
 		if (c >= '0' && c <= '9')
 		{
 			val = (val << 4) | ((c - '0') & 0x0F);
@@ -418,126 +415,126 @@ uint32_t JSON::decodeEscaped(std::istringstream& iss)
 	return val;
 }
 
-SNum* JSON::decodeNumber(std::istringstream& iss)
+SNum* JsonSerializer::decodeNumber()
 {
-	auto p = iss.tellg();
+	auto p = _iss.tellg();
 
-	while (!iss.eof())
+	while (!_iss.eof())
 	{
-		auto c = iss.get();
+		auto c = _iss.get();
 		if (c == '.' || c == 'e' || c == 'E')
 		{
-			iss.seekg(p);
+			_iss.seekg(p);
 			long double value = 0;
-			iss >> value;
+			_iss >> value;
 			return new SFloat(value);
 		}
 	}
 
-	iss.seekg(p);
+	_iss.seekg(p);
 	int64_t value = 0;
-	iss >> value;
+	_iss >> value;
 	return new SInt(value);
 }
 
-void JSON::encodeNull(const SNull *value, std::ostringstream &oss)
+void JsonSerializer::encodeNull(const SNull *value)
 {
-	oss << "null";
+	_oss << "null";
 }
 
-void JSON::encodeBool(const SBool *value, std::ostringstream &oss)
+void JsonSerializer::encodeBool(const SBool *value)
 {
-	oss << (value->value() ? "true" : "false");
+	_oss << (value->value() ? "true" : "false");
 }
 
-void JSON::encodeString(const SStr *value, std::ostringstream &oss)
+void JsonSerializer::encodeString(const SStr *value)
 {
-	oss << '"' << value->value() << '"';
+	_oss << '"' << value->value() << '"';
 }
 
-void JSON::encodeNumber(const SNum *value, std::ostringstream &oss)
+void JsonSerializer::encodeNumber(const SNum *value)
 {
 	const SInt *intVal = dynamic_cast<const SInt*>(value);
 	if (intVal)
 	{
-		oss << intVal->value();
+		_oss << intVal->value();
 		return;
 	}
 	const SFloat *floatVal = dynamic_cast<const SFloat*>(value);
 	if (floatVal)
 	{
-		oss << floatVal->value();
+		_oss << floatVal->value();
 		return;
 	}
 }
 
-void JSON::encodeArray(const SArr *value, std::ostringstream &oss)
+void JsonSerializer::encodeArray(const SArr *value)
 {
-	oss << "[";
+	_oss << "[";
 
 	bool empty = true;
-	value->forEach([&oss,&empty](const SVal* value){
+	value->forEach([this,&empty](const SVal* value){
 		if (!empty)
 		{
-			oss << ",";
+			_oss << ",";
 		}
 		else
 		{
 			empty = false;
 		}
-		encodeValue(value, oss);
+		encodeValue(value);
 	});
 
-	oss << "]";
+	_oss << "]";
 }
 
-void JSON::encodeObject(const SObj *value, std::ostringstream &oss)
+void JsonSerializer::encodeObject(const SObj *value)
 {
-	oss << "{";
+	_oss << "{";
 
 	bool empty = true;
-	value->forEach([&oss,&empty](const std::pair<const SStr* const, SVal*>&element){
+	value->forEach([this,&empty](const std::pair<const SStr* const, SVal*>&element){
 		if (!empty)
 		{
-			oss << ",";
+			_oss << ",";
 		}
 		else
 		{
 			empty = false;
 		}
-		encodeString(element.first, oss);
-		oss << ':';
-		encodeValue(element.second, oss);
+		encodeString(element.first);
+		_oss << ':';
+		encodeValue(element.second);
 	});
 
-	oss << "}";
+	_oss << "}";
 }
 
-void JSON::encodeValue(const SVal *value, std::ostringstream &oss)
+void JsonSerializer::encodeValue(const SVal *value)
 {
 	if (auto p = dynamic_cast<const SStr *>(value))
 	{
-		encodeString(p, oss);
+		encodeString(p);
 	}
 	else if (auto p = dynamic_cast<const SNum *>(value))
 	{
-		encodeNumber(p, oss);
+		encodeNumber(p);
 	}
 	else if (auto p = dynamic_cast<const SObj *>(value))
 	{
-		encodeObject(p, oss);
+		encodeObject(p);
 	}
 	else if (auto p = dynamic_cast<const SArr *>(value))
 	{
-		encodeArray(p, oss);
+		encodeArray(p);
 	}
 	else if (auto p = dynamic_cast<const SBool *>(value))
 	{
-		encodeBool(p, oss);
+		encodeBool(p);
 	}
 	else if (auto p = dynamic_cast<const SNull *>(value))
 	{
-		encodeNull(p, oss);
+		encodeNull(p);
 	}
 	else
 	{
@@ -545,7 +542,7 @@ void JSON::encodeValue(const SVal *value, std::ostringstream &oss)
 	}
 }
 
-void JSON::putUtf8Symbol(SStr &str, uint32_t symbol)
+void JsonSerializer::putUtf8Symbol(SStr &str, uint32_t symbol)
 {
 	if (symbol <= 0b0111'1111) // 7bit -> 1byte
 	{
