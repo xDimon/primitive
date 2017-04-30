@@ -30,8 +30,7 @@
 #include "ConnectionManager.hpp"
 
 SslConnection::SslConnection(Transport::Ptr& transport, int sock, const sockaddr_in& sockaddr, std::shared_ptr<SSL_CTX> sslContext)
-: Log("SslConnection")
-, TcpConnection(transport, sock, sockaddr)
+: TcpConnection(transport, sock, sockaddr)
 , _sslEstablished(false)
 {
 	_sslContext = sslContext;
@@ -86,7 +85,7 @@ bool SslConnection::processing()
 				{
 					if (isHalfHup() || isHup())
 					{
-						log().trace("Can't complete SslHelper-handshake: already closed %s", name().c_str());
+						log().trace_("Can't complete SslHelper-handshake: already closed %s", name().c_str());
 						_noRead = true;
 						_noWrite = true;
 						break;
@@ -103,21 +102,21 @@ bool SslConnection::processing()
 				}
 				if (e == SSL_ERROR_WANT_READ || e == SSL_ERROR_WANT_WRITE)
 				{
-					log().trace("SslHelper-handshake incomplete yet on %s", name().c_str());
+					log().trace_("SslHelper-handshake incomplete yet on %s", name().c_str());
 					break;
 				}
 
 				char err[1<<12];
 				ERR_error_string_n(ERR_get_error(), err, sizeof(err));
 
-				log().trace("Fail SslHelper-handshake on %s: %s", name().c_str(), err);
+				log().trace_("Fail SslHelper-handshake on %s: %s", name().c_str(), err);
 				_error = true;
 				break;
 			}
 
 			_sslEstablished = true;
 
-			log().trace("Success SslHelper-handshake on %s", name().c_str());
+			log().trace_("Success SslHelper-handshake on %s", name().c_str());
 		}
 
 		if (isReadyForWrite())
@@ -172,7 +171,7 @@ bool SslConnection::processing()
 
 bool SslConnection::writeToSocket()
 {
-	log().trace("Write into socket on %s", name().c_str());
+	log().trace_("Write into socket on %s", name().c_str());
 
 	// Отправляем данные
 	for (;;)
@@ -232,13 +231,13 @@ bool SslConnection::writeToSocket()
 		}
 		else if (e == SSL_ERROR_SSL)
 		{
-			log().trace("SSL_ERROR_SSL while SslHelper-write on %s", name().c_str());
+			log().trace_("SSL_ERROR_SSL while SslHelper-write on %s", name().c_str());
 			_error = true;
 			return false;
 		}
 		else
 		{
-			log().trace("SSL_ERROR_? while SslHelper-write on %s", name().c_str());
+			log().trace_("SSL_ERROR_? while SslHelper-write on %s", name().c_str());
 			_error = true;
 			return false;
 		}
@@ -249,7 +248,7 @@ bool SslConnection::writeToSocket()
 
 bool SslConnection::readFromSocket()
 {
-	log().trace("Read from socket on %s", name().c_str());
+	log().trace_("Read from socket on %s", name().c_str());
 
 	// Пытаемся полностью заполнить буфер
 	for (;;)
@@ -262,7 +261,7 @@ bool SslConnection::readFromSocket()
 		if (n > 0)
 		{
 			_inBuff.forward(n);
-			log().trace("Read %d bytes on %s", n, name().c_str());
+			log().trace_("Read %d bytes on %s", n, name().c_str());
 			continue;
 		}
 
@@ -276,27 +275,27 @@ bool SslConnection::readFromSocket()
 		}
 		else if (e == SSL_ERROR_WANT_READ)
 		{
-			log().trace("No more read on %s", name().c_str());
+			log().trace_("No more read on %s", name().c_str());
 			break;
 		}
 		// Нет готовых данных - продолжаем ждать
 		else if (e == SSL_ERROR_ZERO_RETURN)
 		{
 			// Клиент отключился
-			log().trace("Client disconnected on %s", name().c_str());
+			log().trace_("Client disconnected on %s", name().c_str());
 			_noRead = true;
 			break;
 		}
 		else if (e == SSL_ERROR_WANT_WRITE)
 		{
-			log().trace("No more read without writing before on %s", name().c_str());
+			log().trace_("No more read without writing before on %s", name().c_str());
 			break;
 		}
 		else if (e == SSL_ERROR_SYSCALL)
 		{
 			if (isHalfHup() || isHup())
 			{
-				log().trace("Connection already closed %s", name().c_str());
+				log().trace_("Connection already closed %s", name().c_str());
 				_noRead = true;
 				break;
 			}
@@ -307,7 +306,7 @@ bool SslConnection::readFromSocket()
 				break;
 			}
 
-			log().trace("SSL_ERROR_SYSCALL with errno=0 while SslHelper-read on %s", name().c_str());
+			log().trace_("SSL_ERROR_SYSCALL with errno=0 while SslHelper-read on %s", name().c_str());
 			break;
 		}
 		else if (e == SSL_ERROR_SSL)

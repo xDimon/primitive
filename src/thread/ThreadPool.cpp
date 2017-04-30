@@ -85,7 +85,7 @@ void ThreadPool::createThread()
 		{
 			std::function<void()> task;
 
-			log().trace("Wait task on thread");
+			log().trace_("Wait task on thread");
 
 			// Try to get or wait task
 			{
@@ -103,7 +103,7 @@ void ThreadPool::createThread()
 					break;
 				}
 
-				log().trace("Get task from queue");
+				log().trace_("Get task from queue");
 
 				// Get task from queue
 				task = std::move(_tasks.front());

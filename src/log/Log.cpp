@@ -23,18 +23,19 @@
 #include "LoggerManager.hpp"
 
 Log::Log(std::string name)
-: _name([](std::string name){name.resize(18, ' '); return name;}(name))
 {
 	//get shared P7 trace object 1
-	_logTrace.reset(LoggerManager::getLogTrace());
-	if (!_logTrace)
+	trace.reset(LoggerManager::getLogTrace());
+	if (!trace)
 	{
 		throw std::runtime_error("Can't get shared p7-channel");
 	}
 
-	_logModule = nullptr;
+	module = nullptr;
 
-	_logTrace->Register_Module(_name.c_str(), &_logModule);
+	name.resize(18, ' ');
+
+	trace->Register_Module(name.c_str(), &module);
 }
 
 Log::Log()

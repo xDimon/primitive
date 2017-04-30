@@ -27,10 +27,8 @@
 #include <cstring>
 #include <unistd.h>
 
-
 TcpConnection::TcpConnection(Transport::Ptr& transport, int sock, const sockaddr_in &sockaddr)
-: Log("TcpConnection")
-, Connection(transport)
+: Connection(transport)
 , ReaderConnection()
 , WriterConnection()
 , _noRead(false)
@@ -155,7 +153,7 @@ bool TcpConnection::processing()
 
 bool TcpConnection::writeToSocket()
 {
-	log().trace("Write into socket on %s", name().c_str());
+	log().trace_("Write into socket on %s", name().c_str());
 
 	// Отправляем данные
 	for (;;)
@@ -198,7 +196,7 @@ bool TcpConnection::writeToSocket()
 
 bool TcpConnection::readFromSocket()
 {
-	log().trace("Read from socket on %s", name().c_str());
+	log().trace_("Read from socket on %s", name().c_str());
 
 	// Пытаемся полностью заполнить буфер
 	for (;;)

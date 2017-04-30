@@ -21,7 +21,8 @@
 
 #pragma once
 
-#define LOG_TRACE_ON
+//#define LOG_TRACE_ON
+#define LOG_DEBUG_ON
 
 #include <string>
 #include <thread>
@@ -38,13 +39,10 @@ struct IP7_Trace_Deleter
 
 class Log
 {
-private:
-	std::string _name;
-
-	std::unique_ptr<IP7_Trace, IP7_Trace_Deleter> _logTrace;
-	IP7_Trace::hModule _logModule;
-
 public:
+	std::unique_ptr<IP7_Trace, IP7_Trace_Deleter> trace;
+	IP7_Trace::hModule module;
+
 	Log();
 
 	explicit Log(std::string name);
@@ -56,17 +54,11 @@ public:
 		return *this;
 	}
 
-	virtual const std::string& name() const
-	{
-		return _name;
-	}
-
 	template<typename... Args>
-	void trace(const char *fmt, const Args &... args)
+	void trace_(const char* fmt, const Args& ... args)
 	{
 #if defined(LOG_TRACE_ON)
-		_logTrace->P7_TRACE(_logModule, fmt, args...);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		trace->P7_TRACE(module, fmt, args...);
 #endif // defined(LOG_TRACE_ON)
 	}
 
@@ -74,36 +66,31 @@ public:
 	void debug(const char *fmt, const Args &... args)
 	{
 #if defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
-		_logTrace->P7_DEBUG(_logModule, fmt, args...);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		trace->P7_DEBUG(module, fmt, args...);
 #endif // defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
 	}
 
 	template<typename... Args>
 	void info(const char *fmt, const Args &... args)
 	{
-		_logTrace->P7_INFO(_logModule, fmt, args...);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		trace->P7_INFO(module, fmt, args...);
 	}
 
 	template<typename... Args>
 	void warn(const char *fmt, const Args &... args)
 	{
-		_logTrace->P7_WARNING(_logModule, fmt, args...);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		trace->P7_WARNING(module, fmt, args...);
 	}
 
 	template<typename... Args>
 	void error(const char *fmt, const Args &... args)
 	{
-		_logTrace->P7_ERROR(_logModule, fmt, args...);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		trace->P7_ERROR(module, fmt, args...);
 	}
 
 	template<typename... Args>
 	void critical(const char *fmt, const Args &... args)
 	{
-		_logTrace->P7_CRITICAL(_logModule, fmt, args...);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		trace->P7_CRITICAL(module, fmt, args...);
 	}
 };
