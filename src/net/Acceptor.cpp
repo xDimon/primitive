@@ -16,17 +16,17 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.04.28
 
-// ConnectionAcceptor.cpp
+// Acceptor.cpp
 
 
-#include "ConnectionAcceptor.hpp"
+#include "Acceptor.hpp"
 
-ConnectionAcceptor::ConnectionAcceptor(Transport::Ptr& transport)
-: Log("ConnectionAcceptor")
+Acceptor::Acceptor(std::shared_ptr<Transport>& transport)
+: Log("Acceptor")
 , Connection(transport)
 {
 }
 
-ConnectionAcceptor::~ConnectionAcceptor()
+Acceptor::~Acceptor()
 {
 }

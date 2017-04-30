@@ -14,42 +14,46 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.09
+// File created on: 2017.04.30
 
-// TcpAcceptor.hpp
+// AcceptorFactory.hpp
 
 
 #pragma once
 
-#include <mutex>
-#include "Acceptor.hpp"
+#include <functional>
+#include <memory>
 
-struct sockaddr_in;
+#include "../configs/Setting.hpp"
 
-class TcpAcceptor : public Acceptor
+class Connection;
+class Acceptor;
+class Transport;
+
+class AcceptorFactory
 {
-private:
-	std::string _name;
+public:
+	typedef std::function<std::shared_ptr<Connection>(std::shared_ptr<Transport>&)> Creator;
 
-protected:
-	std::string _host;
-	std::uint16_t _port;
-	std::mutex _mutex;
+private:
+	AcceptorFactory()
+	{};
+
+	virtual ~AcceptorFactory()
+	{};
+
+	AcceptorFactory(AcceptorFactory const&) = delete;
+
+	void operator=(AcceptorFactory const&) = delete;
+
+	static AcceptorFactory& getInstance()
+	{
+		static AcceptorFactory instance;
+		return instance;
+	}
 
 public:
-	TcpAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port);
-	virtual ~TcpAcceptor();
+	std::shared_ptr<Acceptor> create(const Setting& setting);
 
-	virtual const std::string& name();
-
-	virtual void watch(epoll_event &ev);
-
-	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
-
-	virtual bool processing();
-
-	static TcpAcceptor::Ptr create(Transport::Ptr& transport, std::string host, std::uint16_t port)
-	{
-		return std::make_shared<TcpAcceptor>(transport, host, port);
-	}
+	static std::shared_ptr<AcceptorFactory::Creator> creator(const Setting& setting);
 };

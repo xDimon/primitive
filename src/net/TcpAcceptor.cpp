@@ -34,7 +34,7 @@
 
 TcpAcceptor::TcpAcceptor(Transport::Ptr& transport, std::string host, std::uint16_t port)
 : Log("TcpAcceptor")
-, ConnectionAcceptor(transport)
+, Acceptor(transport)
 , _host(host)
 , _port(port)
 {

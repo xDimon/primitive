@@ -16,17 +16,18 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.04.28
 
-// ConnectionAcceptor.hpp
+// Acceptor.hpp
 
 
 #pragma once
 
 
 #include "Connection.hpp"
+#include "../configs/Setting.hpp"
 
-class ConnectionAcceptor : public Connection
+class Acceptor : public Connection
 {
 public:
-	ConnectionAcceptor(Transport::Ptr& transport);
-	virtual ~ConnectionAcceptor();
+	Acceptor(std::shared_ptr<Transport>& transport);
+	virtual ~Acceptor();
 };
