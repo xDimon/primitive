@@ -31,103 +31,16 @@ Config::Config(Options::Ptr &options)
 {
 	auto &configPath = _options->getConfig();
 
-	try
-	{
-		auto&& root = getRoot();
-		{
-			auto &&transports = root.add("transports", libconfig::Setting::Type::TypeList);
-			{
-				auto &&transport = transports.add(libconfig::Setting::Type::TypeGroup);
-
-				transport.add("name", libconfig::Setting::Type::TypeString) = "http::8000";
-				transport.add("type", libconfig::Setting::Type::TypeString) = "http";
-				transport.add("secure", libconfig::Setting::Type::TypeBoolean) = false;
-				transport.add("address", libconfig::Setting::Type::TypeString) = "0.0.0.0";
-				transport.add("port", libconfig::Setting::Type::TypeInt) = 8000;
-				transport.add("serialization", libconfig::Setting::Type::TypeString) = "json";
-			}
-			{
-				auto &&transport = transports.add(libconfig::Setting::Type::TypeGroup);
-
-				transport.add("name", libconfig::Setting::Type::TypeString) = "https::4430";
-				transport.add("type", libconfig::Setting::Type::TypeString) = "http";
-				transport.add("secure", libconfig::Setting::Type::TypeBoolean) = true;
-				transport.add("address", libconfig::Setting::Type::TypeString) = "0.0.0.0";
-				transport.add("port", libconfig::Setting::Type::TypeInt) = 4430;
-				transport.add("serialization", libconfig::Setting::Type::TypeString) = "json";
-			}
-			{
-				auto &&transport = transports.add(libconfig::Setting::Type::TypeGroup);
-
-				transport.add("name", libconfig::Setting::Type::TypeString) = "wss::4431";
-				transport.add("type", libconfig::Setting::Type::TypeString) = "websocket";
-				transport.add("secure", libconfig::Setting::Type::TypeBoolean) = true;
-				transport.add("address", libconfig::Setting::Type::TypeString) = "0.0.0.0";
-				transport.add("port", libconfig::Setting::Type::TypeInt) = 4431;
-				transport.add("serialization", libconfig::Setting::Type::TypeString) = "json";
-			}
-			{
-				auto &&transport = transports.add(libconfig::Setting::Type::TypeGroup);
-
-				transport.add("type", libconfig::Setting::Type::TypeString) = "packet";
-				transport.add("secure", libconfig::Setting::Type::TypeBoolean) = true;
-				transport.add("address", libconfig::Setting::Type::TypeString) = "0.0.0.0";
-				transport.add("port", libconfig::Setting::Type::TypeInt) = 8002;
-				transport.add("serialization", libconfig::Setting::Type::TypeString) = "json";
-			}
-		}
-
-		libconfig::Config::writeFile(configPath.c_str());
-	}
-	catch (libconfig::SettingTypeException& exception)
-	{
-		throw;
-	}
-	catch (...)
-	{
-		throw;
-	}
-
-
-
 //
-//		type = http;
-//		secure = false;
-//		address = 0.0.0.0;
-//		port = 8000;
-//		serialization = json;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	try
 	{
-//		if (!libconfig::Config::exists(configPath))
-//		{
-//			throw std::runtime_error("Config file not found");
-//		}
 		libconfig::Config::readFile(configPath.c_str());
 	}
 	catch (const libconfig::FileIOException &fioex)
 	{
 		std::ostringstream ss;
-		ss << "I/O error while reading config file: " << fioex.what();
+		ss << "Can't read config file: " << fioex.what();
 		throw std::runtime_error(ss.str());
 	}
 	catch (const libconfig::ParseException &pex)
