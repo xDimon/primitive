@@ -168,7 +168,7 @@ bool TcpConnection::writeToSocket()
 			break;
 		}
 
-		int n = ::write(_sock, _outBuff.dataPtr(), _outBuff.dataLen());
+		ssize_t n = ::write(_sock, _outBuff.dataPtr(), _outBuff.dataLen());
 		if (n == -1)
 		{
 			// Повторяем вызов прерваный сигналом
@@ -221,7 +221,7 @@ bool TcpConnection::readFromSocket()
 
 		_inBuff.prepare(bytes_available);
 
-		int n = ::read(_sock, _inBuff.spacePtr(), _inBuff.spaceLen());
+		ssize_t n = ::read(_sock, _inBuff.spacePtr(), _inBuff.spaceLen());
 		if (n == -1)
 		{
 			// Повторяем вызов прерваный сигналом

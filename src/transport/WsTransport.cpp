@@ -30,6 +30,7 @@
 #include "../utils/Time.hpp"
 #include "websocket/WsContext.hpp"
 #include "WsTransport.hpp"
+#include "http/HttpResponse.hpp"
 
 bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 {
@@ -66,21 +67,10 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 		{
 			log().debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
 
-			std::stringstream ss;
-			ss << "HTTP/1.0 400 Bad request\r\n"
-				<< "Server: " << Server::httpName() << "\r\n"
-				<< "Date: " << Time::httpDate() << "\r\n"
-				<< "X-Transport: websocket\r\n"
-				<< "\r\n"
-				<< "Headers data too large" << "\r\n";
-
-			// Формируем пакет
-			Packet response(ss.str().c_str(), ss.str().size());
-
-			// Отправляем
-			connection->write(response.data(), response.size());
-
-			connection->close();
+			HttpResponse(400)
+				<< HttpHeader("Connection", "close")
+				<< "Headers data too large\n"
+				>> *connection;
 
 			return true;
 		}
@@ -117,21 +107,13 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			// (echo -n "$1"; echo -n '258EAFA5-E914-47DA-95CA-C5AB0DC85B11') | sha1sum | xxd -r -p | base64
 			auto acceptKey = Base64::encode(SHA1::encode_bin(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
 
-			std::stringstream ss;
-			ss << "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
-				<< "Server: " << Server::httpName() << "\r\n"
-				<< "Date: " << Time::httpDate() << "\r\n"
-				<< "X-Transport: websocket\r\n"
-				<< "Upgrade: websocket\r\n"
-				<< "Connection: Upgrade\r\n"
-				<< "Sec-WebSocket-Accept: " << acceptKey << "\r\n"
-				<< "\r\n";
-
-			// Формируем пакет
-			Packet response(ss.str().c_str(), ss.str().size());
-
-			// Отправляем
-			connection->write(response.data(), response.size());
+			HttpResponse(101, "Web Socket Protocol Handshake")
+				<< HttpHeader("X-Transport", "websocket")
+				<< HttpHeader("Upgrade", "websocket")
+				<< HttpHeader("Connection", "Upgrade")
+				<< HttpHeader("Sec-WebSocket-Accept", acceptKey)
+				<< "Headers data too large\n"
+				>> *connection;
 
 			context->setEstablished();
 
@@ -143,19 +125,11 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 		}
 		catch (std::runtime_error &exception)
 		{
-			std::stringstream ss;
-			ss << "HTTP/1.0 400 Bad request\r\n"
-				<< "Server: " << Server::httpName() << "\r\n"
-				<< "Date: " << Time::httpDate() << "\r\n"
-				<< "X-Transport: websocket\r\n"
-				<< "\r\n"
-				<< exception.what() << "\r\n";
-
-			// Формируем пакет
-			Packet response(ss.str().c_str(), ss.str().size());
-
-			// Отправляем
-			connection->write(response.data(), response.size());
+			HttpResponse(400)
+				<< HttpHeader("X-Transport", "websocket")
+				<< HttpHeader("Connection", "Close")
+				<< exception.what()
+				>> *connection;
 
 			connection->close();
 
@@ -224,7 +198,6 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 		context->getFrame()->applyMask();
 
-
 		if (context->getFrame()->opcode() == WsFrame::Opcode::Text)
 		{
 			log().debug("FRAME-TEXT: \"%s\" %zu bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
@@ -254,6 +227,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			log().debug("FRAME-CLOSE: %zu bytes", context->getFrame()->dataLen());
 			WsFrame::send(connection, WsFrame::Opcode::Close, "Bye!", 4);
 			context.reset();
+			connection->close();
 			n++;
 			break;
 		}

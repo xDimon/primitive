@@ -29,6 +29,8 @@
 #include "http/HttpContext.hpp"
 #include "HttpTransport.hpp"
 #include "../serialization/SObj.hpp"
+#include "http/HttpResponse.hpp"
+#include "http/HttpHeader.hpp"
 
 bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 {
@@ -59,7 +61,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 		if (!context->getRequest())
 		{
 			// Проверка готовности заголовков
-			auto endHeaders = static_cast<const char *>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
+			auto endHeaders = static_cast<const char*>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
 
 			if (!endHeaders && connection->dataLen() < (1 << 12))
 			{
@@ -78,21 +80,10 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 			{
 				log().debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
 
-				std::stringstream ss;
-				ss << "HTTP/1.0 400 Bad request\r\n"
-					<< "Server: " << Server::httpName() << "\r\n"
-					<< "Date: " << Time::httpDate() << "\r\n"
-					<< "X-Transport: http\r\n"
-				   << "\r\n"
-				   << "Headers data too large" << "\r\n";
-
-				// Формируем пакет
-				Packet response(ss.str().c_str(), ss.str().size());
-
-				// Отправляем
-				connection->write(response.data(), response.size());
-
-				connection->close();
+				HttpResponse(400)
+					<< HttpHeader("Connection", "Close")
+					<< "Headers data too large\r\n"
+					>> *connection;
 
 				break;
 			}
@@ -110,21 +101,10 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 			}
 			catch (std::runtime_error& exception)
 			{
-				std::stringstream ss;
-				ss << "HTTP/1.0 400 Bad request\r\n"
-					<< "Server: " << Server::httpName() << "\r\n"
-					<< "Date: " << Time::httpDate() << "\r\n"
-					<< "X-Transport: http\r\n"
-				   << "\r\n"
-				   << exception.what() << "\r\n";
-
-				// Формируем пакет
-				Packet response(ss.str().c_str(), ss.str().size());
-
-				// Отправляем
-				connection->write(response.data(), response.size());
-
-				connection->close();
+				HttpResponse(400)
+					<< HttpHeader("Connection", "Close")
+					<< exception.what() << "\r\n"
+					>> *connection;
 
 				break;
 			}
@@ -140,7 +120,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 			{
 				if (context->getRequest()->contentLength() > context->getRequest()->dataLen())
 				{
-					size_t len = std::min(context->getRequest()->contentLength(), context->getRequest()->dataLen());
+					size_t len = std::min(context->getRequest()->contentLength(), connection->dataLen());
 
 					context->getRequest()->write(connection->dataPtr(), len);
 
@@ -188,21 +168,11 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 				throw std::runtime_error("No data for parsing");
 			}
 
-			std::ostringstream body;
-			body << "Received:\r\n"
-				 << serializer()->encode(input.get()) << "\r\n";
-
-			std::stringstream ss;
-			ss << "HTTP/1.0 200 OK\r\n"
-			   << "Server: " << Server::httpName() << "\r\n"
-			   << "Date: " << Time::httpDate() << "\r\n"
-			   << "X-Transport: http\r\n"
-			   << "Content-Length: " << body.str().length() << "\r\n"
-			   << "\r\n"
-			   << body.str();
-
-			// Отправляем
-			connection->write(ss.str().c_str(), ss.str().length());
+			// TODO реализовать реальную обработку вместо echo
+			HttpResponse(200)
+				<< "Received:\r\n"
+				<< serializer()->encode(input.get()) << "\r\n"
+				>> *connection;
 		}
 		catch (const std::exception& exception)
 		{
@@ -210,21 +180,10 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 			output.insert(new SStr("status"), new SStr("error"));
 			output.insert(new SStr("error"), new SStr(exception.what()));
 
-			auto body = serializer()->encode(&output);
-
-			std::ostringstream ss;
-			ss << "HTTP/1.0 400 OK\r\n"
-			   << "Server: " << Server::httpName() << "\r\n"
-			   << "Date: " << Time::httpDate() << "\r\n"
-			   << "X-Transport: http\r\n"
-			   << "Content-Length: " << body.length() << "\r\n"
-			   << "\r\n"
-			   << body;
-
-			// Отправляем
-			connection->write(ss.str().c_str(), ss.str().length());
-
-			connection->close();
+			HttpResponse(200)
+				<< HttpHeader("Connection", "Close")
+				<< serializer()->encode(&output) << "\r\n"
+				>> *connection;
 		}
 
 		context->getRequest().reset();
