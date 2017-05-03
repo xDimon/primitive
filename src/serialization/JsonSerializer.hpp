@@ -70,7 +70,7 @@ private:
 	void encodeValue(const SVal* value);
 
 public:
-	virtual SVal* decode(const std::string &data) override;
+	virtual SVal* decode(const std::string &data, bool strict = false) override;
 
 	virtual std::string encode(const SVal* value) override;
 };

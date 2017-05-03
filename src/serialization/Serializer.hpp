@@ -26,6 +26,6 @@
 class Serializer
 {
 public:
-	virtual SVal* decode(const std::string &data) = 0;
+	virtual SVal* decode(const std::string &data, bool strict = false) = 0;
 	virtual std::string encode(const SVal* value) = 0;
 };
