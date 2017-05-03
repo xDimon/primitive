@@ -24,13 +24,13 @@
 #include <iostream>
 #include <iomanip>
 #include <ctime>
+#include <chrono>
 
 class Time
 {
 public:
-	static auto httpDate(std::time_t *ts_ = nullptr)
+	static auto httpDate(std::time_t* ts_ = nullptr)
 	{
-		std::tm tm;
 		std::time_t ts;
 		if (ts_)
 		{
@@ -38,9 +38,12 @@ public:
 		}
 		else
 		{
-			std::time(&ts);
+			ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 		}
+		std::tm tm;
 		::localtime_r(&ts, &tm);
-		return std::put_time(&tm, "%a, %d %b %Y %H:%M:%S %Z");
+		std::ostringstream ss;
+		ss << std::put_time(&tm, "%a, %d %b %Y %H:%M:%S %Z");
+		return ss.str();
 	}
 };
