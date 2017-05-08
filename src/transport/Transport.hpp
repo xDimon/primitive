@@ -40,11 +40,6 @@ private:
 	std::shared_ptr<SerializerFactory::Creator> _serializerCreator;
 
 public:
-	Transport(const std::string& name, std::shared_ptr<AcceptorFactory::Creator>& creator)
-	: _name(name)
-	, _acceptorCreator(creator)
-	{
-	}
 
 	Transport(const Setting& setting);
 

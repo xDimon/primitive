@@ -37,7 +37,10 @@ Server::Server(Config::Ptr &configs)
 		{
 			auto transport = TransportFactory::create(setting);
 
-			addTransport(transport->name(), transport);
+			if (!addTransport(transport->name(), transport))
+			{
+				throw std::runtime_error(std::string("Already exists transport with the name ('") + transport->name() + "')");
+			}
 		}
 	}
 	catch (const std::runtime_error& exception)
@@ -67,6 +70,7 @@ bool Server::addTransport(const std::string& name, std::shared_ptr<Transport>& t
 	{
 		return false;
 	}
+	log().debug("Transport '%s' added", name.c_str());
 	_transports.emplace(name, transport->ptr());
 	return true;
 }
@@ -106,6 +110,7 @@ void Server::removeTransport(const std::string& name)
 	auto& transport = i->second;
 	transport->disable();
 	_transports.erase(i);
+	log().debug("Transport '%s' removed", name.c_str());
 }
 
 void Server::start()
