@@ -25,6 +25,8 @@
 #include <map>
 #include "../configs/Config.hpp"
 #include "../transport/Transport.hpp"
+#include "../storage/DbConnectionPool.hpp"
+#include <map>
 
 class Server: public Log
 {
@@ -36,6 +38,8 @@ private:
 	std::mutex _mutex;
 
 	Config::Ptr _configs;
+
+	std::shared_ptr<DbConnectionPool> _database;
 
 	std::map<const std::string, std::shared_ptr<Transport>> _transports;
 

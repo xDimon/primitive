@@ -67,6 +67,20 @@ list(APPEND "${CODENAME}_LIBRARIES" ${OPENSSL_LIBRARIES})
 list(APPEND "${CODENAME}_LIBRARIES" pthread)
 
 
+# Подключаем mysql
+find_package(MySQL)
+if (MYSQL_FOUND)
+    include_directories(${MYSQL_INCLUDE_DIR})
+    list(APPEND "${CODENAME}_LIBRARIES" ${MYSQL_LIBRARIES})
+else()
+    message(FATAL "libmysqlclient not found")
+endif ()
+
+message(STATUS "Project libraries:")
+foreach(F ${${CODENAME}_LIBRARIES})
+	message(STATUS "  ${F}")
+endforeach()
+
 add_subdirectory(src)
 
 list(APPEND SOURCE_FILES test/main.cpp)

@@ -21,14 +21,31 @@
 
 #include "../net/SslAcceptor.hpp"
 #include "../thread/ThreadPool.hpp"
+#include "../transport/HttpTransport.hpp"
 #include "Server.hpp"
 #include "../transport/TransportFactory.hpp"
 #include "../net/ConnectionManager.hpp"
+#include "../storage/mysql/MysqlConnectionPool.hpp"
 
 Server::Server(Config::Ptr &configs)
 : Log("Server")
 , _configs(configs)
 {
+	try
+	{
+		const auto& settings = _configs->getRoot()["databases"];
+
+		for (const auto& setting : settings)
+		{
+			_database = std::make_shared<MysqlConnectionPool>(setting);
+			_database->touch();
+		}
+	}
+	catch (const std::runtime_error& exception)
+	{
+		log().error("Can't create database connection pool: %s", exception.what());
+	}
+
 	try
 	{
 		const auto& settings = _configs->getRoot()["transports"];
