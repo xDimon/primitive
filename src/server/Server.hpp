@@ -30,21 +30,17 @@
 
 class Server: public Log
 {
-public:
-	typedef std::shared_ptr<Server> Ptr;
-
 private:
-
 	std::mutex _mutex;
 
-	Config::Ptr _configs;
+	std::shared_ptr<Config> _configs;
 
 	std::shared_ptr<DbConnectionPool> _database;
 
 	std::map<const std::string, std::shared_ptr<Transport>> _transports;
 
 public:
-	Server(Config::Ptr &configs);
+	Server(std::shared_ptr<Config> &configs);
 	virtual ~Server();
 
 	static std::string httpName()

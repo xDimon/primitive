@@ -27,7 +27,7 @@
 #include "../net/ConnectionManager.hpp"
 #include "../storage/mysql/MysqlConnectionPool.hpp"
 
-Server::Server(Config::Ptr &configs)
+Server::Server(std::shared_ptr<Config>& configs)
 : Log("Server")
 , _configs(configs)
 {

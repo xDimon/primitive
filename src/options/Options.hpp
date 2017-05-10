@@ -26,11 +26,11 @@
 
 class Options
 {
-public:
-	typedef std::shared_ptr<Options> Ptr;
+private:
+	std::string _configFile;
 
 public:
 	Options(int argc, char *argv[]);
 
-	const std::string getConfig() const;
+	const std::string& getConfig() const;
 };

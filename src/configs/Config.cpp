@@ -21,17 +21,12 @@
 
 #include "Config.hpp"
 
-#include <libconfig.h++>
 #include <sstream>
 
-Config::Config(Options::Ptr &options)
+Config::Config(std::shared_ptr<Options>& options)
 : _options(options)
-//, _mainConfig(new libconfig::Config())
-//, _transportConfig(new libconfig::Config())
 {
 	auto &configPath = _options->getConfig();
-
-//
 
 	try
 	{

@@ -27,13 +27,10 @@
 
 class Config: public libconfig::Config
 {
-public:
-	typedef std::shared_ptr<Config> Ptr;
-
 private:
-	Options::Ptr _options;
+	std::shared_ptr<Options> _options;
 
 public:
-	Config(Options::Ptr &options);
+	Config(std::shared_ptr<Options>& options);
 	virtual ~Config();
 };

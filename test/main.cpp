@@ -29,11 +29,11 @@ int main(int argc, char *argv[])
 {
 	ThreadPool::setThreadNum(2);
 
-	Options::Ptr options(new Options(argc, argv));
+	auto options = std::make_shared<Options>(argc, argv);
 
-	Config::Ptr configs(new Config(options));
+	auto configs = std::make_shared<Config>(options);
 
-	Server::Ptr server(new Server(configs));
+	auto server = std::make_shared<Server>(configs);
 
 	server->start();
 
