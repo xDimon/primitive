@@ -38,29 +38,14 @@ SslConnection::SslConnection(std::shared_ptr<Transport>& transport, int sock, co
 
 	_sslConnect = SSL_new(_sslContext.get());
 	SSL_set_fd(_sslConnect, _sock);
-
-	log().debug("Create %s", name().c_str());
 }
 
 SslConnection::~SslConnection()
 {
-	log().debug("Destroy %s", name().c_str());
-
 	SSL_shutdown(_sslConnect);
 	SSL_free(_sslConnect);
 
 	shutdown(_sock, SHUT_RD);
-}
-
-const std::string& SslConnection::name()
-{
-	if (_name.empty())
-	{
-		std::ostringstream ss;
-		ss << "SslConnection [" << _sock << "] [" << inet_ntoa(_sockaddr.sin_addr) << ":" << htons(_sockaddr.sin_port) << "]";
-		_name = ss.str();
-	}
-	return _name;
 }
 
 bool SslConnection::processing()

@@ -34,8 +34,6 @@
 class SslConnection: public TcpConnection
 {
 private:
-	std::string _name;
-
 	std::shared_ptr<SSL_CTX> _sslContext;
 	SSL *_sslConnect;
 
@@ -51,8 +49,6 @@ public:
 
 	SslConnection(std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, std::shared_ptr<SSL_CTX> sslContext);
 	virtual ~SslConnection();
-
-	virtual const std::string& name();
 
 	virtual bool processing();
 };

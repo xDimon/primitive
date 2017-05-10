@@ -41,25 +41,18 @@ TcpConnection::TcpConnection(std::shared_ptr<Transport>& transport, int sock, co
 
 	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
 
-	log().debug("Create %s", name().c_str());
+	std::ostringstream ss;
+	ss << "[" << _sock << "][" << inet_ntoa(_sockaddr.sin_addr) << ":" << htons(_sockaddr.sin_port) << "]";
+	_name = std::move(ss.str());
+
+	log().debug("TcpConnection '%s' created", name().c_str());
 }
 
 TcpConnection::~TcpConnection()
 {
-	log().debug("Destroy %s", name().c_str());
-
 	shutdown(_sock, SHUT_RD);
-}
 
-const std::string& TcpConnection::name()
-{
-	if (_name.empty())
-	{
-		std::ostringstream ss;
-		ss << "TcpConnection [" << _sock << "] [" << inet_ntoa(_sockaddr.sin_addr) << ":" << htons(_sockaddr.sin_port) << "]";
-		_name = ss.str();
-	}
-	return _name;
+	log().debug("TcpConnection '%s' destroyed", name().c_str());
 }
 
 void TcpConnection::watch(epoll_event &ev)

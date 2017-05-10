@@ -29,9 +29,6 @@
 
 class TcpConnection: public Connection, public ReaderConnection, public WriterConnection
 {
-private:
-	std::string _name;
-
 protected:
 	sockaddr_in _sockaddr;
 
@@ -63,8 +60,6 @@ public:
 	{
 		return _noRead;
 	}
-
-	virtual const std::string& name();
 
 	virtual void watch(epoll_event &ev);
 
