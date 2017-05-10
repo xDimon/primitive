@@ -26,10 +26,10 @@
 #include "JsonSerializer.hpp"
 #include "SInt.hpp"
 #include "SFloat.hpp"
+#include "../utils/Base64.hpp"
 #include "../utils/literals.hpp"
 
-
-SVal* JsonSerializer::decode(const std::string &data, bool strict)
+SVal* JsonSerializer::decode(const std::string& data, bool strict)
 {
 	_iss.str(data);
 
@@ -101,7 +101,28 @@ SVal* JsonSerializer::decodeValue()
 			return decodeNumber();
 
 		case '"':
+		{
+			auto p = _iss.tellg();
+			if (_iss.get() == '"')
+			{
+				if (_iss.get() == '=')
+				{
+					if (_iss.get() == '?')
+					{
+						if (_iss.get() == 'B')
+						{
+							if (_iss.get() == '?')
+							{
+								_iss.seekg(p);
+								return decodeBinary();;
+							}
+						}
+					}
+				}
+			}
+			_iss.seekg(p);
 			return decodeString();
+		}
 
 		case 't':
 		case 'f':
@@ -272,7 +293,8 @@ SStr* JsonSerializer::decodeString()
 				{
 					throw std::runtime_error("Bad escaped symbol: wrong for second byte of utf-16 surrogate pair");
 				}
-				symbol = ((((symbol >> 6) & 0b1111) + 1) << 16) | ((symbol & 0b11'1111) << 10) | (symbol2 & 0b0011'1111'1111);
+				symbol = ((((symbol >> 6) & 0b1111) + 1) << 16) | ((symbol & 0b11'1111) << 10) |
+						 (symbol2 & 0b0011'1111'1111);
 			}
 
 			putUtf8Symbol(*str, symbol);
@@ -347,23 +369,83 @@ SStr* JsonSerializer::decodeString()
 	throw std::runtime_error("Unexpect out of data during parse string value");
 }
 
+SBinary* JsonSerializer::decodeBinary()
+{
+	bool ok = false;
+
+	if (_iss.get() == '"')
+	{
+		if (_iss.get() == '=')
+		{
+			if (_iss.get() == '?')
+			{
+				if (_iss.get() == 'B')
+				{
+					if (_iss.get() == '?')
+					{
+						ok = true;
+					}
+				}
+			}
+		}
+	}
+
+	if (!ok)
+	{
+		throw std::runtime_error("Wrong token for open base64-encoded binary string");
+	}
+
+	std::string b64;
+
+	while (!_iss.eof())
+	{
+		int c = _iss.get();
+		if (c == '"')
+		{
+			std::string decoded = Base64::decode(b64);
+			return new SBinary(decoded);
+		}
+		else if (c == -1)
+		{
+			break;
+		}
+		b64.push_back(c);
+	}
+
+	throw std::runtime_error("Unexpect out of data during parse base64-encoded binary string");
+}
+
 SBool* JsonSerializer::decodeBool()
 {
 	auto c = _iss.get();
 	if (c == 't')
 	{
 		if (!_iss.eof() && _iss.get() == 'r')
+		{
 			if (!_iss.eof() && _iss.get() == 'u')
+			{
 				if (!_iss.eof() && _iss.get() == 'e')
+				{
 					return new SBool(true);
+				}
+			}
+		}
 	}
 	else if (c == 'f')
 	{
 		if (!_iss.eof() && _iss.get() == 'a')
+		{
 			if (!_iss.eof() && _iss.get() == 'l')
+			{
 				if (!_iss.eof() && _iss.get() == 's')
+				{
 					if (!_iss.eof() && _iss.get() == 'e')
+					{
 						return new SBool(false);
+					}
+				}
+			}
+		}
 	}
 	if (_iss.eof())
 	{
@@ -376,10 +458,18 @@ SBool* JsonSerializer::decodeBool()
 SNull* JsonSerializer::decodeNull()
 {
 	if (!_iss.eof() && _iss.get() == 'n')
+	{
 		if (!_iss.eof() && _iss.get() == 'u')
+		{
 			if (!_iss.eof() && _iss.get() == 'l')
+			{
 				if (!_iss.eof() && _iss.get() == 'l')
+				{
 					return new SNull();
+				}
+			}
+		}
+	}
 	if (_iss.eof())
 	{
 		throw std::runtime_error("Unxpected end of data during try parse null value");
@@ -402,16 +492,26 @@ uint32_t JsonSerializer::decodeEscaped()
 	c = _iss.get();
 	switch (c)
 	{
-		case '"': return '"';
-		case '\\': return '\\';
-		case '/': return '/';
-		case 'b': return '\b';
-		case 'f': return '\f';
-		case 'n': return '\n';
-		case 't': return '\t';
-		case 'r': return '\r';
-		case 'u': break;
-		default: throw std::runtime_error("Wrong token for escaped-sequece");
+		case '"':
+			return '"';
+		case '\\':
+			return '\\';
+		case '/':
+			return '/';
+		case 'b':
+			return '\b';
+		case 'f':
+			return '\f';
+		case 'n':
+			return '\n';
+		case 't':
+			return '\t';
+		case 'r':
+			return '\r';
+		case 'u':
+			break;
+		default:
+			throw std::runtime_error("Wrong token for escaped-sequece");
 	}
 	uint32_t val = 0;
 	for (int i = 0; i < 4; i++)
@@ -468,17 +568,17 @@ SNum* JsonSerializer::decodeNumber()
 	return new SInt(value);
 }
 
-void JsonSerializer::encodeNull(const SNull *value)
+void JsonSerializer::encodeNull(const SNull* value)
 {
 	_oss << "null";
 }
 
-void JsonSerializer::encodeBool(const SBool *value)
+void JsonSerializer::encodeBool(const SBool* value)
 {
 	_oss << (value->value() ? "true" : "false");
 }
 
-void JsonSerializer::encodeString(const SStr *value)
+void JsonSerializer::encodeString(const SStr* value)
 {
 	_oss.put('"');
 	for (size_t i = 0; i < value->value().length(); i++)
@@ -486,29 +586,59 @@ void JsonSerializer::encodeString(const SStr *value)
 		auto c = value->value()[i];
 		switch (c)
 		{
-			case '"':	_oss.put('\\');	_oss.put('"');	break;
-			case '\\':	_oss.put('\\');	_oss.put('\\');	break;
-			case '/':	_oss.put('\\');	_oss.put('/');	break;
-			case '\b':	_oss.put('\\');	_oss.put('b');	break;
-			case '\f':	_oss.put('\\');	_oss.put('f');	break;
-			case '\n':	_oss.put('\\');	_oss.put('n');	break;
-			case '\t':	_oss.put('\\');	_oss.put('t');	break;
-			case '\r':	_oss.put('\\');	_oss.put('r');	break;
-			default: _oss.put(c);
+			case '"':
+				_oss.put('\\');
+				_oss.put('"');
+				break;
+			case '\\':
+				_oss.put('\\');
+				_oss.put('\\');
+				break;
+			case '/':
+				_oss.put('\\');
+				_oss.put('/');
+				break;
+			case '\b':
+				_oss.put('\\');
+				_oss.put('b');
+				break;
+			case '\f':
+				_oss.put('\\');
+				_oss.put('f');
+				break;
+			case '\n':
+				_oss.put('\\');
+				_oss.put('n');
+				break;
+			case '\t':
+				_oss.put('\\');
+				_oss.put('t');
+				break;
+			case '\r':
+				_oss.put('\\');
+				_oss.put('r');
+				break;
+			default:
+				_oss.put(c);
 		}
 	}
 	_oss.put('"');
 }
 
-void JsonSerializer::encodeNumber(const SNum *value)
+void JsonSerializer::encodeBinary(const SBinary* value)
 {
-	const SInt *intVal = dynamic_cast<const SInt*>(value);
+	_oss << "\"=?B?" << Base64::encode(value->value().data(), value->value().size()) << "?=\"";
+}
+
+void JsonSerializer::encodeNumber(const SNum* value)
+{
+	const SInt* intVal = dynamic_cast<const SInt*>(value);
 	if (intVal)
 	{
 		_oss << intVal->value();
 		return;
 	}
-	const SFloat *floatVal = dynamic_cast<const SFloat*>(value);
+	const SFloat* floatVal = dynamic_cast<const SFloat*>(value);
 	if (floatVal)
 	{
 		_oss << std::setprecision(15) << floatVal->value();
@@ -516,73 +646,79 @@ void JsonSerializer::encodeNumber(const SNum *value)
 	}
 }
 
-void JsonSerializer::encodeArray(const SArr *value)
+void JsonSerializer::encodeArray(const SArr* value)
 {
 	_oss << "[";
 
 	bool empty = true;
-	value->forEach([this,&empty](const SVal* value){
-		if (!empty)
-		{
-			_oss << ",";
-		}
-		else
-		{
-			empty = false;
-		}
-		encodeValue(value);
-	});
+	value->forEach([this, &empty](const SVal* value)
+				   {
+					   if (!empty)
+					   {
+						   _oss << ",";
+					   }
+					   else
+					   {
+						   empty = false;
+					   }
+					   encodeValue(value);
+				   });
 
 	_oss << "]";
 }
 
-void JsonSerializer::encodeObject(const SObj *value)
+void JsonSerializer::encodeObject(const SObj* value)
 {
 	_oss << "{";
 
 	bool empty = true;
-	value->forEach([this,&empty](const std::pair<const SStr* const, SVal*>&element){
-		if (!empty)
-		{
-			_oss << ",";
-		}
-		else
-		{
-			empty = false;
-		}
-		encodeString(element.first);
-		_oss << ':';
-		encodeValue(element.second);
-	});
+	value->forEach([this, &empty](const std::pair<const SStr* const, SVal*>& element)
+				   {
+					   if (!empty)
+					   {
+						   _oss << ",";
+					   }
+					   else
+					   {
+						   empty = false;
+					   }
+					   encodeString(element.first);
+					   _oss << ':';
+					   encodeValue(element.second);
+				   });
 
 	_oss << "}";
 }
 
-void JsonSerializer::encodeValue(const SVal *value)
+void JsonSerializer::encodeValue(const SVal* value)
 {
-	if (auto pStr = dynamic_cast<const SStr *>(value))
+	if (auto pStr = dynamic_cast<const SStr*>(value))
 	{
 		encodeString(pStr);
 	}
-	else if (auto pNum = dynamic_cast<const SNum *>(value))
+	else if (auto pNum = dynamic_cast<const SNum*>(value))
 	{
 		encodeNumber(pNum);
 	}
-	else if (auto pObj = dynamic_cast<const SObj *>(value))
+	else if (auto pObj = dynamic_cast<const SObj*>(value))
 	{
 		encodeObject(pObj);
 	}
-	else if (auto pArr = dynamic_cast<const SArr *>(value))
+	else if (auto pArr = dynamic_cast<const SArr*>(value))
 	{
 		encodeArray(pArr);
 	}
-	else if (auto pBool = dynamic_cast<const SBool *>(value))
+	else if (auto pBool = dynamic_cast<const SBool*>(value))
 	{
 		encodeBool(pBool);
 	}
-	else if (auto pNull = dynamic_cast<const SNull *>(value))
+	else if (auto pNull = dynamic_cast<const SNull*>(value))
 	{
 		encodeNull(pNull);
+	}
+	else if (auto pBin = dynamic_cast<const SBinary*>(value))
+	{
+		encodeBinary(pBin);
 	}
 	else
 	{
@@ -590,7 +726,7 @@ void JsonSerializer::encodeValue(const SVal *value)
 	}
 }
 
-void JsonSerializer::putUtf8Symbol(SStr &str, uint32_t symbol)
+void JsonSerializer::putUtf8Symbol(SStr& str, uint32_t symbol)
 {
 	if (symbol <= 0b0111'1111) // 7bit -> 1byte
 	{
@@ -598,37 +734,37 @@ void JsonSerializer::putUtf8Symbol(SStr &str, uint32_t symbol)
 	}
 	else if (symbol <= 0b0111'1111'1111) // 11bit -> 2byte
 	{
-		str.insert(0b1100'0000 | (0b0001'1111 & (symbol>>6)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>0)));
+		str.insert(0b1100'0000 | (0b0001'1111 & (symbol >> 6)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
 	}
 	else if (symbol <= 0b1111'1111'1111'1111) // 16bit -> 3byte
 	{
-		str.insert(0b1110'0000 | (0b0000'1111 & (symbol>>12)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>6)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>0)));
+		str.insert(0b1110'0000 | (0b0000'1111 & (symbol >> 12)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
 	}
 	else if (symbol <= 0b0001'1111'1111'1111'1111'1111) // 21bit -> 4byte
 	{
-		str.insert(0b1111'0000 | (0b0000'0111 & (symbol>>18)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>12)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>6)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>0)));
+		str.insert(0b1111'0000 | (0b0000'0111 & (symbol >> 18)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 12)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
 	}
 	else if (symbol <= 0b0011'1111'1111'1111'1111'1111'1111) // 26bit -> 5byte
 	{
-		str.insert(0b1111'1000 | (0b0000'0011 & (symbol>>24)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>18)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>12)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>6)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>0)));
+		str.insert(0b1111'1000 | (0b0000'0011 & (symbol >> 24)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 18)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 12)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
 	}
 	else if (symbol <= 0b0111'1111'1111'1111'1111'1111'1111'1111) // 31bit -> 6byte
 	{
-		str.insert(0b1111'1100 | (0b0000'0001 & (symbol>>30)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>24)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>18)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>12)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>6)));
-		str.insert(0b1000'0000 | (0b0011'1111 & (symbol>>0)));
+		str.insert(0b1111'1100 | (0b0000'0001 & (symbol >> 30)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 24)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 18)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 12)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
+		str.insert(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
 	}
 }

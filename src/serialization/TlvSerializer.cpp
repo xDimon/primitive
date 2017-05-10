@@ -60,7 +60,9 @@ enum class Token {
 	OBJECT_END	= static_cast<int>(Token::END),
 //	RECURSION	= 60,
 //	UNAVAILABLE	= 70,
-//	BINARY		= 100,
+	BINARY_255	= 81,
+	BINARY_64K	= 82,
+	BINARY_4G	= 83,
 //	_KEY		= 200,
 //	_EXTERNAL	= 250,
 	UNKNOWN		= 255
@@ -148,7 +150,11 @@ SVal* TlvSerializer::decodeValue()
 //		case Token::END:
 //		case Token::RECURSION:
 //		case Token::UNAVAILABLE:
-//		case Token::BINARY:
+		case Token::BINARY_255:
+		case Token::BINARY_64K:
+		case Token::BINARY_4G:
+			return decodeBinary();
+
 //		case Token::_KEY:
 //		case Token::_EXTERNAL:
 		case Token::UNKNOWN:
@@ -329,6 +335,47 @@ SStr* TlvSerializer::decodeString()
 	throw std::runtime_error("Unexpect out of data during parse string value");
 }
 
+SBinary* TlvSerializer::decodeBinary()
+{
+	auto token = static_cast<Token>(_iss.get());
+
+	size_t size;
+
+	if (token == Token::BINARY_255)
+	{
+		size = static_cast<uint8_t>(_iss.get());
+	}
+	else if (token == Token::BINARY_64K)
+	{
+		uint16_t size_le;
+		_iss.read(reinterpret_cast<char*>(&size_le), sizeof(size_le));
+		size = le16toh(size_le);
+	}
+	else if (token == Token::BINARY_4G)
+	{
+		uint32_t size_le;
+		_iss.read(reinterpret_cast<char*>(&size_le), sizeof(size_le));
+		size = le32toh(size_le);
+	}
+	else
+	{
+		throw std::runtime_error("Wrong token for open binary");
+	}
+
+	std::string bin;
+
+	while (size--)
+	{
+		if (!_iss.eof() && _iss.peek() == -1)
+		{
+			throw std::runtime_error("Unexpect out of data during parse binary data");
+		}
+		bin.push_back(_iss.get());
+	}
+
+	return new SBinary(bin);
+}
+
 SBool* TlvSerializer::decodeBool()
 {
 	auto c = static_cast<Token>(_iss.get());
@@ -473,6 +520,39 @@ void TlvSerializer::encodeString(const SStr *value)
 	_oss.put(static_cast<char>(Token::STRING));
 	_oss << value->value();
 	_oss.put(static_cast<char>(Token::END));
+}
+
+void TlvSerializer::encodeBinary(const SBinary *value)
+{
+	if (value->value().size() <= std::numeric_limits<uint8_t>::max())
+	{
+		_oss.put(static_cast<char>(Token::BINARY_255));
+		_oss.put(static_cast<uint8_t>(value->value().size()));
+	}
+	else if (value->value().size() <= std::numeric_limits<uint16_t>::max())
+	{
+		_oss.put(static_cast<char>(Token::BINARY_64K));
+		auto size_le = htole16(static_cast<uint16_t>(value->value().size()));
+		for (size_t i = 0; i < sizeof(size_le); i++)
+		{
+			_oss.put(reinterpret_cast<uint8_t *>(&size_le)[i]);
+		}
+	}
+	else if (value->value().size() <= std::numeric_limits<uint32_t>::max())
+	{
+		_oss.put(static_cast<char>(Token::BINARY_4G));
+		auto size_le = htole32(static_cast<uint32_t>(value->value().size()));
+		for (size_t i = 0; i < sizeof(size_le); i++)
+		{
+			_oss.put(reinterpret_cast<uint8_t *>(&size_le)[i]);
+		}
+	}
+	else
+	{
+		throw std::runtime_error("Too long binary data");
+	}
+
+	_oss.write(value->value().data(), value->value().size());
 }
 
 void TlvSerializer::encodeInteger(const SInt* value)
@@ -621,6 +701,10 @@ void TlvSerializer::encodeValue(const SVal *value)
 	else if (auto pNull = dynamic_cast<const SNull *>(value))
 	{
 		encodeNull(pNull);
+	}
+	else if (auto pBin = dynamic_cast<const SBinary*>(value))
+	{
+		encodeBinary(pBin);
 	}
 	else
 	{

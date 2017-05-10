@@ -23,13 +23,14 @@
 
 #include "Serializer.hpp"
 
-#include "SBool.hpp"
-#include "SObj.hpp"
-#include "SStr.hpp"
-#include "SVal.hpp"
-#include "SArr.hpp"
 #include "SNull.hpp"
+#include "SBool.hpp"
 #include "SNum.hpp"
+#include "SStr.hpp"
+#include "SBinary.hpp"
+#include "SObj.hpp"
+#include "SArr.hpp"
+#include "SVal.hpp"
 
 #include <sstream>
 #include <string>
@@ -49,6 +50,8 @@ private:
 	void putUtf8Symbol(SStr &str, uint32_t symbol);
 	SStr* decodeString();
 
+	SBinary* decodeBinary();
+
 	SNum* decodeNumber();
 
 	SArr* decodeArray();
@@ -61,6 +64,7 @@ private:
 	void encodeBool(const SBool* value);
 
 	void encodeString(const SStr* value);
+	void encodeBinary(const SBinary* value);
 
 	void encodeNumber(const SNum* value);
 

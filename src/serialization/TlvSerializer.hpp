@@ -33,6 +33,7 @@
 #include "SNum.hpp"
 #include "SInt.hpp"
 #include "SFloat.hpp"
+#include "SBinary.hpp"
 
 #include <sstream>
 #include <string>
@@ -48,6 +49,7 @@ private:
 
 	void putUtf8Symbol(SStr &str, uint32_t symbol);
 	SStr* decodeString();
+	SBinary* decodeBinary();
 
 	SNum* decodeInteger();
 	SNum* decodeFloat();
@@ -61,6 +63,7 @@ private:
 	void encodeBool(const SBool* value);
 
 	void encodeString(const SStr* value);
+	void encodeBinary(const SBinary* value);
 
 	void encodeInteger(const SInt* value);
 	void encodeFloat(const SFloat* value);
