@@ -45,6 +45,10 @@ std::shared_ptr<AcceptorFactory::Creator> AcceptorFactory::creator(const Setting
 	std::string host;
 	try
 	{
+		if (!setting.exists("host"))
+		{
+			throw libconfig::SettingNotFoundException("");
+		}
 		setting.lookupValue("host", host);
 	}
 	catch (const libconfig::SettingNotFoundException& exception)
