@@ -49,7 +49,7 @@ private:
 	std::mutex _epool_mutex;
 
 	/// Реестр подключений
-	std::set<std::shared_ptr<Connection>> _aConns;
+	std::set<std::shared_ptr<Connection>> _allConnections;
 
 	/// Захваченные подключения
 	std::set<std::shared_ptr<Connection>> _capturedConnections;

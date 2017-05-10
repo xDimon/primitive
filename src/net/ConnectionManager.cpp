@@ -45,11 +45,11 @@ ConnectionManager::~ConnectionManager()
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	close(_epfd);
 	_epfd = -1;
-	for (auto i = _aConns.begin(); i != _aConns.end();)
+	for (auto i = _allConnections.begin(); i != _allConnections.end();)
 	{
 		auto ci = i++;
 		auto connection = *ci;
-		_aConns.erase(ci);
+		_allConnections.erase(ci);
 		remove(connection);
 	}
 }
@@ -59,7 +59,7 @@ void ConnectionManager::add(std::shared_ptr<Connection> connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
-	if (getInstance()._aConns.find(connection) != getInstance()._aConns.end())
+	if (getInstance()._allConnections.find(connection) != getInstance()._allConnections.end())
 	{
 		getInstance().log().debug("Fail of add %s in ConnectionManager::add()", connection->name().c_str());
 		return;
@@ -67,7 +67,7 @@ void ConnectionManager::add(std::shared_ptr<Connection> connection)
 
 	getInstance().log().debug("Add %s in ConnectionManager::add()", connection->name().c_str());
 
-	getInstance()._aConns.insert(connection);
+	getInstance()._allConnections.insert(connection);
 
 	epoll_event ev;
 
@@ -90,7 +90,7 @@ bool ConnectionManager::remove(std::shared_ptr<Connection> connection)
 
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
-	if (getInstance()._aConns.erase(connection))
+	if (getInstance()._allConnections.erase(connection))
 	{
 		if (std::dynamic_pointer_cast<TcpConnection>(connection))
 		{
@@ -194,7 +194,7 @@ void ConnectionManager::wait()
 		log().trace_("Catch event(s) `%d` on %s in ConnectionManager::wait()", _epev[i].events, connection->name().c_str());
 
 		// Игнорируем незарегистрированные соединения
-		if (_aConns.find(connection) == _aConns.end())
+		if (_allConnections.find(connection) == _allConnections.end())
 		{
 			log().warn("Skip %s in ConnectionManager::wait() because connection unregistered", connection->name().c_str());
 			continue;
@@ -336,5 +336,10 @@ void ConnectionManager::dispatch()
 
 			getInstance().log().trace_("End processing for %s", connection->name().c_str());
 		});
+
+		ThreadPool::enqueue([connection](){
+#warning "Реализовать таймауты"
+		});
+
 	}
 }
