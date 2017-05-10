@@ -47,9 +47,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 	{
 		if (!connection->getContext())
 		{
-			auto context = HttpContext::Ptr(new HttpContext());
-
-			connection->setContext(context);
+			connection->setContext(std::make_shared<HttpContext>()->ptr());
 		}
 		auto context = std::dynamic_pointer_cast<HttpContext>(connection->getContext());
 		if (!context)

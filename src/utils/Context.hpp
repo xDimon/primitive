@@ -21,13 +21,11 @@
 
 #pragma once
 
-#include <memory>
 
-class Context: public std::enable_shared_from_this<Context>
+#include "../utils/Shareable.hpp"
+
+class Context: public Shareable<Context>
 {
 public:
-	typedef std::shared_ptr<Context> Ptr;
-	typedef std::weak_ptr<Context> WPtr;
-
 	virtual ~Context() {};
 };

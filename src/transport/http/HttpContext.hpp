@@ -28,14 +28,14 @@
 class HttpContext: public Context
 {
 private:
-	HttpRequest::Ptr _request;
+	std::shared_ptr<HttpRequest> _request;
 
 public:
-	void setRequest(HttpRequest::Ptr& request)
+	void setRequest(std::shared_ptr<HttpRequest>& request)
 	{
 		_request = request;
 	}
-	HttpRequest::Ptr& getRequest()
+	std::shared_ptr<HttpRequest>& getRequest()
 	{
 		return _request;
 	}

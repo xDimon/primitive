@@ -29,9 +29,9 @@
 class WsContext: public Context
 {
 private:
-	HttpRequest::Ptr _request;
+	std::shared_ptr<HttpRequest> _request;
 	bool _established;
-	WsFrame::Ptr _frame;
+	std::shared_ptr<WsFrame> _frame;
 
 public:
 	WsContext(): _established(false) {};
@@ -47,20 +47,20 @@ public:
 		return _established;
 	}
 
-	void setRequest(HttpRequest::Ptr& request)
+	void setRequest(std::shared_ptr<HttpRequest>& request)
 	{
 		_request = request;
 	}
-	HttpRequest::Ptr& getRequest()
+	std::shared_ptr<HttpRequest>& getRequest()
 	{
 		return _request;
 	}
 
-	void setFrame(WsFrame::Ptr& frame)
+	void setFrame(std::shared_ptr<WsFrame>& frame)
 	{
 		_frame = frame;
 	}
-	WsFrame::Ptr& getFrame()
+	std::shared_ptr<WsFrame>& getFrame()
 	{
 		return _frame;
 	}

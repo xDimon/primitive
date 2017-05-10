@@ -42,9 +42,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 	if (!connection->getContext())
 	{
-		auto context = WsContext::Ptr(new WsContext());
-
-		connection->setContext(context);
+		connection->setContext(std::make_shared<WsContext>()->ptr());
 	}
 	auto context = std::dynamic_pointer_cast<WsContext>(connection->getContext());
 	if (!context)
@@ -170,7 +168,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 				break;
 			}
 
-			auto frame = WsFrame::Ptr(new WsFrame(connection->dataPtr(), connection->dataPtr() + connection->dataLen()));
+			auto frame = std::shared_ptr<WsFrame>(new WsFrame(connection->dataPtr(), connection->dataPtr() + connection->dataLen()));
 
 			log().debug("Read %zu bytes of frame header. Size of data: %zu bytes", headerSize, frame->contentLength());
 

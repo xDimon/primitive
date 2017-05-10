@@ -64,9 +64,9 @@ public:
 	explicit Connection(std::shared_ptr<Transport>& transport);
 	virtual ~Connection();
 
-	void setContext(std::shared_ptr<Context>& context)
+	void setContext(std::shared_ptr<Context> context)
 	{
-		_context = context;
+		_context = std::move(context) ;
 	}
 	std::shared_ptr<Context> getContext()
 	{
