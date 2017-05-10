@@ -33,8 +33,7 @@
 #include <unistd.h>
 
 TcpAcceptor::TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& host, std::uint16_t port)
-: Log("TcpAcceptor")
-, Acceptor(transport)
+: Acceptor(transport)
 , _host(host)
 , _port(port)
 {
@@ -44,6 +43,10 @@ TcpAcceptor::TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& hos
 	{
 		throw std::runtime_error("Can't create socket");
 	}
+
+	std::ostringstream ss;
+	ss << "[" << _sock << "][" << host << ":" << port << "]";
+	_name = std::move(ss.str());
 
 	const int val = 1;
 
@@ -96,23 +99,12 @@ TcpAcceptor::TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& hos
 	int rrc = fcntl(_sock, F_GETFL, 0);
 	fcntl(_sock, F_SETFL, rrc | O_NONBLOCK);
 
-	log().debug("Create %s", name().c_str());
+	log().debug("TcpAcceptor '%s' created", name().c_str());
 }
 
 TcpAcceptor::~TcpAcceptor()
 {
-	log().debug("Destroy %s", name().c_str());
-}
-
-const std::string& TcpAcceptor::name()
-{
-	if (_name.empty())
-	{
-		std::ostringstream ss;
-		ss << "TcpAcceptor [" << _sock << "] [" << _host << ":" << _port << "]";
-		_name = ss.str();
-	}
-	return _name;
+	log().debug("TcpAcceptor '%s' destroyed", name().c_str());
 }
 
 void TcpAcceptor::watch(epoll_event &ev)

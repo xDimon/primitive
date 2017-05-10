@@ -30,11 +30,11 @@ public:
 	: Log("PacketTransport")
 	, Transport(setting)
 	{
-		log().debug("Create '%s'", _name.c_str());
+		log().debug("Transport '%s' created", name().c_str());
 	}
 	virtual ~PacketTransport()
 	{
-		log().debug("Destroy '%s'", name().c_str());
+		log().debug("Transport '%s' destroyed", name().c_str());
 	}
 
 	virtual bool processing(std::shared_ptr<Connection> connection);

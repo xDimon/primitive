@@ -28,9 +28,6 @@ struct sockaddr_in;
 
 class TcpAcceptor : public Acceptor
 {
-private:
-	std::string _name;
-
 protected:
 	std::string _host;
 	std::uint16_t _port;
@@ -39,8 +36,6 @@ protected:
 public:
 	TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& host, std::uint16_t port);
 	virtual ~TcpAcceptor();
-
-	virtual const std::string& name();
 
 	virtual void watch(epoll_event &ev);
 

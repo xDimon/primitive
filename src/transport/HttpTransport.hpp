@@ -30,12 +30,12 @@ public:
 	: Log("HttpTransport")
 	, Transport(setting)
 	{
-		log().debug("Create '%s'", _name.c_str());
+		log().debug("Transport '%s' created", name().c_str());
 	}
 
 	virtual ~HttpTransport()
 	{
-		log().debug("Destroy '%s'", _name.c_str());
+		log().debug("Transport '%s' destroyed", name().c_str());
 	}
 
 	virtual bool processing(std::shared_ptr<Connection> connection) override;

@@ -30,10 +30,12 @@ Transport::Transport(const Setting& setting)
 	{
 		setting.lookupValue("name", name);
 	}
-	else
+
+	if (!name.length())
 	{
-		std::ostringstream ss(name);
+		std::ostringstream ss;
 		ss << "_transport#" << this;
+		name = std::move(ss.str());
 	}
 
 	_name = std::move(name);
@@ -50,8 +52,6 @@ bool Transport::enable()
 		return true;
 	}
 
-	log().debug("Enable '%s'", name().c_str());
-
 	try
 	{
 		auto t = this->ptr();
@@ -61,11 +61,13 @@ bool Transport::enable()
 
 		ConnectionManager::add(_acceptor.lock());
 
+		log().debug("Transport '%s' enabled", name().c_str());
+
 		return true;
 	}
 	catch (std::runtime_error exception)
 	{
-		log().debug("Can't create Acceptor for '%s': %s", name().c_str(), exception.what());
+		log().debug("Transport '%s' didn't enable: Can't create Acceptor: %s", name().c_str(), exception.what());
 
 		return false;
 	}
@@ -75,14 +77,14 @@ bool Transport::disable()
 {
 	if (_acceptor.expired())
 	{
+		log().debug("Transport '%s' not enable", name().c_str());
 		return true;
 	}
-
-	log().debug("Disable '%s'", name().c_str());
 
 	ConnectionManager::remove(_acceptor.lock());
 
 	_acceptor.reset();
 
+	log().debug("Transport '%s' disabled", name().c_str());
 	return true;
 }

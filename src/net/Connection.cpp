@@ -23,9 +23,10 @@
 #include "Connection.hpp"
 
 #include <unistd.h>
+#include <sstream>
 
 Connection::Connection(std::shared_ptr<Transport>& transport)
-: Log("Conn")
+: Log("Connection")
 , _transport(transport)
 , _sock(-1)
 , _closed(true)
@@ -34,6 +35,10 @@ Connection::Connection(std::shared_ptr<Transport>& transport)
 	_captured = false;
 	_events = 0;
 	_postponedEvents = 0;
+
+	std::ostringstream ss;
+	ss << "[__connection#" << this << "][" << _sock << "]";
+	_name = std::move(ss.str());
 
 	_ready = false;
 }

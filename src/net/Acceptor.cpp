@@ -19,12 +19,15 @@
 // Acceptor.cpp
 
 
+#include <sstream>
 #include "Acceptor.hpp"
 
 Acceptor::Acceptor(std::shared_ptr<Transport>& transport)
-: Log("Acceptor")
-, Connection(transport)
+: Connection(transport)
 {
+	std::ostringstream ss;
+	ss << "[__acceptor#" << this << "][" << _sock << "]";
+	_name = std::move(ss.str());
 }
 
 Acceptor::~Acceptor()

@@ -30,12 +30,13 @@
 #include "ConnectionEvent.hpp"
 #include <unistd.h>
 #include "../utils/Shareable.hpp"
+#include "../utils/Named.hpp"
 
 struct sockaddr_in;
 class Transport;
 class Context;
 
-class Connection: public Shareable<Connection>, public virtual Log
+class Connection: public Shareable<Connection>, public Named, public Log
 {
 private:
 	bool _captured;
@@ -72,8 +73,6 @@ public:
 	{
 		return _context;
 	}
-
-	virtual const std::string& name() = 0;
 
 	inline int fd() const
 	{

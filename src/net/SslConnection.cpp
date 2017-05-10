@@ -31,8 +31,7 @@
 #include "../transport/Transport.hpp"
 
 SslConnection::SslConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in& sockaddr, std::shared_ptr<SSL_CTX> sslContext)
-: Log("SslConnection")
-, TcpConnection(transport, sock, sockaddr)
+: TcpConnection(transport, sock, sockaddr)
 , _sslEstablished(false)
 {
 	_sslContext = sslContext;
