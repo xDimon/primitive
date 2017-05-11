@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <signal.h>
+#include <ucontext.h>
 #include "ThreadPool.hpp"
 #include "../log/LoggerManager.hpp"
 
@@ -71,7 +72,7 @@ void ThreadPool::createThread()
 	char buff[32];
 	snprintf(buff, sizeof(buff), "Worker_%zu", ++_workerCounter);
 
-	auto thread = new Thread([this,buff](){
+	auto thread = new Thread([this,buff](ucontext_t *context){
 		LoggerManager::regThread(buff);
 
 		log().debug("Start new thread");
@@ -83,6 +84,8 @@ void ThreadPool::createThread()
 
 		for (;;)
 		{
+			getcontext(context);
+
 			std::function<void()> task;
 
 			log().trace_("Wait task on thread");
@@ -119,7 +122,7 @@ void ThreadPool::createThread()
 		LoggerManager::unregThread();
 	});
 
-	_workers.emplace(thread->get_id(), thread);
+	_workers.emplace(thread->id(), thread);
 }
 
 void ThreadPool::wait()

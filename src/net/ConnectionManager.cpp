@@ -336,10 +336,5 @@ void ConnectionManager::dispatch()
 
 			getInstance().log().trace_("End processing for %s", connection->name().c_str());
 		});
-
-		ThreadPool::enqueue([connection](){
-#warning "Реализовать таймауты"
-		});
-
 	}
 }

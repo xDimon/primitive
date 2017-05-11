@@ -14,32 +14,33 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.02.28
+// File created on: 2017.05.11
 
-// Thread.cpp
+// Coroutine.hpp
 
 
+#pragma once
+
+#include <functional>
 #include <ucontext.h>
-#include "Thread.hpp"
-#include "ThreadPool.hpp"
+#include <climits>
+#include "../utils/Shareable.hpp"
+#include "../log/Log.hpp"
 
-Thread::Thread(std::function<void(ucontext_t*)> function)
-: Log("Thread")
-, _function(function)
-, _thread([this](){ Thread::run(this); })
+class Coroutine : public Shareable<Coroutine>, public Log
 {
-}
+private:
+	ucontext_t _parentContext;
+	ucontext_t _context;
+	char _stack[PTHREAD_STACK_MIN];
+	volatile bool _done;
+	std::function<void()> _function;
 
-Thread::~Thread()
-{
-}
+	static void _helper(Coroutine* coroutine);
 
-void Thread::run(Thread *thread)
-{
-	thread->_function(&thread->_reenterContext);
-}
+public:
+	Coroutine(std::function<void()> function);
+	virtual ~Coroutine();
 
-Thread* Thread::self()
-{
-	return ThreadPool::getCurrent();
-}
+	void run();
+};

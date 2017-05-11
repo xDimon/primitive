@@ -25,14 +25,38 @@
 #include <event2/event.h>
 #include <memory>
 #include <evhttp.h>
+#include <ucontext.h>
 
 #include "../log/Log.hpp"
 
-class Thread: public std::thread, public virtual Log
+class Thread: public Log
 {
+private:
+	std::function<void(ucontext_t*)> _function;
+	std::thread _thread;
+
+	ucontext_t _reenterContext;
+
+	static void run(Thread *);
+
 public:
-	Thread(std::function<void()>);
+	Thread(std::function<void(ucontext_t*)>);
 	virtual ~Thread();
+
+	ucontext_t* reenterContext()
+	{
+		return &_reenterContext;
+	}
+
+	inline void join()
+	{
+		_thread.join();
+	}
+
+	inline auto id()
+	{
+		return _thread.get_id();
+	}
 
 	static Thread * self();
 };

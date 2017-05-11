@@ -62,7 +62,7 @@ private:
 	size_t _workerNumber;
 
 	// need to keep track of threads so we can join them
-	std::map<std::thread::id, Thread*> _workers;
+	std::map<const std::thread::id, Thread*> _workers;
 
 	// the task queue
 	std::queue<std::function<void()>> _tasks;
