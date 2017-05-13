@@ -32,7 +32,7 @@
 class Thread: public Log
 {
 private:
-	std::function<void(ucontext_t*)> _function;
+	std::function<void()> _function;
 	std::thread _thread;
 
 	ucontext_t _reenterContext;
@@ -40,7 +40,7 @@ private:
 	static void run(Thread *);
 
 public:
-	Thread(std::function<void(ucontext_t*)>);
+	Thread(std::function<void()>);
 	virtual ~Thread();
 
 	ucontext_t* reenterContext()

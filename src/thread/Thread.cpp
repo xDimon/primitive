@@ -20,23 +20,32 @@
 
 
 #include <ucontext.h>
+#include <cstring>
 #include "Thread.hpp"
 #include "ThreadPool.hpp"
 
-Thread::Thread(std::function<void(ucontext_t*)> function)
+Thread::Thread(std::function<void()> function)
 : Log("Thread")
 , _function(function)
 , _thread([this](){ Thread::run(this); })
 {
+	log().debug("Thread created");
 }
 
 Thread::~Thread()
 {
+	log().debug("Thread destroyed");
 }
 
 void Thread::run(Thread *thread)
 {
-	thread->_function(&thread->_reenterContext);
+
+
+
+
+	memset(&thread->_reenterContext, 0, sizeof(thread->_reenterContext));
+	getcontext(&thread->_reenterContext);
+	thread->_function();
 }
 
 Thread* Thread::self()

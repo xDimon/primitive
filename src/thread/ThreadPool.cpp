@@ -72,7 +72,7 @@ void ThreadPool::createThread()
 	char buff[32];
 	snprintf(buff, sizeof(buff), "Worker_%zu", ++_workerCounter);
 
-	auto thread = new Thread([this,buff](ucontext_t *context){
+	auto thread = new Thread([this,buff](){
 		LoggerManager::regThread(buff);
 
 		log().debug("Start new thread");
@@ -82,12 +82,10 @@ void ThreadPool::createThread()
 		sigfillset(&sig);
 		sigprocmask(SIG_BLOCK, &sig, nullptr);
 
+		std::function<void()> task;
+
 		for (;;)
 		{
-			getcontext(context);
-
-			std::function<void()> task;
-
 			log().trace_("Wait task on thread");
 
 			// Try to get or wait task
@@ -114,15 +112,18 @@ void ThreadPool::createThread()
 			}
 
 			log().debug("Execute task on thread");
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 			// Execute task
+			log().debug("Begin execution task on thread");
 			task();
+			log().debug("End execution task on thread");
 		}
 
 		LoggerManager::unregThread();
 	});
 
-	_workers.emplace(thread->id(), thread);
+	_workers.insert(std::make_pair(thread->id(), thread));
 }
 
 void ThreadPool::wait()

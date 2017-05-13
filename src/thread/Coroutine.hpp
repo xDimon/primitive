@@ -24,12 +24,14 @@
 #include <functional>
 #include <ucontext.h>
 #include <climits>
+#include <mutex>
 #include "../utils/Shareable.hpp"
 #include "../log/Log.hpp"
 
-class Coroutine : public Shareable<Coroutine>, public Log
+class Coroutine : public Shareable<Coroutine>
 {
 private:
+	std::mutex _mutex;
 	ucontext_t _parentContext;
 	ucontext_t _context;
 	char _stack[PTHREAD_STACK_MIN];

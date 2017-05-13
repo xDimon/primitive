@@ -19,83 +19,97 @@
 // Coroutine.cpp
 
 
+#include <cstring>
 #include "Coroutine.hpp"
 
 #include "ThreadPool.hpp"
 
 Coroutine::Coroutine(std::function<void()> function)
-: Log("Coroutine")
-, _function(function)
+: _function(function)
 {
-	log().debug("Coroutine created");
+	memset(&_stack, 0, sizeof(_stack));
+	memset(&_context, 0, sizeof(_context));
+	memset(&_parentContext, 0, sizeof(_parentContext));
+
+	Log("Coroutine").debug("Coroutine created");
 }
 
 Coroutine::~Coroutine()
 {
-	log().debug("Coroutine destroyed");
+	Log("Coroutine").debug("Coroutine destroyed");
 }
 
 void Coroutine::_helper(Coroutine* coroutine)
 {
-	Log log("_helper");
+	{
+		Log log("CoroutineHelper");
 
-	log.debug("Coroutine #%u", __LINE__);
-	ThreadPool::enqueue(
-		[coroutine,&log]() {
-			log.debug("Coroutine #%u", __LINE__);
-			coroutine->_function();
-			log.debug("Coroutine #%u", __LINE__);
-			swapcontext(&coroutine->_context, &coroutine->_parentContext);
-//			setcontext(&coroutine->_parentContext);
-			log.debug("Coroutine #%u", __LINE__);
-		}
-	);
+		log.debug("Begin coroutine's helper");
 
-	log.debug("Coroutine #%u", __LINE__);
-	setcontext(Thread::self()->reenterContext());
+//		ThreadPool::enqueue(
+//			[coroutine]() {
+//				coroutine->_mutex.lock();
+//				coroutine->_mutex.unlock();
+//
+//				{
+//					Log log("CoroutineTask");
+//
+//					log.debug("Begin coroutine's task");
+//					coroutine->_function();
+//					log.debug("End coroutine's task");
+//
+//					log.debug("Change context for continue prev thread %p", &coroutine->_parentContext);
+//					std::this_thread::sleep_for(std::chrono::milliseconds(50));
+//				}
+//
+//				if (setcontext(&coroutine->_parentContext))
+//				{
+//					throw std::runtime_error("Can't change context");
+//				}
+//			}
+//		);
+//
+//		coroutine->_mutex.unlock();
+
+		log.debug("End coroutine's helper");
+
+//		log.debug("Change context to reenter thread %p", Thread::self()->reenterContext());
+//		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+//	}
+//
+//	if (setcontext(Thread::self()->reenterContext()))
+//	{
+//		throw std::runtime_error("Can't change context");
+	}
 };
 
 void Coroutine::run()
 {
-	log().debug("Coroutine enter");
+	Log *log = new Log("CoroutineRun");
 
-	log().debug("Coroutine #%u", __LINE__);
+	log->debug("Begin coroutine's running");
 
 	// Инициализация контекста корутины. uc_link указывает на _parentContext, точку возврата при завершении корутины
-	getcontext(&_context);
-	_context.uc_link = &_parentContext;
+	int r1 = getcontext(&_context);
+	log->debug("getcontext %p return %d", &_context, r1);
+
+	_context.uc_link = nullptr;//&_parentContext;
+	_context.uc_stack.ss_flags = 0;
 	_context.uc_stack.ss_sp = _stack;
-	_context.uc_stack.ss_size = sizeof(_stack);
+	_context.uc_stack.ss_size = PTHREAD_STACK_MIN;
 
 	// Заполнение _context, что позволяет swapcontext начать цикл.
 	// Преобразование в (void (*)(void)) необходимо для избежания  предупреждения компилятора и не влияет на поведение функции.
 	makecontext(&_context, reinterpret_cast<void (*)(void)>(&_helper), 1, this);
+	log->debug("Make coroutine's helper context %p ", &_context);
+setcontext(&_context);
 
-	_done = false;
+	_mutex.lock();
 
-	log().debug("Coroutine #%u", __LINE__);
+	log->debug("Swap context to coroutine helper");
+	int r41 = swapcontext(&_parentContext, &_context);
+	log->debug("swapcontext(%p->%p) return %d", &_parentContext, &_context, r41);
 
-	// Сохранение текущего контекста в _parentContext. При завершении корутины управление будет возвращено в эту точку
-	getcontext(&_parentContext);
-
-	log().debug("Coroutine #%u", __LINE__);
-
-	if (!_done)
-	{
-		_done = true;
-
-		log().debug("Coroutine #%u", __LINE__);
-
-//		swapcontext(&_context, &_parentContext);
-//		swapcontext(&_parentContext, &_context);
-		setcontext(&_context);
-
-		log().debug("Coroutine #%u", __LINE__);
-	}
-	else
-	{
-		log().debug("Coroutine #%u", __LINE__);
-	}
-
-	log().debug("Coroutine leave");
+	log->debug("End coroutine's running");
+	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 }
