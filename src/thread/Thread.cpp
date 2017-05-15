@@ -19,14 +19,16 @@
 // Thread.cpp
 
 
-#include <ucontext.h>
-#include <cstring>
 #include "Thread.hpp"
+
 #include "ThreadPool.hpp"
+#include "Coroutine.hpp"
+
+#include <cstring>
 
 Thread::Thread(std::function<void()> function)
 : Log("Thread")
-, _function(function)
+, _function(std::move(function))
 , _thread([this](){ Thread::run(this); })
 {
 	log().debug("Thread created");
@@ -39,13 +41,12 @@ Thread::~Thread()
 
 void Thread::run(Thread *thread)
 {
+	// Блокируем реакцию на все сигналы
+	sigset_t sig;
+	sigfillset(&sig);
+	sigprocmask(SIG_BLOCK, &sig, nullptr);
 
-
-
-
-	memset(&thread->_reenterContext, 0, sizeof(thread->_reenterContext));
-	getcontext(&thread->_reenterContext);
-	thread->_function();
+	Coro(thread->_function);
 }
 
 Thread* Thread::self()

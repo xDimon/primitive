@@ -21,12 +21,6 @@
 
 #pragma once
 
-#include <thread>
-#include <event2/event.h>
-#include <memory>
-#include <evhttp.h>
-#include <ucontext.h>
-
 #include "../log/Log.hpp"
 
 class Thread: public Log
@@ -35,25 +29,18 @@ private:
 	std::function<void()> _function;
 	std::thread _thread;
 
-	ucontext_t _reenterContext;
-
 	static void run(Thread *);
 
 public:
 	Thread(std::function<void()>);
 	virtual ~Thread();
 
-	ucontext_t* reenterContext()
-	{
-		return &_reenterContext;
-	}
-
 	inline void join()
 	{
 		_thread.join();
 	}
 
-	inline auto id()
+	inline auto id() const
 	{
 		return _thread.get_id();
 	}

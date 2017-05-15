@@ -32,17 +32,19 @@ class Coroutine : public Shareable<Coroutine>
 {
 private:
 	std::mutex _mutex;
-	ucontext_t _parentContext;
+	std::function<void()> _function;
+	ucontext_t *_parentContext;
 	ucontext_t _context;
 	char _stack[PTHREAD_STACK_MIN];
 	volatile bool _done;
-	std::function<void()> _function;
 
 	static void _helper(Coroutine* coroutine);
 
 public:
-	Coroutine(std::function<void()> function);
+	Coroutine(std::function<void()> function, ucontext_t* parentContext = nullptr);
 	virtual ~Coroutine();
 
 	void run();
 };
+
+void Coro(std::function<void()> function);

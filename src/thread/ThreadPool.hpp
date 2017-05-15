@@ -50,8 +50,10 @@ public:
 
 	static void setThreadNum(size_t num);
 
-	template<class F, class... Args>
-	static auto enqueue(F &&f, Args &&... args)->std::future<typename std::result_of<F(Args...)>::type>;
+//	template<class F, class... Args>
+//	static auto enqueue(F &&f, Args &&... args)->std::future<typename std::result_of<F(Args...)>::type>;
+
+	static void enqueue(std::function<void()>);
 
 	static void wait();
 
@@ -73,34 +75,3 @@ private:
 
 	void createThread();
 };
-
-// add new work item to the pool
-template<class F, class... Args>
-auto ThreadPool::enqueue(F &&f, Args &&... args)->std::future<typename std::result_of<F(Args...)>::type>
-{
-	using return_type = typename std::result_of<F(Args...)>::type;
-
-	auto task = std::make_shared<std::packaged_task<return_type()>>(
-		std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-	);
-
-	std::future<return_type> res = task.get()->get_future();
-	{
-		std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
-
-		// don't allow enqueueing after stopping the pool
-		if (getInstance()._workerNumber == 0)
-		{
-			throw std::runtime_error("enqueue on stopped ThreadPool");
-		}
-
-		getInstance()._tasks.emplace(
-			[task]() {
-				task.get()->operator()();
-			}
-		);
-	}
-
-	getInstance()._condition.notify_all();
-	return res;
-}

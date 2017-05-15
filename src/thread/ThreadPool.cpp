@@ -77,11 +77,6 @@ void ThreadPool::createThread()
 
 		log().debug("Start new thread");
 
-		// Блокируем реакцию на все сигналы
-		sigset_t sig;
-		sigfillset(&sig);
-		sigprocmask(SIG_BLOCK, &sig, nullptr);
-
 		std::function<void()> task;
 
 		for (;;)
@@ -148,4 +143,19 @@ Thread *ThreadPool::getCurrent()
 		throw std::runtime_error("Unrecognized thread");
 	}
 	return i->second;
+}
+
+void ThreadPool::enqueue(std::function<void()> task)
+{
+	std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
+
+	// don't allow enqueueing after stopping the pool
+	if (getInstance()._workerNumber == 0)
+	{
+		throw std::runtime_error("enqueue on stopped ThreadPool");
+	}
+
+	getInstance()._tasks.emplace(task);
+
+	getInstance()._condition.notify_all();
 }
