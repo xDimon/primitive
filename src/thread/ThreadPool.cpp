@@ -38,7 +38,7 @@ ThreadPool::~ThreadPool()
 {
 	// Switch to stop
 	{
-		std::unique_lock<std::mutex> lock(_queue_mutex);
+		std::unique_lock<std::mutex> lock(_queueMutex);
 		_workerNumber = 0;
 	}
 
@@ -54,7 +54,7 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::setThreadNum(size_t num)
 {
-	std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
+	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
 	getInstance()._workerNumber = num;
 
 	size_t remain = (num < getInstance()._workers.size()) ? 0 : (num - getInstance()._workers.size());
@@ -64,28 +64,27 @@ void ThreadPool::setThreadNum(size_t num)
 	}
 }
 
+size_t ThreadPool::genThreadId()
+{
+	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
+	return ++getInstance()._workerCounter;
+}
+
 void ThreadPool::createThread()
 {
 	log().debug("Create new thread");
 
-	static size_t _workerCounter = 0;
-	char buff[32];
-	snprintf(buff, sizeof(buff), "Worker_%zu", ++_workerCounter);
-
-	auto thread = new Thread([this,buff](){
-		LoggerManager::regThread(buff);
-
-		log().debug("Start new thread");
-
+	auto thread = new Thread([this](){
 		std::function<void()> task;
 
+		Log log("ThreadLoop");
 		for (;;)
 		{
-			log().trace_("Wait task on thread");
+			log.trace_("Wait task on thread");
 
 			// Try to get or wait task
 			{
-				std::unique_lock<std::mutex> lock(_queue_mutex);
+				std::unique_lock<std::mutex> lock(_queueMutex);
 
 				// Condition for run thread
 				_condition.wait(lock, [this](){
@@ -95,37 +94,36 @@ void ThreadPool::createThread()
 				// Condition for end thread
 				if (_workerNumber == 0 && _tasks.empty())
 				{
-					log().debug("End thread");
+					log.debug("End thread's loop");
 					break;
 				}
 
-				log().trace_("Get task from queue");
+				log.trace_("Get task from queue");
 
 				// Get task from queue
 				task = std::move(_tasks.front());
 				_tasks.pop();
 			}
 
-			log().debug("Execute task on thread");
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			log.debug("Execute task on thread");
+//			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 			// Execute task
-			log().debug("Begin execution task on thread");
+			log.debug("Begin execution task on thread");
 			task();
-			log().debug("End execution task on thread");
+			log.debug("End execution task on thread");
 		}
-
-		LoggerManager::unregThread();
 	});
 
-	_workers.insert(std::make_pair(thread->id(), thread));
+	_workers.emplace(thread->id(), thread);
+	//_workers.insert(std::make_pair(thread->id(), thread));
 }
 
 void ThreadPool::wait()
 {
 	getInstance().log().debug("Wait threadpool close");
 
-	std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
+	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
 
 	// Condition for close pool
 	getInstance()._condition.wait(
@@ -147,7 +145,7 @@ Thread *ThreadPool::getCurrent()
 
 void ThreadPool::enqueue(std::function<void()> task)
 {
-	std::unique_lock<std::mutex> lock(getInstance()._queue_mutex);
+	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
 
 	// don't allow enqueueing after stopping the pool
 	if (getInstance()._workerNumber == 0)

@@ -21,11 +21,15 @@
 
 #pragma once
 
+#include <mutex>
 #include "../log/Log.hpp"
 
-class Thread: public Log
+class Thread
 {
+	friend void fake(Thread *thread);
 private:
+	Log _log;
+	std::mutex _mutex;
 	std::function<void()> _function;
 	std::thread _thread;
 
@@ -44,6 +48,8 @@ public:
 	{
 		return _thread.get_id();
 	}
+
+	void reenter();
 
 	static Thread * self();
 };

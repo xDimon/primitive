@@ -21,30 +21,7 @@
 
 #pragma once
 
+
 #include <functional>
-#include <ucontext.h>
-#include <climits>
-#include <mutex>
-#include "../utils/Shareable.hpp"
-#include "../log/Log.hpp"
 
-class Coroutine : public Shareable<Coroutine>
-{
-private:
-	std::mutex _mutex;
-	std::function<void()> _function;
-	ucontext_t *_parentContext;
-	ucontext_t _context;
-	char _stack[PTHREAD_STACK_MIN];
-	volatile bool _done;
-
-	static void _helper(Coroutine* coroutine);
-
-public:
-	Coroutine(std::function<void()> function, ucontext_t* parentContext = nullptr);
-	virtual ~Coroutine();
-
-	void run();
-};
-
-void Coro(std::function<void()> function);
+void Coroutine(std::function<void()> function);

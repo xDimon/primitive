@@ -50,6 +50,8 @@ public:
 
 	static void setThreadNum(size_t num);
 
+	static size_t genThreadId();
+
 //	template<class F, class... Args>
 //	static auto enqueue(F &&f, Args &&... args)->std::future<typename std::result_of<F(Args...)>::type>;
 
@@ -60,6 +62,7 @@ public:
 	static Thread *getCurrent();
 
 private:
+	std::mutex _counterMutex;
 	size_t _workerCounter;
 	size_t _workerNumber;
 
@@ -70,7 +73,7 @@ private:
 	std::queue<std::function<void()>> _tasks;
 
 	// synchronization
-	std::mutex _queue_mutex;
+	std::mutex _queueMutex;
 	std::condition_variable _condition;
 
 	void createThread();

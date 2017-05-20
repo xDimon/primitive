@@ -19,119 +19,73 @@
 // Coroutine.cpp
 
 
-#include <cstring>
+#include <ucontext.h>
+#include <sys/mman.h>
 #include "Coroutine.hpp"
-
 #include "ThreadPool.hpp"
 
-void Coro(std::function<void()> function)
+void Coroutine(std::function<void()> function)
 {
-	ucontext_t context;
+	std::mutex orderMutex;
+	ucontext_t mainContext;
+	ucontext_t tmpContext;
 
-	volatile bool done = false;
+	volatile bool first = true;
 
-	// Инициализация контекста корутины. uc_link указывает на _parentContext, точку возврата при завершении корутины
-	getcontext(&context);
-//	context.uc_link = 0;
-//	context.uc_stack.ss_flags = 0;
-//	context.uc_stack.ss_sp = malloc(PTHREAD_STACK_MIN);
-//	context.uc_stack.ss_size = PTHREAD_STACK_MIN;
-//
-//	// Заполнение _context, что позволяет swapcontext начать цикл.
-//	// Преобразование в (void (*)(void)) необходимо для избежания  предупреждения компилятора и не влияет на поведение функции.
-//	makecontext(&context, reinterpret_cast<void (*)(void)>(&_helper), 1, this);
-//	log->debug("Make coroutine's helper context %p ", &_context);
+	// сохранить текущий контекст
+	getcontext(&mainContext);
 
-	if (!done)
+	// если это первый проход (т.е. не возврат)
+	if (first)
 	{
-		done = true;
+		first = false;
 
-		auto coro = new Coroutine(function, &context);
-		coro->run();
-		delete coro;
+		{
+			Log log("Coroutine");
+
+			log.debug("Make coroutine");
+
+			std::lock_guard<std::mutex> lockGuardCoro(orderMutex);
+
+			// создать таск связанный с сохраненным контекстом и положить в очередь
+			ThreadPool::enqueue(
+				[&]()
+				{
+					{
+						std::lock_guard<std::mutex> lockGuardTask(orderMutex);
+
+						Log log("CoroutineTask");
+
+						log.debug("Begin coroutine's task");
+						function();
+						log.debug("End coroutine's task");
+
+						log.debug("Change context for continue prev thread %p", &mainContext);
+//						std::this_thread::sleep_for(std::chrono::milliseconds(50));
+					}
+
+					// при завершении таска вернуться в связанный контекст, и удалить предыдущий
+					if (swapcontext(&tmpContext, &mainContext))
+					{
+						throw std::runtime_error("Can't change context");
+					}
+				}
+			);
+
+			log.debug("Switch context (detach coroutine)");
+		}
+
+		// переключиться на контекст входа в поток
+		Thread::self()->reenter();
 	}
-}
-
-Coroutine::Coroutine(std::function<void()> function, ucontext_t* parentContext)
-: _function(std::move(function))
-, _parentContext(parentContext)
-{
-	Log("Coroutine").debug("Coroutine created");
-}
-
-Coroutine::~Coroutine()
-{
-	Log("Coroutine").debug("Coroutine destroyed");
-}
-
-void Coroutine::_helper(Coroutine* coroutine)
-{
+	else
 	{
-		Log log("CoroutineHelper");
+		Log log("Coroutine");
 
-		log.debug("Begin coroutine's helper");
+		log.debug("Switch context (reattach coroutine and continue)");
 
-//		ThreadPool::enqueue(
-//			[coroutine]() {
-//				coroutine->_mutex.lock();
-//				coroutine->_mutex.unlock();
-//
-//				{
-//					Log log("CoroutineTask");
-//
-//					log.debug("Begin coroutine's task");
-//					coroutine->_function();
-//					log.debug("End coroutine's task");
-//
-//					log.debug("Change context for continue prev thread %p", &coroutine->_parentContext);
-//					std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//				}
-//
-//				if (setcontext(&coroutine->_parentContext))
-//				{
-//					throw std::runtime_error("Can't change context");
-//				}
-//			}
-//		);
-//
-//		coroutine->_mutex.unlock();
-
-		log.debug("End coroutine's helper");
-
-//		log.debug("Change context to reenter thread %p", Thread::self()->reenterContext());
-//		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		munmap(tmpContext.uc_stack.ss_sp, tmpContext.uc_stack.ss_size);
 	}
 
-	if (setcontext(coroutine->_parentContext))
-	{
-		throw std::runtime_error("Can't change context");
-	}
-};
-
-void Coroutine::run()
-{
-	Log *log = new Log("CoroutineRun");
-
-	log->debug("Begin coroutine's running");
-
-	// Инициализация контекста корутины. uc_link указывает на _parentContext, точку возврата при завершении корутины
-	getcontext(&_context);
-	_context.uc_link = _parentContext;
-	_context.uc_stack.ss_flags = 0;
-	_context.uc_stack.ss_sp = _stack;
-	_context.uc_stack.ss_size = PTHREAD_STACK_MIN;
-
-	// Заполнение _context, что позволяет swapcontext начать цикл.
-	// Преобразование в (void (*)(void)) необходимо для избежания  предупреждения компилятора и не влияет на поведение функции.
-	makecontext(&_context, reinterpret_cast<void (*)(void)>(&_helper), 1, this);
-	log->debug("Make coroutine's helper context %p ", &_context);
-
-	_mutex.lock();
-
-	log->debug("Swap context to coroutine helper");
-//	int r41 = swapcontext(_parentContext, &_context);
-	int r41 = setcontext(&_context);
-	log->debug("swapcontext(%p->%p) return %d", &_parentContext, &_context, r41);
-
-	log->debug("End coroutine's running");
+	return;
 }

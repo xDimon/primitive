@@ -22,34 +22,97 @@
 #include "Thread.hpp"
 
 #include "ThreadPool.hpp"
-#include "Coroutine.hpp"
+#include "../log/LoggerManager.hpp"
 
 #include <cstring>
+#include <sys/mman.h>
+#include <signal.h>
+#include <ucontext.h>
+#include <climits>
 
 Thread::Thread(std::function<void()> function)
-: Log("Thread")
+: _log("Thread")
 , _function(std::move(function))
 , _thread([this](){ Thread::run(this); })
 {
-	log().debug("Thread created");
+	_log.debug("Thread created");
 }
 
 Thread::~Thread()
 {
-	log().debug("Thread destroyed");
+	_log.debug("Thread destroyed");
+}
+
+void fake(Thread *thread)
+{
+	thread->_function();
 }
 
 void Thread::run(Thread *thread)
 {
-	// Блокируем реакцию на все сигналы
-	sigset_t sig;
-	sigfillset(&sig);
-	sigprocmask(SIG_BLOCK, &sig, nullptr);
+	{
+		char buff[32];
+		snprintf(buff, sizeof(buff), "Worker_%zu", ThreadPool::genThreadId());
 
-	Coro(thread->_function);
+		LoggerManager::regThread(buff);
+
+		// Блокируем реакцию на все сигналы
+		sigset_t sig;
+		sigfillset(&sig);
+		sigprocmask(SIG_BLOCK, &sig, nullptr);
+
+		thread->_log.debug("Start new thread");
+	}
+
+	thread->reenter();
+
+	LoggerManager::unregThread();
 }
 
 Thread* Thread::self()
 {
 	return ThreadPool::getCurrent();
+}
+
+void Thread::reenter()
+{
+	ucontext_t context;
+	ucontext_t retContext;
+
+//	_log.debug("make context");
+
+	// Инициализация контекста корутины. uc_link указывает на _parentContext, точку возврата при завершении корутины
+	getcontext(&context);
+	context.uc_link = &retContext;
+	context.uc_stack.ss_flags = 0;
+	context.uc_stack.ss_size = PTHREAD_STACK_MIN;
+	context.uc_stack.ss_sp = mmap(0, context.uc_stack.ss_size,
+            PROT_READ | PROT_WRITE | PROT_EXEC,
+            MAP_PRIVATE | MAP_ANON, -1, 0);
+
+	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 1, this);
+//	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 0);
+
+//	_log.debug("get ret context %p", &retContext);
+
+	volatile bool first = true;
+
+	getcontext(&retContext);
+
+	if (first)
+	{
+		first = false;
+//		_log.debug("first set context %p", &context);
+
+		if (setcontext(&context))
+		{
+			throw std::runtime_error("Can't change context");
+		}
+
+//		_log.debug("return from first context %p", &context);
+	}
+
+//	_log.debug("free stack of first context %p", &context);
+
+	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
 }
