@@ -48,7 +48,7 @@ bool Transport::enable()
 {
 	if (!_acceptor.expired())
 	{
-		log().trace_("Transport '%s' already enabled", name().c_str());
+		log().trace("Transport '%s' already enabled", name().c_str());
 		return true;
 	}
 

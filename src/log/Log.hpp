@@ -39,59 +39,60 @@ struct IP7_Trace_Deleter
 
 class Log
 {
-public:
-	std::unique_ptr<IP7_Trace, IP7_Trace_Deleter> trace;
+private:
+	std::unique_ptr<IP7_Trace, IP7_Trace_Deleter> _tracer;
 	IP7_Trace::hModule module;
 
+public:
 	Log();
 
 	explicit Log(std::string name);
 
 	virtual ~Log();
 
-	virtual Log &log()
+	virtual Log& log()
 	{
 		return *this;
 	}
 
 	template<typename... Args>
-	void trace_(const char* fmt, const Args& ... args)
+	void trace(const char* fmt, const Args& ... args)
 	{
 #if defined(LOG_TRACE_ON)
-		trace->P7_TRACE(module, fmt, args...);
+		_tracer->P7_TRACE(module, fmt, args...);
 #endif // defined(LOG_TRACE_ON)
 	}
 
 	template<typename... Args>
-	void debug(const char *fmt, const Args &... args)
+	void debug(const char* fmt, const Args& ... args)
 	{
 #if defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
-		trace->P7_DEBUG(module, fmt, args...);
+		_tracer->P7_DEBUG(module, fmt, args...);
 #endif // defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
 	}
 
 	template<typename... Args>
-	void info(const char *fmt, const Args &... args)
+	void info(const char* fmt, const Args& ... args)
 	{
-		trace->P7_INFO(module, fmt, args...);
+		_tracer->P7_INFO(module, fmt, args...);
 	}
 
 	template<typename... Args>
-	void warn(const char *fmt, const Args &... args)
+	void warn(const char* fmt, const Args& ... args)
 	{
-		trace->P7_WARNING(module, fmt, args...);
+		_tracer->P7_WARNING(module, fmt, args...);
 	}
 
 	template<typename... Args>
-	void error(const char *fmt, const Args &... args)
+	void error(const char* fmt, const Args& ... args)
 	{
-		trace->P7_ERROR(module, fmt, args...);
+		_tracer->P7_ERROR(module, fmt, args...);
 	}
 
 	template<typename... Args>
-	void critical(const char *fmt, const Args &... args)
+	void critical(const char* fmt, const Args& ... args)
 	{
-		trace->P7_CRITICAL(module, fmt, args...);
+		_tracer->P7_CRITICAL(module, fmt, args...);
 	}
 
 	void flush()

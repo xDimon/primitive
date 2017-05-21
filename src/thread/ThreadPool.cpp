@@ -77,7 +77,7 @@ void ThreadPool::createThread()
 		Log log("ThreadLoop");
 		for (;;)
 		{
-			log.trace_("Wait task on thread");
+			log.trace("Wait task on thread");
 
 			// Try to get or wait task
 			{
@@ -95,7 +95,7 @@ void ThreadPool::createThread()
 					break;
 				}
 
-				log.trace_("Get task from queue");
+				log.trace("Get task from queue");
 
 				// Get task from queue
 				task = std::move(_tasks.front());

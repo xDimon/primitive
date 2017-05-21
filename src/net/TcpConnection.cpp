@@ -147,7 +147,7 @@ bool TcpConnection::processing()
 
 bool TcpConnection::writeToSocket()
 {
-	log().trace_("Write into socket on %s", name().c_str());
+	log().trace("Write into socket on %s", name().c_str());
 
 	// Отправляем данные
 	for (;;)
@@ -190,7 +190,7 @@ bool TcpConnection::writeToSocket()
 
 bool TcpConnection::readFromSocket()
 {
-	log().trace_("Read from socket on %s", name().c_str());
+	log().trace("Read from socket on %s", name().c_str());
 
 	// Пытаемся полностью заполнить буфер
 	for (;;)

@@ -27,7 +27,7 @@
 #include <mutex>
 #include "Connection.hpp"
 
-class ConnectionManager: public Log
+class ConnectionManager
 {
 private:
 	ConnectionManager();
@@ -42,6 +42,8 @@ private:
 	}
 
 	static const int poolSize = 1<<17;
+
+	Log _log;
 
 	std::recursive_mutex _mutex;
 
