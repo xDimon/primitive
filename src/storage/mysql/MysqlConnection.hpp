@@ -33,7 +33,8 @@ class MysqlConnection : public Shareable<MysqlConnection>, public DbConnection
 private:
 	size_t _transaction;
 
-	mutable MYSQL _mysql;
+	//mutable
+	MYSQL _mysql;
 
 public:
 	MysqlConnection(
@@ -59,16 +60,16 @@ public:
 
 	void operator=(MysqlConnection const&) = delete;
 
-	virtual bool alive() const override
+	virtual bool alive() override
 	{
 		return !mysql_ping(&_mysql);
 	}
 
 	virtual bool startTransaction() override;
 
-	virtual bool deadlockDetected() const override;
+	virtual bool deadlockDetected() override;
 
-	virtual bool inTransaction() const override
+	virtual bool inTransaction() override
 	{
 		return _transaction > 0;
 	}
@@ -77,6 +78,6 @@ public:
 
 	virtual bool rollback() override;
 
-	virtual bool query(const std::string& query, DbResult* res = nullptr, int* affected = nullptr, int* insertId = nullptr) override;
+	virtual bool query(const std::string& query, DbResult* res = nullptr, size_t* affected = nullptr, size_t* insertId = nullptr) override;
 	virtual bool multiQuery(const std::string& sql) override;
 };

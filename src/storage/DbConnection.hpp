@@ -28,6 +28,7 @@
 #include <mysql.h>
 
 class DbResult;
+
 class DbConnectionPool;
 
 class DbConnection
@@ -45,7 +46,9 @@ public:
 	: id(++_lastId)
 	, _pool(pool)
 	{};
-	virtual ~DbConnection() {};
+
+	virtual ~DbConnection()
+	{};
 
 	bool captured() const
 	{
@@ -62,14 +65,15 @@ public:
 		_captured--;
 	}
 
-	virtual bool alive() const = 0;
+	virtual bool alive() = 0;
 
 	virtual bool startTransaction() = 0;
-	virtual bool deadlockDetected() const = 0;
-	virtual bool inTransaction() const = 0;
+	virtual bool deadlockDetected() = 0;
+	virtual bool inTransaction() = 0;
+
 	virtual bool commit() = 0;
 	virtual bool rollback() = 0;
 
-	virtual bool query(const std::string &query, DbResult* res = nullptr, int *affected = nullptr, int *insertId = nullptr) = 0;
+	virtual bool query(const std::string& query, DbResult* res = nullptr, size_t* affected = nullptr, size_t* insertId = nullptr) = 0;
 	virtual bool multiQuery(const std::string& sql) = 0;
 };

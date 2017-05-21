@@ -87,7 +87,7 @@ bool MysqlConnection::startTransaction()
 	return false;
 }
 
-bool MysqlConnection::deadlockDetected() const
+bool MysqlConnection::deadlockDetected()
 {
 	return mysql_errno(&_mysql) == 1213;
 }
@@ -134,7 +134,7 @@ bool MysqlConnection::rollback()
 	return false;
 }
 
-bool MysqlConnection::query(const std::string& sql, DbResult* res, int* affected, int* insertId)
+bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affected, size_t* insertId)
 {
 	auto result = dynamic_cast<MysqlResult *>(res);
 
