@@ -93,4 +93,8 @@ public:
 	{
 		trace->P7_CRITICAL(module, fmt, args...);
 	}
+
+	void flush()
+	{
+	}
 };
