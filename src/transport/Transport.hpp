@@ -42,6 +42,7 @@ private:
 public:
 
 	Transport(const Setting& setting);
+	virtual ~Transport();
 
 	const std::string& name() const
 	{

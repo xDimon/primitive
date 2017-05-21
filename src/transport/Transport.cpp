@@ -22,6 +22,7 @@
 #include <sstream>
 #include "Transport.hpp"
 #include "../net/ConnectionManager.hpp"
+#include "../thread/ThreadPool.hpp"
 
 Transport::Transport(const Setting& setting)
 {
@@ -44,6 +45,10 @@ Transport::Transport(const Setting& setting)
 	_serializerCreator = SerializerFactory::creator(setting);
 }
 
+Transport::~Transport()
+{
+}
+
 bool Transport::enable()
 {
 	if (!_acceptor.expired())
@@ -58,6 +63,8 @@ bool Transport::enable()
 		auto acceptor = (*_acceptorCreator)(t);
 
 		_acceptor = acceptor->ptr();
+
+		ThreadPool::hold();
 
 		ConnectionManager::add(_acceptor.lock());
 
@@ -82,6 +89,8 @@ bool Transport::disable()
 	}
 
 	ConnectionManager::remove(_acceptor.lock());
+
+	ThreadPool::unhold();
 
 	_acceptor.reset();
 

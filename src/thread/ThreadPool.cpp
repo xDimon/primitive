@@ -59,6 +59,8 @@ void ThreadPool::setThreadNum(size_t num)
 	{
 		getInstance().createThread();
 	}
+
+	getInstance()._condition.notify_all();
 }
 
 size_t ThreadPool::genThreadId()
@@ -69,10 +71,13 @@ size_t ThreadPool::genThreadId()
 
 void ThreadPool::createThread()
 {
-	log().debug("Create new thread");
-
-	auto thread = new Thread([this](){
+	std::function<void()> threadLoop = [this]()
+	{
 		std::function<void()> task;
+
+		auto waitIf = [this](){
+			return _hold && !_tasks.empty();
+		};
 
 		Log log("ThreadLoop");
 		for (;;)
@@ -84,12 +89,10 @@ void ThreadPool::createThread()
 				std::unique_lock<std::mutex> lock(_queueMutex);
 
 				// Condition for run thread
-				_condition.wait(lock, [this](){
-					return _workerNumber == 0 || !_tasks.empty();
-				});
+				_condition.wait(lock, waitIf);
 
 				// Condition for end thread
-				if (_workerNumber == 0 && _tasks.empty())
+				if (_tasks.empty())
 				{
 					log.debug("End thread's loop");
 					break;
@@ -110,10 +113,14 @@ void ThreadPool::createThread()
 			task();
 			log.debug("End execution task on thread");
 		}
-	});
+	};
+
+
+	log().debug("Create new thread");
+
+	auto thread = new Thread(threadLoop);
 
 	_workers.emplace(thread->id(), thread);
-	//_workers.insert(std::make_pair(thread->id(), thread));
 }
 
 void ThreadPool::wait()
@@ -125,7 +132,7 @@ void ThreadPool::wait()
 	// Condition for close pool
 	getInstance()._condition.wait(
 		lock, [pool = &getInstance()]()->bool {
-			return !pool->_workerNumber && pool->_tasks.empty();
+			return !pool->_hold && pool->_tasks.empty();
 		}
 	);
 }

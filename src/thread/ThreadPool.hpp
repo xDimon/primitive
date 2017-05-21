@@ -61,10 +61,25 @@ public:
 
 	static Thread *getCurrent();
 
+	static void hold()
+	{
+		std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
+		++getInstance()._hold;
+		getInstance()._condition.notify_all();
+	}
+	static void unhold()
+	{
+		std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
+		--getInstance()._hold;
+		getInstance()._condition.notify_all();
+	}
+
 private:
 	std::mutex _counterMutex;
 	size_t _workerCounter;
 	size_t _workerNumber;
+
+	size_t _hold;
 
 	// need to keep track of threads so we can join them
 	std::map<const std::thread::id, Thread*> _workers;

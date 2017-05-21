@@ -36,7 +36,7 @@ private:
 	static void run(Thread *);
 
 public:
-	Thread(std::function<void()>);
+	Thread(std::function<void()>& );
 	virtual ~Thread();
 
 	inline void join()
