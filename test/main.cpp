@@ -24,10 +24,15 @@
 #include "../src/options/Options.hpp"
 #include "../src/configs/Config.hpp"
 #include "../src/server/Server.hpp"
+#include "../src/utils/Daemon.hpp"
+#include "../src/utils/ShutdownManager.hpp"
 
 int main(int argc, char *argv[])
 {
-	ThreadPool::setThreadNum(2);
+	SetProcessName();
+	StartManageSignals();
+
+	ThreadPool::setThreadNum(3);
 
 	auto options = std::make_shared<Options>(argc, argv);
 
@@ -35,9 +40,15 @@ int main(int argc, char *argv[])
 
 	auto server = std::make_shared<Server>(configs);
 
+//	SetDaemonMode();
+
 	server->start();
+
+	ShutdownManager::doAtShutdown([server](){
+		server->stop();
+	});
 
 	server->wait();
 
-	exit(EXIT_SUCCESS);
+	return 0;
 }

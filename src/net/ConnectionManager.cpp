@@ -23,10 +23,9 @@
 #include "ConnectionManager.hpp"
 
 #include <unistd.h>
-#include <cstring>
 #include "../thread/ThreadPool.hpp"
 #include "TcpConnection.hpp"
-#include <unistd.h>
+#include "../utils/ShutdownManager.hpp"
 
 ConnectionManager::ConnectionManager()
 : Log("ConnectionManager")
@@ -257,6 +256,12 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 	// Если нет готовых...
 	while (_readyConnections.empty())
 	{
+		// то выходим при остановке сервера
+		if (ShutdownManager::shutingdown() && _allConnections.empty())
+		{
+			return nullptr;
+		}
+
 		log().trace_("Not found ready connection in ConnectionManager::capture()");
 
 		// а в штатном режиме ожидаем появления готового соединения

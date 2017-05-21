@@ -31,6 +31,8 @@
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"
 #include <unistd.h>
+#include <cstdint>
+#include "../utils/ShutdownManager.hpp"
 
 TcpAcceptor::TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& host, std::uint16_t port)
 : Acceptor(transport)
@@ -125,6 +127,12 @@ bool TcpAcceptor::processing()
 	std::lock_guard<std::mutex> guard(_mutex);
 	for (;;)
 	{
+		if (ShutdownManager::shutingdown())
+		{
+			ConnectionManager::remove(this->ptr());
+			return false;
+		}
+
 		if (wasFailure())
 		{
 			_closed = true;

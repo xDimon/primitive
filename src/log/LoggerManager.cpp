@@ -42,6 +42,8 @@ LoggerManager::LoggerManager()
 
 	uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
 	_logTrace->Register_Thread("MainThread", tid);
+
+//	P7_Set_Crash_Handler();
 }
 
 LoggerManager::~LoggerManager()
