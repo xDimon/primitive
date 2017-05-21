@@ -22,7 +22,6 @@
 #include "ActionsFactory.hpp"
 
 #include <assert.h>
-#include <utility>
 
 std::string ActionsFactory::_regRequest(const std::string& name, RequestBase *(*creator)(std::shared_ptr<Connection>&, const void *))
 {

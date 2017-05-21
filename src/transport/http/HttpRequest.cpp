@@ -23,7 +23,6 @@
 #include "HttpHelper.hpp"
 
 #include <memory.h>
-#include "../../log/Log.hpp"
 
 HttpRequest::HttpRequest(const char* begin, const char* end)
 : _hasContentLength(false)

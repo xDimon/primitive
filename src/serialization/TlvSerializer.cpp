@@ -19,12 +19,12 @@
 // TlvSerializer.cpp
 
 
+#include "TlvSerializer.hpp"
+
+#include "../utils/literals.hpp"
+
 #include <memory>
 #include <cstring>
-#include "TlvSerializer.hpp"
-#include "SInt.hpp"
-#include "../utils/literals.hpp"
-#include "SFloat.hpp"
 
 #ifdef NAN
 #undef NAN

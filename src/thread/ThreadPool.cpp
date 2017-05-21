@@ -20,10 +20,7 @@
 
 
 #include <iostream>
-#include <signal.h>
-#include <ucontext.h>
 #include "ThreadPool.hpp"
-#include "../log/LoggerManager.hpp"
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()

@@ -20,7 +20,6 @@
 
 
 #include "MysqlConnection.hpp"
-#include "MysqlConnectionPool.hpp"
 #include "MysqlResult.hpp"
 
 MysqlConnection::MysqlConnection(

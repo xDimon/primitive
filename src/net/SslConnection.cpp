@@ -21,10 +21,7 @@
 
 #include "SslConnection.hpp"
 
-#include <arpa/inet.h>
-#include <sys/ioctl.h>
 #include <sstream>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
 
 #include "ConnectionManager.hpp"

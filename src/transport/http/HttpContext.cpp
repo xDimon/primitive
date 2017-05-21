@@ -17,6 +17,3 @@
 // File created on: 2017.03.28
 
 // HttpContext.cpp
-
-
-#include "HttpContext.hpp"

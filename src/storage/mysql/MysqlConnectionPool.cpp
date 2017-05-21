@@ -22,7 +22,6 @@
 #include <sstream>
 #include "MysqlConnectionPool.hpp"
 #include "MysqlConnection.hpp"
-#include "../DbConnectionPool.hpp"
 
 MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 : DbConnectionPool(setting)
