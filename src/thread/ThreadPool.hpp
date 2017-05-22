@@ -61,18 +61,8 @@ public:
 
 	static Thread *getCurrent();
 
-	static void hold()
-	{
-		std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
-		++getInstance()._hold;
-		getInstance()._condition.notify_all();
-	}
-	static void unhold()
-	{
-		std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
-		--getInstance()._hold;
-		getInstance()._condition.notify_all();
-	}
+	static void hold();
+	static void unhold();
 
 private:
 	std::mutex _counterMutex;
@@ -89,7 +79,8 @@ private:
 
 	// synchronization
 	std::mutex _queueMutex;
-	std::condition_variable _condition;
+	std::condition_variable _workersWakeupCondition;
+	std::condition_variable _poolCloseCondition;
 
 	void createThread();
 };

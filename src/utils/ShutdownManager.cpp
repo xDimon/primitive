@@ -33,10 +33,15 @@ void ShutdownManager::shutdown()
 {
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
+//	ThreadPool::hold();
+
 	getInstance()._shutingdown = true;
 
 	for (auto handler : getInstance()._handlers)
 	{
 		handler();
 	}
+
+//	ThreadPool::unhold();
+
 }

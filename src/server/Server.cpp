@@ -31,6 +31,8 @@ Server::Server(std::shared_ptr<Config>& configs)
 : Log("Server")
 , _configs(configs)
 {
+	log().info("Server instantiate");
+
 	try
 	{
 		const auto& settings = _configs->getRoot()["databases"];
@@ -65,13 +67,12 @@ Server::Server(std::shared_ptr<Config>& configs)
 		log().error("Can't add transport: %s", exception.what());
 	}
 
-	ThreadPool::enqueue([](){
-		ConnectionManager::dispatch();
-	});
+	ThreadPool::enqueue(ConnectionManager::dispatch);
 }
 
 Server::~Server()
 {
+	log().info("Server shutdown");
 }
 
 void Server::wait()
@@ -132,6 +133,11 @@ void Server::removeTransport(const std::string& name)
 
 void Server::start()
 {
+	log().info("Server start");
+
+	ThreadPool::hold();
+	ThreadPool::setThreadNum(3);
+
 	std::lock_guard<std::mutex> guard(_mutex);
 	for (auto &&item : _transports)
 	{
@@ -146,4 +152,8 @@ void Server::stop()
 	{
 		item.second->disable();
 	}
+
+	ThreadPool::unhold();
+
+	log().info("Server stop");
 }

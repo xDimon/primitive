@@ -31,16 +31,17 @@
 #include <climits>
 
 Thread::Thread(std::function<void()>& function)
-: _log("Thread")
+: _id(ThreadPool::genThreadId())
+, _log("Thread")
 , _function(std::move(function))
 , _thread([this](){ Thread::run(this); })
 {
-	_log.debug("Thread created");
+	_log.debug("Thread 'Worker_%zu' created", _id);
 }
 
 Thread::~Thread()
 {
-	_log.debug("Thread destroyed");
+	_log.debug("Thread 'Worker_%zu' destroyed", _id);
 }
 
 void fake(Thread *thread)
@@ -52,7 +53,7 @@ void Thread::run(Thread *thread)
 {
 	{
 		char buff[32];
-		snprintf(buff, sizeof(buff), "Worker_%zu", ThreadPool::genThreadId());
+		snprintf(buff, sizeof(buff), "Worker_%zu", thread->_id);
 
 		LoggerManager::regThread(buff);
 
@@ -61,7 +62,7 @@ void Thread::run(Thread *thread)
 		sigfillset(&sig);
 		sigprocmask(SIG_BLOCK, &sig, nullptr);
 
-		thread->_log.debug("Start new thread");
+		thread->_log.debug("Thread 'Worker_%zu' start", thread->_id);
 	}
 
 	thread->reenter();
@@ -115,4 +116,6 @@ void Thread::reenter()
 //	_log.debug("free stack of first context %p", &context);
 
 	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
+	context.uc_stack.ss_sp = nullptr;
+	context.uc_stack.ss_size = 0;
 }

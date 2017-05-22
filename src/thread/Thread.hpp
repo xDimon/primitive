@@ -28,6 +28,7 @@ class Thread
 {
 	friend void fake(Thread *thread);
 private:
+	size_t _id;
 	Log _log;
 	std::mutex _mutex;
 	std::function<void()> _function;

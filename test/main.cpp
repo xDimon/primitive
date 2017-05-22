@@ -29,10 +29,12 @@
 
 int main(int argc, char *argv[])
 {
+	Log log("Main");
+
+	log.info("Start daemon");
+
 	SetProcessName();
 	StartManageSignals();
-
-	ThreadPool::setThreadNum(3);
 
 	auto options = std::make_shared<Options>(argc, argv);
 
@@ -49,6 +51,10 @@ int main(int argc, char *argv[])
 	});
 
 	server->wait();
+
+	log.info("Stop daemon");
+
+	P7_Exceptional_Flush();
 
 	return 0;
 }

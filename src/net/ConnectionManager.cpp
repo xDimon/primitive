@@ -176,6 +176,19 @@ void ConnectionManager::wait()
 			_log.trace("Catch event(s) on %d connection(s) in ConnectionManager::wait()", n);
 			break;
 		}
+		if (ShutdownManager::shutingdown())
+		{
+			if (_allConnections.empty())
+			{
+				_log.debug("Interrupt waiting");
+
+				_epool_mutex.unlock();
+
+				_mutex.lock();
+				return;
+			}
+
+		}
 	}
 
 	_mutex.lock();
