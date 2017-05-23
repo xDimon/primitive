@@ -29,6 +29,7 @@
 #include <map>
 #include "Thread.hpp"
 #include "../log/Log.hpp"
+#include "Task.hpp"
 
 class ThreadPool: public Log
 {
@@ -52,10 +53,10 @@ public:
 
 	static size_t genThreadId();
 
-//	template<class F, class... Args>
-//	static auto enqueue(F &&f, Args &&... args)->std::future<typename std::result_of<F(Args...)>::type>;
-
-	static void enqueue(std::function<void()>);
+	static void enqueue(Task&& task);
+	static void enqueue(Task::Func function);
+	static void enqueue(Task::Func function, Task::Duration delay);
+	static void enqueue(Task::Func function, Task::Time time);
 
 	static void wait();
 
@@ -75,12 +76,11 @@ private:
 	std::map<const std::thread::id, Thread*> _workers;
 
 	// the task queue
-	std::queue<std::function<void()>> _tasks;
+	std::priority_queue<Task, std::deque<Task>> _tasks;
 
 	// synchronization
 	std::mutex _queueMutex;
 	std::condition_variable _workersWakeupCondition;
-	std::condition_variable _poolCloseCondition;
 
 	void createThread();
 };
