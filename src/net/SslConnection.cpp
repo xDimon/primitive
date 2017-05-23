@@ -23,6 +23,7 @@
 
 #include <sstream>
 #include <openssl/err.h>
+#include <unistd.h>
 
 #include "ConnectionManager.hpp"
 #include "../transport/Transport.hpp"
@@ -53,7 +54,7 @@ bool SslConnection::processing()
 	{
 		if (wasFailure())
 		{
-			_closed = true;
+			_error = true;
 			break;
 		}
 
@@ -69,8 +70,9 @@ bool SslConnection::processing()
 					if (isHalfHup() || isHup())
 					{
 						log().trace("Can't complete SslHelper-handshake: already closed %s", name().c_str());
+						shutdown(_sock, SHUT_RD);
 						_noRead = true;
-						_noWrite = true;
+//						_noWrite = true;
 						break;
 					}
 
@@ -89,11 +91,17 @@ bool SslConnection::processing()
 					break;
 				}
 
-				char err[1<<12];
+				char err[1<<7];
 				ERR_error_string_n(ERR_get_error(), err, sizeof(err));
 
 				log().trace("Fail SslHelper-handshake on %s: %s", name().c_str(), err);
-				_error = true;
+
+				char msg[] = "HTTP/1.1 525 SSL handshake failed\r\n\r\nSSL handshake failed\n";
+				::write(_sock, msg, sizeof(msg));
+
+				shutdown(_sock, SHUT_RD);
+				_noRead = true;
+				_noWrite = true;
 				break;
 			}
 
@@ -135,11 +143,6 @@ bool SslConnection::processing()
 		}
 	}
 
-	if (_noRead && _noWrite)
-	{
-		_closed = true;
-	}
-
 	if (_closed)
 	{
 		ConnectionManager::remove(this->ptr());
@@ -148,6 +151,11 @@ bool SslConnection::processing()
 	}
 
 	ConnectionManager::watch(this->ptr());
+
+	if (_noRead && _noWrite)
+	{
+		_closed = true;
+	}
 
 	return true;
 }
