@@ -111,7 +111,7 @@ TcpAcceptor::~TcpAcceptor()
 
 void TcpAcceptor::watch(epoll_event &ev)
 {
-	ev.data.ptr = new std::shared_ptr<Connection>(shared_from_this());
+	ev.data.ptr = this;
 	ev.events = 0;
 
 	ev.events |= EPOLLET; // Ждем появления НОВЫХ событий
@@ -129,6 +129,7 @@ bool TcpAcceptor::processing()
 	{
 		if (ShutdownManager::shutingdown())
 		{
+			log().debug("Interrupt processing on %s (shutdown)", name().c_str());
 			ConnectionManager::remove(this->ptr());
 			return false;
 		}
@@ -136,6 +137,8 @@ bool TcpAcceptor::processing()
 		if (wasFailure())
 		{
 			_closed = true;
+
+			log().debug("End processing on %s (was failure)", name().c_str());
 
 			ConnectionManager::remove(this->ptr());
 
@@ -158,12 +161,12 @@ bool TcpAcceptor::processing()
 			// Нет подключений - на этом все
 			if (errno == EAGAIN)
 			{
-				log().debug("No more accept on %s", name().c_str());
-				break;
+				log().debug("End processing on %s (no more accept)", name().c_str());
+				return true;
 			}
 
 			// Ошибка установления соединения
-			log().debug("Error '%s' at accept on %s", strerror(errno), name().c_str());
+			log().debug("End processing on %s (accept error: %s)", name().c_str(), strerror(errno));
 			return false;
 		}
 
@@ -181,10 +184,6 @@ bool TcpAcceptor::processing()
 			::close(sock);
 		}
 	}
-
-	ConnectionManager::watch(this->ptr());
-
-	return true;
 }
 
 void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)

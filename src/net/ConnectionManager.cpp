@@ -42,15 +42,17 @@ ConnectionManager::ConnectionManager()
 ConnectionManager::~ConnectionManager()
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
+	std::vector<std::shared_ptr<Connection>> connections;
+	for (auto& i : _allConnections)
+	{
+		connections.emplace_back(i.second);
+	}
+	for (auto& connection : connections)
+	{
+		remove(std::shared_ptr<Connection>(connection));
+	}
 	close(_epfd);
 	_epfd = -1;
-	for (auto i = _allConnections.begin(); i != _allConnections.end();)
-	{
-		auto ci = i++;
-		auto connection = *ci;
-		_allConnections.erase(ci);
-		remove(connection);
-	}
 }
 
 /// Зарегистрировать соединение
@@ -58,7 +60,7 @@ void ConnectionManager::add(std::shared_ptr<Connection> connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
-	if (getInstance()._allConnections.find(connection) != getInstance()._allConnections.end())
+	if (getInstance()._allConnections.find(connection.get()) != getInstance()._allConnections.end())
 	{
 		getInstance()._log.debug("Fail of add %s in ConnectionManager::add()", connection->name().c_str());
 		return;
@@ -66,11 +68,13 @@ void ConnectionManager::add(std::shared_ptr<Connection> connection)
 
 	getInstance()._log.debug("Add %s in ConnectionManager::add()", connection->name().c_str());
 
-	getInstance()._allConnections.insert(connection);
+	getInstance()._allConnections.emplace(connection.get(), connection);
 
 	epoll_event ev;
 
 	connection->watch(ev);
+
+	getInstance()._log.trace("Call `epoll_ctl(ADD)` for %s in ConnectionManager::add(): %p", connection->name().c_str(), ev.data.ptr);
 
 	// Включаем наблюдение
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_ADD, connection->fd(), &ev) == -1)
@@ -89,13 +93,15 @@ bool ConnectionManager::remove(std::shared_ptr<Connection> connection)
 
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
-	if (getInstance()._allConnections.erase(connection))
+	if (getInstance()._allConnections.erase(connection.get()))
 	{
 		if (std::dynamic_pointer_cast<TcpConnection>(connection))
 		{
 			getInstance()._established--;
 		}
 	}
+
+	getInstance()._log.trace("Call `epoll_ctl(DEL)` for %s in ConnectionManager::add()", connection->name().c_str());
 
 	// Удаляем из очереди событий
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_DEL, connection->fd(), nullptr) == -1)
@@ -134,10 +140,12 @@ void ConnectionManager::watch(std::shared_ptr<Connection> connection)
 
 	connection->watch(ev);
 
+	getInstance()._log.trace("Call `epoll_ctl(MOD)` for %s in ConnectionManager::watch(): %p", connection->name().c_str(), ev.data.ptr);
+
 	// Включаем наблюдение
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_MOD, connection->fd(), &ev) == -1)
 	{
-		getInstance()._log.debug("Fail call `epoll_ctl(MOD)` for %s (error: '%s') in ConnectionManager::add()", connection->name().c_str(), strerror(errno));
+		getInstance()._log.debug("Fail call `epoll_ctl(MOD)` for %s (error: '%s') in ConnectionManager::watch()", connection->name().c_str(), strerror(errno));
 	}
 }
 
@@ -196,22 +204,30 @@ void ConnectionManager::wait()
 	// Перебираем полученые события
 	for (int i = 0; i < n; i++)
 	{
-		std::shared_ptr<Connection> connection = std::move(*static_cast<std::shared_ptr<Connection> *>(_epev[i].data.ptr));
-
-		if (!connection)
-		{
-			_log.trace("Skip nullptr in ConnectionManager::wait(): %p", _epev[i].data.ptr);
-			continue;
-		}
-
-		_log.trace("Catch event(s) `%d` on %s in ConnectionManager::wait()", _epev[i].events, connection->name().c_str());
+//		std::shared_ptr<Connection> connection = std::move(*static_cast<std::shared_ptr<Connection> *>(_epev[i].data.ptr));
+//
+//		std::shared_ptr<Connection> connection = (*static_cast<std::weak_ptr<Connection> *>(_epev[i].data.ptr)).lock();
+//
+//		if (!connection)
+//		{
+//			delete static_cast<std::weak_ptr<Connection> *>(_epev[i].data.ptr);
+//			_log.trace("Skip nullptr in ConnectionManager::wait(): %p", _epev[i].data.ptr);
+//			continue;
+//		}
+//
+//		_log.trace("Catch event(s) `%d` on %s in ConnectionManager::wait(): %p", _epev[i].events, connection->name().c_str(), _epev[i].data.ptr);
 
 		// Игнорируем незарегистрированные соединения
-		if (_allConnections.find(connection) == _allConnections.end())
+		auto it = _allConnections.find(static_cast<const Connection *>(_epev[i].data.ptr));
+		if (it == _allConnections.end())
 		{
-			_log.warn("Skip %s in ConnectionManager::wait() because connection unregistered", connection->name().c_str());
+			_log.warn("Skip Connection#%p in ConnectionManager::wait() because unregistered", _epev[i].data.ptr);
 			continue;
 		}
+
+		auto connection = it->second;
+
+		_log.trace("Catch event(s) `%d` on %s in ConnectionManager::wait(): %p", _epev[i].events, connection->name().c_str(), _epev[i].data.ptr);
 
 		uint32_t fdEvent = _epev[i].events;
 
@@ -304,7 +320,7 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 
 	connection->setCaptured();
 
-	return connection;
+	return std::move(connection);
 }
 
 /// Освободить соединение
@@ -329,8 +345,8 @@ void ConnectionManager::release(std::shared_ptr<Connection> connection)
 /// Обработка событий
 void ConnectionManager::dispatch()
 {
-	getInstance()._log.debug("Start dispatching in ConnectionManager::dispatch()");
-
+//	getInstance()._log.debug("Start dispatching in ConnectionManager::dispatch()");
+//
 	for (;;)
 	{
 		std::shared_ptr<Connection> connection = getInstance().capture();
@@ -340,16 +356,16 @@ void ConnectionManager::dispatch()
 			break;
 		}
 
-//		_log.trace("Enqueue %s into ThreadPool for procession ConnectionManager::dispatch()", connection->name().c_str());
+		getInstance()._log.debug("Enqueue %s for procession", connection->name().c_str());
 
 		ThreadPool::enqueue([connection](){
-			getInstance()._log.trace("Begin processing for %s", connection->name().c_str());
+			getInstance()._log.trace("Begin processing on %s", connection->name().c_str());
 
-			connection->processing();
+			bool status = connection->processing();
 
 			getInstance().release(connection);
 
-			getInstance()._log.trace("End processing for %s", connection->name().c_str());
+			getInstance()._log.trace("End processing on %s: %s", connection->name().c_str(), status ? "success" : "fail");
 		});
 	}
 }

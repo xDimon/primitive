@@ -24,6 +24,7 @@
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include <sstream>
+#include <cerrno>
 #include <cstring>
 #include <unistd.h>
 #include "../transport/Transport.hpp"
@@ -57,8 +58,7 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::watch(epoll_event &ev)
 {
-	ev.data.ptr = new std::shared_ptr<Connection>(shared_from_this());
-
+	ev.data.ptr = this;
 	ev.events = 0;
 
 	ev.events |= EPOLLET; // Ждем появления НОВЫХ событий
@@ -95,9 +95,8 @@ bool TcpConnection::processing()
 	{
 		if (wasFailure())
 		{
-			_closed = true;
-			ConnectionManager::remove(this->ptr());
-			return true;
+			_error = true;
+			break;
 		}
 
 		if (isReadyForWrite())
@@ -119,6 +118,11 @@ bool TcpConnection::processing()
 	}
 	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()));
 
+	if (_error)
+	{
+		_closed = true;
+	}
+
 	if (_noRead)
 	{
 		if (!_outBuff.dataLen())
@@ -126,11 +130,6 @@ bool TcpConnection::processing()
 			shutdown(_sock, SHUT_WR);
 			_noWrite = true;
 		}
-	}
-
-	if (_noRead && _noWrite)
-	{
-		_closed = true;
 	}
 
 	if (_closed)
@@ -141,6 +140,11 @@ bool TcpConnection::processing()
 	}
 
 	ConnectionManager::watch(this->ptr());
+
+	if (_noRead && _noWrite)
+	{
+		_closed = true;
+	}
 
 	return true;
 }

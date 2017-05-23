@@ -25,6 +25,7 @@
 #include <set>
 #include <string>
 #include <mutex>
+#include <map>
 #include "Connection.hpp"
 
 class ConnectionManager
@@ -51,7 +52,7 @@ private:
 	std::mutex _epool_mutex;
 
 	/// Реестр подключений
-	std::set<std::shared_ptr<Connection>> _allConnections;
+	std::map<const Connection *, std::shared_ptr<Connection>> _allConnections;
 
 	/// Захваченные подключения
 	std::set<std::shared_ptr<Connection>> _capturedConnections;
