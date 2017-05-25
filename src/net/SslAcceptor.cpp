@@ -22,6 +22,7 @@
 #include "SslAcceptor.hpp"
 #include "SslConnection.hpp"
 #include "ConnectionManager.hpp"
+#include "../thread/ThreadPool.hpp"
 
 SslAcceptor::SslAcceptor(std::shared_ptr<Transport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& context)
 : TcpAcceptor(transport, host, port)
@@ -34,6 +35,19 @@ void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 	std::shared_ptr<Transport> transport = _transport.lock();
 
 	auto connection = std::shared_ptr<Connection>(new SslConnection(transport, sock, cliaddr, _sslContext));
+
+	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(connection->ptr())](){
+		auto connection = std::dynamic_pointer_cast<TcpConnection>(wp.lock());
+		if (!connection)
+		{
+			return;
+		}
+		if (std::chrono::steady_clock::now() > connection->aTime() + std::chrono::seconds(10))
+		{
+			Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
+			connection->close();
+		}
+	}, std::chrono::seconds(10));
 
 	ConnectionManager::add(connection->ptr());
 }
