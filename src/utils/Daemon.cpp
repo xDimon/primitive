@@ -32,6 +32,7 @@
 #include <set>
 #include <execinfo.h>
 #include <sys/prctl.h>
+#include <dlfcn.h>
 
 static void SignalsHandler(int sig, siginfo_t* info, void* context);
 
@@ -211,14 +212,23 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 		void *bt[128];
 		int n = backtrace(bt, 128);
 
-		char **strings = backtrace_symbols(bt, n);
 
 		Log log("Backtrace");
 
 		log.debug("--- begin backtrace ---");
 
+		char **strings = backtrace_symbols(bt, n);
 		for (int i = 0; i < n; i++)
 		{
+			log.debug(strings[i]);
+		}
+
+		for (int i = 0; i < n; i++)
+		{
+			Dl_info dli;
+
+			dladdr(bt[0], &dli);
+
 			log.debug(strings[i]);
 		}
 

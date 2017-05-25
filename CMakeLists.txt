@@ -31,8 +31,8 @@ endif ()
 # Задаем стандарт С++14
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -rdynamic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -rdynamic")
 
 set(${CODENAME}_LIBRARIES)
 
@@ -75,6 +75,17 @@ if (MYSQL_FOUND)
 else()
     message(FATAL "libmysqlclient not found")
 endif ()
+
+# Подключаем libconfig++
+find_package(Libconfig++)
+if (LIBCONFIG++_FOUND)
+    include_directories(${LIBCONFIG++_INCLUDE_DIR})
+    list(APPEND "${CODENAME}_LIBRARIES" ${LIBCONFIG++_LIBRARIES})
+else()
+    message(FATAL "libconfig++ not found")
+endif ()
+
+list(APPEND "${CODENAME}_LIBRARIES" dl)
 
 message(STATUS "Project libraries:")
 foreach(F ${${CODENAME}_LIBRARIES})
