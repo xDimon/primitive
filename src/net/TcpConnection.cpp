@@ -37,6 +37,7 @@ TcpConnection::TcpConnection(std::shared_ptr<Transport>& transport, int sock, co
 , _noWrite(false)
 , _error(false)
 , _closed(false)
+, _accessTime(std::chrono::steady_clock::now())
 {
 	_sock = sock;
 

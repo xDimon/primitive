@@ -48,6 +48,8 @@ protected:
 
 	virtual bool writeToSocket();
 
+	std::chrono::steady_clock::time_point _accessTime;
+
 public:
 	TcpConnection() = delete;
 	TcpConnection(const TcpConnection&) = delete;
@@ -55,6 +57,11 @@ public:
 
 	TcpConnection(std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr);
 	virtual ~TcpConnection();
+
+	const std::chrono::steady_clock::time_point& aTime() const
+	{
+		return _accessTime;
+	}
 
 	bool noRead() const
 	{

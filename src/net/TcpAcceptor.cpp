@@ -19,20 +19,20 @@
 // TcpAcceptor.cpp
 
 
-#include <sys/socket.h>
+#include "TcpAcceptor.hpp"
+
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <cstring>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <sstream>
-#include "../log/Log.hpp"
-#include "TcpAcceptor.hpp"
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"
 #include <unistd.h>
 #include <cstdint>
 #include "../utils/ShutdownManager.hpp"
+#include "../thread/ThreadPool.hpp"
 
 TcpAcceptor::TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& host, std::uint16_t port)
 : Acceptor(transport)
@@ -189,8 +189,25 @@ bool TcpAcceptor::processing()
 void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 {
 	std::shared_ptr<Transport> transport = _transport.lock();
+	if (!transport)
+	{
+		return;
+	}
 
-	auto connection = std::shared_ptr<Connection>(new TcpConnection(transport, sock, cliaddr));
+	auto connection = std::make_shared<TcpConnection>(transport, sock, cliaddr);
+
+	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(connection->ptr())](){
+		auto connection = std::dynamic_pointer_cast<TcpConnection>(wp.lock());
+		if (!connection)
+		{
+			return;
+		}
+		if (std::chrono::steady_clock::now() > connection->aTime() + std::chrono::seconds(10))
+		{
+			Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
+			connection->close();
+		}
+	}, std::chrono::seconds(10));
 
 	ConnectionManager::add(connection->ptr());
 }
