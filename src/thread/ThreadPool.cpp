@@ -19,8 +19,9 @@
 // ThreadPool.cpp
 
 
-#include <iostream>
 #include "ThreadPool.hpp"
+
+#include <iostream>
 #include "../utils/Time.hpp"
 
 // the constructor just launches some amount of _workers
@@ -41,7 +42,6 @@ ThreadPool::~ThreadPool()
 	}
 
 	// Talk to stop threads
-	getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 	_workersWakeupCondition.notify_all();
 
 	// Wait end all threads
@@ -56,7 +56,6 @@ void ThreadPool::hold()
 	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
 	++getInstance()._hold;
 //	getInstance().log().debug("Hold to %d", getInstance()._hold);
-	getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
@@ -78,7 +77,6 @@ void ThreadPool::setThreadNum(size_t num)
 		getInstance().createThread();
 	}
 
-	getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
@@ -152,7 +150,6 @@ void ThreadPool::createThread()
 				// Condition for end thread
 				if (!_tasks.empty())
 				{
-					getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 					_workersWakeupCondition.notify_one();
 				}
 			}
@@ -180,7 +177,6 @@ void ThreadPool::createThread()
 			_workers.erase(i);
 		}
 
-		getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 		_workersWakeupCondition.notify_one();
 	};
 
@@ -227,7 +223,6 @@ void ThreadPool::enqueue(Task&& task)
 
 	getInstance()._tasks.emplace(std::move(task));
 
-	getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
@@ -237,7 +232,6 @@ void ThreadPool::enqueue(Task::Func function)
 
 	getInstance()._tasks.emplace(std::move(function));
 
-	getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
@@ -247,7 +241,6 @@ void ThreadPool::enqueue(Task::Func function, Task::Duration delay)
 
 	getInstance()._tasks.emplace(std::move(function), delay);
 
-	getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
@@ -257,6 +250,5 @@ void ThreadPool::enqueue(Task::Func function, Task::Time time)
 
 	getInstance()._tasks.emplace(std::move(function), time);
 
-	getInstance().log().trace("  Wake up One worker (%d)", __LINE__);
 	getInstance()._workersWakeupCondition.notify_one();
 }

@@ -31,19 +31,17 @@
 #include "../log/Log.hpp"
 #include "Task.hpp"
 
-class ThreadPool: public Log
+class ThreadPool : public Log
 {
 private:
 	ThreadPool();
-
 	virtual ~ThreadPool();
 
-	ThreadPool(ThreadPool const &) = delete;
-
-	void operator=(ThreadPool const &) = delete;
+	ThreadPool(ThreadPool const&) = delete;
+	void operator=(ThreadPool const&) = delete;
 
 public:
-	static ThreadPool &getInstance()
+	static ThreadPool& getInstance()
 	{
 		static ThreadPool instance;
 		return instance;
@@ -60,7 +58,7 @@ public:
 
 	static void wait();
 
-	static Thread *getCurrent();
+	static Thread* getCurrent();
 
 	static void hold();
 	static void unhold();
