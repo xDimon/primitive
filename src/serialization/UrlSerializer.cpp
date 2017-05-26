@@ -79,7 +79,7 @@ std::string UrlSerializer::encode(const SVal* value)
 {
 	try
 	{
-		encodeValue(value);
+		encodeValue("", value);
 	}
 	catch (std::runtime_error& exception)
 	{
@@ -210,157 +210,105 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 	return new SInt(value);
 }
 
-void UrlSerializer::encodeNull(const SNull* value)
+void UrlSerializer::encodeNull(const std::string& keyline, const SNull* value)
 {
-	_oss << "null";
+	_oss << keyline << "=" << "*null*";
 }
 
-void UrlSerializer::encodeBool(const SBool* value)
+void UrlSerializer::encodeBool(const std::string& keyline, const SBool* value)
 {
-	_oss << (value->value() ? "true" : "false");
+	_oss << keyline << "=" << (value->value() ? "*true*" : "*false*");
 }
 
-void UrlSerializer::encodeString(const SStr* value)
+void UrlSerializer::encodeString(const std::string& keyline, const SStr* value)
 {
-	_oss.put('"');
-	for (size_t i = 0; i < value->value().length(); i++)
-	{
-		auto c = value->value()[i];
-		switch (c)
-		{
-			case '"':
-				_oss.put('\\');
-				_oss.put('"');
-				break;
-			case '\\':
-				_oss.put('\\');
-				_oss.put('\\');
-				break;
-			case '/':
-				_oss.put('\\');
-				_oss.put('/');
-				break;
-			case '\b':
-				_oss.put('\\');
-				_oss.put('b');
-				break;
-			case '\f':
-				_oss.put('\\');
-				_oss.put('f');
-				break;
-			case '\n':
-				_oss.put('\\');
-				_oss.put('n');
-				break;
-			case '\t':
-				_oss.put('\\');
-				_oss.put('t');
-				break;
-			case '\r':
-				_oss.put('\\');
-				_oss.put('r');
-				break;
-			default:
-				_oss.put(c);
-		}
-	}
-	_oss.put('"');
+	_oss << keyline << "=" << value->value(); // TODO HttpUri::urlencode(value.value());
 }
 
-void UrlSerializer::encodeBinary(const SBinary* value)
+void UrlSerializer::encodeBinary(const std::string& keyline, const SBinary* value)
 {
-	_oss << "\"=?B?" << Base64::encode(value->value().data(), value->value().size()) << "?=\"";
+	_oss << "*binary*";
 }
 
-void UrlSerializer::encodeNumber(const SNum* value)
+void UrlSerializer::encodeNumber(const std::string& keyline, const SNum* value)
 {
 	const SInt* intVal = dynamic_cast<const SInt*>(value);
 	if (intVal)
 	{
-		_oss << intVal->value();
+		_oss << keyline << "=" << intVal->value();
 		return;
 	}
 	const SFloat* floatVal = dynamic_cast<const SFloat*>(value);
 	if (floatVal)
 	{
-		_oss << std::setprecision(15) << floatVal->value();
+		_oss << keyline << "=" << std::setprecision(15) << floatVal->value();
 		return;
 	}
 }
 
-void UrlSerializer::encodeArray(const SArr* value)
+void UrlSerializer::encodeArray(const std::string& keyline, const SArr* value)
 {
-	_oss << "[";
+	int index = 0;
+	value->forEach([this,&keyline,&index](const SVal* value)
+	{
+		if (index > 0)
+		{
+			_oss << "&";
+		}
+		std::ostringstream oss;
+		oss << keyline << "[" << index++ << "]";
+		encodeValue(oss.str(), value);
+	});
+}
 
+void UrlSerializer::encodeObject(const std::string& keyline, const SObj* value)
+{
 	bool empty = true;
-	value->forEach([this, &empty](const SVal* value)
+	value->forEach([this,&keyline,&empty](const std::pair<const SStr* const, SVal*>& element)
 	{
 		if (!empty)
 		{
-			_oss << ",";
+			_oss << "&";
 		}
 		else
 		{
 			empty = false;
 		}
-		encodeValue(value);
+		std::ostringstream oss;
+		oss << keyline << (keyline.empty()?"":"[") << element.first->value() << (keyline.empty()?"":"]");
+		encodeValue(oss.str(), element.second);
 	});
-
-	_oss << "]";
 }
 
-void UrlSerializer::encodeObject(const SObj* value)
-{
-	_oss << "{";
-
-	bool empty = true;
-	value->forEach([this, &empty](const std::pair<const SStr* const, SVal*>& element)
-	{
-		if (!empty)
-		{
-			_oss << ",";
-		}
-		else
-		{
-			empty = false;
-		}
-		encodeString(element.first);
-		_oss << ':';
-		encodeValue(element.second);
-	});
-
-	_oss << "}";
-}
-
-void UrlSerializer::encodeValue(const SVal* value)
+void UrlSerializer::encodeValue(const std::string& keyline, const SVal* value)
 {
 	if (auto pStr = dynamic_cast<const SStr*>(value))
 	{
-		encodeString(pStr);
+		encodeString(keyline, pStr);
 	}
 	else if (auto pNum = dynamic_cast<const SNum*>(value))
 	{
-		encodeNumber(pNum);
+		encodeNumber(keyline, pNum);
 	}
 	else if (auto pObj = dynamic_cast<const SObj*>(value))
 	{
-		encodeObject(pObj);
+		encodeObject(keyline, pObj);
 	}
 	else if (auto pArr = dynamic_cast<const SArr*>(value))
 	{
-		encodeArray(pArr);
+		encodeArray(keyline, pArr);
 	}
 	else if (auto pBool = dynamic_cast<const SBool*>(value))
 	{
-		encodeBool(pBool);
+		encodeBool(keyline, pBool);
 	}
 	else if (auto pNull = dynamic_cast<const SNull*>(value))
 	{
-		encodeNull(pNull);
+		encodeNull(keyline, pNull);
 	}
 	else if (auto pBin = dynamic_cast<const SBinary*>(value))
 	{
-		encodeBinary(pBin);
+		encodeBinary(keyline, pBin);
 	}
 	else
 	{

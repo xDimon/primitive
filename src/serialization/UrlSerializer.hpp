@@ -46,20 +46,20 @@ private:
 
 	SVal* decodeValue(const std::string& strval);
 
-	void encodeNull(const SNull* value);
-	void encodeBool(const SBool* value);
+	void encodeNull(const std::string& keyline, const SNull* value);
+	void encodeBool(const std::string& keyline, const SBool* value);
 
-	void encodeString(const SStr* value);
-	void encodeBinary(const SBinary* value);
+	void encodeString(const std::string& keyline, const SStr* value);
+	void encodeBinary(const std::string& keyline, const SBinary* value);
 
-	void encodeInteger(const SInt* value);
-	void encodeFloat(const SFloat* value);
-	void encodeNumber(const SNum* value);
+	void encodeInteger(const std::string& keyline, const SInt* value);
+	void encodeFloat(const std::string& keyline, const SFloat* value);
+	void encodeNumber(const std::string& keyline, const SNum* value);
 
-	void encodeArray(const SArr* value);
-	void encodeObject(const SObj* value);
+	void encodeArray(const std::string& keyline, const SArr* value);
+	void encodeObject(const std::string& keyline, const SObj* value);
 
-	void encodeValue(const SVal* value);
+	void encodeValue(const std::string& keyline, const SVal* value);
 
 public:
 	virtual SVal* decode(const std::string &data, bool strict = false) override;
