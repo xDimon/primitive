@@ -30,7 +30,6 @@
 #include "HttpTransport.hpp"
 #include "../serialization/SObj.hpp"
 #include "http/HttpResponse.hpp"
-#include "http/HttpHeader.hpp"
 
 bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 {
@@ -158,7 +157,8 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 			}
 			else if (context->getRequest()->uri().hasQuery())
 			{
-				auto data = HttpUri::urldecode(context->getRequest()->uri().query());
+//				auto data = HttpUri::urldecode(context->getRequest()->uri().query());
+				auto data = context->getRequest()->uri().query();
 				input.reset(serializer()->decode(data));
 			}
 			else
