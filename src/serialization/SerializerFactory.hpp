@@ -47,7 +47,12 @@ private:
 		return instance;
 	}
 
-	std::shared_ptr<Serializer> createJson();
+	template<class T>
+	std::shared_ptr<Serializer> create()
+	{
+		return std::make_shared<T>();
+	}
+
 
 public:
 	std::shared_ptr<Serializer> create(const Setting& setting);

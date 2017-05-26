@@ -21,6 +21,8 @@
 
 #include "SerializerFactory.hpp"
 #include "JsonSerializer.hpp"
+#include "TlvSerializer.hpp"
+#include "UrlSerializer.hpp"
 
 std::shared_ptr<Serializer> SerializerFactory::create(const Setting& setting)
 {
@@ -53,7 +55,23 @@ std::shared_ptr<SerializerFactory::Creator> SerializerFactory::creator(const Set
 	{
 		return std::make_shared<Creator>(
 			[instance = &getInstance()](){
-				return instance->createJson();
+				return instance->create<JsonSerializer>();
+			}
+		);
+	}
+	else if (type == "tlv")
+	{
+		return std::make_shared<Creator>(
+			[instance = &getInstance()](){
+				return instance->create<TlvSerializer>();
+			}
+		);
+	}
+	else if (type == "uri")
+	{
+		return std::make_shared<Creator>(
+			[instance = &getInstance()](){
+				return instance->create<UrlSerializer>();
 			}
 		);
 	}
@@ -61,9 +79,4 @@ std::shared_ptr<SerializerFactory::Creator> SerializerFactory::creator(const Set
 	{
 		throw std::runtime_error("Unknown serializer type");
 	}
-}
-
-std::shared_ptr<Serializer> SerializerFactory::createJson()
-{
-	return std::make_shared<JsonSerializer>();
 }
