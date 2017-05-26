@@ -71,6 +71,7 @@ enum class Token {
 SVal* TlvSerializer::decode(const std::string &data, bool strict)
 {
 	_iss.str(data);
+	_iss.clear(_iss.goodbit);
 
 	SVal* value = nullptr;
 

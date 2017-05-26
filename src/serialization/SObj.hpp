@@ -27,10 +27,10 @@
 #include "SStr.hpp"
 #include "SVal.hpp"
 
-class SObj: public SVal
+class SObj : public SVal
 {
 private:
-	std::map<const SStr*, SVal*> _elements;
+	std::map<const SStr*, SVal*, SStr::Cmp> _elements;
 
 public:
 	SObj() = default;
@@ -59,7 +59,7 @@ public:
 		return *this;
 	}
 
-	void insert(SStr *key, SVal *value)
+	void insert(SStr* key, SVal* value)
 	{
 		auto i = _elements.find(key);
 		if (i != _elements.end())
@@ -73,12 +73,27 @@ public:
 		}
 		_elements.emplace(key, value);
 	}
+
 	void insert(SStr& key, SVal& value)
 	{
 		insert(&key, &value);
 	}
 
-	void forEach(std::function<void (const std::pair<const SStr* const, SVal*>&)> handler) const
+	SVal* get(SStr* key)
+	{
+		auto i = _elements.find(key);
+		if (i == _elements.end())
+		{
+			return nullptr;
+		}
+		return i->second;
+	}
+	SVal* get(SStr& key)
+	{
+		return get(key);
+	}
+
+	void forEach(std::function<void(const std::pair<const SStr* const, SVal*>&)> handler) const
 	{
 		std::for_each(_elements.cbegin(), _elements.cend(), handler);
 	}

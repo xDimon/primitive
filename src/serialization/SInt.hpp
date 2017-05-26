@@ -23,11 +23,14 @@
 
 class SInt: public SNum
 {
+public:
+	typedef int64_t type;
+
 private:
-	int64_t _value;
+	type _value;
 
 public:
-	SInt(int64_t value): _value(value) {}
+	SInt(type value): _value(value) {}
 
 	auto value() const
 	{

@@ -53,13 +53,16 @@ public:
 		_value.push_back(symbol);
 	}
 
-	bool operator<(const SStr& that) const
-	{
-		return _value < that._value;
-	}
-
 	const std::string& value() const
 	{
 		return _value;
 	}
+
+	struct Cmp
+	{
+		bool operator()(const SStr* left, const SStr* right)
+		{
+			return left->value() < right->value();
+		}
+	};
 };

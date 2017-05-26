@@ -24,7 +24,7 @@
 class SFloat: public SNum
 {
 public:
-	typedef __long_double_t type;
+	typedef double_t type;
 
 private:
 	type _value;

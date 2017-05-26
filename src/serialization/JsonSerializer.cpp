@@ -31,6 +31,7 @@
 SVal* JsonSerializer::decode(const std::string& data, bool strict)
 {
 	_iss.str(data);
+	_iss.clear(_iss.goodbit);
 
 	SVal* value = nullptr;
 
@@ -551,7 +552,7 @@ SNum* JsonSerializer::decodeNumber()
 		if (c == '.' || c == 'e' || c == 'E')
 		{
 			_iss.seekg(p);
-			long double value = 0;
+			SFloat::type value = 0;
 			_iss >> value;
 			return new SFloat(value);
 		}
@@ -562,7 +563,7 @@ SNum* JsonSerializer::decodeNumber()
 	}
 
 	_iss.seekg(p);
-	int64_t value = 0;
+	SInt::type value = 0;
 	_iss >> value;
 	return new SInt(value);
 }
