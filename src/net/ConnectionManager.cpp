@@ -195,7 +195,27 @@ void ConnectionManager::wait()
 				_mutex.lock();
 				return;
 			}
+			// Если можно закрыть все оставшееся - делаем это
+			else
+			{
+				_epool_mutex.unlock();
 
+				_mutex.lock();
+
+				std::vector<std::shared_ptr<Connection>> connections;
+				for (auto& i : _allConnections)
+				{
+					connections.emplace_back(i.second);
+				}
+				for (auto& connection : connections)
+				{
+					remove(std::shared_ptr<Connection>(connection));
+				}
+
+				_mutex.unlock();
+
+				_epool_mutex.lock();
+			}
 		}
 	}
 
@@ -204,24 +224,11 @@ void ConnectionManager::wait()
 	// Перебираем полученые события
 	for (int i = 0; i < n; i++)
 	{
-//		std::shared_ptr<Connection> connection = std::move(*static_cast<std::shared_ptr<Connection> *>(_epev[i].data.ptr));
-//
-//		std::shared_ptr<Connection> connection = (*static_cast<std::weak_ptr<Connection> *>(_epev[i].data.ptr)).lock();
-//
-//		if (!connection)
-//		{
-//			delete static_cast<std::weak_ptr<Connection> *>(_epev[i].data.ptr);
-//			_log.trace("Skip nullptr in ConnectionManager::wait(): %p", _epev[i].data.ptr);
-//			continue;
-//		}
-//
-//		_log.trace("Catch event(s) `%d` on %s in ConnectionManager::wait(): %p", _epev[i].events, connection->name().c_str(), _epev[i].data.ptr);
-
 		// Игнорируем незарегистрированные соединения
 		auto it = _allConnections.find(static_cast<const Connection *>(_epev[i].data.ptr));
 		if (it == _allConnections.end())
 		{
-			_log.warn("Skip Connection#%p in ConnectionManager::wait() because unregistered", _epev[i].data.ptr);
+			_log.trace("Skip Connection#%p in ConnectionManager::wait() because unregistered", _epev[i].data.ptr);
 			continue;
 		}
 
