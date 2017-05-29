@@ -222,7 +222,7 @@ void UrlSerializer::encodeBool(const std::string& keyline, const SBool* value)
 
 void UrlSerializer::encodeString(const std::string& keyline, const SStr* value)
 {
-	_oss << keyline << "=" << value->value(); // TODO HttpUri::urlencode(value.value());
+	_oss << keyline << "=" << HttpUri::urlencode(value->value());
 }
 
 void UrlSerializer::encodeBinary(const std::string& keyline, const SBinary* value)
@@ -302,6 +302,7 @@ void UrlSerializer::encodeValue(const std::string& keyline, const SVal* value)
 	{
 		encodeBool(keyline, pBool);
 	}
+
 	else if (auto pNull = dynamic_cast<const SNull*>(value))
 	{
 		encodeNull(keyline, pNull);

@@ -53,7 +53,7 @@ public:
 		parse(string.c_str(), string.size());
 	};
 
-	std::string str() const;
+	const std::string& str() const;
 
 	Scheme scheme() const
 	{
@@ -94,4 +94,6 @@ public:
 	}
 
 	static std::string urldecode(const std::string &encoded);
+
+	static std::string urlencode(const std::string& value);
 };

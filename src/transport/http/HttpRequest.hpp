@@ -61,7 +61,7 @@ public:
 		return _uri;
 	}
 
-	std::string uri_s() const
+	const std::string& uri_s() const
 	{
 		return _uri.str();
 	}

@@ -22,7 +22,32 @@
 #include <cstring>
 #include <stdexcept>
 #include <sstream>
+#include <iomanip>
 #include "HttpUri.hpp"
+
+// unreserved
+static const std::string unreserved =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"abcdefghijklmnopqrstuvwxyz"
+	"0123456789"
+	"-_.~";
+
+// reserved
+static const std::string reserved =
+	"!*'();:@&=+$,/?%#[]";
+
+inline static bool need_encode(unsigned char c)
+{
+	if (unreserved.find(c))
+	{
+		return false;
+	}
+	if (reserved.find(c))
+	{
+		return true;
+	}
+	return true;
+}
 
 HttpUri::HttpUri()
 : _scheme(Scheme::UNDEFINED)
@@ -129,7 +154,7 @@ void HttpUri::parse(const char *string, size_t length)
 	}
 }
 
-std::string HttpUri::str() const
+const std::string& HttpUri::str() const
 {
 	std::stringstream ss;
 
@@ -156,34 +181,39 @@ std::string HttpUri::str() const
 		ss << "#" << _fragment;
 	}
 
-	return ss.str();
+	_thisAsString = std::move(ss.str());
+
+	return _thisAsString;
 }
 
-std::string HttpUri::urldecode(const std::string& encoded)
+std::string HttpUri::urldecode(const std::string& input)
 {
-	std::istringstream iss(encoded);
 	std::ostringstream oss;
+	std::string os;
+	std::string os1;
+	int o = 0;
 
-	while (!iss.eof())
+	size_t length = input.length();
+	for (size_t i = 0; i < length; ++i)
 	{
-		auto c = iss.get();
+		unsigned char c = input[i];
 		if (c == '+')
 		{
 			oss << " ";
 		}
 		else if (c == '%')
 		{
-			int d = 0;
-			int c1 = iss.peek();
-			if (c1 >= '0' || c1 <= '9')
+			unsigned char d = 0;
+			unsigned char c1 = input[++i];
+			if (c1 >= '0' && c1 <= '9')
 			{
 				d = c1 - '0';
 			}
-			else if (c1 >= 'a' || c1 <= 'f')
+			else if (c1 >= 'a' && c1 <= 'f')
 			{
 				d = c1 - 'a';
 			}
-			else if (c1 >= 'A' || c1 <= 'F')
+			else if (c1 >= 'A' && c1 <= 'F')
 			{
 				d = c1 - 'A';
 			}
@@ -194,49 +224,80 @@ std::string HttpUri::urldecode(const std::string& encoded)
 			else
 			{
 				oss.put(c);
-				if (c1 == -1)
-				{
-					break;
-				}
+				os.push_back(c);
+				os1[o++] = c;
+//				if (c1 == -1)
+//				{
+//					break;
+//				}
 				continue;
 			}
-			iss.ignore();
-			int c2 = iss.peek();
-			if (c2 >= '0' || c2 <= '9')
+			char c2 = input[++i];
+			if (c2 >= '0' && c2 <= '9')
 			{
 				d = (d << 4) | (c2 - '0');
 			}
-			else if (c2 >= 'a' || c2 <= 'f')
+			else if (c2 >= 'a' && c2 <= 'f')
 			{
 				d = (d << 4) | (c2 - 'a');
 			}
-			else if (c2 >= 'A' || c2 <= 'F')
+			else if (c2 >= 'A' && c2 <= 'F')
 			{
 				d = (d << 4) | (c2 - 'A');
 			}
 			else
 			{
 				oss.put(c);
+				os.push_back(c);
+				os1[o++] = c;
 				oss.put(c1);
-				if (c2 == -1)
-				{
-					break;
-				}
+				os.push_back(c1);
+				os1[o++] = c1;
+//				if (c2 == -1)
+//				{
+//					break;
+//				}
 				continue;
 			}
-			iss.ignore();
 			oss.put(d);
+			os.push_back(d);
+			os1[o++] = d;
 		}
-		else if (c == -1)
+//		else if (c == -1)
+//		{
+//			break;
+//		}
+		else
 		{
-			break;
+			oss.put(c);
+			os.push_back(c);
+			os1[o++] = c;
+		}
+	}
+	std::string decoded = oss.str();
+
+	return decoded;
+}
+
+std::string HttpUri::urlencode(const std::string& input)
+{
+	std::ostringstream oss;
+
+	size_t length = input.length();
+	for (size_t i = 0; i < length; ++i)
+	{
+		auto c = input[i];
+		if (need_encode(c))
+		{
+			oss << "%" << std::uppercase << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(c);
 		}
 		else
 		{
 			oss.put(c);
 		}
 	}
-	std::string decoded = oss.str();
 
-	return decoded;
+	std::string encoded = oss.str();
+
+	return encoded;
 }
