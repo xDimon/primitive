@@ -122,11 +122,14 @@ SslHelper::SslHelper()
 
 	BIO *cbio = BIO_new_mem_buf(certificate.data(), -1);
 	X509 *cert = PEM_read_bio_X509(cbio, nullptr, 0, nullptr);
+	BIO_free(cbio);
 	assert(cert != nullptr);
 
 	BIO *kbio = BIO_new_mem_buf(key.data(), -1);
 	RSA *rsa = PEM_read_bio_RSAPrivateKey(kbio, nullptr, 0, nullptr);
+	BIO_free(kbio);
 	assert(rsa != nullptr);
+
 
 	struct D {
 		void operator()(SSL_CTX* ctx) const {
@@ -141,10 +144,13 @@ SslHelper::SslHelper()
 	SSL_CTX_use_certificate(_context.get(), cert);
 	SSL_CTX_use_RSAPrivateKey(_context.get(), rsa);
 
+	X509_free(cert);
+	RSA_free(rsa);
 }
 
 SslHelper::~SslHelper()
 {
+	_context.reset();
 	ERR_free_strings();
 	EVP_cleanup();
 }
