@@ -44,6 +44,7 @@ protected:
 public:
 	DbConnection(std::shared_ptr<DbConnectionPool> pool)
 	: id(++_lastId)
+	, _captured(0)
 	, _pool(pool)
 	{};
 

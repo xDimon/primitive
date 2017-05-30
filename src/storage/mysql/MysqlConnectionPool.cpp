@@ -23,6 +23,21 @@
 #include "MysqlConnectionPool.hpp"
 #include "MysqlConnection.hpp"
 
+MysqlLibHelper::MysqlLibHelper()
+{
+	if (mysql_library_init(0, nullptr, nullptr))
+	{
+		throw std::runtime_error("Could not initialize MySQL library");
+	}
+}
+
+MysqlLibHelper::~MysqlLibHelper()
+{
+	mysql_library_end();
+}
+
+MysqlLibHelper MysqlConnectionPool::_helper;
+
 MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 : DbConnectionPool(setting)
 , _dbport(0)

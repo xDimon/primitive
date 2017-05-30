@@ -31,6 +31,7 @@ ConnectionManager::ConnectionManager()
 : _log("ConnectionManager")
 {
 	_epfd = epoll_create(poolSize);
+	memset(_epev, 0, sizeof(_epev));
 
 	_accepted = 0;
 	_established = 0;

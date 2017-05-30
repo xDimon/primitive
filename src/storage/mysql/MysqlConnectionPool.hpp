@@ -29,9 +29,17 @@
 #include <map>
 #include <deque>
 
+struct MysqlLibHelper
+{
+	MysqlLibHelper();
+	~MysqlLibHelper();
+};
+
 class MysqlConnectionPool : public DbConnectionPool
 {
 private:
+	static MysqlLibHelper _helper;
+
 	std::string _dbname;
 	std::string _dbsocket;
 	std::string _dbserver;
