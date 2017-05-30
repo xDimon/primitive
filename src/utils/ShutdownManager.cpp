@@ -42,6 +42,7 @@ void ShutdownManager::shutdown()
 		handler();
 	}
 
-//	ThreadPool::unhold();
+	getInstance()._handlers.clear();
 
+//	ThreadPool::unhold();
 }
