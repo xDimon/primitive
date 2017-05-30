@@ -52,8 +52,6 @@ private:
 	void encodeString(const std::string& keyline, const SStr* value);
 	void encodeBinary(const std::string& keyline, const SBinary* value);
 
-	void encodeInteger(const std::string& keyline, const SInt* value);
-	void encodeFloat(const std::string& keyline, const SFloat* value);
 	void encodeNumber(const std::string& keyline, const SNum* value);
 
 	void encodeArray(const std::string& keyline, const SArr* value);

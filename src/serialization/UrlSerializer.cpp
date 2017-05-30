@@ -160,26 +160,22 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 	}
 
 	// Deeper recognizing
-	std::string s = strval;
-	_iss = std::istringstream(s);
-//	_iss.seekg(0, _iss.beg);
-//	_iss.setstate(_iss.goodbit);
-	auto p = _iss.tellg();
+	std::istringstream iss(strval);
+	auto p = iss.tellg();
 
-	while (!_iss.eof())
+	while (!iss.eof())
 	{
-		auto c = _iss.get();
+		auto c = iss.get();
 		if (c == '.' || c == 'e' || c == 'E')
 		{
 			// Looks like a float
 			SFloat::type value = 0;
 
-			_iss.seekg(p);
-//			_iss.setstate(_iss.goodbit);
- 			_iss >> value;
+			iss.seekg(p);
+ 			iss >> value;
 
 			// Remain data - it's not number
-			if (_iss.get() != -1)
+			if (iss.get() != -1)
 			{
 				return new SStr(strval);
 			}
@@ -196,12 +192,11 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 	// Looks like a integer
 	SInt::type value = 0;
 
-	_iss.seekg(p);
-//	_iss.setstate(_iss.goodbit);
-	_iss >> value;
+	iss.seekg(p);
+	iss >> value;
 
 	// Remain data - it's not number
-	if (_iss.get() != -1)
+	if (iss.get() != -1)
 	{
 		return new SStr(strval);
 	}
@@ -302,7 +297,6 @@ void UrlSerializer::encodeValue(const std::string& keyline, const SVal* value)
 	{
 		encodeBool(keyline, pBool);
 	}
-
 	else if (auto pNull = dynamic_cast<const SNull*>(value))
 	{
 		encodeNull(keyline, pNull);
