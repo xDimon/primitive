@@ -93,7 +93,7 @@ public:
 		_host = host;
 	}
 
-	static std::string urldecode(const std::string &encoded);
+	static std::string urldecode(const std::string& input);
 
-	static std::string urlencode(const std::string& value);
+	static std::string urlencode(const std::string& input);
 };
