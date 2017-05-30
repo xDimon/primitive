@@ -45,9 +45,12 @@ ThreadPool::~ThreadPool()
 	_workersWakeupCondition.notify_all();
 
 	// Wait end all threads
-	for (auto i : _workers)
+	while (!_workers.empty())
 	{
-		i.second->join();
+		auto i = _workers.begin();
+		i->second->join();
+		_workers.erase(i);
+		delete i->second;
 	}
 }
 
@@ -171,11 +174,12 @@ void ThreadPool::createThread()
 			log.debug("End execution task on thread");
 		}
 
-		{
-			std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
-			auto i = _workers.find(std::this_thread::get_id());
-			_workers.erase(i);
-		}
+//		{
+//			std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
+//			auto i = _workers.find(std::this_thread::get_id());
+//			_workers.erase(i);
+//			delete i->second;
+//		}
 
 		_workersWakeupCondition.notify_one();
 	};
@@ -185,6 +189,8 @@ void ThreadPool::createThread()
 	auto thread = new Thread(threadLoop);
 
 	_workers.emplace(thread->id(), thread);
+
+	_workersWakeupCondition.notify_one();
 }
 
 void ThreadPool::wait()
@@ -196,9 +202,21 @@ void ThreadPool::wait()
 	// Condition for close pool
 	for(;;)
 	{
+		// Wait end all threads
 		{
 			std::unique_lock<std::mutex> lock(pool._queueMutex);
-			if (pool._hold == 0 && pool._tasks.empty() && pool._workers.empty())
+			for (auto i = pool._workers.begin(); i != pool._workers.end(); )
+			{
+				auto ci = i++;
+				Thread *thread = ci->second;
+				if (thread->finished())
+				{
+					pool._workers.erase(ci);
+					thread->join();
+					delete thread;
+				}
+			}
+			if (pool._hold == 0 && /* pool._tasks.empty() && */ pool._workers.empty())
 			{
 				break;
 			}

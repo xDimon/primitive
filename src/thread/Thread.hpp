@@ -33,16 +33,22 @@ private:
 	std::mutex _mutex;
 	std::function<void()> _function;
 	std::thread _thread;
+	bool _finished;
 
 	static void run(Thread *);
 
 public:
-	Thread(std::function<void()>& );
+	Thread(std::function<void()> threadLoop);
 	virtual ~Thread();
 
 	inline void join()
 	{
 		_thread.join();
+	}
+
+	inline bool finished()
+	{
+		return _finished;
 	}
 
 	inline auto id() const

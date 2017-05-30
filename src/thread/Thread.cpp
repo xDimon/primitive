@@ -30,11 +30,12 @@
 #include <ucontext.h>
 #include <climits>
 
-Thread::Thread(std::function<void()>& function)
+Thread::Thread(std::function<void()> function)
 : _id(ThreadPool::genThreadId())
 , _log("Thread")
 , _function(std::move(function))
 , _thread([this](){ Thread::run(this); })
+, _finished(false)
 {
 	_log.debug("Thread 'Worker_%zu' created", _id);
 }
@@ -65,9 +66,15 @@ void Thread::run(Thread *thread)
 		thread->_log.debug("Thread 'Worker_%zu' start", thread->_id);
 	}
 
+#if WITH_COROUTINE
 	thread->reenter();
+#else
+	fake(thread);
+#endif
 
 	LoggerManager::unregThread();
+
+	thread->_finished = true;
 }
 
 Thread* Thread::self()

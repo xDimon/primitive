@@ -63,6 +63,11 @@ public:
 	static void hold();
 	static void unhold();
 
+	static void touch()
+	{
+		getInstance()._workersWakeupCondition.notify_one();
+	}
+
 private:
 	std::mutex _counterMutex;
 	size_t _workerCounter;
