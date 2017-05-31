@@ -67,6 +67,30 @@ Server::Server(std::shared_ptr<Config>& configs)
 		_log.error("Can't add transport: %s", exception.what());
 	}
 
+	try
+	{
+		const auto& settings = _configs->getRoot()["services"];
+
+		for (const auto& setting : settings)
+		{
+			auto service = ServiceFactory::create(setting);
+
+			if (!addService(service->name(), service))
+			{
+				throw std::runtime_error(std::string("Already exists service with the same name ('") + service->name() + "')");
+			}
+		}
+	}
+	catch (const libconfig::SettingNotFoundException& exception)
+	{
+		_log.error("Services' config not found");
+		throw std::runtime_error("Services' config not found");
+	}
+	catch (const std::runtime_error& exception)
+	{
+		_log.error("Can't add service: %s", exception.what());
+	}
+
 	ThreadPool::enqueue(ConnectionManager::dispatch);
 }
 
@@ -82,7 +106,7 @@ void Server::wait()
 
 bool Server::addTransport(const std::string& name, std::shared_ptr<Transport>& transport)
 {
-	std::lock_guard<std::mutex> guard(_mutex);
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	auto i = _transports.find(name);
 	if (i != _transports.end())
 	{
@@ -93,9 +117,20 @@ bool Server::addTransport(const std::string& name, std::shared_ptr<Transport>& t
 	return true;
 }
 
+std::shared_ptr<Transport> Server::getTransport(const std::string& name)
+{
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
+	auto i = _transports.find(name);
+	if (i == _transports.end())
+	{
+		return nullptr;
+	}
+	return i->second;
+}
+
 void Server::enableTransport(const std::string& name)
 {
-	std::lock_guard<std::mutex> guard(_mutex);
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	auto i = _transports.find(name);
 	if (i == _transports.end())
 	{
@@ -107,7 +142,7 @@ void Server::enableTransport(const std::string& name)
 
 void Server::disableTransport(const std::string& name)
 {
-	std::lock_guard<std::mutex> guard(_mutex);
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	auto i = _transports.find(name);
 	if (i == _transports.end())
 	{
@@ -119,7 +154,7 @@ void Server::disableTransport(const std::string& name)
 
 void Server::removeTransport(const std::string& name)
 {
-	std::lock_guard<std::mutex> guard(_mutex);
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	auto i = _transports.find(name);
 	if (i == _transports.end())
 	{
@@ -138,7 +173,7 @@ void Server::start()
 	ThreadPool::hold();
 	ThreadPool::setThreadNum(3);
 
-	std::lock_guard<std::mutex> guard(_mutex);
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	for (auto &&item : _transports)
 	{
 		item.second->enable();
@@ -147,7 +182,7 @@ void Server::start()
 
 void Server::stop()
 {
-	std::lock_guard<std::mutex> guard(_mutex);
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	for (auto &&item : _transports)
 	{
 		item.second->disable();
@@ -156,4 +191,33 @@ void Server::stop()
 	ThreadPool::unhold();
 
 	_log.info("Server stop");
+}
+
+bool Server::addService(const std::string& name, std::shared_ptr<Service>& service)
+{
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
+	auto i = _services.find(name);
+	if (i != _services.end())
+	{
+		return false;
+	}
+	_log.debug("Service '%s' added", name.c_str());
+	service->activate(this);
+	_services.emplace(name, service->ptr());
+
+	return true;
+}
+
+void Server::removeService(const std::string& name)
+{
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
+	auto i = _services.find(name);
+	if (i == _services.end())
+	{
+		return;
+	}
+	auto& service = i->second;
+	service->deactivate(this);
+	_services.erase(i);
+	_log.debug("Service '%s' removed", name.c_str());
 }

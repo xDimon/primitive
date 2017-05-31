@@ -26,20 +26,22 @@
 #include "../configs/Config.hpp"
 #include "../transport/Transport.hpp"
 #include "../storage/DbConnectionPool.hpp"
+#include "../services/Service.hpp"
 #include <map>
 
 class Server final
 {
 private:
-	std::mutex _mutex;
 	Log _log;
 
+	std::recursive_mutex _mutex;
 
 	std::shared_ptr<Config> _configs;
 
 	std::shared_ptr<DbConnectionPool> _database;
 
 	std::map<const std::string, std::shared_ptr<Transport>> _transports;
+	std::map<const std::string, std::shared_ptr<Service>> _services;
 
 public:
 	Server(std::shared_ptr<Config> &configs);
@@ -52,11 +54,17 @@ public:
 
 	bool addTransport(const std::string& name, std::shared_ptr<Transport>& transport);
 
+	std::shared_ptr<Transport> getTransport(const std::string& name);
+
 	void enableTransport(const std::string& name);
 
 	void disableTransport(const std::string& name);
 
 	void removeTransport(const std::string& name);
+
+	bool addService(const std::string& name, std::shared_ptr<Service>& service);
+
+	void removeService(const std::string& name);
 
 	void start();
 	void stop();

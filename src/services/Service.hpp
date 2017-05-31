@@ -25,20 +25,47 @@
 #include "../utils/Shareable.hpp"
 #include "../utils/Named.hpp"
 #include "../serialization/SerializerFactory.hpp"
+#include "../log/Log.hpp"
+
+class Server;
 
 class Service : public Shareable<Service>, public Named
 {
-private:
-	std::shared_ptr<SerializerFactory::Creator> _serializerCreator;
+protected:
+	Log _log;
+	const Setting& _setting;
+
+	Service(const Setting& setting);
 
 public:
-	Service(const Setting& setting);
 	virtual ~Service();
 
-	virtual SVal* processing(SVal* input) = 0;
-
-	virtual std::shared_ptr<Serializer> serializer() const
-	{
-		return (*_serializerCreator)();
-	}
+	virtual void activate(Server *server) = 0;
+	virtual void deactivate(Server *server) = 0;
 };
+
+#include "ServiceFactory.hpp"
+
+#define REGISTER_SERVICE(Type,Class) const bool Class::__dummy = \
+	ServiceFactory::reg(												\
+		#Type, 															\
+		[](const Setting& setting){										\
+			return std::shared_ptr<Service>(new Class(setting));		\
+		}																\
+	);
+
+#define DECLARE_SERVICE(Class) \
+private:																\
+	Class() = delete;													\
+	Class(const Class&) = delete;										\
+	void operator=(Class const&) = delete;								\
+																		\
+	Class(const Setting& setting);										\
+																		\
+public:																	\
+	virtual ~Class();													\
+	virtual void activate(Server *server);								\
+	virtual void deactivate(Server *server);							\
+																		\
+private:																\
+	static const bool __dummy;

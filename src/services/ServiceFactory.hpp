@@ -14,40 +14,39 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.05.30
+// File created on: 2017.05.31
 
-// Service.cpp
+// ServiceFactory.hpp
 
 
-#include <sstream>
+#pragma once
+
+
+#include <map>
 #include "Service.hpp"
 
-Service::Service(const Setting& setting)
-: _log("Service")
-, _setting(setting)
+class ServiceFactory
 {
-	if (setting.exists("name"))
-	{
-		std::string name;
-		setting.lookupValue("name", _name);
-	}
-	if (!_name.length() && setting.exists("type"))
-	{
-		std::string type;
-		setting.lookupValue("type", type);
+private:
+	ServiceFactory()
+	{};
 
-		std::ostringstream ss;
-		ss << "_service[" << type << "]";
-		_name = std::move(ss.str());
-	}
-	if (!_name.length())
-	{
-		std::ostringstream ss;
-		ss << "_service[" << std::hex << this << "]";
-		_name = std::move(ss.str());
-	}
-}
+	virtual ~ServiceFactory()
+	{};
 
-Service::~Service()
-{
-}
+	ServiceFactory(ServiceFactory const&) = delete;
+
+	void operator=(ServiceFactory const&) = delete;
+
+	static ServiceFactory& getInstance()
+	{
+		static ServiceFactory instance;
+		return instance;
+	}
+
+	std::map<std::string, std::shared_ptr<Service>(*)(const Setting &setting)> _requests;
+
+public:
+	static bool reg(const std::string& name, std::shared_ptr<Service>(*)(const Setting &setting));
+	static std::shared_ptr<Service> create(const Setting& setting);
+};
