@@ -27,38 +27,25 @@
 #include "../net/AcceptorFactory.hpp"
 #include "../configs/Setting.hpp"
 #include "../serialization/SerializerFactory.hpp"
+#include "../utils/Named.hpp"
+#include "../utils/Context.hpp"
 
-class Transport : public Shareable<Transport>
+class Transport : public Shareable<Transport>, public Named
 {
-protected:
-	std::string _name;
-
-	Log _log;
-
 private:
 	std::shared_ptr<AcceptorFactory::Creator> _acceptorCreator;
 	std::weak_ptr<Connection> _acceptor;
 
-	std::shared_ptr<SerializerFactory::Creator> _serializerCreator;
+protected:
+	Log _log;
 
 public:
 
 	Transport(const Setting& setting);
 	virtual ~Transport();
 
-	const std::string& name() const
-	{
-		return _name;
-	}
-
-	virtual bool enable() final;
-
-	virtual bool disable() final;
+	bool enable();
+	bool disable();
 
 	virtual bool processing(std::shared_ptr<Connection> connection) = 0;
-
-	virtual std::shared_ptr<Serializer> serializer() const
-	{
-		return (*_serializerCreator)();
-	}
 };

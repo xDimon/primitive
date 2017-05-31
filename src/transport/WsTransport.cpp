@@ -106,11 +106,10 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			auto acceptKey = Base64::encode(SHA1::encode_bin(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
 
 			HttpResponse(101, "Web Socket Protocol Handshake")
-				<< HttpHeader("X-Transport", "websocket")
+				<< HttpHeader("X-Transport", "websocket", true)
 				<< HttpHeader("Upgrade", "websocket")
 				<< HttpHeader("Connection", "Upgrade")
 				<< HttpHeader("Sec-WebSocket-Accept", acceptKey)
-				<< "Headers data too large\n"
 				>> *connection;
 
 			context->setEstablished();
@@ -124,7 +123,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 		catch (std::runtime_error &exception)
 		{
 			HttpResponse(400)
-				<< HttpHeader("X-Transport", "websocket")
+				<< HttpHeader("X-Transport", "websocket", true)
 				<< HttpHeader("Connection", "Close")
 				<< exception.what()
 				>> *connection;

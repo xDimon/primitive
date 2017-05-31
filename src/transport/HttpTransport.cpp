@@ -126,7 +126,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 					if (context->getRequest()->contentLength() > context->getRequest()->dataLen())
 					{
 						_log.debug(
-							"Not anough data for read request body ({%zu < %zu)",
+							"Not anough data for read request body (%zu < %zu)",
 							context->getRequest()->dataLen(),
 							context->getRequest()->contentLength()
 						);

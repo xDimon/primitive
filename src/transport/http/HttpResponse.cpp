@@ -134,7 +134,8 @@ HttpResponse& HttpResponse::addHeader(const std::string& name, const std::string
 
 HttpResponse& HttpResponse::removeHeader(const std::string& name)
 {
-	_headers.erase(name);
+	auto p = _headers.equal_range(name);
+	_headers.erase(p.first, p.second);
 	return *this;
 }
 
@@ -144,7 +145,6 @@ void HttpResponse::operator>>(TcpConnection& connection)
 	oss << "HTTP/1.1 " << _statusCode << " " << _statusMessage << "\r\n"
 		<< "Server: " << Server::httpName() << "\r\n"
 		<< "Date: " << Time::httpDate() << "\r\n"
-		<< "X-Transport: http\r\n"
 		<< "Content-Length: " << _body.str().size() << "\r\n";
 
 	connection.write(oss.str().data(), oss.str().size());
