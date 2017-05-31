@@ -14,33 +14,34 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.04.06
+// File created on: 2017.05.31
 
-// ActionsFactory.cpp
+// ActionFactory.cpp
 
 
-#include "ActionsFactory.hpp"
+#include "ActionFactory.hpp"
 
-#include <assert.h>
-
-std::string ActionsFactory::_regRequest(const std::string& name, RequestBase *(*creator)(std::shared_ptr<Connection>&, const void *))
+bool ActionFactory::reg(const std::string& name, std::shared_ptr<Action>(* creator)(Context&, const SVal*))
 {
-	auto i = _requests.find(name);
-	assert(i == _requests.end());
-	if (i != _requests.end())
+	auto& factory = getInstance();
+
+	auto i = factory._requests.find(name);
+	if (i != factory._requests.end())
 	{
-		throw std::runtime_error("Double registered");
+		throw std::runtime_error(std::string("Attepmt to register action with the same name (") + name + ")");
 	}
-	_requests.emplace(std::make_pair(name, creator));
-	return name;
+	factory._requests.emplace(name, creator);
+	return true;
 }
 
-RequestBase *ActionsFactory::_createRequest(const std::string& name, std::shared_ptr<Connection>& connection, const void *data)
+std::shared_ptr<Action> ActionFactory::create(const std::string& name, Context& context, const SVal* input)
 {
-	auto i = _requests.find(name);
-	if (i == _requests.end())
+	auto& factory = getInstance();
+
+	auto i = factory._requests.find(name);
+	if (i == factory._requests.end())
 	{
 		return nullptr;
 	}
-	return i->second(connection, data);
+	return i->second(context, input);
 }
