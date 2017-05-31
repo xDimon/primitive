@@ -63,6 +63,7 @@ private:
 	void encodeNull(const SNull* value);
 	void encodeBool(const SBool* value);
 
+	void encodeString(const std::string& string);
 	void encodeString(const SStr* value);
 	void encodeBinary(const SBinary* value);
 

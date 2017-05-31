@@ -123,16 +123,15 @@ void UrlSerializer::emplace(SObj* parent, std::string& keyline, const std::strin
 		}
 	}
 
-	auto oKey = std::make_unique<SStr>(HttpUri::urldecode(key));
+	auto oKey = HttpUri::urldecode(key);
 	if (keyline.length())
 	{
-		auto t = oKey.get();
-		auto a = parent->get(t);
+		auto a = parent->get(oKey);
 		SObj* object = dynamic_cast<SObj*>(a);
 		if (!object)
 		{
 			object = new SObj;
-			parent->insert(oKey.release(), object);
+			parent->insert(oKey, object);
 		}
 
 		emplace(object, keyline, val);
@@ -141,7 +140,7 @@ void UrlSerializer::emplace(SObj* parent, std::string& keyline, const std::strin
 	{
 		auto oVal = std::unique_ptr<SVal>(decodeValue(HttpUri::urldecode(val)));
 
-		parent->insert(oKey.release(), oVal.release());
+		parent->insert(oKey, oVal.release());
 	}
 }
 
@@ -259,7 +258,7 @@ void UrlSerializer::encodeArray(const std::string& keyline, const SArr* value)
 void UrlSerializer::encodeObject(const std::string& keyline, const SObj* value)
 {
 	bool empty = true;
-	value->forEach([this,&keyline,&empty](const std::pair<const SStr* const, SVal*>& element)
+	value->forEach([this,&keyline,&empty](const std::pair<const std::string&, SVal*>& element)
 	{
 		if (!empty)
 		{
@@ -270,7 +269,7 @@ void UrlSerializer::encodeObject(const std::string& keyline, const SObj* value)
 			empty = false;
 		}
 		std::ostringstream oss;
-		oss << keyline << (keyline.empty()?"":"[") << element.first->value() << (keyline.empty()?"":"]");
+		oss << keyline << (keyline.empty()?"":"[") << element.first << (keyline.empty()?"":"]");
 		encodeValue(oss.str(), element.second);
 	});
 }

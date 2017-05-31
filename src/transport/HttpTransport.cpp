@@ -171,8 +171,8 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 		catch (const std::exception& exception)
 		{
 			SObj output;
-			output.insert(new SStr("status"), new SStr("error"));
-			output.insert(new SStr("error"), new SStr(exception.what()));
+			output.insert("status", new SStr("error"));
+			output.insert("error", new SStr(exception.what()));
 
 			HttpResponse(200)
 				<< HttpHeader("Connection", "Close")

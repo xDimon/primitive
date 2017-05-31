@@ -194,7 +194,7 @@ SObj* TlvSerializer::decodeObject()
 
 		try
 		{
-			obj->insert(key.release(), decodeValue());
+			obj->insert(key->value(), decodeValue());
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -523,6 +523,13 @@ void TlvSerializer::encodeString(const SStr *value)
 	_oss.put(static_cast<char>(Token::END));
 }
 
+void TlvSerializer::encodeKey(const std::string& key)
+{
+	_oss.put(static_cast<char>(Token::STRING));
+	_oss << key;
+	_oss.put(static_cast<char>(Token::END));
+}
+
 void TlvSerializer::encodeBinary(const SBinary *value)
 {
 	if (value->value().size() <= std::numeric_limits<uint8_t>::max())
@@ -666,8 +673,8 @@ void TlvSerializer::encodeArray(const SArr *value)
 void TlvSerializer::encodeObject(const SObj *value)
 {
 	_oss.put(static_cast<char>(Token::OBJECT));
-	value->forEach([this](const std::pair<const SStr* const, SVal*>&element){
-		encodeString(element.first);
+	value->forEach([this](const std::pair<const std::string&, SVal*>&element){
+		encodeKey(element.first);
 		encodeValue(element.second);
 	});
 	_oss.put(static_cast<char>(Token::OBJECT_END));

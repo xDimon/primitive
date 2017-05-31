@@ -69,6 +69,7 @@ private:
 	void encodeFloat(const SFloat* value);
 
 	void encodeArray(const SArr* value);
+	void encodeKey(const std::string& key);
 	void encodeObject(const SObj* value);
 
 	void encodeValue(const SVal* value);

@@ -30,7 +30,7 @@
 class SObj : public SVal
 {
 private:
-	std::map<const SStr*, SVal*, SStr::Cmp> _elements;
+	std::map<std::string, SVal*> _elements;
 
 public:
 	SObj() = default;
@@ -40,10 +40,8 @@ public:
 		while (!_elements.empty())
 		{
 			auto i = _elements.begin();
-			auto key = const_cast<SStr*>(i->first);
 			auto value = const_cast<SVal*>(i->second);
 			_elements.erase(i);
-			delete key;
 			delete value;
 		}
 	};
@@ -59,27 +57,24 @@ public:
 		return *this;
 	}
 
-	void insert(SStr* key, SVal* value)
+	void insert(const std::string& key, SVal* value)
 	{
 		auto i = _elements.find(key);
 		if (i != _elements.end())
 		{
-			auto i = _elements.begin();
-			auto key = const_cast<SStr*>(i->first);
 			auto value = const_cast<SVal*>(i->second);
 			_elements.erase(i);
-			delete key;
 			delete value;
 		}
 		_elements.emplace(key, value);
 	}
 
-	void insert(SStr& key, SVal& value)
+	void insert(const std::string key, SVal& value)
 	{
-		insert(&key, &value);
+		insert(key, &value);
 	}
 
-	SVal* get(SStr* key)
+	SVal* get(const std::string& key) const
 	{
 		auto i = _elements.find(key);
 		if (i == _elements.end())
@@ -88,12 +83,16 @@ public:
 		}
 		return i->second;
 	}
-	SVal* get(SStr& key)
+	SVal* get(SStr* key) const
+	{
+		return get(key->value());
+	}
+	SVal* get(SStr& key) const
 	{
 		return get(key);
 	}
 
-	void forEach(std::function<void(const std::pair<const SStr* const, SVal*>&)> handler) const
+	void forEach(std::function<void(const std::pair<std::string, SVal*>&)> handler) const
 	{
 		std::for_each(_elements.cbegin(), _elements.cend(), handler);
 	}
