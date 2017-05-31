@@ -68,7 +68,7 @@ TcpAcceptor::TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& hos
 	{
 		if (!inet_aton(_host.c_str(), &servaddr.sin_addr))
 		{
-			log().debug("Can't convert host to binary IPv4 address (error '%s'). I'll use universal address.", strerror(errno));
+			_log.debug("Can't convert host to binary IPv4 address (error '%s'). I'll use universal address.", strerror(errno));
 
 			// Задаем хост (INADDR_ANY - универсальный)
 			servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -101,12 +101,12 @@ TcpAcceptor::TcpAcceptor(std::shared_ptr<Transport>& transport, std::string& hos
 	int rrc = fcntl(_sock, F_GETFL, 0);
 	fcntl(_sock, F_SETFL, rrc | O_NONBLOCK);
 
-	log().debug("TcpAcceptor '%s' created", name().c_str());
+	_log.debug("TcpAcceptor '%s' created", name().c_str());
 }
 
 TcpAcceptor::~TcpAcceptor()
 {
-	log().debug("TcpAcceptor '%s' destroyed", name().c_str());
+	_log.debug("TcpAcceptor '%s' destroyed", name().c_str());
 }
 
 void TcpAcceptor::watch(epoll_event &ev)
@@ -122,14 +122,14 @@ void TcpAcceptor::watch(epoll_event &ev)
 
 bool TcpAcceptor::processing()
 {
-	log().debug("Processing on %s", name().c_str());
+	_log.debug("Processing on %s", name().c_str());
 
 	std::lock_guard<std::mutex> guard(_mutex);
 	for (;;)
 	{
 		if (ShutdownManager::shutingdown())
 		{
-			log().debug("Interrupt processing on %s (shutdown)", name().c_str());
+			_log.debug("Interrupt processing on %s (shutdown)", name().c_str());
 			ConnectionManager::remove(this->ptr());
 			return false;
 		}
@@ -138,7 +138,7 @@ bool TcpAcceptor::processing()
 		{
 			_closed = true;
 
-			log().debug("End processing on %s (was failure)", name().c_str());
+			_log.debug("End processing on %s (was failure)", name().c_str());
 
 			ConnectionManager::remove(this->ptr());
 
@@ -161,12 +161,12 @@ bool TcpAcceptor::processing()
 			// Нет подключений - на этом все
 			if (errno == EAGAIN)
 			{
-				log().debug("End processing on %s (no more accept)", name().c_str());
+				_log.debug("End processing on %s (no more accept)", name().c_str());
 				return true;
 			}
 
 			// Ошибка установления соединения
-			log().debug("End processing on %s (accept error: %s)", name().c_str(), strerror(errno));
+			_log.debug("End processing on %s (accept error: %s)", name().c_str(), strerror(errno));
 			return false;
 		}
 

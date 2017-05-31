@@ -33,9 +33,7 @@ Log::Log(std::string name)
 
 	module = nullptr;
 
-	name.resize(18, ' ');
-
-	_tracer->Register_Module(name.c_str(), &module);
+	setName(name);
 }
 
 Log::Log()
@@ -45,4 +43,11 @@ Log::Log()
 
 Log::~Log()
 {
+}
+
+void Log::setName(std::string name)
+{
+	name.resize(18, ' ');
+
+	_tracer->Register_Module(name.c_str(), &module);
 }

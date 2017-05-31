@@ -37,7 +37,7 @@ struct IP7_Trace_Deleter
 	}
 };
 
-class Log
+class Log final
 {
 private:
 	std::unique_ptr<IP7_Trace, IP7_Trace_Deleter> _tracer;
@@ -54,6 +54,8 @@ public:
 	{
 		return *this;
 	}
+
+	void setName(std::string name);
 
 	template<typename... Args>
 	void trace(const char* fmt, const Args& ... args)

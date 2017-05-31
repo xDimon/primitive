@@ -27,15 +27,15 @@ class WsTransport : public Transport
 {
 public:
 	WsTransport(const Setting& setting)
-	: Log("WsTransport")
-	, Transport(setting)
+	: Transport(setting)
 	{
-		log().debug("Transport '%s' created", name().c_str());
+		_log.setName("WsTransport");
+		_log.debug("Transport '%s' created", name().c_str());
 	}
 
 	virtual ~WsTransport()
 	{
-		log().debug("Transport '%s' destroyed", name().c_str());
+		_log.debug("Transport '%s' destroyed", name().c_str());
 	}
 
 	virtual bool processing(std::shared_ptr<Connection> connection) override;

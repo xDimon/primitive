@@ -26,7 +26,7 @@
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
-: Log("ThreadPool")
+: _log("ThreadPool")
 , _workerCounter(0)
 , _workerNumber(0)
 {
@@ -58,7 +58,6 @@ void ThreadPool::hold()
 {
 	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
 	++getInstance()._hold;
-//	getInstance().log().debug("Hold to %d", getInstance()._hold);
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
@@ -66,7 +65,6 @@ void ThreadPool::unhold()
 {
 	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
 	--getInstance()._hold;
-//	getInstance().log().debug("Unhold to %d", getInstance()._hold);
 }
 
 void ThreadPool::setThreadNum(size_t num)
@@ -184,7 +182,7 @@ void ThreadPool::createThread()
 		_workersWakeupCondition.notify_one();
 	};
 
-	log().debug("Thread create");
+	_log.debug("Thread create");
 
 	auto thread = new Thread(threadLoop);
 
@@ -195,7 +193,7 @@ void ThreadPool::createThread()
 
 void ThreadPool::wait()
 {
-	getInstance().log().debug("Wait threadpool close");
+	getInstance()._log.debug("Wait threadpool close");
 
 	auto& pool = getInstance();
 

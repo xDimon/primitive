@@ -27,7 +27,7 @@
 #include "../../utils/Buffer.hpp"
 #include "HttpUri.hpp"
 
-class HttpRequest: public virtual Log, public Buffer
+class HttpRequest: public Buffer
 {
 public:
 	typedef std::shared_ptr<HttpRequest> Ptr;

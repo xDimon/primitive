@@ -47,14 +47,14 @@ TcpConnection::TcpConnection(std::shared_ptr<Transport>& transport, int sock, co
 	ss << "[" << _sock << "][" << inet_ntoa(_sockaddr.sin_addr) << ":" << htons(_sockaddr.sin_port) << "]";
 	_name = std::move(ss.str());
 
-	log().debug("TcpConnection '%s' created", name().c_str());
+	_log.debug("TcpConnection '%s' created", name().c_str());
 }
 
 TcpConnection::~TcpConnection()
 {
 	shutdown(_sock, SHUT_RD);
 
-	log().debug("TcpConnection '%s' destroyed", name().c_str());
+	_log.debug("TcpConnection '%s' destroyed", name().c_str());
 }
 
 void TcpConnection::watch(epoll_event &ev)
@@ -90,7 +90,7 @@ void TcpConnection::watch(epoll_event &ev)
 
 bool TcpConnection::processing()
 {
-	log().debug("Processing on %s", name().c_str());
+	_log.debug("Processing on %s", name().c_str());
 
 	do
 	{
@@ -152,7 +152,7 @@ bool TcpConnection::processing()
 
 bool TcpConnection::writeToSocket()
 {
-	log().trace("Write into socket on %s", name().c_str());
+	_log.trace("Write into socket on %s", name().c_str());
 
 	// Отправляем данные
 	for (;;)
@@ -181,7 +181,7 @@ bool TcpConnection::writeToSocket()
 			}
 
 			// Ошибка записи
-			log().debug("Fail writing data (error: '%s')", strerror(errno));
+			_log.debug("Fail writing data (error: '%s')", strerror(errno));
 
 			_error = true;
 			return false;
@@ -195,7 +195,7 @@ bool TcpConnection::writeToSocket()
 
 bool TcpConnection::readFromSocket()
 {
-	log().trace("Read from socket on %s", name().c_str());
+	_log.trace("Read from socket on %s", name().c_str());
 
 	// Пытаемся полностью заполнить буфер
 	for (;;)
@@ -230,12 +230,12 @@ bool TcpConnection::readFromSocket()
 			// Нет готовых данных - продолжаем ждать
 			if (errno == EAGAIN)
 			{
-				log().debug("No more read on %s", name().c_str());
+				_log.debug("No more read on %s", name().c_str());
 				break;
 			}
 
 			// Ошибка чтения
-			log().debug("Error '%s' while read on %s", strerror(errno), name().c_str());
+			_log.debug("Error '%s' while read on %s", strerror(errno), name().c_str());
 
 			_error = true;
 			return false;
@@ -243,7 +243,7 @@ bool TcpConnection::readFromSocket()
 		if (n == 0)
 		{
 			// Клиент отключился
-			log().debug("Client disconnected on %s", name().c_str());
+			_log.debug("Client disconnected on %s", name().c_str());
 
 			_noRead = true;
 			return false;
@@ -251,7 +251,7 @@ bool TcpConnection::readFromSocket()
 
 		_inBuff.forward(n);
 
-		log().debug("Read %d bytes (summary %d) on %s", n, _inBuff.dataLen(), name().c_str());
+		_log.debug("Read %d bytes (summary %d) on %s", n, _inBuff.dataLen(), name().c_str());
 	}
 
 	if (_inBuff.dataLen())

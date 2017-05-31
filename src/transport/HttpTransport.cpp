@@ -64,18 +64,18 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 			{
 				if (connection->dataLen())
 				{
-					log().debug("Not anough data for read headers (%zu bytes)", connection->dataLen());
+					_log.debug("Not anough data for read headers (%zu bytes)", connection->dataLen());
 				}
 				else
 				{
-					log().debug("No more data");
+					_log.debug("No more data");
 				}
 				break;
 			}
 
 			if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
 			{
-				log().debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
+				_log.debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
 
 				HttpResponse(400)
 					<< HttpHeader("Connection", "Close")
@@ -87,7 +87,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 			size_t headersSize = endHeaders - connection->dataPtr() + 4;
 
-			log().debug("Read %zu bytes of request headers", headersSize);
+			_log.debug("Read %zu bytes of request headers", headersSize);
 
 			try
 			{
@@ -125,7 +125,11 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 					if (context->getRequest()->contentLength() > context->getRequest()->dataLen())
 					{
-						log().debug("Not anough data for read request body ({%zu < %zu)", context->getRequest()->dataLen(), context->getRequest()->contentLength());
+						_log.debug(
+							"Not anough data for read request body ({%zu < %zu)",
+							context->getRequest()->dataLen(),
+							context->getRequest()->contentLength()
+						);
 						break;
 					}
 				}
@@ -138,37 +142,30 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 				if (!connection->noRead())
 				{
-					log().debug("Not read all request body yet (read %zu)", context->getRequest()->dataLen());
+					_log.debug("Not read all request body yet (read %zu)", context->getRequest()->dataLen());
 					break;
 				}
 			}
 		}
 
-		log().debug("REQUEST: %s %s %zu", context->getRequest()->method_s().c_str(), context->getRequest()->uri_s().c_str(), context->getRequest()->hasContentLength() ? context->getRequest()->contentLength() : 0);
+		_log.debug("REQUEST: %s %s %zu",
+			context->getRequest()->method_s().c_str(),
+			context->getRequest()->uri_s().c_str(),
+			context->getRequest()->hasContentLength() ? context->getRequest()->contentLength() : 0
+		);
 
 		try
 		{
-			std::shared_ptr<SVal> input;
+//			auto handler = getHandler(context->getRequest()->uri().path());
 
-			if (context->getRequest()->dataLen())
-			{
-				auto data = context->getRequest()->data();
-				input.reset(serializer()->decode({data.begin(), data.end()}));
-			}
-			else if (context->getRequest()->uri().hasQuery())
-			{
-				auto data = context->getRequest()->uri().query();
-				input.reset(serializer()->decode(data));
-			}
-			else
-			{
-				throw std::runtime_error("No data for parsing");
-			}
+			const std::vector<char> out;
+
+//			out = handler(context->getRequest()->data());
 
 			// TODO реализовать реальную обработку вместо echo
 			HttpResponse(200)
 				<< "Received:\r\n"
-				<< serializer()->encode(input.get()) << "\r\n"
+//				<< out << "\r\n"
 				>> *connection;
 		}
 		catch (const std::exception& exception)
@@ -179,7 +176,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 			HttpResponse(200)
 				<< HttpHeader("Connection", "Close")
-				<< serializer()->encode(&output) << "\r\n"
+//				<< serializer()->encode(&output) << "\r\n"
 				>> *connection;
 		}
 
@@ -188,7 +185,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 		n++;
 	}
 
-	log().debug("Processed %d request, remain %zu bytes", n, connection->dataLen());
+	_log.debug("Processed %d request, remain %zu bytes", n, connection->dataLen());
 
 	return false;
 }

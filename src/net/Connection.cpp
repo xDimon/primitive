@@ -26,7 +26,7 @@
 #include <sstream>
 
 Connection::Connection(std::shared_ptr<Transport>& transport)
-: Log("Connection")
+: _log("Connection")
 , _transport(transport)
 , _sock(-1)
 , _closed(true)

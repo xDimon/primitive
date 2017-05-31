@@ -44,23 +44,23 @@ bool PacketTransport::processing(std::shared_ptr<Connection> connection_)
 		{
 			if (connection->dataLen())
 			{
-				log().debug("Not anough data for read packet size (%zu < 2)", connection->dataLen());
+				_log.debug("Not anough data for read packet size (%zu < 2)", connection->dataLen());
 			}
 			else
 			{
-				log().debug("No more data");
+				_log.debug("No more data");
 			}
 			break;
 		}
-		log().debug("Read 2 bytes of packet size: %hu bytes", packetSize);
+		_log.debug("Read 2 bytes of packet size: %hu bytes", packetSize);
 
 		// Недостаточно данных для формирования пакета (не все данные получены)
 		if (connection->dataLen() < sizeof(packetSize) + packetSize)
 		{
-			log().debug("Not anough data for read packet body (%zu < %hu)", connection->dataLen() - sizeof(packetSize), packetSize);
+			_log.debug("Not anough data for read packet body (%zu < %hu)", connection->dataLen() - sizeof(packetSize), packetSize);
 			break;
 		}
-		log().debug("Read %hu bytes of packet body", packetSize);
+		_log.debug("Read %hu bytes of packet body", packetSize);
 
 		// Пропускаем байты размера пакета
 		connection->skip(sizeof(packetSize));
@@ -83,7 +83,7 @@ bool PacketTransport::processing(std::shared_ptr<Connection> connection_)
 		n++;
 	}
 
-	log().debug("Processed %d packets, remain %zu bytes", n, connection->dataLen());
+	_log.debug("Processed %d packets, remain %zu bytes", n, connection->dataLen());
 
 	return false;
 }

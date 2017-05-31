@@ -28,10 +28,10 @@
 #include "../storage/mysql/MysqlConnectionPool.hpp"
 
 Server::Server(std::shared_ptr<Config>& configs)
-: Log("Server")
+: _log("Server")
 , _configs(configs)
 {
-	log().info("Server instantiate");
+	_log.info("Server instantiate");
 
 	try
 	{
@@ -45,7 +45,7 @@ Server::Server(std::shared_ptr<Config>& configs)
 	}
 	catch (const std::runtime_error& exception)
 	{
-		log().error("Can't create database connection pool: %s", exception.what());
+		_log.error("Can't create database connection pool: %s", exception.what());
 	}
 
 	try
@@ -58,13 +58,13 @@ Server::Server(std::shared_ptr<Config>& configs)
 
 			if (!addTransport(transport->name(), transport))
 			{
-				throw std::runtime_error(std::string("Already exists transport with the name ('") + transport->name() + "')");
+				throw std::runtime_error(std::string("Already exists transport with the same name ('") + transport->name() + "')");
 			}
 		}
 	}
 	catch (const std::runtime_error& exception)
 	{
-		log().error("Can't add transport: %s", exception.what());
+		_log.error("Can't add transport: %s", exception.what());
 	}
 
 	ThreadPool::enqueue(ConnectionManager::dispatch);
@@ -72,7 +72,7 @@ Server::Server(std::shared_ptr<Config>& configs)
 
 Server::~Server()
 {
-	log().info("Server shutdown");
+	_log.info("Server shutdown");
 }
 
 void Server::wait()
@@ -88,7 +88,7 @@ bool Server::addTransport(const std::string& name, std::shared_ptr<Transport>& t
 	{
 		return false;
 	}
-	log().debug("Transport '%s' added", name.c_str());
+	_log.debug("Transport '%s' added", name.c_str());
 	_transports.emplace(name, transport->ptr());
 	return true;
 }
@@ -128,12 +128,12 @@ void Server::removeTransport(const std::string& name)
 	auto& transport = i->second;
 	transport->disable();
 	_transports.erase(i);
-	log().debug("Transport '%s' removed", name.c_str());
+	_log.debug("Transport '%s' removed", name.c_str());
 }
 
 void Server::start()
 {
-	log().info("Server start");
+	_log.info("Server start");
 
 	ThreadPool::hold();
 	ThreadPool::setThreadNum(3);
@@ -155,5 +155,5 @@ void Server::stop()
 
 	ThreadPool::unhold();
 
-	log().info("Server stop");
+	_log.info("Server stop");
 }

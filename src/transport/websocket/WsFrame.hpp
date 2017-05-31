@@ -27,7 +27,7 @@
 
 #include <memory>
 
-class WsFrame: public virtual Log, public Buffer
+class WsFrame: public Buffer
 {
 public:
 	typedef std::shared_ptr<WsFrame> Ptr;

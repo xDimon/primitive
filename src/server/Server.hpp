@@ -28,10 +28,12 @@
 #include "../storage/DbConnectionPool.hpp"
 #include <map>
 
-class Server: public Log
+class Server final
 {
 private:
 	std::mutex _mutex;
+	Log _log;
+
 
 	std::shared_ptr<Config> _configs;
 

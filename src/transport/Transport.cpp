@@ -25,6 +25,7 @@
 #include "../thread/ThreadPool.hpp"
 
 Transport::Transport(const Setting& setting)
+: _log("Transport")
 {
 	std::string name;
 	if (setting.exists("name"))
@@ -42,7 +43,7 @@ Transport::Transport(const Setting& setting)
 	_name = std::move(name);
 
 	_acceptorCreator = AcceptorFactory::creator(setting);
-	_serializerCreator = SerializerFactory::creator(setting);
+//	_serializerCreator = SerializerFactory::creator(setting);
 }
 
 Transport::~Transport()
@@ -53,7 +54,7 @@ bool Transport::enable()
 {
 	if (!_acceptor.expired())
 	{
-		log().trace("Transport '%s' already enabled", name().c_str());
+		_log.trace("Transport '%s' already enabled", name().c_str());
 		return true;
 	}
 
@@ -68,13 +69,13 @@ bool Transport::enable()
 
 		ConnectionManager::add(_acceptor.lock());
 
-		log().debug("Transport '%s' enabled", name().c_str());
+		_log.debug("Transport '%s' enabled", name().c_str());
 
 		return true;
 	}
 	catch (std::runtime_error exception)
 	{
-		log().debug("Transport '%s' didn't enable: Can't create Acceptor: %s", name().c_str(), exception.what());
+		_log.debug("Transport '%s' didn't enable: Can't create Acceptor: %s", name().c_str(), exception.what());
 
 		return false;
 	}
@@ -84,7 +85,7 @@ bool Transport::disable()
 {
 	if (_acceptor.expired())
 	{
-		log().debug("Transport '%s' not enable", name().c_str());
+		_log.debug("Transport '%s' not enable", name().c_str());
 		return true;
 	}
 
@@ -94,6 +95,6 @@ bool Transport::disable()
 
 	_acceptor.reset();
 
-	log().debug("Transport '%s' disabled", name().c_str());
+	_log.debug("Transport '%s' disabled", name().c_str());
 	return true;
 }

@@ -36,7 +36,7 @@ struct sockaddr_in;
 class Transport;
 class Context;
 
-class Connection: public Shareable<Connection>, public Named, public Log
+class Connection: public Shareable<Connection>, public Named
 {
 private:
 	bool _captured;
@@ -44,6 +44,8 @@ private:
 	uint32_t _postponedEvents;
 
 protected:
+	Log _log;
+
 	std::weak_ptr<Transport> _transport;
 	std::shared_ptr<Context> _context;
 

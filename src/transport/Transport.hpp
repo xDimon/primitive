@@ -28,10 +28,12 @@
 #include "../configs/Setting.hpp"
 #include "../serialization/SerializerFactory.hpp"
 
-class Transport : public Shareable<Transport>, public virtual Log
+class Transport : public Shareable<Transport>
 {
 protected:
 	std::string _name;
+
+	Log _log;
 
 private:
 	std::shared_ptr<AcceptorFactory::Creator> _acceptorCreator;

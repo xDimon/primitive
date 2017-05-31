@@ -27,14 +27,13 @@ class PacketTransport : public Transport
 {
 public:
 	PacketTransport(const Setting& setting)
-	: Log("PacketTransport")
-	, Transport(setting)
+	: Transport(setting)
 	{
-		log().debug("Transport '%s' created", name().c_str());
+		_log.debug("Transport '%s' created", name().c_str());
 	}
 	virtual ~PacketTransport()
 	{
-		log().debug("Transport '%s' destroyed", name().c_str());
+		_log.debug("Transport '%s' destroyed", name().c_str());
 	}
 
 	virtual bool processing(std::shared_ptr<Connection> connection);
