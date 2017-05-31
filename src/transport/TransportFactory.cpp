@@ -21,22 +21,23 @@
 
 #include "TransportFactory.hpp"
 #include "HttpTransport.hpp"
-#include "WsTransport.hpp"
-#include "PacketTransport.hpp"
 #include "../net/SslAcceptor.hpp"
 
-std::shared_ptr<Transport> TransportFactory::create(const Setting &setting)
+bool TransportFactory::reg(const std::string& name, std::shared_ptr<Transport> (* creator)(const Setting&))
 {
-	std::shared_ptr<AcceptorFactory::Creator> acceptorCreator;
-	try
-	{
-		acceptorCreator = AcceptorFactory::creator(setting);
-	}
-	catch(...)
-	{
-		throw;
-	}
+	auto& factory = getInstance();
 
+	auto i = factory._creators.find(name);
+	if (i != factory._creators.end())
+	{
+		throw std::runtime_error(std::string("Attepmt to register action with the same name (") + name + ")");
+	}
+	factory._creators.emplace(name, creator);
+	return true;
+}
+
+std::shared_ptr<Transport> TransportFactory::create(const Setting& setting)
+{
 	std::string type;
 	try
 	{
@@ -47,35 +48,12 @@ std::shared_ptr<Transport> TransportFactory::create(const Setting &setting)
 		throw std::runtime_error("Bad config or type undefined");
 	}
 
-	if (type == "http")
-	{
-		return getInstance().createHttp(setting);
-	}
-	else if (type == "websocket")
-	{
-		return getInstance().createWs(setting);
-	}
-	else if (type == "packet")
-	{
-		return getInstance().createPacket(setting);
-	}
-	else
+	auto& factory = getInstance();
+
+	auto i = factory._creators.find(type);
+	if (i == factory._creators.end())
 	{
 		throw std::runtime_error("Unknown transport type");
 	}
-}
-
-std::shared_ptr<Transport> TransportFactory::createHttp(const Setting &setting)
-{
-	return std::make_shared<HttpTransport>(setting);
-}
-
-std::shared_ptr<Transport> TransportFactory::createWs(const Setting &setting)
-{
-	return std::make_shared<WsTransport>(setting);
-}
-
-std::shared_ptr<Transport> TransportFactory::createPacket(const Setting &setting)
-{
-	return std::make_shared<PacketTransport>(setting);
+	return i->second(setting);
 }

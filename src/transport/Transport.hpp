@@ -48,4 +48,45 @@ public:
 	bool disable();
 
 	virtual bool processing(std::shared_ptr<Connection> connection) = 0;
+
+	typedef void(* handler)(Context*);
+
+	virtual bool bindHandler(const std::string& selector, handler handler) = 0;
+	virtual handler getHandler(const std::string& subject) = 0;
 };
+
+#include "TransportFactory.hpp"
+
+#define REGISTER_TRANSPORT(name,Class) const bool Class::__dummy = \
+    TransportFactory::reg(                                                                      \
+        #name,                                                                                 \
+        [](const Setting& setting){                                                             \
+            return std::shared_ptr<Transport>(new Class(setting));                              \
+        }                                                                                       \
+    );
+
+#define DECLARE_TRANSPORT(Class) \
+private:                                                                                        \
+    Class() = delete;                                                                           \
+    Class(const Class&) = delete;                                                               \
+    void operator=(Class const&) = delete;                                                      \
+                                                                                                \
+    Class(const Setting& setting)                                                               \
+    : Transport(setting)                                                                        \
+    {                                                                                           \
+        _log.setName(#Class);                                                                   \
+        _log.debug("Transport '%s' created", name().c_str());                                   \
+    }                                                                                           \
+                                                                                                \
+public:                                                                                         \
+    virtual ~Class()                                                                            \
+    {                                                                                           \
+        _log.debug("Transport '%s' destroyed", name().c_str());                                 \
+    }                                                                                           \
+                                                                                                \
+    virtual bool processing(std::shared_ptr<Connection> connection) override;                   \
+    virtual bool bindHandler(const std::string& selector, Transport::handler handler) override; \
+    virtual Transport::handler getHandler(const std::string& subject) override;                 \
+                                                                                                \
+private:                                                                                        \
+    static const bool __dummy;

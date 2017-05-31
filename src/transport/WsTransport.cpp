@@ -32,6 +32,8 @@
 #include "WsTransport.hpp"
 #include "http/HttpResponse.hpp"
 
+REGISTER_TRANSPORT(websocket, WsTransport);
+
 bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
@@ -241,4 +243,19 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 	_log.debug("Processed %d request, remain %zu bytes", n, connection->dataLen());
 
 	return true;
+}
+
+
+bool WsTransport::bindHandler(const std::string& selector, Transport::handler handler)
+{
+	// TODO реализовать
+	throw std::runtime_error("Not implemented");
+	return false;
+}
+
+Transport::handler WsTransport::getHandler(const std::string& subject)
+{
+	// TODO реализовать
+	throw std::runtime_error("Not implemented");
+	return nullptr;
 }

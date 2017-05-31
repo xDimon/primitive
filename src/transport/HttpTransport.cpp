@@ -31,6 +31,8 @@
 #include "../serialization/SObj.hpp"
 #include "http/HttpResponse.hpp"
 
+REGISTER_TRANSPORT(http, HttpTransport);
+
 bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
@@ -188,4 +190,18 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 	_log.debug("Processed %d request, remain %zu bytes", n, connection->dataLen());
 
 	return false;
+}
+
+bool HttpTransport::bindHandler(const std::string& selector, Transport::handler handler)
+{
+	// TODO реализовать
+	throw std::runtime_error("Not implemented");
+	return false;
+}
+
+Transport::handler HttpTransport::getHandler(const std::string& subject)
+{
+	// TODO реализовать
+	throw std::runtime_error("Not implemented");
+	return nullptr;
 }

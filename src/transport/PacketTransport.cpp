@@ -24,6 +24,8 @@
 #include "../net/TcpConnection.hpp"
 #include "../utils/Packet.hpp"
 
+REGISTER_TRANSPORT(packet, PacketTransport);
+
 bool PacketTransport::processing(std::shared_ptr<Connection> connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
@@ -86,4 +88,18 @@ bool PacketTransport::processing(std::shared_ptr<Connection> connection_)
 	_log.debug("Processed %d packets, remain %zu bytes", n, connection->dataLen());
 
 	return false;
+}
+
+bool PacketTransport::bindHandler(const std::string& selector, Transport::handler handler)
+{
+	// TODO реализовать
+	throw std::runtime_error("Not implemented");
+	return false;
+}
+
+Transport::handler PacketTransport::getHandler(const std::string& subject)
+{
+	// TODO реализовать
+	throw std::runtime_error("Not implemented");
+	return nullptr;
 }

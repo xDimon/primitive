@@ -22,6 +22,7 @@
 #pragma once
 
 #include <memory>
+#include <map>
 #include "../net/Connection.hpp"
 #include "../configs/Setting.hpp"
 
@@ -44,12 +45,9 @@ private:
 		return instance;
 	}
 
-	std::shared_ptr<Transport> createHttp(const Setting& setting);
-
-	std::shared_ptr<Transport> createWs(const Setting& setting);
-
-	std::shared_ptr<Transport> createPacket(const Setting& setting);
+	std::map<std::string, std::shared_ptr<Transport>(*)(const Setting &setting)> _creators;
 
 public:
+	static bool reg(const std::string& name, std::shared_ptr<Transport>(*)(const Setting &setting));
 	static std::shared_ptr<Transport> create(const Setting& setting);
 };

@@ -25,16 +25,5 @@
 
 class PacketTransport : public Transport
 {
-public:
-	PacketTransport(const Setting& setting)
-	: Transport(setting)
-	{
-		_log.debug("Transport '%s' created", name().c_str());
-	}
-	virtual ~PacketTransport()
-	{
-		_log.debug("Transport '%s' destroyed", name().c_str());
-	}
-
-	virtual bool processing(std::shared_ptr<Connection> connection);
+	DECLARE_TRANSPORT(PacketTransport);
 };

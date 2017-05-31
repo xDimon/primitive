@@ -25,18 +25,5 @@
 
 class HttpTransport : public Transport
 {
-public:
-	HttpTransport(const Setting& setting)
-	: Transport(setting)
-	{
-		_log.setName("HttpTransport");
-		_log.debug("Transport '%s' created", name().c_str());
-	}
-
-	virtual ~HttpTransport()
-	{
-		_log.debug("Transport '%s' destroyed", name().c_str());
-	}
-
-	virtual bool processing(std::shared_ptr<Connection> connection) override;
+	DECLARE_TRANSPORT(HttpTransport);
 };
