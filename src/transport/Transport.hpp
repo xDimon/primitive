@@ -21,14 +21,17 @@
 
 #pragma once
 
-#include <memory>
-#include "../log/Log.hpp"
 #include "../utils/Shareable.hpp"
+#include "../utils/Named.hpp"
+
+#include "../log/Log.hpp"
 #include "../net/AcceptorFactory.hpp"
 #include "../configs/Setting.hpp"
 #include "../serialization/SerializerFactory.hpp"
-#include "../utils/Named.hpp"
 #include "../utils/Context.hpp"
+
+#include <memory>
+#include <functional>
 
 class Transport : public Shareable<Transport>, public Named
 {
@@ -49,17 +52,17 @@ public:
 
 	virtual bool processing(std::shared_ptr<Connection> connection) = 0;
 
-	typedef void(* handler)(Context*);
+	typedef std::function<void(std::shared_ptr<Context>, const void*, size_t)> handler;
 
-	virtual bool bindHandler(const std::string& selector, handler handler) = 0;
-	virtual handler getHandler(const std::string& subject) = 0;
+	virtual void bindHandler(const std::string& selector, handler handler) = 0;
+	virtual handler getHandler(std::string subject) = 0;
 };
 
 #include "TransportFactory.hpp"
 
-#define REGISTER_TRANSPORT(name,Class) const bool Class::__dummy = \
+#define REGISTER_TRANSPORT(Type,Class) const bool Class::__dummy = \
     TransportFactory::reg(                                                                      \
-        #name,                                                                                 \
+        #Type,                                                                                  \
         [](const Setting& setting){                                                             \
             return std::shared_ptr<Transport>(new Class(setting));                              \
         }                                                                                       \
@@ -85,8 +88,8 @@ public:                                                                         
     }                                                                                           \
                                                                                                 \
     virtual bool processing(std::shared_ptr<Connection> connection) override;                   \
-    virtual bool bindHandler(const std::string& selector, Transport::handler handler) override; \
-    virtual Transport::handler getHandler(const std::string& subject) override;                 \
+    virtual void bindHandler(const std::string& selector, Transport::handler handler) override; \
+    virtual Transport::handler getHandler(std::string subject) override;                        \
                                                                                                 \
 private:                                                                                        \
     static const bool __dummy;

@@ -21,11 +21,11 @@
 
 #include <sstream>
 #include <memory>
+#include <cstring>
 #include "../net/ConnectionManager.hpp"
 #include "../net/TcpConnection.hpp"
 #include "../server/Server.hpp"
 #include "../utils/Base64.hpp"
-#include "../utils/Packet.hpp"
 #include "../utils/SHA1.hpp"
 #include "../utils/Time.hpp"
 #include "websocket/WsContext.hpp"
@@ -44,7 +44,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 	if (!connection->getContext())
 	{
-		connection->setContext(std::make_shared<WsContext>()->ptr());
+		connection->setContext(std::make_shared<WsContext>(connection)->ptr());
 	}
 	auto context = std::dynamic_pointer_cast<WsContext>(connection->getContext());
 	if (!context)
@@ -84,6 +84,9 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			// Читаем запрос
 			auto request = std::make_shared<HttpRequest>(connection->dataPtr(), connection->dataPtr() + headersSize);
 
+			// Пропускаем байты заголовка
+			connection->skip(headersSize);
+
 			context->setRequest(request);
 
 			// Допустим только GET
@@ -107,6 +110,20 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			// (echo -n "$1"; echo -n '258EAFA5-E914-47DA-95CA-C5AB0DC85B11') | sha1sum | xxd -r -p | base64
 			auto acceptKey = Base64::encode(SHA1::encode_bin(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
 
+			auto handler = getHandler(context->getRequest()->uri().path());
+			if (!handler)
+			{
+				HttpResponse(404, "WebSocket Upgrade Failure")
+					<< HttpHeader("X-Transport", "websocket", true)
+					<< HttpHeader("Connection", "Close")
+					<< "Not found service-handler for uri " << context->getRequest()->uri().path()
+					>> *connection;
+
+				connection->close();
+				context.reset();
+				return true;
+			}
+
 			HttpResponse(101, "Web Socket Protocol Handshake")
 				<< HttpHeader("X-Transport", "websocket", true)
 				<< HttpHeader("Upgrade", "websocket")
@@ -114,13 +131,23 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 				<< HttpHeader("Sec-WebSocket-Accept", acceptKey)
 				>> *connection;
 
-			context->setEstablished();
+			if (!handler)
+			{
+				std::string msg("##Not found service-handler for uri ");
+				msg += context->getRequest()->uri().path();
+				uint16_t code = htobe16(1008); // Policy Violation
+				memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
+				WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
+				context.reset();
+				connection->close();
+				return true;
+			}
 
 			context->getRequest().reset();
 
-			//
-			// http://learn.javascript.ru/websockets#описание-фрейма
-			//
+			context->setHandler(std::move(handler));
+
+			context->setEstablished();
 		}
 		catch (std::runtime_error &exception)
 		{
@@ -134,9 +161,6 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 			return true;
 		}
-
-		// Пропускаем байты заголовка
-		connection->skip(headersSize);
 	}
 
 	int n = 0;
@@ -144,6 +168,8 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 	// Цикл извлечения фреймов
 	for (;;)
 	{
+		// http://learn.javascript.ru/websockets#описание-фрейма
+
 		// Пробуем читать новый фрейм
 		if (!context->getFrame())
 		{
@@ -197,22 +223,32 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 		context->getFrame()->applyMask();
 
-		if (context->getFrame()->opcode() == WsFrame::Opcode::Text)
+		if (context->getFrame()->opcode() == WsFrame::Opcode::Text || context->getFrame()->opcode() == WsFrame::Opcode::Binary)
 		{
-			_log.debug("TEXT-FRAME: \"%s\" %zu bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
-			WsFrame::send(connection, WsFrame::Opcode::Text, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+			Transport::handler h = context->getHandler();
+
+				h(context, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+
 			context->getFrame().reset();
 			n++;
 			continue;
 		}
-		else if (context->getFrame()->opcode() == WsFrame::Opcode::Binary)
-		{
-			_log.debug("BINARY-FRAME: %zu bytes", context->getFrame()->dataLen());
-			WsFrame::send(connection, WsFrame::Opcode::Text, "Received binary data", 21);
-			context->getFrame().reset();
-			n++;
-			continue;
-		}
+//		else if (context->getFrame()->opcode() == WsFrame::Opcode::Text)
+//		{
+//			_log.debug("TEXT-FRAME: \"%s\" %zu bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+//			WsFrame::send(connection, WsFrame::Opcode::Text, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+//			context->getFrame().reset();
+//			n++;
+//			continue;
+//		}
+//		else if (context->getFrame()->opcode() == WsFrame::Opcode::Binary)
+//		{
+//			_log.debug("BINARY-FRAME: %zu bytes", context->getFrame()->dataLen());
+//			WsFrame::send(connection, WsFrame::Opcode::Text, "Received binary data", 21);
+//			context->getFrame().reset();
+//			n++;
+//			continue;
+//		}
 		else if (context->getFrame()->opcode() == WsFrame::Opcode::Ping)
 		{
 			WsFrame::send(connection, WsFrame::Opcode::Pong, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
@@ -246,16 +282,61 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 }
 
 
-bool WsTransport::bindHandler(const std::string& selector, Transport::handler handler)
+void WsTransport::bindHandler(const std::string& selector, Transport::handler handler)
 {
-	// TODO реализовать
-	throw std::runtime_error("Not implemented");
-	return false;
+	if (_handlers.find(selector) != _handlers.end())
+	{
+		throw std::runtime_error("Handler already set early");
+	}
+
+	_handlers.emplace(selector, handler);
 }
 
-Transport::handler WsTransport::getHandler(const std::string& subject)
+Transport::handler WsTransport::getHandler(std::string subject)
 {
-	// TODO реализовать
-	throw std::runtime_error("Not implemented");
+	do
+	{
+		auto i = _handlers.upper_bound(subject);
+
+		if (i != _handlers.end())
+		{
+//			_log.debug(">>> '%s' upper_bound: '%s'", subject.c_str(), i->first.c_str());
+			if (i->first == subject)
+			{
+//				_log.debug(">>> DONE: found '%s'", i->first.c_str());
+				return i->second;
+			}
+		}
+//		_log.debug(">>> '%s' upper_bound: end", subject.c_str());
+
+		if (i == _handlers.begin())
+		{
+//			_log.debug(">>> '%s' upper_bound: begin", subject.c_str());
+//			_log.debug(">>> DONE: not found");
+			break;
+		}
+
+		--i;
+//		_log.debug(">>> '%s' previously:  '%s'", subject.c_str(), i->first.c_str());
+
+		size_t len = std::min(subject.length(), i->first.length());
+
+		int cmpres = std::strncmp(i->first.c_str(), subject.c_str(), len);
+		if (cmpres == 0)
+		{
+//			_log.debug(">>> DONE: found '%s'", i->first.c_str());
+			return i->second;
+		}
+		else if (cmpres > 0)
+		{
+//			_log.debug(">>> DONE: not found");
+			return nullptr;
+		}
+
+		subject.resize(--len);
+//		_log.debug(">>> sbj decrease to '%s'", subject.c_str(), i->first.c_str());
+	}
+	while (subject.length());
+
 	return nullptr;
 }

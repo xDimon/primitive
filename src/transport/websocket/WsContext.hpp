@@ -23,6 +23,9 @@
 
 #include "../../utils/Context.hpp"
 #include "../http/HttpRequest.hpp"
+#include "../../net/TcpConnection.hpp"
+#include "../../transport/Transport.hpp"
+
 #include "WsFrame.hpp"
 #include <memory>
 
@@ -31,10 +34,15 @@ class WsContext: public Context
 private:
 	std::shared_ptr<HttpRequest> _request;
 	bool _established;
+	std::shared_ptr<TcpConnection> _connection;
 	std::shared_ptr<WsFrame> _frame;
+	Transport::handler _handler;
 
 public:
-	WsContext(): _established(false) {};
+	WsContext(std::shared_ptr<TcpConnection> connection)
+	: _established(false)
+	, _connection(connection)
+	{};
 	virtual ~WsContext() {};
 
 	void setEstablished()
@@ -47,6 +55,11 @@ public:
 		return _established;
 	}
 
+	std::shared_ptr<TcpConnection> connection()
+	{
+		return _connection;
+	}
+
 	void setRequest(std::shared_ptr<HttpRequest>& request)
 	{
 		_request = request;
@@ -54,6 +67,15 @@ public:
 	std::shared_ptr<HttpRequest>& getRequest()
 	{
 		return _request;
+	}
+
+	void setHandler(Transport::handler handler)
+	{
+		_handler = handler;
+	}
+	Transport::handler getHandler() const
+	{
+		return _handler;
 	}
 
 	void setFrame(std::shared_ptr<WsFrame>& frame)

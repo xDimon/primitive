@@ -21,6 +21,7 @@
 
 #include <sstream>
 #include <memory>
+#include <cstring>
 #include "../net/ConnectionManager.hpp"
 #include "../net/TcpConnection.hpp"
 #include "../server/Server.hpp"
@@ -192,16 +193,52 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 	return false;
 }
 
-bool HttpTransport::bindHandler(const std::string& selector, Transport::handler handler)
+void HttpTransport::bindHandler(const std::string& selector, Transport::handler handler)
 {
-	// TODO реализовать
-	throw std::runtime_error("Not implemented");
-	return false;
+	if (_handlers.find(selector) != _handlers.end())
+	{
+		throw std::runtime_error("Handler already set early");
+	}
+
+	_handlers.emplace(selector, handler);
 }
 
-Transport::handler HttpTransport::getHandler(const std::string& subject)
+Transport::handler HttpTransport::getHandler(std::string subject)
 {
-	// TODO реализовать
-	throw std::runtime_error("Not implemented");
+	do
+	{
+		auto i = _handlers.upper_bound(subject);
+
+		if (i != _handlers.end())
+		{
+			if (i->first == subject)
+			{
+				return i->second;
+			}
+		}
+
+		if (i == _handlers.begin())
+		{
+			break;
+		}
+
+		--i;
+
+		size_t len = std::min(subject.length(), i->first.length());
+
+		int cmpres = std::strncmp(i->first.c_str(), subject.c_str(), len);
+		if (cmpres == 0)
+		{
+			return i->second;
+		}
+		if (cmpres > 0)
+		{
+			return nullptr;
+		}
+
+		subject.resize(--len);
+	}
+	while (subject.length());
+
 	return nullptr;
 }
