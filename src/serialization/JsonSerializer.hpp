@@ -37,7 +37,8 @@
 
 class JsonSerializer : public Serializer
 {
-private:
+	DECLARE_SERIALIZER(JsonSerializer);
+
 	std::istringstream _iss;
 	std::ostringstream _oss;
 
@@ -73,9 +74,4 @@ private:
 	void encodeObject(const SObj* value);
 
 	void encodeValue(const SVal* value);
-
-public:
-	virtual SVal* decode(const std::string &data, bool strict = false) override;
-
-	virtual std::string encode(const SVal* value) override;
 };

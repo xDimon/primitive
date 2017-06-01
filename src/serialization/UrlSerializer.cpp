@@ -27,6 +27,8 @@
 #include "../transport/http/HttpUri.hpp"
 #include "../utils/Base64.hpp"
 
+REGISTER_SERIALIZER(uri, UrlSerializer);
+
 struct tokens: std::ctype<char>
 {
     tokens(): std::ctype<char>(get_table()) {}

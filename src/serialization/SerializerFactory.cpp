@@ -24,59 +24,27 @@
 #include "TlvSerializer.hpp"
 #include "UrlSerializer.hpp"
 
-std::shared_ptr<Serializer> SerializerFactory::create(const Setting& setting)
+bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)())
 {
-	std::shared_ptr<Creator> acceptorCreator;
-	try
-	{
-		acceptorCreator = getInstance().creator(setting);
-	}
-	catch (...)
-	{
-		throw;
-	}
+	auto& factory = getInstance();
 
-	return std::shared_ptr<Serializer>();
+	auto i = factory._creators.find(name);
+	if (i != factory._creators.end())
+	{
+		throw std::runtime_error(std::string("Attepmt to register serializer with the same name (") + name + ")");
+	}
+	factory._creators.emplace(name, creator);
+	return true;
 }
 
-std::shared_ptr<SerializerFactory::Creator> SerializerFactory::creator(const Setting& setting)
+std::shared_ptr<Serializer> SerializerFactory::create(const std::string& type)
 {
-	std::string type;
-	try
-	{
-		setting.lookupValue("serializer", type);
-	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
-		throw std::runtime_error("Bad config: serializer undefined");
-	}
+	auto& factory = getInstance();
 
-	if (type == "json")
-	{
-		return std::make_shared<Creator>(
-			[instance = &getInstance()](){
-				return instance->create<JsonSerializer>();
-			}
-		);
-	}
-	else if (type == "tlv")
-	{
-		return std::make_shared<Creator>(
-			[instance = &getInstance()](){
-				return instance->create<TlvSerializer>();
-			}
-		);
-	}
-	else if (type == "uri")
-	{
-		return std::make_shared<Creator>(
-			[instance = &getInstance()](){
-				return instance->create<UrlSerializer>();
-			}
-		);
-	}
-	else
+	auto i = factory._creators.find(type);
+	if (i == factory._creators.end())
 	{
 		throw std::runtime_error("Unknown serializer type");
 	}
+	return std::move(i->second());
 }

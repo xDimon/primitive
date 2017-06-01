@@ -29,3 +29,26 @@ public:
 	virtual SVal* decode(const std::string &data, bool strict = false) = 0;
 	virtual std::string encode(const SVal* value) = 0;
 };
+
+#include "SerializerFactory.hpp"
+
+#define REGISTER_SERIALIZER(Type,Class) const bool Class::__dummy = \
+    SerializerFactory::reg(                                                                     \
+        #Type,                                                                                  \
+        [](){                                                                                   \
+            return std::shared_ptr<Serializer>(new Class());                                    \
+        }                                                                                       \
+    );
+
+#define DECLARE_SERIALIZER(Class) \
+private:                                                                                        \
+    Class(): Serializer() {}                                                                    \
+    Class(const Class&) = delete;                                                               \
+    void operator=(Class const&) = delete;                                                      \
+                                                                                                \
+public:                                                                                         \
+	virtual SVal* decode(const std::string &data, bool strict = false) override;                \
+	virtual std::string encode(const SVal* value) override;                           	        \
+                                                                                                \
+private:                                                                                        \
+    static const bool __dummy;

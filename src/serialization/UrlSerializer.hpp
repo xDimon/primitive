@@ -38,7 +38,8 @@
 
 class UrlSerializer : public Serializer
 {
-private:
+	DECLARE_SERIALIZER(UrlSerializer);
+
 	std::istringstream _iss;
 	std::ostringstream _oss;
 
@@ -58,9 +59,4 @@ private:
 	void encodeObject(const std::string& keyline, const SObj* value);
 
 	void encodeValue(const std::string& keyline, const SVal* value);
-
-public:
-	virtual SVal* decode(const std::string &data, bool strict = false) override;
-
-	virtual std::string encode(const SVal* value) override;
 };

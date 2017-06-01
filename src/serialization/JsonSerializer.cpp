@@ -28,6 +28,8 @@
 
 #include <iomanip>
 
+REGISTER_SERIALIZER(json, JsonSerializer);
+
 SVal* JsonSerializer::decode(const std::string& data, bool strict)
 {
 	_iss.str(data);

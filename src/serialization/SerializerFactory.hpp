@@ -22,6 +22,7 @@
 #pragma once
 
 #include <memory>
+#include <map>
 #include "Serializer.hpp"
 #include "../configs/Setting.hpp"
 
@@ -47,15 +48,9 @@ private:
 		return instance;
 	}
 
-	template<class T>
-	std::shared_ptr<Serializer> create()
-	{
-		return std::make_shared<T>();
-	}
-
+	std::map<std::string, std::shared_ptr<Serializer>(*)()> _creators;
 
 public:
-	std::shared_ptr<Serializer> create(const Setting& setting);
-
-	static std::shared_ptr<Creator> creator(const Setting& setting);
+	static bool reg(const std::string& name, std::shared_ptr<Serializer>(*)());
+	static std::shared_ptr<Serializer> create(const std::string& type);
 };
