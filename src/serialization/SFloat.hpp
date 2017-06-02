@@ -21,7 +21,10 @@
 
 #pragma once
 
-class SFloat: public SNum
+
+#include "SNum.hpp"
+
+class SFloat : public SNum
 {
 public:
 	typedef double_t type;
@@ -30,7 +33,9 @@ private:
 	type _value;
 
 public:
-	SFloat(type value): _value(value) {}
+	SFloat(type value)
+	: _value(value)
+	{}
 
 	auto value() const
 	{

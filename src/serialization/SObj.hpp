@@ -26,6 +26,9 @@
 #include <functional>
 #include "SStr.hpp"
 #include "SVal.hpp"
+#include "SBool.hpp"
+#include "SInt.hpp"
+#include "SFloat.hpp"
 
 class SObj : public SVal
 {
@@ -95,5 +98,65 @@ public:
 	void forEach(std::function<void(const std::pair<std::string, SVal*>&)> handler) const
 	{
 		std::for_each(_elements.cbegin(), _elements.cend(), handler);
+	}
+
+	void lookup(const std::string& key, bool &value) const
+	{
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+		}
+		auto elementValue = dynamic_cast<SBool *>(element);
+		if (!elementValue)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' isn't boolean");
+		}
+		value = elementValue->value();
+	}
+
+	void lookup(const char *key, double &value) const
+	{
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+		}
+		auto elementValue = dynamic_cast<const SFloat *>(element);
+		if (!elementValue)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' isn't numeric");
+		}
+		value = elementValue->value();
+	}
+
+	void lookup(const char *key, int64_t &value) const
+	{
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+		}
+		auto elementValue = dynamic_cast<const SInt *>(element);
+		if (!elementValue)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' isn't integer");
+		}
+		value = elementValue->value();
+	}
+
+	void lookup(const std::string& key, std::string &value) const
+	{
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+		}
+		auto elementValue = dynamic_cast<SStr *>(element);
+		if (!elementValue)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' isn't string");
+		}
+		value = elementValue->value();
 	}
 };

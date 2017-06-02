@@ -33,7 +33,7 @@ REGISTER_SERIALIZER(json, JsonSerializer);
 SVal* JsonSerializer::decode(const std::string& data, bool strict)
 {
 	_iss.str(data);
-	_iss.clear(_iss.goodbit);
+	_iss.clear();
 
 	SVal* value = nullptr;
 
@@ -58,6 +58,9 @@ SVal* JsonSerializer::decode(const std::string& data, bool strict)
 
 std::string JsonSerializer::encode(const SVal* value)
 {
+	_oss.str("");
+	_oss.clear();
+
 	try
 	{
 		encodeValue(value);

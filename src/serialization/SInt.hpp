@@ -21,7 +21,10 @@
 
 #pragma once
 
-class SInt: public SNum
+
+#include "SNum.hpp"
+
+class SInt : public SNum
 {
 public:
 	typedef int64_t type;
@@ -30,7 +33,9 @@ private:
 	type _value;
 
 public:
-	SInt(type value): _value(value) {}
+	SInt(type value)
+	: _value(value)
+	{}
 
 	auto value() const
 	{
