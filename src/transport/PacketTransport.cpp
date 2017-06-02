@@ -90,13 +90,13 @@ bool PacketTransport::processing(std::shared_ptr<Connection> connection_)
 	return false;
 }
 
-void PacketTransport::bindHandler(const std::string& selector, Transport::handler handler)
+void PacketTransport::bindHandler(const std::string& selector, Transport::Handler handler)
 {
 	// TODO реализовать
 	throw std::runtime_error("Not implemented");
 }
 
-Transport::handler PacketTransport::getHandler(std::string subject)
+Transport::Handler PacketTransport::getHandler(std::string subject)
 {
 	// TODO реализовать
 	throw std::runtime_error("Not implemented");

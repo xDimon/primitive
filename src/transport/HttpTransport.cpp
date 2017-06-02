@@ -159,11 +159,24 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 		try
 		{
-//			auto handler = getHandler(context->getRequest()->uri().path());
+//			auto Handler = getHandler(context->getRequest()->uri().path());
 
 			const std::vector<char> out;
 
-//			out = handler(context->getRequest()->data());
+//			if (context->getRequest()->dataLen())
+//			{
+//				out = Handler(context->getRequest()->data());
+//			}
+//			else if (context->getRequest()->uri().hasQuery())
+//			{
+//				out = Handler(context->getRequest()->uri().query());
+//			}
+//			else
+//			{
+//				throw std::runtime_error("No data for parsing");
+//			}
+
+//			out = Handler(context->getRequest()->data());
 
 			// TODO реализовать реальную обработку вместо echo
 			HttpResponse(200)
@@ -193,7 +206,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 	return false;
 }
 
-void HttpTransport::bindHandler(const std::string& selector, Transport::handler handler)
+void HttpTransport::bindHandler(const std::string& selector, Transport::Handler handler)
 {
 	if (_handlers.find(selector) != _handlers.end())
 	{
@@ -203,7 +216,7 @@ void HttpTransport::bindHandler(const std::string& selector, Transport::handler 
 	_handlers.emplace(selector, handler);
 }
 
-Transport::handler HttpTransport::getHandler(std::string subject)
+Transport::Handler HttpTransport::getHandler(std::string subject)
 {
 	do
 	{

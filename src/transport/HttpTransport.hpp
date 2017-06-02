@@ -27,5 +27,5 @@ class HttpTransport : public Transport
 {
 	DECLARE_TRANSPORT(HttpTransport);
 
-	std::map<std::string, Transport::handler> _handlers;
+	std::map<std::string, Transport::Handler> _handlers;
 };

@@ -116,7 +116,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 				HttpResponse(404, "WebSocket Upgrade Failure")
 					<< HttpHeader("X-Transport", "websocket", true)
 					<< HttpHeader("Connection", "Close")
-					<< "Not found service-handler for uri " << context->getRequest()->uri().path()
+					<< "Not found service-Handler for uri " << context->getRequest()->uri().path()
 					>> *connection;
 
 				connection->close();
@@ -133,7 +133,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 			if (!handler)
 			{
-				std::string msg("##Not found service-handler for uri ");
+				std::string msg("##Not found service-Handler for uri ");
 				msg += context->getRequest()->uri().path();
 				uint16_t code = htobe16(1008); // Policy Violation
 				memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
@@ -225,10 +225,22 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 		if (context->getFrame()->opcode() == WsFrame::Opcode::Text || context->getFrame()->opcode() == WsFrame::Opcode::Binary)
 		{
-			Transport::handler h = context->getHandler();
+			Transport::Transmitter transmitter =
+				[&connection,opcode = context->getFrame()->opcode()]
+					(const char*data, size_t size, bool close){
+					WsFrame::send(connection, opcode, data, size);
+					if (close)
+					{
+						std::string msg("##Bye!");
+						uint16_t code = htobe16(1000); // Normal Closure
+						memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
 
-				h(context, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+						WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
+						connection->close();
+					}
+				};
 
+			context->handle(context->getFrame()->dataPtr(), context->getFrame()->dataLen(), transmitter);
 			context->getFrame().reset();
 			n++;
 			continue;
@@ -281,8 +293,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 	return true;
 }
 
-
-void WsTransport::bindHandler(const std::string& selector, Transport::handler handler)
+void WsTransport::bindHandler(const std::string& selector, Transport::Handler handler)
 {
 	if (_handlers.find(selector) != _handlers.end())
 	{
@@ -292,7 +303,7 @@ void WsTransport::bindHandler(const std::string& selector, Transport::handler ha
 	_handlers.emplace(selector, handler);
 }
 
-Transport::handler WsTransport::getHandler(std::string subject)
+Transport::Handler WsTransport::getHandler(std::string subject)
 {
 	do
 	{

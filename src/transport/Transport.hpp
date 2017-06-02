@@ -52,10 +52,11 @@ public:
 
 	virtual bool processing(std::shared_ptr<Connection> connection) = 0;
 
-	typedef std::function<void(std::shared_ptr<Context>, const void*, size_t)> handler;
+	typedef std::function<void(const char*, size_t, bool)> Transmitter;
+	typedef std::function<void(std::shared_ptr<Context>, const char*, size_t, Transmitter)> Handler;
 
-	virtual void bindHandler(const std::string& selector, handler handler) = 0;
-	virtual handler getHandler(std::string subject) = 0;
+	virtual void bindHandler(const std::string& selector, Handler handler) = 0;
+	virtual Handler getHandler(std::string subject) = 0;
 };
 
 #include "TransportFactory.hpp"
@@ -88,8 +89,8 @@ public:                                                                         
     }                                                                                           \
                                                                                                 \
     virtual bool processing(std::shared_ptr<Connection> connection) override;                   \
-    virtual void bindHandler(const std::string& selector, Transport::handler handler) override; \
-    virtual Transport::handler getHandler(std::string subject) override;                        \
+    virtual void bindHandler(const std::string& selector, Transport::Handler Handler) override; \
+    virtual Transport::Handler getHandler(std::string subject) override;                        \
                                                                                                 \
 private:                                                                                        \
     static const bool __dummy;

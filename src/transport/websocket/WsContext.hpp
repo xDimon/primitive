@@ -36,7 +36,7 @@ private:
 	bool _established;
 	std::shared_ptr<TcpConnection> _connection;
 	std::shared_ptr<WsFrame> _frame;
-	Transport::handler _handler;
+	Transport::Handler _handler;
 
 public:
 	WsContext(std::shared_ptr<TcpConnection> connection)
@@ -69,13 +69,13 @@ public:
 		return _request;
 	}
 
-	void setHandler(Transport::handler handler)
+	void setHandler(Transport::Handler handler)
 	{
 		_handler = handler;
 	}
-	Transport::handler getHandler() const
+	void handle(const char*data, size_t size, Transport::Transmitter transmitter)
 	{
-		return _handler;
+		_handler(ptr(), data, size, transmitter);
 	}
 
 	void setFrame(std::shared_ptr<WsFrame>& frame)

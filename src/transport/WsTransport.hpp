@@ -27,5 +27,5 @@ class WsTransport : public Transport
 {
 	DECLARE_TRANSPORT(WsTransport);
 
-	std::map<std::string, Transport::handler> _handlers;
+	std::map<std::string, Transport::Handler> _handlers;
 };
