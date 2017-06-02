@@ -32,6 +32,8 @@
 class Server final
 {
 private:
+	static Server* _instance;
+
 	Log _log;
 
 	std::recursive_mutex _mutex;
@@ -46,6 +48,24 @@ private:
 public:
 	Server(std::shared_ptr<Config> &configs);
 	virtual ~Server();
+
+	static Server& getInstance()
+	{
+		if (!_instance)
+		{
+			throw std::runtime_error("Server isn't instantiate yet");
+		}
+		return *_instance;
+	}
+
+	static auto getDatabase()
+	{
+		if (!_instance)
+		{
+			throw std::runtime_error("Server isn't instantiate yet");
+		}
+		return _instance->_database;
+	}
 
 	static std::string httpName()
 	{

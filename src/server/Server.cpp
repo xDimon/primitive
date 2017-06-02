@@ -27,10 +27,19 @@
 #include "../net/ConnectionManager.hpp"
 #include "../storage/mysql/MysqlConnectionPool.hpp"
 
+Server* Server::_instance = nullptr;
+
 Server::Server(std::shared_ptr<Config>& configs)
 : _log("Server")
 , _configs(configs)
 {
+	if (_instance)
+	{
+		throw std::runtime_error("Server already instantiated");
+	}
+
+	_instance = this;
+
 	_log.info("Server instantiate");
 
 	try
@@ -96,6 +105,7 @@ Server::Server(std::shared_ptr<Config>& configs)
 
 Server::~Server()
 {
+	_instance = nullptr;
 	_log.info("Server shutdown");
 }
 
