@@ -94,7 +94,7 @@ std::shared_ptr<DbConnection> DbConnectionPool::Capture()
 
 	while (!_pool.empty())
 	{
-		auto& conn = _pool.front();
+		auto conn = std::move(_pool.front());
 		_pool.pop_front();
 
 		_mutex.unlock();
@@ -107,7 +107,7 @@ std::shared_ptr<DbConnection> DbConnectionPool::Capture()
 
 			_captured.insert(std::make_pair(std::this_thread::get_id(), conn));
 
-			conn.reset();
+			return std::move(conn);
 		}
 
 		_mutex.lock();
