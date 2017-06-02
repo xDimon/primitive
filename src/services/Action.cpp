@@ -25,26 +25,27 @@
 
 uint64_t Action::_requestCount = 0;
 
-Action::Action(Context& context, const SVal* input)
+Action::Action(std::shared_ptr<Context>& context, const SVal* input, Transport::Transmitter transmitter)
 : _context(context)
 , _input(input)
+, _data(dynamic_cast<const SObj *>(_input))
+, _transmitter(transmitter)
 , _requestId(0)
 , _lastConfirmedEvent(0)
 , _lastConfirmedResponse(0)
 {
 	_name = nullptr;
 
-//	auto data = dynamic_cast<const SObj*>(input);
-//	if (data)
-//	{
-//		auto aux = dynamic_cast<const SObj*>(data->get("_"));
-//		if (aux)
-//		{
+	if (_data)
+	{
+		auto aux = dynamic_cast<const SObj*>(_data->get("_"));
+		if (aux)
+		{
 //			_requestId = aux->get("ri"); // request id
 //			_lastConfirmedResponse = aux->get("cr"); // confirmed response id
 //			_lastConfirmedEvent = aux->get("ce"); // confirmed event id
-//		}
-//	}
+		}
+	}
 }
 
 Action::~Action()

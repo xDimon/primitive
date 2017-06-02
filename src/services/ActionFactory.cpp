@@ -21,27 +21,27 @@
 
 #include "ActionFactory.hpp"
 
-bool ActionFactory::reg(const std::string& name, std::shared_ptr<Action>(* creator)(Context&, const SVal*))
+bool ActionFactory::reg(const std::string& name, std::shared_ptr<Action>(* creator)(std::shared_ptr<Context>&, const SVal*, Transport::Transmitter))
 {
 	auto& factory = getInstance();
 
-	auto i = factory._requests.find(name);
-	if (i != factory._requests.end())
+	auto i = factory._creators.find(name);
+	if (i != factory._creators.end())
 	{
 		throw std::runtime_error(std::string("Attepmt to register action with the same name (") + name + ")");
 	}
-	factory._requests.emplace(name, creator);
+	factory._creators.emplace(name, creator);
 	return true;
 }
 
-std::shared_ptr<Action> ActionFactory::create(const std::string& name, Context& context, const SVal* input)
+std::shared_ptr<Action> ActionFactory::create(const std::string& name, std::shared_ptr<Context>& context, const SVal* input, Transport::Transmitter transmitter)
 {
 	auto& factory = getInstance();
 
-	auto i = factory._requests.find(name);
-	if (i == factory._requests.end())
+	auto i = factory._creators.find(name);
+	if (i == factory._creators.end())
 	{
 		return nullptr;
 	}
-	return i->second(context, input);
+	return i->second(context, input, transmitter);
 }

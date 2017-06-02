@@ -25,18 +25,22 @@
 #include <cstdint>
 #include "../utils/Context.hpp"
 #include "../serialization/SVal.hpp"
+#include "../serialization/SObj.hpp"
+#include "../transport/Transport.hpp"
 
 class Action
 {
 private:
-	mutable const char *_name;
+	mutable const char* _name;
 
 protected:
 	using Id = uint32_t;
 
 	static uint64_t _requestCount;
-	Context &_context;
-	const SVal *_input;
+	std::shared_ptr<Context>& _context;
+	const SVal* _input;
+	const SObj* _data;
+	Transport::Transmitter _transmitter;
 	Id _requestId;
 	Id _lastConfirmedEvent;
 	Id _lastConfirmedResponse;
@@ -44,9 +48,13 @@ protected:
 public:
 	Action() = delete;
 	Action(const Action&) = delete;
-	void operator= (Action const&) = delete;
+	void operator=(Action const&) = delete;
 
-	Action(Context& context, const SVal* input);
+	Action(
+		std::shared_ptr<Context>& context,
+		const SVal* input,
+		Transport::Transmitter _transmitter
+	);
 	virtual ~Action();
 
 	static inline auto getCount()
@@ -54,9 +62,10 @@ public:
 		return _requestCount;
 	}
 
-	const char *getName() const;
+	const char* getName() const;
 
 	virtual bool validate() = 0;
+
 	virtual bool execute() = 0;
 
 	virtual bool isCanBeFirst() const
@@ -68,10 +77,12 @@ public:
 	{
 		return _requestId;
 	}
+
 	inline auto lastConfirmedMessage() const
 	{
 		return _lastConfirmedEvent;
 	}
+
 	inline auto lastConfirmedResponse() const
 	{
 		return _lastConfirmedResponse;
@@ -80,24 +91,34 @@ public:
 
 #include "ActionFactory.hpp"
 
-#define REGISTER_ACTION(ActionName) const bool ActionName::__dummy_for_reg_call = ActionsFactory::reg(#ActionName, ActionName::create);
+#define REGISTER_ACTION(Type,ActionName) const bool ActionName::__dummy_for_reg_call = ActionFactory::reg(#Type, ActionName::create);
 #define DECLARE_ACTION(ActionName) \
-private:																						\
-	ActionName() = delete;																		\
-	ActionName(const ActionName&) = delete;														\
-	void operator= (ActionName const&) = delete;												\
-																								\
-	ActionName(Context& context, const SVal* input);											\
-																								\
-public:																							\
-	virtual ~ActionName() {};																	\
-																								\
-	virtual bool validate();																	\
-	virtual bool execute();																		\
-																								\
-private:																						\
-	static auto create(Context& context, const SVal* input)										\
-	{																							\
-		return std::shared_ptr<Action>(new ActionName(context, input));							\
-	}																							\
-	static const bool __dummy_for_reg_call;
+private:                                                                                        \
+    ActionName() = delete;                                                                      \
+    ActionName(const ActionName&) = delete;                                                     \
+    void operator= (ActionName const&) = delete;                                                \
+                                                                                                \
+    ActionName(                                                                                 \
+		std::shared_ptr<Context>& context,                                                      \
+		const SVal* input,                                                                      \
+		Transport::Transmitter transmitter                                                      \
+	)                                                                                           \
+    : Action(context, input, transmitter)                                                       \
+    {};                                                                                         \
+                                                                                                \
+public:                                                                                         \
+    virtual ~ActionName() {};                                                                   \
+                                                                                                \
+    virtual bool validate() override;                                                           \
+    virtual bool execute() override;                                                            \
+                                                                                                \
+private:                                                                                        \
+    static auto create(                                                                         \
+		std::shared_ptr<Context>& context,                                                      \
+		const SVal* input,                                                                      \
+		Transport::Transmitter transmitter                                                      \
+	)                                                                                           \
+    {                                                                                           \
+        return std::shared_ptr<Action>(new ActionName(context, input, transmitter));            \
+    }                                                                                           \
+    static const bool __dummy_for_reg_call;

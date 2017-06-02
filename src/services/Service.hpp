@@ -40,32 +40,33 @@ protected:
 public:
 	virtual ~Service();
 
-	virtual void activate(Server *server) = 0;
-	virtual void deactivate(Server *server) = 0;
+	virtual void activate(Server* server) = 0;
+
+	virtual void deactivate(Server* server) = 0;
 };
 
 #include "ServiceFactory.hpp"
 
-#define REGISTER_SERVICE(Type,Class) const bool Class::__dummy = \
-	ServiceFactory::reg(												\
-		#Type, 															\
-		[](const Setting& setting){										\
-			return std::shared_ptr<Service>(new Class(setting));		\
-		}																\
-	);
+#define REGISTER_SERVICE(Type) const bool Type::Service::__dummy =          \
+    ServiceFactory::reg(                                                    \
+        #Type,                                                            	\
+        [](const Setting& setting){                                         \
+            return std::shared_ptr<::Service>(new Type::Service(setting));  \
+        }                                                                   \
+    );
 
-#define DECLARE_SERVICE(Class) \
-private:																\
-	Class() = delete;													\
-	Class(const Class&) = delete;										\
-	void operator=(Class const&) = delete;								\
-																		\
-	Class(const Setting& setting);										\
-																		\
-public:																	\
-	virtual ~Class();													\
-	virtual void activate(Server *server);								\
-	virtual void deactivate(Server *server);							\
-																		\
-private:																\
-	static const bool __dummy;
+#define DECLARE_SERVICE() \
+private:                                                                    \
+    Service() = delete;                                                     \
+    Service(const Service&) = delete;                                       \
+    void operator=(Service const&) = delete;                                \
+                                                                            \
+    Service(const Setting& setting);                                        \
+                                                                            \
+public:                                                                     \
+    virtual ~Service();                                                     \
+    virtual void activate(Server *server);                                   \
+    virtual void deactivate(Server *server);                                \
+                                                                            \
+private:                                                                    \
+    static const bool __dummy;
