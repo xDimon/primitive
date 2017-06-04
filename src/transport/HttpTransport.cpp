@@ -159,30 +159,38 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 
 		try
 		{
-//			auto Handler = getHandler(context->getRequest()->uri().path());
+			auto handler = getHandler(context->getRequest()->uri().path());
 
-			const std::vector<char> out;
+			if (!handler)
+			{
+				HttpResponse(404)
+					<< "Not found service-Handler for uri " << context->getRequest()->uri().path() << "\r\n"
+					>> *connection;
 
-//			if (context->getRequest()->dataLen())
-//			{
-//				out = Handler(context->getRequest()->data());
-//			}
-//			else if (context->getRequest()->uri().hasQuery())
-//			{
-//				out = Handler(context->getRequest()->uri().query());
-//			}
-//			else
-//			{
-//				throw std::runtime_error("No data for parsing");
-//			}
+				context.reset();
+				return true;
+			}
 
-//			out = Handler(context->getRequest()->data());
+			Transport::Transmitter transmitter =
+				[&connection]
+					(const char*data, size_t size, bool close){
 
-			// TODO реализовать реальную обработку вместо echo
-			HttpResponse(200)
-				<< "Received:\r\n"
-//				<< out << "\r\n"
-				>> *connection;
+					std::string out(data, size);
+					HttpResponse response(200);
+					if (close)
+					{
+						response << HttpHeader("Connection", "Close");
+					}
+					response
+						<< out << "\r\n"
+						>> *connection;
+				};
+
+			handler(context, context->getRequest()->dataPtr(), context->getRequest()->dataLen(), transmitter);
+
+			context->getRequest().reset();
+			n++;
+			continue;
 		}
 		catch (const std::exception& exception)
 		{
