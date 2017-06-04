@@ -1,51 +1,25 @@
-// Copyright © 2017 Dmitriy Khaustov
+//	100% Public Domain.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+//	Original C Code
+//	 -- Steve Reid <steve@edmweb.com>
+//	Small changes to fit into bglibs
+//	  -- Bruce Guenter <bruce@untroubled.org>
+//	Translation to simpler C++ Code
+//	  -- Volker Grabsch <vog@notjusthosting.com>
+//	Safety fixes
+//	  -- Eugene Hopkinson <slowriot at voxelstorm dot com>
+//  Adapt for project
+//      Dmitriy Khaustov <khaustov.dm@gmail.com>
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Author: Dmitriy Khaustov aka xDimon
-// Contacts: khaustov.dm@gmail.com
 // File created on: 2017.02.25
 
 // SHA1.cpp
 
-
 #include "SHA1.hpp"
 
-/*
-    sha1.cpp - source code of
-
-    ============
-    SHA-1 in C++
-    ============
-
-    100% Public Domain.
-
-    Original C Code
-        -- Steve Reid <steve@edmweb.com>
-    Small changes to fit into bglibs
-        -- Bruce Guenter <bruce@untroubled.org>
-    Translation to simpler C++ Code
-        -- Volker Grabsch <vog@notjusthosting.com>
-    Safety fixes
-        -- Eugene Hopkinson <slowriot at voxelstorm dot com>
-*/
-
-#include "SHA1.hpp"
 #include <sstream>
 #include <iomanip>
 #include <fstream>
-
-#include "literals.hpp"
 
 static const size_t BLOCK_INTS = 16;  /* number of 32bit integers per SHA1 block */
 static const size_t BLOCK_BYTES = BLOCK_INTS * 4;
@@ -329,7 +303,7 @@ std::string SHA1::final_bin()
 	{
 		for (size_t b = 0; b < sizeof(digest[0])/sizeof(uint8_t); b++)
 		{
-			result.push_back((digest[i] >> (8 * (sizeof(digest[0]) / sizeof(uint8_t) - 1 - b))) & 0xFF_u8);
+			result.push_back((digest[i] >> (8 * (sizeof(digest[0]) / sizeof(uint8_t) - 1 - b))) & 0xFF);
 		}
 	}
 
