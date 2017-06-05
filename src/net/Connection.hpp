@@ -26,15 +26,14 @@
 #include <memory>
 #include <type_traits>
 #include <sys/epoll.h>
-#include "../log/Log.hpp"
-#include "ConnectionEvent.hpp"
-#include <unistd.h>
 #include "../utils/Shareable.hpp"
 #include "../utils/Named.hpp"
-
-struct sockaddr_in;
-class Transport;
-class Context;
+#include "../log/Log.hpp"
+#include "../transport/Transport.hpp"
+#include "../utils/Context.hpp"
+#include "ConnectionEvent.hpp"
+#include <sys/epoll.h>
+#include <unistd.h>
 
 class Connection: public Shareable<Connection>, public Named
 {
@@ -64,7 +63,7 @@ public:
 	Connection(const Connection&) = delete;
 	void operator= (Connection const&) = delete;
 
-	explicit Connection(const std::shared_ptr<Transport>& transport);
+	Connection(const std::shared_ptr<Transport>& transport);
 	virtual ~Connection();
 
 	void setContext(std::shared_ptr<Context> context)
