@@ -673,7 +673,7 @@ void TlvSerializer::encodeArray(const SArr *value)
 void TlvSerializer::encodeObject(const SObj *value)
 {
 	_oss.put(static_cast<char>(Token::OBJECT));
-	value->forEach([this](const std::pair<const std::string&, SVal*>&element){
+	value->forEach([this](const std::pair<const std::string&, const SVal*>&element){
 		encodeKey(element.first);
 		encodeValue(element.second);
 	});

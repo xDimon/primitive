@@ -71,7 +71,7 @@ class JsonSerializer : public Serializer
 	void encodeNumber(const SNum* value);
 
 	void encodeArray(const SArr* value);
-	void encodeObject(const SObj* value);
-
 	void encodeValue(const SVal* value);
+
+	void encodeObject(const SObj* value);
 };

@@ -682,7 +682,7 @@ void JsonSerializer::encodeObject(const SObj* value)
 	_oss << "{";
 
 	bool empty = true;
-	value->forEach([this, &empty](const std::pair<const std::string&, SVal*>& element)
+	value->forEach([this, &empty](const std::pair<const std::string&, const SVal*>& element)
 	{
 		if (!empty)
 		{

@@ -95,7 +95,7 @@ public:
 		return get(key);
 	}
 
-	void forEach(std::function<void(const std::pair<std::string, SVal*>&)> handler) const
+	void forEach(std::function<void(const std::pair<const std::string, const SVal*>&)> handler) const
 	{
 		std::for_each(_elements.cbegin(), _elements.cend(), handler);
 	}
