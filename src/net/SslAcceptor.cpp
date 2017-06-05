@@ -24,7 +24,7 @@
 #include "ConnectionManager.hpp"
 #include "../thread/ThreadPool.hpp"
 
-SslAcceptor::SslAcceptor(std::shared_ptr<Transport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& context)
+SslAcceptor::SslAcceptor(std::shared_ptr<ServerTransport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& context)
 : TcpAcceptor(transport, host, port)
 , _sslContext(context)
 {

@@ -14,18 +14,18 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.27
+// File created on: 2017.03.29
 
-// HttpTransport.hpp
+// WebsocketServer.hpp
 
 
 #pragma once
 
-#include "Transport.hpp"
+#include "ServerTransport.hpp"
 
-class HttpTransport : public Transport
+class WebsocketServer : public ServerTransport
 {
-	DECLARE_TRANSPORT(HttpTransport);
+	DECLARE_TRANSPORT(WebsocketServer);
 
-	std::map<std::string, Transport::Handler> _handlers;
+	std::map<std::string, ServerTransport::Handler> _handlers;
 };

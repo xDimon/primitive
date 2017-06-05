@@ -22,7 +22,7 @@
 #include <sstream>
 #include "Acceptor.hpp"
 
-Acceptor::Acceptor(std::shared_ptr<Transport>& transport)
+Acceptor::Acceptor(const std::shared_ptr<ServerTransport>& transport)
 : Connection(transport)
 {
 	std::ostringstream ss;

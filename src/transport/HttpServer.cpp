@@ -16,7 +16,7 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.27
 
-// HttpTransport.cpp
+// HttpServer.cpp
 
 
 #include <sstream>
@@ -28,13 +28,13 @@
 #include "../utils/Packet.hpp"
 #include "../utils/Time.hpp"
 #include "http/HttpContext.hpp"
-#include "HttpTransport.hpp"
+#include "HttpServer.hpp"
 #include "../serialization/SObj.hpp"
 #include "http/HttpResponse.hpp"
 
-REGISTER_TRANSPORT(http, HttpTransport);
+REGISTER_TRANSPORT(http, HttpServer);
 
-bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
+bool HttpServer::processing(std::shared_ptr<Connection> connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
@@ -171,7 +171,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 				return true;
 			}
 
-			Transport::Transmitter transmitter =
+			ServerTransport::Transmitter transmitter =
 				[&connection]
 					(const char*data, size_t size, bool close){
 
@@ -214,7 +214,7 @@ bool HttpTransport::processing(std::shared_ptr<Connection> connection_)
 	return false;
 }
 
-void HttpTransport::bindHandler(const std::string& selector, Transport::Handler handler)
+void HttpServer::bindHandler(const std::string& selector, ServerTransport::Handler handler)
 {
 	if (_handlers.find(selector) != _handlers.end())
 	{
@@ -224,7 +224,7 @@ void HttpTransport::bindHandler(const std::string& selector, Transport::Handler 
 	_handlers.emplace(selector, handler);
 }
 
-Transport::Handler HttpTransport::getHandler(std::string subject)
+ServerTransport::Handler HttpServer::getHandler(std::string subject)
 {
 	do
 	{

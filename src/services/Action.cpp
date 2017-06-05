@@ -25,7 +25,7 @@
 
 uint64_t Action::_requestCount = 0;
 
-Action::Action(std::shared_ptr<Context>& context, const SVal* input, Transport::Transmitter transmitter)
+Action::Action(std::shared_ptr<Context>& context, const SVal* input, ServerTransport::Transmitter transmitter)
 : _context(context)
 , _input(input)
 , _data(dynamic_cast<const SObj *>(_input))

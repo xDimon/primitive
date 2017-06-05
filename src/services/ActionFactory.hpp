@@ -26,7 +26,7 @@
 #include <map>
 #include <memory>
 #include "Action.hpp"
-#include "../transport/Transport.hpp"
+#include "../transport/ServerTransport.hpp"
 
 class ActionFactory
 {
@@ -50,9 +50,9 @@ private:
 		return instance;
 	}
 
-	std::map<std::string, std::shared_ptr<Action>(*)(std::shared_ptr<Context>&, const SVal*, Transport::Transmitter)> _creators;
+	std::map<std::string, std::shared_ptr<Action>(*)(std::shared_ptr<Context>&, const SVal*, ServerTransport::Transmitter)> _creators;
 
 public:
-	static bool reg(const std::string& name, std::shared_ptr<Action>(* creator)(std::shared_ptr<Context>&, const SVal*, Transport::Transmitter));
-	static std::shared_ptr<Action> create(const std::string& name, std::shared_ptr<Context>& context, const SVal* input, Transport::Transmitter transmitter);
+	static bool reg(const std::string& name, std::shared_ptr<Action>(* creator)(std::shared_ptr<Context>&, const SVal*, ServerTransport::Transmitter));
+	static std::shared_ptr<Action> create(const std::string& name, std::shared_ptr<Context>& context, const SVal* input, ServerTransport::Transmitter transmitter);
 };

@@ -16,17 +16,17 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.10
 
-// PacketTransport.cpp
+// PacketServer.cpp
 
 
 #include <sstream>
-#include "PacketTransport.hpp"
+#include "PacketServer.hpp"
 #include "../net/TcpConnection.hpp"
 #include "../utils/Packet.hpp"
 
-REGISTER_TRANSPORT(packet, PacketTransport);
+REGISTER_TRANSPORT(packet, PacketServer);
 
-bool PacketTransport::processing(std::shared_ptr<Connection> connection_)
+bool PacketServer::processing(std::shared_ptr<Connection> connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
@@ -90,13 +90,13 @@ bool PacketTransport::processing(std::shared_ptr<Connection> connection_)
 	return false;
 }
 
-void PacketTransport::bindHandler(const std::string& selector, Transport::Handler handler)
+void PacketServer::bindHandler(const std::string& selector, ServerTransport::Handler handler)
 {
 	// TODO реализовать
 	throw std::runtime_error("Not implemented");
 }
 
-Transport::Handler PacketTransport::getHandler(std::string subject)
+ServerTransport::Handler PacketServer::getHandler(std::string subject)
 {
 	// TODO реализовать
 	throw std::runtime_error("Not implemented");

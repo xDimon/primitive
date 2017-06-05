@@ -25,6 +25,7 @@
 #include <map>
 #include "../net/Connection.hpp"
 #include "../configs/Setting.hpp"
+#include "ServerTransport.hpp"
 
 class TransportFactory
 {
@@ -45,9 +46,9 @@ private:
 		return instance;
 	}
 
-	std::map<std::string, std::shared_ptr<Transport>(*)(const Setting &setting)> _creators;
+	std::map<std::string, std::shared_ptr<ServerTransport>(*)(const Setting &setting)> _creators;
 
 public:
-	static bool reg(const std::string& name, std::shared_ptr<Transport>(*)(const Setting &setting));
-	static std::shared_ptr<Transport> create(const Setting& setting);
+	static bool reg(const std::string& name, std::shared_ptr<ServerTransport>(*)(const Setting &setting));
+	static std::shared_ptr<ServerTransport> create(const Setting& setting);
 };

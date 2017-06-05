@@ -26,7 +26,7 @@
 #include "../utils/Context.hpp"
 #include "../serialization/SVal.hpp"
 #include "../serialization/SObj.hpp"
-#include "../transport/Transport.hpp"
+#include "../transport/ServerTransport.hpp"
 
 class Action
 {
@@ -40,7 +40,7 @@ protected:
 	std::shared_ptr<Context>& _context;
 	const SVal* _input;
 	const SObj* _data;
-	Transport::Transmitter _transmitter;
+	ServerTransport::Transmitter _transmitter;
 	Id _requestId;
 	Id _lastConfirmedEvent;
 	Id _lastConfirmedResponse;
@@ -53,7 +53,7 @@ public:
 	Action(
 		std::shared_ptr<Context>& context,
 		const SVal* input,
-		Transport::Transmitter _transmitter
+		ServerTransport::Transmitter _transmitter
 	);
 	virtual ~Action();
 
@@ -101,7 +101,7 @@ private:                                                                        
     ActionName(                                                                                 \
 		std::shared_ptr<Context>& context,                                                      \
 		const SVal* input,                                                                      \
-		Transport::Transmitter transmitter                                                      \
+		ServerTransport::Transmitter transmitter                                                      \
 	)                                                                                           \
     : Action(context, input, transmitter)                                                       \
     {};                                                                                         \
@@ -116,7 +116,7 @@ private:                                                                        
     static auto create(                                                                         \
 		std::shared_ptr<Context>& context,                                                      \
 		const SVal* input,                                                                      \
-		Transport::Transmitter transmitter                                                      \
+		ServerTransport::Transmitter transmitter                                                      \
 	)                                                                                           \
     {                                                                                           \
         return std::shared_ptr<Action>(new ActionName(context, input, transmitter));            \

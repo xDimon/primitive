@@ -21,7 +21,7 @@
 
 #include "../net/SslAcceptor.hpp"
 #include "../thread/ThreadPool.hpp"
-#include "../transport/HttpTransport.hpp"
+#include "../transport/HttpServer.hpp"
 #include "Server.hpp"
 #include "../transport/TransportFactory.hpp"
 #include "../net/ConnectionManager.hpp"
@@ -114,7 +114,7 @@ void Server::wait()
 	ThreadPool::wait();
 }
 
-bool Server::addTransport(const std::string& name, std::shared_ptr<Transport>& transport)
+bool Server::addTransport(const std::string& name, std::shared_ptr<ServerTransport>& transport)
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	auto i = _transports.find(name);
@@ -127,7 +127,7 @@ bool Server::addTransport(const std::string& name, std::shared_ptr<Transport>& t
 	return true;
 }
 
-std::shared_ptr<Transport> Server::getTransport(const std::string& name)
+std::shared_ptr<ServerTransport> Server::getTransport(const std::string& name)
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	auto i = _transports.find(name);

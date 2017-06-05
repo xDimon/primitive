@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 #include "ConnectionManager.hpp"
-#include "../transport/Transport.hpp"
+#include "../transport/ServerTransport.hpp"
 
 SslConnection::SslConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in& sockaddr, std::shared_ptr<SSL_CTX> sslContext)
 : TcpConnection(transport, sock, sockaddr)

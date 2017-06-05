@@ -24,10 +24,12 @@
 
 #include "Connection.hpp"
 #include "../configs/Setting.hpp"
+#include "../utils/Named.hpp"
+#include "../transport/ServerTransport.hpp"
 
 class Acceptor : public Connection
 {
 public:
-	Acceptor(std::shared_ptr<Transport>& transport);
+	Acceptor(const std::shared_ptr<ServerTransport>& transport);
 	virtual ~Acceptor();
 };

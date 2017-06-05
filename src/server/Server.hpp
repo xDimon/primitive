@@ -24,7 +24,7 @@
 #include <memory>
 #include <map>
 #include "../configs/Config.hpp"
-#include "../transport/Transport.hpp"
+#include "../transport/ServerTransport.hpp"
 #include "../storage/DbConnectionPool.hpp"
 #include "../services/Service.hpp"
 #include <map>
@@ -42,7 +42,7 @@ private:
 
 	std::shared_ptr<DbConnectionPool> _database;
 
-	std::map<const std::string, std::shared_ptr<Transport>> _transports;
+	std::map<const std::string, std::shared_ptr<ServerTransport>> _transports;
 	std::map<const std::string, std::shared_ptr<Service>> _services;
 
 public:
@@ -72,9 +72,9 @@ public:
 		return "Primitive";
 	}
 
-	bool addTransport(const std::string& name, std::shared_ptr<Transport>& transport);
+	bool addTransport(const std::string& name, std::shared_ptr<ServerTransport>& transport);
 
-	std::shared_ptr<Transport> getTransport(const std::string& name);
+	std::shared_ptr<ServerTransport> getTransport(const std::string& name);
 
 	void enableTransport(const std::string& name);
 

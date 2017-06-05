@@ -20,10 +20,10 @@
 
 
 #include "TransportFactory.hpp"
-#include "HttpTransport.hpp"
+#include "HttpServer.hpp"
 #include "../net/SslAcceptor.hpp"
 
-bool TransportFactory::reg(const std::string& name, std::shared_ptr<Transport> (* creator)(const Setting&))
+bool TransportFactory::reg(const std::string& name, std::shared_ptr<ServerTransport> (* creator)(const Setting&))
 {
 	auto& factory = getInstance();
 
@@ -36,7 +36,7 @@ bool TransportFactory::reg(const std::string& name, std::shared_ptr<Transport> (
 	return true;
 }
 
-std::shared_ptr<Transport> TransportFactory::create(const Setting& setting)
+std::shared_ptr<ServerTransport> TransportFactory::create(const Setting& setting)
 {
 	std::string type;
 	try

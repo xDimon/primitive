@@ -16,7 +16,7 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.29
 
-// WsTransport.cpp
+// WebsocketServer.cpp
 
 
 #include <sstream>
@@ -29,12 +29,12 @@
 #include "../utils/SHA1.hpp"
 #include "../utils/Time.hpp"
 #include "websocket/WsContext.hpp"
-#include "WsTransport.hpp"
+#include "WebsocketServer.hpp"
 #include "http/HttpResponse.hpp"
 
-REGISTER_TRANSPORT(websocket, WsTransport);
+REGISTER_TRANSPORT(websocket, WebsocketServer);
 
-bool WsTransport::processing(std::shared_ptr<Connection> connection_)
+bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
@@ -114,7 +114,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			if (!handler)
 			{
 				HttpResponse(404, "WebSocket Upgrade Failure")
-					<< HttpHeader("X-Transport", "websocket", true)
+					<< HttpHeader("X-ServerTransport", "websocket", true)
 					<< HttpHeader("Connection", "Close")
 					<< "Not found service-Handler for uri " << context->getRequest()->uri().path()
 					>> *connection;
@@ -125,7 +125,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 			}
 
 			HttpResponse(101, "Web Socket Protocol Handshake")
-				<< HttpHeader("X-Transport", "websocket", true)
+				<< HttpHeader("X-ServerTransport", "websocket", true)
 				<< HttpHeader("Upgrade", "websocket")
 				<< HttpHeader("Connection", "Upgrade")
 				<< HttpHeader("Sec-WebSocket-Accept", acceptKey)
@@ -152,7 +152,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 		catch (std::runtime_error &exception)
 		{
 			HttpResponse(400)
-				<< HttpHeader("X-Transport", "websocket", true)
+				<< HttpHeader("X-ServerTransport", "websocket", true)
 				<< HttpHeader("Connection", "Close")
 				<< exception.what()
 				>> *connection;
@@ -225,7 +225,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 
 		if (context->getFrame()->opcode() == WsFrame::Opcode::Text || context->getFrame()->opcode() == WsFrame::Opcode::Binary)
 		{
-			Transport::Transmitter transmitter =
+			ServerTransport::Transmitter transmitter =
 				[&connection,opcode = context->getFrame()->opcode()]
 					(const char*data, size_t size, bool close){
 					WsFrame::send(connection, opcode, data, size);
@@ -293,7 +293,7 @@ bool WsTransport::processing(std::shared_ptr<Connection> connection_)
 	return true;
 }
 
-void WsTransport::bindHandler(const std::string& selector, Transport::Handler handler)
+void WebsocketServer::bindHandler(const std::string& selector, ServerTransport::Handler handler)
 {
 	if (_handlers.find(selector) != _handlers.end())
 	{
@@ -303,7 +303,7 @@ void WsTransport::bindHandler(const std::string& selector, Transport::Handler ha
 	_handlers.emplace(selector, handler);
 }
 
-Transport::Handler WsTransport::getHandler(std::string subject)
+ServerTransport::Handler WebsocketServer::getHandler(std::string subject)
 {
 	do
 	{

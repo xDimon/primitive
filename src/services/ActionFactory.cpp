@@ -21,7 +21,7 @@
 
 #include "ActionFactory.hpp"
 
-bool ActionFactory::reg(const std::string& name, std::shared_ptr<Action>(* creator)(std::shared_ptr<Context>&, const SVal*, Transport::Transmitter))
+bool ActionFactory::reg(const std::string& name, std::shared_ptr<Action>(* creator)(std::shared_ptr<Context>&, const SVal*, ServerTransport::Transmitter))
 {
 	auto& factory = getInstance();
 
@@ -34,7 +34,7 @@ bool ActionFactory::reg(const std::string& name, std::shared_ptr<Action>(* creat
 	return true;
 }
 
-std::shared_ptr<Action> ActionFactory::create(const std::string& name, std::shared_ptr<Context>& context, const SVal* input, Transport::Transmitter transmitter)
+std::shared_ptr<Action> ActionFactory::create(const std::string& name, std::shared_ptr<Context>& context, const SVal* input, ServerTransport::Transmitter transmitter)
 {
 	auto& factory = getInstance();
 

@@ -28,6 +28,7 @@
 #include <cstring>
 #include <unistd.h>
 #include "../transport/Transport.hpp"
+#include "../transport/ServerTransport.hpp"
 
 TcpConnection::TcpConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr)
 : Connection(transport)

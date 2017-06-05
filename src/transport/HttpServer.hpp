@@ -14,18 +14,18 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.29
+// File created on: 2017.03.27
 
-// WsTransport.hpp
+// HttpServer.hpp
 
 
 #pragma once
 
-#include "Transport.hpp"
+#include "ServerTransport.hpp"
 
-class WsTransport : public Transport
+class HttpServer : public ServerTransport
 {
-	DECLARE_TRANSPORT(WsTransport);
+	DECLARE_TRANSPORT(HttpServer);
 
-	std::map<std::string, Transport::Handler> _handlers;
+	std::map<std::string, ServerTransport::Handler> _handlers;
 };

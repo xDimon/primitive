@@ -16,14 +16,14 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.10
 
-// PacketTransport.hpp
+// PacketServer.hpp
 
 
 #pragma once
 
-#include "Transport.hpp"
+#include "ServerTransport.hpp"
 
-class PacketTransport : public Transport
+class PacketServer : public ServerTransport
 {
-	DECLARE_TRANSPORT(PacketTransport);
+	DECLARE_TRANSPORT(PacketServer);
 };

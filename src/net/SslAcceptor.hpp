@@ -32,12 +32,12 @@ private:
 	std::shared_ptr<SSL_CTX>& _sslContext;
 
 public:
-	SslAcceptor(std::shared_ptr<Transport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext);
+	SslAcceptor(std::shared_ptr<ServerTransport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext);
 	virtual ~SslAcceptor() {};
 
 	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
 
-	static std::shared_ptr<Connection> create(std::shared_ptr<Transport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext)
+	static std::shared_ptr<Connection> create(std::shared_ptr<ServerTransport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext)
 	{
 		return std::make_shared<SslAcceptor>(transport, host, port, sslContext);
 	}

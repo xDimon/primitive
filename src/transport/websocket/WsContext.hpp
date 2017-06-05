@@ -24,7 +24,7 @@
 #include "../../utils/Context.hpp"
 #include "../http/HttpRequest.hpp"
 #include "../../net/TcpConnection.hpp"
-#include "../../transport/Transport.hpp"
+#include "../ServerTransport.hpp"
 
 #include "WsFrame.hpp"
 #include <memory>
@@ -36,7 +36,7 @@ private:
 	bool _established;
 	std::shared_ptr<TcpConnection> _connection;
 	std::shared_ptr<WsFrame> _frame;
-	Transport::Handler _handler;
+	ServerTransport::Handler _handler;
 
 public:
 	WsContext(std::shared_ptr<TcpConnection> connection)
@@ -69,11 +69,11 @@ public:
 		return _request;
 	}
 
-	void setHandler(Transport::Handler handler)
+	void setHandler(ServerTransport::Handler handler)
 	{
 		_handler = handler;
 	}
-	void handle(const char*data, size_t size, Transport::Transmitter transmitter)
+	void handle(const char*data, size_t size, ServerTransport::Transmitter transmitter)
 	{
 		_handler(ptr(), data, size, transmitter);
 	}
