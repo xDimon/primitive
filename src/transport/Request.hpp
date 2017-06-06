@@ -75,7 +75,7 @@ public:
 					connector->addConnectedHandler([this](std::shared_ptr<TcpConnection> connection){
 						Log("_").debug("connected");
 						_state = State::CONNECTED;
-						connection->addCompleteHandler([this](){
+						connection->addCompleteHandler([this](const std::shared_ptr<Context>& context){
 							Log("_").debug("done");
 							_state = State::DONE;
 							operator()();

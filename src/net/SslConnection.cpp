@@ -28,12 +28,11 @@
 #include "ConnectionManager.hpp"
 #include "../transport/ServerTransport.hpp"
 
-SslConnection::SslConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in& sockaddr, std::shared_ptr<SSL_CTX> sslContext)
-: TcpConnection(transport, sock, sockaddr)
+SslConnection::SslConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in& sockaddr, std::shared_ptr<SSL_CTX> sslContext, bool outgoing)
+: TcpConnection(transport, sock, sockaddr, outgoing)
+, _sslContext(sslContext)
 , _sslEstablished(false)
 {
-	_sslContext = sslContext;
-
 	_sslConnect = SSL_new(_sslContext.get());
 	SSL_set_fd(_sslConnect, _sock);
 }
@@ -44,6 +43,41 @@ SslConnection::~SslConnection()
 	SSL_free(_sslConnect);
 
 	shutdown(_sock, SHUT_RD);
+}
+
+void SslConnection::watch(epoll_event &ev)
+{
+	ev.data.ptr = this;
+	ev.events = 0;
+
+	ev.events |= EPOLLET; // Ждем появления НОВЫХ событий
+
+	if (_closed)
+	{
+		return;
+	}
+
+	ev.events |= EPOLLERR;
+
+	if (!_noRead)
+	{
+		ev.events |= EPOLLIN | EPOLLRDNORM;
+	}
+
+	ev.events |= EPOLLRDHUP;
+	ev.events |= EPOLLHUP;
+
+	if (!_error)
+	{
+		if (_outBuff.dataLen() > 0)
+		{
+			ev.events |= EPOLLOUT | EPOLLWRNORM;
+		}
+		else if (!_sslEstablished && _outgoing)
+		{
+			ev.events |= EPOLLOUT | EPOLLWRNORM;
+		}
+	}
 }
 
 bool SslConnection::processing()
@@ -60,7 +94,9 @@ bool SslConnection::processing()
 
 		if (!_sslEstablished)
 		{
-			int n = SSL_accept(_sslConnect);
+			int n = _outgoing
+					? SSL_connect(_sslConnect)
+					: SSL_accept(_sslConnect);
 			if(n <= 0)
 			{
 				auto e = SSL_get_error(_sslConnect, n);

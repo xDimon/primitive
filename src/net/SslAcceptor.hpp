@@ -28,8 +28,7 @@
 class SslAcceptor : public TcpAcceptor
 {
 private:
-	std::string _name;
-	std::shared_ptr<SSL_CTX>& _sslContext;
+	std::shared_ptr<SSL_CTX> _sslContext;
 
 public:
 	SslAcceptor(std::shared_ptr<ServerTransport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext);

@@ -31,11 +31,11 @@
 #include <netinet/in.h>
 #include <openssl/ssl.h>
 
-class SslConnection: public TcpConnection
+class SslConnection : public TcpConnection
 {
 private:
 	std::shared_ptr<SSL_CTX> _sslContext;
-	SSL *_sslConnect;
+	SSL* _sslConnect;
 
 	bool _sslEstablished;
 
@@ -45,10 +45,14 @@ private:
 public:
 	SslConnection() = delete;
 	SslConnection(const SslConnection&) = delete;
-	void operator= (SslConnection const&) = delete;
+	void operator=(SslConnection const&) = delete;
 
-	SslConnection(std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, std::shared_ptr<SSL_CTX> sslContext);
+	SslConnection(
+		std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, std::shared_ptr<SSL_CTX> sslContext, bool isOutgoing
+	);
 	virtual ~SslConnection();
 
-	virtual bool processing();
+	virtual void watch(epoll_event& ev) override;
+
+	virtual bool processing() override;
 };

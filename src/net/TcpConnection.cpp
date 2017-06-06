@@ -30,10 +30,13 @@
 #include "../transport/Transport.hpp"
 #include "../transport/ServerTransport.hpp"
 
-TcpConnection::TcpConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr)
+const int TcpConnection::timeout;
+
+TcpConnection::TcpConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr, bool outgoing)
 : Connection(transport)
 , ReaderConnection()
 , WriterConnection()
+, _outgoing(outgoing)
 , _noRead(false)
 , _noWrite(false)
 , _error(false)
@@ -273,7 +276,7 @@ void TcpConnection::close()
 	_noRead = true;
 }
 
-void TcpConnection::addCompleteHandler(std::function<void()> handler)
+void TcpConnection::addCompleteHandler(std::function<void(const std::shared_ptr<Context>&)> handler)
 {
 	_completeHandler = std::move(handler);
 }

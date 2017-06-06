@@ -32,6 +32,9 @@ struct sockaddr_in;
 
 class TcpConnector : public Connector
 {
+public:
+	static const int timeout = 60;
+
 protected:
 	std::string _host;
 	std::uint16_t _port;
@@ -47,12 +50,12 @@ private:
 	std::function<void(std::shared_ptr<TcpConnection>)> _connectedHandler;
 	std::function<void()> _errorHandler;
 
-	void createConnection(int sock, const sockaddr_in& cliaddr);
+	virtual void createConnection(int sock, const sockaddr_in& cliaddr);
 
 public:
 	TcpConnector(
 		std::shared_ptr<ClientTransport>& transport,
-		std::string& host,
+		std::string host,
 		std::uint16_t port
 	);
 	virtual ~TcpConnector();

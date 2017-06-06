@@ -40,14 +40,16 @@
 #include "../utils/ShutdownManager.hpp"
 #include "../thread/ThreadPool.hpp"
 
+const int TcpConnector::timeout;
+
 TcpConnector::~TcpConnector()
 {
 	_log.debug("TcpConnector '%s' destroyed", name().c_str());
 }
 
-TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::string& hostname, std::uint16_t port)
+TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::string hostname, std::uint16_t port)
 : Connector(transport)
-, _host(hostname)
+, _host(std::move(hostname))
 , _port(port)
 , _buff( reinterpret_cast<char*>(malloc(1024)))
 , _buffSize(1024)
@@ -63,7 +65,7 @@ TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::str
 	_closed = false;
 
 	std::ostringstream ss;
-	ss << "[" << _sock << "][" << hostname << ":" << port << "]";
+	ss << "[" << _sock << "][" << _host << ":" << port << "]";
 	_name = std::move(ss.str());
 
 	const int val = 1;
@@ -77,7 +79,7 @@ TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::str
 	int hres = 0;
 
 	// Список адресов по хосту
-	while ((hres = gethostbyname_r(hostname.c_str(), &_hostbuf, _buff, _buffSize, &_hostptr, &herr)) == ERANGE)
+	while ((hres = gethostbyname_r(_host.c_str(), &_hostbuf, _buff, _buffSize, &_hostptr, &herr)) == ERANGE)
 	{
 		// realloc
 		_buffSize <<= 1;
@@ -103,15 +105,15 @@ TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::str
 		switch (herr)
 		{
 			case HOST_NOT_FOUND:
-				throw std::runtime_error(std::string("Host not found: ") + hostname);
+				throw std::runtime_error(std::string("Host not found: ") + _host);
 			case NO_ADDRESS:
-				throw std::runtime_error(std::string("The requested name does not have an IP address: ") + hostname);
+				throw std::runtime_error(std::string("The requested name does not have an IP address: ") + _host);
 			case NO_RECOVERY:
-				throw std::runtime_error(std::string("A non-recoverable name server error occurred while resolving ") + hostname);
+				throw std::runtime_error(std::string("A non-recoverable name server error occurred while resolving ") + _host);
 			case TRY_AGAIN:
-				throw std::runtime_error(std::string("A temporary error occurred on an authoritative name server while resolving ") + hostname);
+				throw std::runtime_error(std::string("A temporary error occurred on an authoritative name server while resolving ") + _host);
 			default:
-				throw std::runtime_error(std::string("Unknown error code from gethostbyname_r for ") + hostname);
+				throw std::runtime_error(std::string("Unknown error code from gethostbyname_r for ") + _host);
 		}
 	}
 
@@ -135,7 +137,7 @@ TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::str
 		again:
 		if (!connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)))
 		{
-			throw std::runtime_error(std::string("Too fast connect to ") + hostname);
+			throw std::runtime_error(std::string("Too fast connect to ") + _host);
 //
 //			// Подключились сразу?!
 //			createConnection(_sock, _sockaddr);
@@ -157,7 +159,7 @@ TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::str
 		}
 	}
 
-	throw std::runtime_error(std::string("Can't connect to ") + hostname + ": " + strerror(errno));
+	throw std::runtime_error(std::string("Can't connect to ") + _host + ": " + strerror(errno));
 
 	end:
 
@@ -271,10 +273,10 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 	std::shared_ptr<Transport> transport = _transport.lock();
 	if (!transport)
 	{
-		return; // TODO реализовать клиентский транспорт
+		return;
 	}
 
-	auto connection = std::make_shared<TcpConnection>(transport, sock, cliaddr);
+	auto connection = std::make_shared<TcpConnection>(transport, sock, cliaddr, true);
 
 	_connectedHandler(connection);
 
@@ -285,13 +287,13 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 			{
 				return;
 			}
-			if (std::chrono::steady_clock::now() > connection->aTime() + std::chrono::seconds(10))
+			if (std::chrono::steady_clock::now() > connection->aTime() + std::chrono::seconds(timeout))
 			{
 				Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
 				connection->close();
 			}
 		}
-//		, std::chrono::seconds(10)
+		, std::chrono::seconds(timeout)
 	);
 
 	ConnectionManager::add(connection);

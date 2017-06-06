@@ -29,7 +29,12 @@
 
 class TcpConnection: public Connection, public ReaderConnection, public WriterConnection
 {
+public:
+	static const int timeout = 900;
+
 protected:
+	bool _outgoing;
+
 	sockaddr_in _sockaddr;
 
 	/// Данных больше не будет
@@ -50,16 +55,15 @@ protected:
 
 	std::chrono::steady_clock::time_point _accessTime;
 
-	std::function<void()> _completeHandler;
+	std::function<void(std::shared_ptr<Context>&)> _completeHandler;
 	std::function<void()> _errorHandler;
-
 
 public:
 	TcpConnection() = delete;
 	TcpConnection(const TcpConnection&) = delete;
 	void operator= (TcpConnection const&) = delete;
 
-	TcpConnection(std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr);
+	TcpConnection(std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
 	virtual ~TcpConnection();
 
 	const std::chrono::steady_clock::time_point& aTime() const
@@ -76,8 +80,13 @@ public:
 
 	virtual bool processing();
 
-	void addCompleteHandler(std::function<void()>);
+	void addCompleteHandler(std::function<void(const std::shared_ptr<Context>&)>);
 	void addErrorHandler(std::function<void()>);
+
+	void complete()
+	{
+		_completeHandler(_context);
+	}
 
 	void close();
 };
