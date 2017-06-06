@@ -32,9 +32,3 @@ ClientTransport::ClientTransport()
 ClientTransport::~ClientTransport()
 {
 }
-
-bool ClientTransport::processing(std::shared_ptr<Connection> connection)
-{
-	throw "=)";
-	return false;
-}

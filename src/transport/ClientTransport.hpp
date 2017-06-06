@@ -30,6 +30,4 @@ class ClientTransport : public Shareable<ClientTransport>, public Transport
 public:
 	ClientTransport();
 	virtual ~ClientTransport();
-
-	virtual bool processing(std::shared_ptr<Connection> connection);
 };
