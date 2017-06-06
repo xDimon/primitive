@@ -172,7 +172,7 @@ void TcpConnector::watch(epoll_event& ev)
 	ev.events |= EPOLLET; // Ждем появления НОВЫХ событий
 
 	ev.events |= EPOLLERR;
-	ev.events |= EPOLLIN;
+	ev.events |= EPOLLOUT;
 }
 
 bool TcpConnector::processing()
@@ -180,8 +180,8 @@ bool TcpConnector::processing()
 	_log.debug("Processing on %s", name().c_str());
 
 	std::lock_guard<std::mutex> guard(_mutex);
-	for (;;)
-	{
+//	for (;;)
+//	{
 //		if (ShutdownManager::shutingdown())
 //		{
 //			_log.debug("Interrupt processing on %s (shutdown)", name().c_str());
@@ -208,13 +208,15 @@ bool TcpConnector::processing()
 				{
 					createConnection(_sock, _sockaddr);
 					_sock = -1;
+					return true;
 				}
 				catch (std::exception exception)
 				{
+					_errorHandler();
 					shutdown(_sock, SHUT_RDWR);
 					::close(_sock);
+					return false;
 				}
-				return false;
 			}
 		}
 
@@ -256,7 +258,12 @@ bool TcpConnector::processing()
 		_log.debug("End processing on %s (was failure)", name().c_str());
 
 		ConnectionManager::remove(this->ptr());
-	}
+
+		_errorHandler();
+		shutdown(_sock, SHUT_RDWR);
+		::close(_sock);
+		return false;
+//	}
 }
 
 void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
@@ -264,10 +271,12 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 	std::shared_ptr<Transport> transport = _transport.lock();
 	if (!transport)
 	{
-		return;
+		return; // TODO реализовать клиентский транспорт
 	}
 
 	auto connection = std::make_shared<TcpConnection>(transport, sock, cliaddr);
+
+	_connectedHandler(connection);
 
 	ThreadPool::enqueue(
 		[wp = std::weak_ptr<Connection>(connection->ptr())]() {
@@ -281,7 +290,19 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 				Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
 				connection->close();
 			}
-		}, std::chrono::seconds(10));
+		}
+//		, std::chrono::seconds(10)
+	);
 
-	ConnectionManager::add(connection->ptr());
+	ConnectionManager::add(connection);
+}
+
+void TcpConnector::addConnectedHandler(std::function<void(std::shared_ptr<TcpConnection>)> handler)
+{
+	_connectedHandler = std::move(handler);
+}
+
+void TcpConnector::addErrorHandler(std::function<void()> handler)
+{
+	_errorHandler = std::move(handler);
 }

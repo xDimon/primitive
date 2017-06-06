@@ -50,6 +50,10 @@ protected:
 
 	std::chrono::steady_clock::time_point _accessTime;
 
+	std::function<void()> _completeHandler;
+	std::function<void()> _errorHandler;
+
+
 public:
 	TcpConnection() = delete;
 	TcpConnection(const TcpConnection&) = delete;
@@ -71,6 +75,9 @@ public:
 	virtual void watch(epoll_event &ev);
 
 	virtual bool processing();
+
+	void addCompleteHandler(std::function<void()>);
+	void addErrorHandler(std::function<void()>);
 
 	void close();
 };

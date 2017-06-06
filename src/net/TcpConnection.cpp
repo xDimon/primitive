@@ -272,3 +272,13 @@ void TcpConnection::close()
 	shutdown(_sock, SHUT_RD);
 	_noRead = true;
 }
+
+void TcpConnection::addCompleteHandler(std::function<void()> handler)
+{
+	_completeHandler = std::move(handler);
+}
+
+void TcpConnection::addErrorHandler(std::function<void()> handler)
+{
+	_errorHandler = std::move(handler);
+}

@@ -23,6 +23,7 @@
 
 
 #include "Connector.hpp"
+#include "TcpConnection.hpp"
 
 #include <mutex>
 #include <netdb.h>
@@ -41,18 +42,27 @@ private:
 	size_t _buffSize;
 	hostent _hostbuf;
 	hostent* _hostptr;
-	char **_addrIterator;
+	char** _addrIterator;
 	sockaddr_in _sockaddr;
+	std::function<void(std::shared_ptr<TcpConnection>)> _connectedHandler;
+	std::function<void()> _errorHandler;
+
+	void createConnection(int sock, const sockaddr_in& cliaddr);
 
 public:
-	TcpConnector(std::shared_ptr<ClientTransport>& transport, std::string& host, std::uint16_t port);
+	TcpConnector(
+		std::shared_ptr<ClientTransport>& transport,
+		std::string& host,
+		std::uint16_t port
+	);
 	virtual ~TcpConnector();
 
-	virtual void watch(epoll_event& ev);
+	virtual void watch(epoll_event& ev) override;
 
-	virtual void createConnection(int sock, const sockaddr_in& cliaddr);
+	virtual bool processing() override;
 
-	virtual bool processing();
+	void addConnectedHandler(std::function<void(std::shared_ptr<TcpConnection>)>);
+	void addErrorHandler(std::function<void()>);
 
 	static std::shared_ptr<TcpConnector> create(std::shared_ptr<ClientTransport>& transport, std::string& host, std::uint16_t port)
 	{
