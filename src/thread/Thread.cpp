@@ -26,7 +26,6 @@
 
 #include <cstring>
 #include <sys/mman.h>
-#include <signal.h>
 #include <ucontext.h>
 #include <climits>
 
@@ -34,7 +33,7 @@ Thread::Thread(std::function<void()> function)
 : _id(ThreadPool::genThreadId())
 , _log("Thread")
 , _function(std::move(function))
-, _thread([this](){ Thread::run(this); })
+, _thread([this]() { Thread::run(this); })
 , _finished(false)
 {
 	_log.debug("Thread 'Worker_%zu' created", _id);
@@ -45,12 +44,12 @@ Thread::~Thread()
 	_log.debug("Thread 'Worker_%zu' destroyed", _id);
 }
 
-void fake(Thread *thread)
+void fake(Thread* thread)
 {
 	thread->_function();
 }
 
-void Thread::run(Thread *thread)
+void Thread::run(Thread* thread)
 {
 	{
 		char buff[32];
@@ -94,14 +93,16 @@ void Thread::reenter()
 	context.uc_link = &retContext;
 	context.uc_stack.ss_flags = 0;
 	context.uc_stack.ss_size = PTHREAD_STACK_MIN;
-	context.uc_stack.ss_sp = mmap(0, context.uc_stack.ss_size,
-            PROT_READ | PROT_WRITE | PROT_EXEC,
-            MAP_PRIVATE | MAP_ANON, -1, 0);
+	context.uc_stack.ss_sp = mmap(
+		0, context.uc_stack.ss_size,
+		PROT_READ | PROT_WRITE | PROT_EXEC,
+		MAP_PRIVATE | MAP_ANON, -1, 0
+	);
 
 	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 1, this);
 //	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 0);
 
-//	_log.debug("get ret context %p", &retContext);
+	_log.debug("get ret context %p", &retContext);
 
 	volatile bool first = true;
 
@@ -110,19 +111,19 @@ void Thread::reenter()
 	if (first)
 	{
 		first = false;
-//		_log.debug("first set context %p", &context);
+		_log.debug("first set context %p", &context);
 
 		if (setcontext(&context))
 		{
 			throw std::runtime_error("Can't change context");
 		}
 
-//		_log.debug("return from first context %p", &context);
+		_log.debug("return from first context %p", &context);
 	}
 
-//	_log.debug("free stack of first context %p", &context);
+	_log.debug("free stack of first context %p", &context);
 
-	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
-	context.uc_stack.ss_sp = nullptr;
-	context.uc_stack.ss_size = 0;
+//	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
+//	context.uc_stack.ss_sp = nullptr;
+//	context.uc_stack.ss_size = 0;
 }

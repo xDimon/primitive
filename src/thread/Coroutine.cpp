@@ -52,25 +52,17 @@ void Coroutine(Task& task)
 			// создать таск связанный с сохраненным контекстом и положить в очередь
 			ThreadPool::enqueue(
 
-//				[&]() {
-//					std::lock_guard<std::mutex> lockGuardTask(orderMutex);
-//
-//					Log log("CoroutineTask");
-//
-//					log.debug("Begin coroutine's task");
-//
-//					if (function())
-//					{
-//						Log log("CoroutineTask");
-//
-//						log.debug("End coroutine's task");
-//
-//						log.debug("Change context for continue prev thread %p", &mainContext);
-////							std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//					}
-//				}
+				[&]() {
+					std::lock_guard<std::mutex> lockGuardTask(orderMutex);
 
-				task
+					Log log("CoroutineTask");
+
+					log.debug("Begin coroutine's task");
+
+					task();
+
+					log.debug("End coroutine's task");
+				}
 			);
 
 			log.debug("Switch context (detach coroutine)");
@@ -78,6 +70,7 @@ void Coroutine(Task& task)
 
 		// переключиться на контекст входа в поток
 		Thread::self()->reenter();
+		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 	else
 	{
@@ -85,7 +78,9 @@ void Coroutine(Task& task)
 
 		log.debug("Switch context (reattach coroutine and continue)");
 
-		munmap(tmpContext.uc_stack.ss_sp, tmpContext.uc_stack.ss_size);
+//		munmap(tmpContext.uc_stack.ss_sp, tmpContext.uc_stack.ss_size);
+//		tmpContext.uc_stack.ss_sp = nullptr;
+//		tmpContext.uc_stack.ss_size = 0;
 	}
 
 	return;
