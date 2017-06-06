@@ -23,5 +23,6 @@
 
 
 #include <functional>
+#include "Task.hpp"
 
-void Coroutine(std::function<void()> function);
+void Coroutine(Task& task);

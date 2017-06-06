@@ -19,12 +19,16 @@
 // Task.cpp
 
 
+#include <ucontext.h>
 #include "Task.hpp"
+#include "../log/Log.hpp"
 
 Task::Task()
 : _function()
 , _until(Time::min())
 , _immediately(true)
+, _tmpContext(nullptr)
+, _mainContext(nullptr)
 {
 }
 
@@ -32,6 +36,8 @@ Task::Task(Func function)
 : _function(std::move(function))
 , _until(Time::min())
 , _immediately(true)
+, _tmpContext(nullptr)
+, _mainContext(nullptr)
 {
 }
 
@@ -39,6 +45,8 @@ Task::Task(Func function, Duration delay)
 : _function(std::move(function))
 , _until(Clock::now() + delay)
 , _immediately(false)
+, _tmpContext(nullptr)
+, _mainContext(nullptr)
 {
 }
 
@@ -46,6 +54,8 @@ Task::Task(Func function, Time time)
 : _function(std::move(function))
 , _until(time)
 , _immediately(false)
+, _tmpContext(nullptr)
+, _mainContext(nullptr)
 {
 }
 
@@ -53,6 +63,8 @@ Task::Task(Task const &&that)
 : _function(std::move(that._function))
 , _until(std::move(that._until))
 , _immediately(that._immediately)
+, _tmpContext(that._tmpContext)
+, _mainContext(that._mainContext)
 {
 }
 
@@ -61,12 +73,13 @@ void Task::operator=(Task const &&that)
 	_function = std::move(that._function);
 	_until = std::move(that._until);
 	_immediately = that._immediately;
+	_tmpContext = that._tmpContext;
+	_mainContext = that._mainContext;
 }
 
 bool Task::operator()()
 {
-	auto now = Clock::now();
-	if (!_immediately && now < _until)
+	if (!_immediately && Clock::now() < _until)
 	{
 		return false;
 	}
@@ -89,5 +102,29 @@ bool Task::operator<(const Task& that) const
 	else
 	{
 		return this->_until > that._until;
+	}
+}
+
+void Task::saveContext(ucontext_t* tmpContext, ucontext_t* mainContext)
+{
+	_tmpContext = tmpContext;
+	_mainContext = mainContext;
+}
+
+void Task::restoreContext() const
+{
+	if (!_tmpContext || !_mainContext)
+	{
+		return;
+	}
+
+	Log log("Coroutine");
+	log.debug("Change context for continue prev thread %p", _mainContext);
+//	std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+	// при завершении таска вернуться в связанный контекст, и удалить предыдущий
+	if (swapcontext(_tmpContext, _mainContext))
+	{
+		throw std::runtime_error("Can't change context");
 	}
 }

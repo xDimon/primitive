@@ -24,6 +24,7 @@
 
 #include <functional>
 #include <chrono>
+#include <sys/ucontext.h>
 
 class Task
 {
@@ -37,6 +38,10 @@ private:
 	Func _function;
 	Time _until;
 	bool _immediately;
+
+protected:
+	ucontext_t* _tmpContext;
+	ucontext_t* _mainContext;
 
 	Task(Task const &) = delete;
 	void operator=(Task const &) = delete;
@@ -54,10 +59,13 @@ public:
 
 	bool operator<(const Task &that) const;
 
-	bool operator()();
+	virtual bool operator()();
 
 	const Time& until() const
 	{
 		return _until;
 	}
+
+	void saveContext(ucontext_t* tmpContext, ucontext_t* mainContext);
+	void restoreContext() const;
 };

@@ -24,6 +24,8 @@
 #include <mutex>
 #include "../log/Log.hpp"
 
+#define WITH_COROUTINE
+
 class Thread
 {
 	friend void fake(Thread *thread);

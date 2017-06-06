@@ -51,6 +51,7 @@ public:
 
 	static size_t genThreadId();
 
+	static void enqueue(Task& task);
 	static void enqueue(Task&& task);
 	static void enqueue(Task::Func function);
 	static void enqueue(Task::Func function, Task::Duration delay);

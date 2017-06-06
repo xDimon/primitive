@@ -24,13 +24,16 @@
 #include "Coroutine.hpp"
 #include "ThreadPool.hpp"
 
-void Coroutine(std::function<void()> function)
+void Coroutine(Task& task)
 {
 	std::mutex orderMutex;
 	ucontext_t mainContext;
 	ucontext_t tmpContext;
 
 	volatile bool first = true;
+
+	// сохранить указатели на контексты
+	task.saveContext(&tmpContext, &mainContext);
 
 	// сохранить текущий контекст
 	getcontext(&mainContext);
@@ -39,7 +42,6 @@ void Coroutine(std::function<void()> function)
 	if (first)
 	{
 		first = false;
-
 		{
 			Log log("Coroutine");
 
@@ -49,27 +51,26 @@ void Coroutine(std::function<void()> function)
 
 			// создать таск связанный с сохраненным контекстом и положить в очередь
 			ThreadPool::enqueue(
-				[&]()
-				{
-					{
-						std::lock_guard<std::mutex> lockGuardTask(orderMutex);
 
-						Log log("CoroutineTask");
+//				[&]() {
+//					std::lock_guard<std::mutex> lockGuardTask(orderMutex);
+//
+//					Log log("CoroutineTask");
+//
+//					log.debug("Begin coroutine's task");
+//
+//					if (function())
+//					{
+//						Log log("CoroutineTask");
+//
+//						log.debug("End coroutine's task");
+//
+//						log.debug("Change context for continue prev thread %p", &mainContext);
+////							std::this_thread::sleep_for(std::chrono::milliseconds(50));
+//					}
+//				}
 
-						log.debug("Begin coroutine's task");
-						function();
-						log.debug("End coroutine's task");
-
-						log.debug("Change context for continue prev thread %p", &mainContext);
-//						std::this_thread::sleep_for(std::chrono::milliseconds(50));
-					}
-
-					// при завершении таска вернуться в связанный контекст, и удалить предыдущий
-					if (swapcontext(&tmpContext, &mainContext))
-					{
-						throw std::runtime_error("Can't change context");
-					}
-				}
+				task
 			);
 
 			log.debug("Switch context (detach coroutine)");

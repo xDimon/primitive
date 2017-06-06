@@ -91,7 +91,6 @@ void ThreadPool::createThread()
 {
 	std::function<void()> threadLoop = [this]()
 	{
-		Task task;
 		Task::Time waitUntil = std::chrono::steady_clock::now() + std::chrono::hours(24);
 //								std::chrono::time_point<std::chrono::steady_clock>::max();
 
@@ -113,6 +112,8 @@ void ThreadPool::createThread()
 
 		for (;;)
 		{
+			Task task;
+
 			log.trace("Wait task on thread");
 
 			{
@@ -166,8 +167,8 @@ void ThreadPool::createThread()
 			}
 			else
 			{
-				waitUntil = std::chrono::steady_clock::now();
-//							std::chrono::time_point<std::chrono::steady_clock>::min();
+//				waitUntil = std::chrono::steady_clock::now();
+//				std::chrono::time_point<std::chrono::steady_clock>::min();
 			}
 			log.debug("End execution task on thread");
 		}
@@ -231,6 +232,16 @@ Thread *ThreadPool::getCurrent()
 		throw std::runtime_error("Unrecognized thread");
 	}
 	return i->second;
+}
+
+void ThreadPool::enqueue(Task& task)
+{
+	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
+
+	getInstance()._tasks.emplace(std::move(task));
+
+//	getInstance()._log.trace("  Wake up One worker (%d)", __LINE__);
+	getInstance()._workersWakeupCondition.notify_one();
 }
 
 void ThreadPool::enqueue(Task&& task)

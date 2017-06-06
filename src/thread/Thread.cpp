@@ -66,7 +66,7 @@ void Thread::run(Thread *thread)
 		thread->_log.debug("Thread 'Worker_%zu' start", thread->_id);
 	}
 
-#if WITH_COROUTINE
+#ifdef WITH_COROUTINE
 	thread->reenter();
 #else
 	fake(thread);
