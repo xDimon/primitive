@@ -14,42 +14,35 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.28
+// File created on: 2017.06.06
 
-// HttpContext.hpp
+// HttpClient.hpp
 
 
 #pragma once
 
-#include "../../utils/Context.hpp"
-#include "HttpRequest.hpp"
-#include "HttpResponse.hpp"
-#include <memory>
 
-class HttpContext: public Context
+#include "ClientTransport.hpp"
+#include "ServerTransport.hpp"
+
+class HttpClient : public ClientTransport
 {
 private:
-	std::shared_ptr<HttpRequest> _request;
-	std::shared_ptr<HttpResponse> _response;
+	HttpClient(const HttpClient&) = delete;
+	void operator=(HttpClient const&)= delete;
 
 public:
-	virtual ~HttpContext() {};
-
-	void setRequest(std::shared_ptr<HttpRequest>& request)
+	HttpClient()
+	: ClientTransport()
 	{
-		_request = request;
-	}
-	std::shared_ptr<HttpRequest>& getRequest()
-	{
-		return _request;
+		_log.setName("HttpClient");
+		_log.debug("Transport '%s' created", name().c_str());
 	}
 
-	void setResponse(std::shared_ptr<HttpResponse>& response)
+	virtual ~HttpClient()
 	{
-		_response = response;
+		_log.debug("Transport '%s' destroyed", name().c_str());
 	}
-	std::shared_ptr<HttpResponse>& getResponse()
-	{
-		return _response;
-	}
+
+	virtual bool processing(std::shared_ptr<Connection> connection) override;
 };
