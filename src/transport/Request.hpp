@@ -29,14 +29,18 @@
 #include "../net/TcpConnector.hpp"
 #include "../net/ConnectionManager.hpp"
 #include "../thread/Task.hpp"
+#include "HttpClient.hpp"
+#include "http/HttpContext.hpp"
+#include "../net/SslConnector.hpp"
+#include "../utils/SslHelper.hpp"
 
 class Request: public Task
 {
 private:
 	std::shared_ptr<ClientTransport> _clientTransport;
-	std::string _host;
-	int _port;
+	HttpUri _uri;
 	std::string _answer;
+	std::string _error;
 
 	enum class State
 	{
@@ -50,17 +54,29 @@ private:
 	} _state;
 
 public:
-	Request(std::string host, int port)
+	Request(HttpUri uri, HttpRequest::Method method = HttpRequest::Method::GET, std::string body = std::string())
 	: Task([this](){
 		return operator()();
 	})
-	, _clientTransport(new ClientTransport())
-	, _host(host)
-	, _port(port)
+	, _clientTransport(new HttpClient())
+	, _uri(std::move(uri))
 	, _state(State::INIT)
 	{
 	};
 	~Request() {};
+
+	const std::string& answer() const
+	{
+		return _answer;
+	}
+	const std::string& error() const
+	{
+		return _error;
+	}
+	const bool hasFailed() const
+	{
+		return !_error.empty();
+	}
 
 	virtual bool operator()()
 	{
@@ -71,12 +87,48 @@ public:
 				{
 					Log("_").debug("connector in progress");
 					_state = State::CONNECT_IN_PROGRESS;
-					auto connector = std::make_shared<TcpConnector>(_clientTransport, _host, _port);
+					std::shared_ptr<TcpConnector> connector;
+					if (_uri.scheme() == HttpUri::Scheme::HTTPS)
+					{
+						auto context = SslHelper::context();
+						connector.reset(new SslConnector(_clientTransport, _uri.host(), _uri.port(), context));
+					}
+					else
+					{
+						connector.reset(new TcpConnector(_clientTransport, _uri.host(), _uri.port()));
+					}
 					connector->addConnectedHandler([this](std::shared_ptr<TcpConnection> connection){
 						Log("_").debug("connected");
-						_state = State::CONNECTED;
-						connection->addCompleteHandler([this](const std::shared_ptr<Context>& context){
+						connection->addCompleteHandler([this](const std::shared_ptr<Context>&context_){
 							Log("_").debug("done");
+
+							auto context = std::dynamic_pointer_cast<HttpContext>(context_);
+							if (!context)
+							{
+								_error = "Internal error: Bad context";
+								_state = State::ERROR;
+								operator()();
+								return;
+							}
+
+							if (!context->getResponse())
+							{
+								_error = "Internal error: No response";
+								_state = State::ERROR;
+								operator()();
+								return;
+							}
+
+							_answer = std::move(std::string(context->getResponse()->dataPtr(), context->getResponse()->dataLen()));
+
+							if (context->getResponse()->statusCode() != 200)
+							{
+								_error = std::string("No OK response: ") + std::to_string(context->getResponse()->statusCode()) + " " + context->getResponse()->statusMessage();
+								_state = State::ERROR;
+								operator()();
+								return;
+							}
+
 							_state = State::DONE;
 							operator()();
 						});
@@ -88,8 +140,8 @@ public:
 						});
 
 						std::ostringstream oss;
-						oss << "GET /oauth/access_token HTTP/1.1\r\n"
-							<< "Host: " << _host << ":" << _port << "\r\n"
+						oss << "GET " << _uri.path() << (_uri.hasQuery() ? _uri.query() : "") << " HTTP/1.1\r\n"
+							<< "Host: " << _uri.host() << ":" << _uri.port() << "\r\n"
 							<< "Connection: Close\r\n"
 							<< "\r\n";
 
@@ -105,9 +157,11 @@ public:
 					Log("_").debug("add connector");
 					ConnectionManager::add(connector);
 				}
-				catch (...)
+				catch (const std::exception& exception)
 				{
 					Log("_").debug("connector exception");
+					_error = "Internal error: Uncatched exception: ";
+					_error += exception.what();
 					_state = State::ERROR;
 					operator()();
 				}
