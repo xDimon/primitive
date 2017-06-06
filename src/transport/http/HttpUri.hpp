@@ -45,6 +45,7 @@ private:
 
 public:
 	HttpUri();
+	HttpUri(std::string uri);
 	virtual ~HttpUri();
 
 	void parse(const char* string, size_t length);

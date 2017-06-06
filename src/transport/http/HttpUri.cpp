@@ -38,6 +38,14 @@ HttpUri::HttpUri()
 {
 }
 
+HttpUri::HttpUri(std::string uri)
+: _port(0)
+, _hasQuery(false)
+, _hasFragment(false)
+{
+	parse(uri.data(), uri.length());
+}
+
 HttpUri::~HttpUri()
 {
 }
@@ -60,11 +68,13 @@ void HttpUri::parse(const char *string, size_t length)
 	else if (!strncasecmp(s, "http://", 7))
 	{
 		_scheme = Scheme::HTTP;
+		_port = 80;
 		s += 7;
 	}
 	else if (!strncasecmp(s, "https://", 8))
 	{
 		_scheme = Scheme::HTTPS;
+		_port = 443;
 		s += 8;
 	}
 	else
