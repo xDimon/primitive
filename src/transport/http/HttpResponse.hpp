@@ -21,35 +21,47 @@
 
 #pragma once
 
-#include <string>
-#include <map>
-#include "../../net/WriterConnection.hpp"
-#include "../../net/TcpConnection.hpp"
 #include "HttpHeader.hpp"
+#include "../../net/TcpConnection.hpp"
 
-class HttpResponse
+#include <sstream>
+#include <map>
+
+class HttpResponse: public Buffer
 {
 private:
+	const enum class Type
+	{
+		RECEIVED,
+		FOR_SENDING
+	} _type;
 	int _statusCode;
 	std::string _statusMessage;
 
 	std::string _mainHeader;
 	std::multimap<std::string, std::string> _headers;
 
+	bool _hasContentLength;
+	size_t _contentLength;
+
 	std::ostringstream _body;
 
 	bool _close;
 
+	const char* parseResponseLine(const char* string, const char* end);
+
+	const char* parseProtocol(const char* s);
+
+	const char* parseHeaders(const char* begin, const char* end);
+
 public:
 	HttpResponse(int status, std::string message = std::string());
-
+	HttpResponse(const char *begin, const char *end);
 	~HttpResponse();
 
 	HttpResponse& addHeader(const std::string& name, const std::string& value, bool replace = false);
 
 	HttpResponse& removeHeader(const std::string& name);
-
-	HttpResponse& close();
 
 	template<class T>
 	HttpResponse& operator<<(const T& chunk)
@@ -61,4 +73,25 @@ public:
 	HttpResponse& operator<<(const HttpHeader& header);
 
 	void operator>>(TcpConnection& connection);
+
+	std::string& getHeader(std::string name);
+
+	int statusCode() const
+	{
+		return _statusCode;
+	}
+	const std::string& statusMessage() const
+	{
+		return _statusMessage;
+	}
+
+	bool hasContentLength() const
+	{
+		return _hasContentLength;
+	}
+
+	size_t contentLength() const
+	{
+		return _contentLength;
+	}
 };

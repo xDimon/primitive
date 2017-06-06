@@ -24,9 +24,11 @@
 #include "HttpResponse.hpp"
 #include "../../server/Server.hpp"
 #include "../../utils/Time.hpp"
+#include "HttpHelper.hpp"
 
 HttpResponse::HttpResponse(int status, std::string message)
-: _statusCode(status)
+: _type(Type::FOR_SENDING)
+, _statusCode(status)
 , _statusMessage(std::move(message))
 , _close(false)
 {
@@ -118,9 +120,184 @@ HttpResponse::HttpResponse(int status, std::string message)
 	addHeader("Connection", "Keep-Alive");
 }
 
+HttpResponse::HttpResponse(const char *begin, const char *end)
+: _type(Type::RECEIVED)
+{
+	auto s = begin;
+
+	try
+	{
+		s =	parseResponseLine(s, end);
+
+		parseHeaders(s, end);
+	}
+	catch (std::runtime_error& exception)
+	{
+		throw std::runtime_error(std::string("Bad response: ") + exception.what());
+	}
+}
+
 HttpResponse::~HttpResponse()
 {
 }
+
+const char* HttpResponse::parseResponseLine(const char *string, const char *end)
+{
+	auto s = string;
+
+	try
+	{
+		if (end - s < 15)
+		{
+			throw std::runtime_error("Too short line");
+		}
+
+		auto endHeader = static_cast<const char *>(memmem(s, end - s, "\r\n", 2));
+		if (!endHeader)
+		{
+			throw std::runtime_error("Unexpected end");
+		}
+
+		try
+		{
+			s = parseProtocol(s);
+		}
+		catch (std::runtime_error &exception)
+		{
+			throw std::runtime_error(std::string("Bad method: ") + exception.what());
+		}
+
+		s++;
+
+		// Читаем код статуса
+		auto code = s;
+
+		// Находим конец URI
+		while (*s && HttpHelper::isDigit(*s)) s++;
+		if (!isspace(*s))
+		{
+			throw std::runtime_error("Bad status code: Unexpected end");
+		}
+		_statusCode = atoi(code);
+
+		if (_statusCode < 100 || _statusCode > 599)
+		{
+			throw std::runtime_error("Bad status code: Wrong value");
+		}
+
+		s++;
+
+		// Читаем сообщение статуса
+		for ( ; *s != '\r'; s++)
+		{
+			_statusMessage.push_back(*s);
+		}
+		if (*s != '\r' || *(s + 1) != '\n')
+		{
+			throw std::runtime_error("Bad status message");
+		}
+
+		if (!HttpHelper::isCrlf(s))
+		{
+			throw std::runtime_error("Redundant data on end of line");
+		}
+		s += 2;
+	}
+	catch (std::runtime_error &exception)
+	{
+		throw std::runtime_error(std::string("Bad response-line: ") + exception.what());
+	}
+
+	return s;
+}
+
+const char* HttpResponse::parseProtocol(const char* s)
+{
+	if (strncasecmp(s, "HTTP/", 5))
+	{
+		throw std::runtime_error("Wrong type");
+	}
+	s += 5;
+
+	if (strncasecmp(s, "1.1", 3) && strncasecmp(s, "1.0", 3))
+	{
+		throw std::runtime_error("Wrong version");
+	}
+
+	s += 3;
+
+	return s;
+}
+
+const char* HttpResponse::parseHeaders(const char *begin, const char *end)
+{
+	auto s = begin;
+
+	try
+	{
+		for (;;)
+		{
+			auto endHeader = static_cast<const char *>(memmem(s, end - s, "\r\n", 2));
+			if (!endHeader)
+			{
+				throw std::runtime_error("Unexpected end");
+			}
+			// Пустой заголовок - заголовки закончились
+			if (endHeader == s)
+			{
+				s += 2;
+				return s;
+			}
+
+			// Имя заголовка
+			std::string name;
+			while (HttpHelper::isToken(*s))
+			{
+				name.push_back(*s++);
+			}
+
+			if (*s != ':')
+			{
+				throw std::runtime_error("Bad name");
+			}
+
+			s = HttpHelper::skipLws(++s);
+
+			// Значение заголовка
+			std::string value;
+			while (!HttpHelper::isCrlf(s))
+			{
+				value.push_back(*s++);
+			}
+
+			s += 2;
+
+			_headers.emplace(name, value);
+
+			if (!strcasecmp(name.c_str(), "Content-Length"))
+			{
+				_hasContentLength = true;
+				_contentLength = static_cast<size_t>(atoll(value.c_str()));
+			}
+		}
+	}
+	catch (std::runtime_error &exception)
+	{
+		throw std::runtime_error(std::string("Bad headers: ") + exception.what());
+	}
+}
+
+std::string& HttpResponse::getHeader(std::string name)
+{
+	auto i = _headers.find(name);
+	if (i == _headers.end())
+	{
+		static std::string empty;
+		return empty;
+	}
+	return i->second;
+}
+
 
 HttpResponse& HttpResponse::addHeader(const std::string& name, const std::string& value, bool replace)
 {
