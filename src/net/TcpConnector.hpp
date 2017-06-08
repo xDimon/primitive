@@ -47,10 +47,12 @@ private:
 	hostent* _hostptr;
 	char** _addrIterator;
 	sockaddr_in _sockaddr;
-	std::function<void(std::shared_ptr<TcpConnection>)> _connectedHandler;
-	std::function<void()> _errorHandler;
 
 	virtual void createConnection(int sock, const sockaddr_in& cliaddr);
+
+// protected:
+	std::function<void(std::shared_ptr<TcpConnection>)> _connectHandler;
+	std::function<void()> _errorHandler;
 
 public:
 	TcpConnector(
@@ -66,6 +68,21 @@ public:
 
 	void addConnectedHandler(std::function<void(std::shared_ptr<TcpConnection>)>);
 	void addErrorHandler(std::function<void()>);
+
+	void onConnect(std::shared_ptr<TcpConnection> connection)
+	{
+		if (_connectHandler)
+		{
+			_connectHandler(connection);
+		}
+	}
+	void onError()
+	{
+		if (_errorHandler)
+		{
+			_errorHandler();
+		}
+	}
 
 	static std::shared_ptr<TcpConnector> create(std::shared_ptr<ClientTransport>& transport, std::string& host, std::uint16_t port)
 	{

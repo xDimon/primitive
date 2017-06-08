@@ -204,6 +204,7 @@ bool SslConnection::processing()
 	if (_error)
 	{
 		_closed = true;
+		onError();
 	}
 
 	if (_noRead)
@@ -213,6 +214,7 @@ bool SslConnection::processing()
 			shutdown(_sock, SHUT_WR);
 			_noWrite = true;
 		}
+		onComplete();
 	}
 
 	if (_closed)

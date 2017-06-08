@@ -139,12 +139,12 @@ bool TcpConnection::processing()
 
 	if (_closed)
 	{
-		ConnectionManager::remove(this->ptr());
+		ConnectionManager::remove(ptr());
 
 		return true;
 	}
 
-	ConnectionManager::watch(this->ptr());
+	ConnectionManager::watch(ptr());
 
 	if (_noRead && _noWrite)
 	{

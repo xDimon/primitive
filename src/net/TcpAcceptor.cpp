@@ -130,7 +130,7 @@ bool TcpAcceptor::processing()
 		if (ShutdownManager::shutingdown())
 		{
 			_log.debug("Interrupt processing on %s (shutdown)", name().c_str());
-			ConnectionManager::remove(this->ptr());
+			ConnectionManager::remove(ptr());
 			return false;
 		}
 
@@ -139,9 +139,7 @@ bool TcpAcceptor::processing()
 			_closed = true;
 
 			_log.debug("End processing on %s (was failure)", name().c_str());
-
-			ConnectionManager::remove(this->ptr());
-
+			ConnectionManager::remove(ptr());
 			throw std::runtime_error("Error on TcpAcceptor");
 		}
 

@@ -83,9 +83,19 @@ public:
 	void addCompleteHandler(std::function<void(const std::shared_ptr<Context>&)>);
 	void addErrorHandler(std::function<void()>);
 
-	void complete()
+	void onComplete()
 	{
-		_completeHandler(_context);
+		if (_completeHandler)
+		{
+			_completeHandler(_context);
+		}
+	}
+	void onError()
+	{
+		if (_errorHandler)
+		{
+			_errorHandler();
+		}
 	}
 
 	void close();

@@ -204,7 +204,7 @@ bool TcpConnector::processing()
 
 				_log.debug("End processing on %s (was connected)", name().c_str());
 
-				ConnectionManager::remove(this->ptr());
+				ConnectionManager::remove(ptr());
 
 				try
 				{
@@ -214,7 +214,7 @@ bool TcpConnector::processing()
 				}
 				catch (std::exception exception)
 				{
-					_errorHandler();
+					onError();
 					shutdown(_sock, SHUT_RDWR);
 					::close(_sock);
 					return false;
@@ -259,9 +259,9 @@ bool TcpConnector::processing()
 
 		_log.debug("End processing on %s (was failure)", name().c_str());
 
-		ConnectionManager::remove(this->ptr());
+		ConnectionManager::remove(ptr());
 
-		_errorHandler();
+		onError();
 		shutdown(_sock, SHUT_RDWR);
 		::close(_sock);
 		return false;
@@ -278,7 +278,7 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 
 	auto connection = std::make_shared<TcpConnection>(transport, sock, cliaddr, true);
 
-	_connectedHandler(connection);
+	onConnect(connection);
 
 	ThreadPool::enqueue(
 		[wp = std::weak_ptr<Connection>(connection->ptr())]() {
@@ -296,12 +296,13 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 		, std::chrono::seconds(timeout)
 	);
 
+	ConnectionManager::remove(ptr());
 	ConnectionManager::add(connection);
 }
 
 void TcpConnector::addConnectedHandler(std::function<void(std::shared_ptr<TcpConnection>)> handler)
 {
-	_connectedHandler = std::move(handler);
+	_connectHandler = std::move(handler);
 }
 
 void TcpConnector::addErrorHandler(std::function<void()> handler)

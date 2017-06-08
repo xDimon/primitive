@@ -135,7 +135,7 @@ bool HttpClient::processing(std::shared_ptr<Connection> connection_)
 			context->getResponse()->hasContentLength() ? context->getResponse()->contentLength() : 0
 		);
 
-		connection->complete();
+		connection->onComplete();
 
 		context.reset();
 		n++;
