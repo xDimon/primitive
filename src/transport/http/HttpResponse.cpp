@@ -133,7 +133,7 @@ HttpResponse::HttpResponse(const char *begin, const char *end)
 	}
 	catch (std::runtime_error& exception)
 	{
-		throw std::runtime_error(std::string("Bad response: ") + exception.what());
+		throw std::runtime_error(std::string("Bad response ← ") + exception.what());
 	}
 }
 
@@ -164,7 +164,7 @@ const char* HttpResponse::parseResponseLine(const char *string, const char *end)
 		}
 		catch (std::runtime_error &exception)
 		{
-			throw std::runtime_error(std::string("Bad method: ") + exception.what());
+			throw std::runtime_error(std::string("Bad method ← ") + exception.what());
 		}
 
 		s++;
@@ -176,13 +176,13 @@ const char* HttpResponse::parseResponseLine(const char *string, const char *end)
 		while (*s && HttpHelper::isDigit(*s)) s++;
 		if (!isspace(*s))
 		{
-			throw std::runtime_error("Bad status code: Unexpected end");
+			throw std::runtime_error("Bad status code ← Unexpected end");
 		}
 		_statusCode = atoi(code);
 
 		if (_statusCode < 100 || _statusCode > 599)
 		{
-			throw std::runtime_error("Bad status code: Wrong value");
+			throw std::runtime_error("Bad status code ← Wrong value");
 		}
 
 		s++;
@@ -205,7 +205,7 @@ const char* HttpResponse::parseResponseLine(const char *string, const char *end)
 	}
 	catch (std::runtime_error &exception)
 	{
-		throw std::runtime_error(std::string("Bad response-line: ") + exception.what());
+		throw std::runtime_error(std::string("Bad response line ← ") + exception.what());
 	}
 
 	return s;
@@ -283,7 +283,7 @@ const char* HttpResponse::parseHeaders(const char *begin, const char *end)
 	}
 	catch (std::runtime_error &exception)
 	{
-		throw std::runtime_error(std::string("Bad headers: ") + exception.what());
+		throw std::runtime_error(std::string("Bad headers ← ") + exception.what());
 	}
 }
 

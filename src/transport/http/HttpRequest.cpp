@@ -37,7 +37,7 @@ HttpRequest::HttpRequest(const char* begin, const char* end)
 	}
 	catch (std::runtime_error& exception)
 	{
-		throw std::runtime_error(std::string("Bad request: ") + exception.what());
+		throw std::runtime_error(std::string("Bad request ← ") + exception.what());
 	}
 }
 
@@ -59,7 +59,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		}
 		catch (std::runtime_error &exception)
 		{
-			throw std::runtime_error(std::string("Bad method: ") + exception.what());
+			throw std::runtime_error(std::string("Bad method ← ") + exception.what());
 		}
 
 		// Читаем URI
@@ -69,7 +69,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		while (*s && !HttpHelper::isSp(*s) && !HttpHelper::isCr(*s)) s++;
 		if (!isspace(*s))
 		{
-			throw std::runtime_error("Bad uri: Unexpected end");
+			throw std::runtime_error("Bad uri ← Unexpected end");
 		}
 
 		try
@@ -78,7 +78,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		}
 		catch (std::runtime_error &exception)
 		{
-			throw std::runtime_error(std::string("Bad uri: ") + exception.what());
+			throw std::runtime_error(std::string("Bad uri ← ") + exception.what());
 		}
 
 		s++;
@@ -90,7 +90,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		}
 		catch (std::runtime_error &exception)
 		{
-			throw std::runtime_error(std::string("Bad protocol: ") + exception.what());
+			throw std::runtime_error(std::string("Bad protocol ← ") + exception.what());
 		}
 
 		if (!HttpHelper::isCrlf(s))
@@ -101,7 +101,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 	}
 	catch (std::runtime_error &exception)
 	{
-		throw std::runtime_error(std::string("Bad request-line: ") + exception.what());
+		throw std::runtime_error(std::string("Bad request line ← ") + exception.what());
 	}
 
 	return s;
@@ -215,7 +215,7 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 	}
 	catch (std::runtime_error &exception)
 	{
-		throw std::runtime_error(std::string("Bad headers: ") + exception.what());
+		throw std::runtime_error(std::string("Bad headers ← ") + exception.what());
 	}
 }
 
