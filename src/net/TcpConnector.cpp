@@ -105,15 +105,15 @@ TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::str
 		switch (herr)
 		{
 			case HOST_NOT_FOUND:
-				throw std::runtime_error(std::string("Host not found: ") + _host);
+				throw std::runtime_error(std::string("Host not found ") + _host);
 			case NO_ADDRESS:
-				throw std::runtime_error(std::string("The requested name does not have an IP address: ") + _host);
+				throw std::runtime_error(std::string() + "The requested name ("  + _host + ") does not have an IP address");
 			case NO_RECOVERY:
-				throw std::runtime_error(std::string("A non-recoverable name server error occurred while resolving ") + _host);
+				throw std::runtime_error(std::string() + "A non-recoverable name server error occurred while resolving '"  + _host + "'");
 			case TRY_AGAIN:
-				throw std::runtime_error(std::string("A temporary error occurred on an authoritative name server while resolving ") + _host);
+				throw std::runtime_error(std::string() + "A temporary error occurred on an authoritative name server while resolving '"  + _host + "'");
 			default:
-				throw std::runtime_error(std::string("Unknown error code from gethostbyname_r for ") + _host);
+				throw std::runtime_error(std::string() + "Unknown error code from gethostbyname_r for '" + _host + "'");
 		}
 	}
 
@@ -159,7 +159,7 @@ TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::str
 		}
 	}
 
-	throw std::runtime_error(std::string("Can't connect to ") + _host + ": " + strerror(errno));
+	throw std::runtime_error(std::string() + "Can't connect to '" + _host + "' ← " + strerror(errno));
 
 	end:
 

@@ -36,7 +36,7 @@ MysqlConnection::MysqlConnection(
 	mysql_init(&_mysql);
 	if (!mysql_real_connect(&_mysql, dbserver.c_str(), dbuser.c_str(), dbpass.c_str(), dbname.c_str(), dbport, nullptr, 0))
 	{
-		throw std::runtime_error(std::string("Can't connect to database: ") + mysql_error(&_mysql));
+		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(&_mysql));
 	}
 }
 
@@ -53,7 +53,7 @@ MysqlConnection::MysqlConnection(
 	mysql_init(&_mysql);
 	if (!mysql_real_connect(&_mysql, nullptr, dbuser.c_str(), dbpass.c_str(), dbname.c_str(), 0, dbsocket.c_str(), 0))
 	{
-		throw std::runtime_error(std::string("Can't connect to database: ") + mysql_error(&_mysql));
+		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(&_mysql));
 	}
 }
 
