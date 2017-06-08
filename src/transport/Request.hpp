@@ -140,10 +140,13 @@ public:
 						});
 
 						std::ostringstream oss;
-						oss << "GET " << _uri.path() << (_uri.hasQuery() ? _uri.query() : "") << " HTTP/1.1\r\n"
+						oss << "GET " << _uri.path() << (_uri.hasQuery() ? "?" : "") << (_uri.hasQuery() ? _uri.query() : "") << " HTTP/1.1\r\n"
 							<< "Host: " << _uri.host() << ":" << _uri.port() << "\r\n"
 							<< "Connection: Close\r\n"
 							<< "\r\n";
+
+						Log log("Request");
+						log.debug("REQUEST: %s", oss.str().c_str());
 
 						connection->write(oss.str().c_str(), oss.str().length());
 						ConnectionManager::watch(connection);
@@ -160,7 +163,7 @@ public:
 				catch (const std::exception& exception)
 				{
 					Log("_").debug("connector exception");
-					_error = "Internal error: Uncatched exception: ";
+					_error = "Internal error: Uncatched exception ← ";
 					_error += exception.what();
 					_state = State::ERROR;
 					operator()();
@@ -181,6 +184,12 @@ public:
 
 			case State::DONE:
 			case State::ERROR:
+
+				Log log("Request");
+				log.debug("REQUEST: %s", _uri.str().c_str());
+				log.debug("RESPONSE: %s", _answer.c_str());
+				log.debug("ERROR: %s", _error.c_str());
+
 				restoreContext();
 				return true;
 		}
