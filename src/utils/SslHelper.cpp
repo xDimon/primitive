@@ -20,6 +20,7 @@
 
 
 #include "SslHelper.hpp"
+#include "../log/Log.hpp"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -131,18 +132,18 @@ SslHelper::SslHelper()
 	assert(rsa != nullptr);
 
 
-	struct D {
+	struct SSL_CTX_Deleter {
 		void operator()(SSL_CTX* ctx) const {
 			SSL_CTX_free(ctx);
 		}
 	};
 
-	_context = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_server_method()), D());
+	_serverContext = std::shared_ptr<SSL_CTX>(SSL_CTX_new(SSLv23_server_method()), SSL_CTX_Deleter());
 
-	SSL_CTX_set_options(_context.get(), SSL_OP_SINGLE_DH_USE);
+	SSL_CTX_set_options(_serverContext.get(), SSL_OP_SINGLE_DH_USE);
 
-	SSL_CTX_use_certificate(_context.get(), cert);
-	SSL_CTX_use_RSAPrivateKey(_context.get(), rsa);
+	SSL_CTX_use_certificate(_serverContext.get(), cert);
+	SSL_CTX_use_RSAPrivateKey(_serverContext.get(), rsa);
 
 	X509_free(cert);
 	RSA_free(rsa);
@@ -150,7 +151,22 @@ SslHelper::SslHelper()
 
 SslHelper::~SslHelper()
 {
-	_context.reset();
+	_serverContext.reset();
 	ERR_free_strings();
 	EVP_cleanup();
+}
+
+std::shared_ptr<SSL_CTX> SslHelper::getClientContext()
+{
+	getInstance();
+
+	struct SSL_CTX_Deleter {
+		void operator()(SSL_CTX* ctx) const {
+			SSL_CTX_free(ctx);
+		}
+	};
+
+    return std::shared_ptr<SSL_CTX>(
+		SSL_CTX_new(SSLv23_client_method()), SSL_CTX_Deleter()
+	);
 }

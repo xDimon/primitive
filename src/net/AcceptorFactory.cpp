@@ -84,7 +84,7 @@ std::shared_ptr<AcceptorFactory::Creator> AcceptorFactory::creator(const Setting
 	if (secure)
 	{
 		return std::make_shared<Creator>(
-			std::bind(SslAcceptor::create, std::placeholders::_1, host, port, SslHelper::context())
+			std::bind(SslAcceptor::create, std::placeholders::_1, host, port, SslHelper::getServerContext())
 		);
 	}
 	else

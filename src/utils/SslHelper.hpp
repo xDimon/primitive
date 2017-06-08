@@ -39,11 +39,13 @@ private:
 		return instance;
 	}
 
-	std::shared_ptr<SSL_CTX> _context;
+	std::shared_ptr<SSL_CTX> _serverContext;
 
 public:
-	static std::shared_ptr<SSL_CTX> context()
+	static std::shared_ptr<SSL_CTX> getServerContext()
 	{
-		return getInstance()._context;
+		return getInstance()._serverContext;
 	}
+
+	static std::shared_ptr<SSL_CTX> getClientContext();
 };

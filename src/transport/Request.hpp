@@ -90,7 +90,7 @@ public:
 					std::shared_ptr<TcpConnector> connector;
 					if (_uri.scheme() == HttpUri::Scheme::HTTPS)
 					{
-						auto context = SslHelper::context();
+						auto context = SslHelper::getClientContext();
 						connector.reset(new SslConnector(_clientTransport, _uri.host(), _uri.port(), context));
 					}
 					else
