@@ -73,7 +73,7 @@ SVal* UrlSerializer::decode(const std::string& data, bool strict)
 	}
 	catch (std::runtime_error& exception)
 	{
-		throw std::runtime_error(std::string("Can't decode URI: ") + exception.what());
+		throw std::runtime_error(std::string("Can't decode URI ← ") + exception.what());
 	}
 }
 
@@ -85,7 +85,7 @@ std::string UrlSerializer::encode(const SVal* value)
 	}
 	catch (std::runtime_error& exception)
 	{
-		throw std::runtime_error(std::string("Can't encode into URI: ") + exception.what());
+		throw std::runtime_error(std::string("Can't encode into URI ← ") + exception.what());
 	}
 
 	return std::move(_oss.str());

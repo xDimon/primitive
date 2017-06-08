@@ -81,7 +81,7 @@ SVal* TlvSerializer::decode(const std::string &data, bool strict)
 	}
 	catch (std::runtime_error& exception)
 	{
-		throw std::runtime_error(std::string("Can't decode TLV: ") + exception.what());
+		throw std::runtime_error(std::string("Can't decode TLV ← ") + exception.what());
 	}
 
 	// Проверяем лишние данные в конце
@@ -101,7 +101,7 @@ std::string TlvSerializer::encode(const SVal* value)
 	}
 	catch (std::runtime_error& exception)
 	{
-		throw std::runtime_error(std::string("Can't encode into TLV: ") + exception.what());
+		throw std::runtime_error(std::string("Can't encode into TLV ← ") + exception.what());
 	}
 
 	return std::move(_oss.str());
@@ -189,7 +189,7 @@ SObj* TlvSerializer::decodeObject()
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw std::runtime_error(std::string("Can't parse field-key of object: ") + exception.what());
+			throw std::runtime_error(std::string("Can't parse field-key of object ← ") + exception.what());
 		}
 
 		try
@@ -198,7 +198,7 @@ SObj* TlvSerializer::decodeObject()
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw std::runtime_error(std::string("Can't parse field-value of object: ") + exception.what());
+			throw std::runtime_error(std::string("Can't parse field-value of object ← ") + exception.what());
 		}
 
 		if (static_cast<Token>(_iss.peek()) == Token::OBJECT_END)
@@ -235,7 +235,7 @@ SArr* TlvSerializer::decodeArray()
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw std::runtime_error(std::string("Can't parse element of array: ") + exception.what());
+			throw std::runtime_error(std::string("Can't parse element of array ← ") + exception.what());
 		}
 
 		if (static_cast<Token>(_iss.peek()) == Token::ARRAY_END)

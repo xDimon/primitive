@@ -38,6 +38,8 @@ private:
 	SSL* _sslConnect;
 
 	bool _sslEstablished;
+	bool _sslWantRead;
+	bool _sslWantWrite;
 
 	bool readFromSocket() override;
 	bool writeToSocket() override;

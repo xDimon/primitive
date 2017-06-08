@@ -32,6 +32,8 @@ SslConnection::SslConnection(std::shared_ptr<Transport>& transport, int sock, co
 : TcpConnection(transport, sock, sockaddr, outgoing)
 , _sslContext(sslContext)
 , _sslEstablished(false)
+, _sslWantRead(!outgoing)
+, _sslWantWrite(outgoing)
 {
 	_sslConnect = SSL_new(_sslContext.get());
 	SSL_set_fd(_sslConnect, _sock);
@@ -59,8 +61,22 @@ void SslConnection::watch(epoll_event &ev)
 
 	ev.events |= EPOLLERR;
 
-	if (!_noRead)
+
+	if (!_sslEstablished)
 	{
+		if (_sslWantRead)
+		{
+			_log.trace("WATCH: No established and want read");
+			ev.events |= EPOLLIN | EPOLLRDNORM;
+		}
+		else
+		{
+			_log.trace("WATCH: No established and no want read");
+		}
+	}
+	else if (!_noRead)
+	{
+		_log.trace("WATCH: no not read");
 		ev.events |= EPOLLIN | EPOLLRDNORM;
 	}
 
@@ -69,12 +85,21 @@ void SslConnection::watch(epoll_event &ev)
 
 	if (!_error)
 	{
-		if (_outBuff.dataLen() > 0)
+		if (!_sslEstablished)
 		{
-			ev.events |= EPOLLOUT | EPOLLWRNORM;
+			if (_sslWantWrite)
+			{
+				_log.trace("WATCH: No established and want write");
+				ev.events |= EPOLLOUT | EPOLLWRNORM;
+			}
+			else
+			{
+				_log.trace("WATCH: No established and no want write");
+			}
 		}
-		else if (!_sslEstablished && _outgoing)
+		else if (_outBuff.dataLen() > 0)
 		{
+			_log.trace("WATCH: has data for write");
 			ev.events |= EPOLLOUT | EPOLLWRNORM;
 		}
 	}
@@ -99,13 +124,16 @@ bool SslConnection::processing()
 					: SSL_accept(_sslConnect);
 			if(n <= 0)
 			{
+				_sslWantRead = false;
+				_sslWantWrite = false;
+
 				auto e = SSL_get_error(_sslConnect, n);
 				// Повторяем вызов прерваный сигналом
 				if (e == SSL_ERROR_SYSCALL)
 				{
 					if (isHalfHup() || isHup())
 					{
-						_log.trace("Can't complete SslHelper-handshake: already closed %s", name().c_str());
+						_log.trace("Can't complete SSH handshake: already closed %s", name().c_str());
 						shutdown(_sock, SHUT_RD);
 						_noRead = true;
 //						_noWrite = true;
@@ -114,23 +142,31 @@ bool SslConnection::processing()
 
 					if (errno)
 					{
-						_log.debug("SSL_ERROR_SYSCALL while SslHelper-handshake on %s: %s", name().c_str(), strerror(errno));
+						_log.debug("SSL_ERROR_SYSCALL while SSH handshake on %s: %s", name().c_str(), strerror(errno));
 						break;
 					}
 
-					_log.debug("SSL_ERROR_SYSCALL with errno=0 while SslHelper-handshake on %s", name().c_str());
+					_log.debug("SSL_ERROR_SYSCALL with errno=0 while SSH handshake on %s", name().c_str());
 					break;
 				}
-				if (e == SSL_ERROR_WANT_READ || e == SSL_ERROR_WANT_WRITE)
+				if (e == SSL_ERROR_WANT_READ)
 				{
-					_log.trace("SslHelper-handshake incomplete yet on %s", name().c_str());
+					_sslWantRead = true;
+					_log.trace("SSH handshake incomplete yet on %s (want read)", name().c_str());
+					break;
+				}
+				if (e == SSL_ERROR_WANT_WRITE)
+				{
+					_sslWantRead = true;
+					_sslWantWrite = true;
+					_log.trace("SSH handshake incomplete yet on %s (want wtite)", name().c_str());
 					break;
 				}
 
 				char err[1<<7];
 				ERR_error_string_n(ERR_get_error(), err, sizeof(err));
 
-				_log.trace("Fail SslHelper-handshake on %s: %s", name().c_str(), err);
+				_log.trace("Fail SSH handshake on %s: %s", name().c_str(), err);
 
 				char msg[] = "HTTP/1.1 525 SSL handshake failed\r\n\r\nSSL handshake failed\n";
 				::write(_sock, msg, sizeof(msg));
@@ -143,7 +179,7 @@ bool SslConnection::processing()
 
 			_sslEstablished = true;
 
-			_log.trace("Success SslHelper-handshake on %s", name().c_str());
+			_log.trace("Success SSH handshake on %s", name().c_str());
 		}
 
 		if (isReadyForWrite())
@@ -181,7 +217,7 @@ bool SslConnection::processing()
 
 	if (_closed)
 	{
-		ConnectionManager::remove(this->ptr());
+		ConnectionManager::remove(ptr());
 
 		return true;
 	}

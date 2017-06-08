@@ -43,7 +43,7 @@ SVal* JsonSerializer::decode(const std::string& data, bool strict)
 	}
 	catch (std::runtime_error& exception)
 	{
-		throw std::runtime_error(std::string("Can't decode JSON: ") + exception.what());
+		throw std::runtime_error(std::string("Can't decode JSON ← ") + exception.what());
 	}
 
 	// Проверяем лишние символы в конце
@@ -67,7 +67,7 @@ std::string JsonSerializer::encode(const SVal* value)
 	}
 	catch (std::runtime_error& exception)
 	{
-		throw std::runtime_error(std::string("Can't encode into JSON: ") + exception.what());
+		throw std::runtime_error(std::string("Can't encode into JSON ← ") + exception.what());
 	}
 
 	return std::move(_oss.str());
@@ -174,7 +174,7 @@ SObj* JsonSerializer::decodeObject()
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw std::runtime_error(std::string("Can't parse field-key of object: ") + exception.what());
+			throw std::runtime_error(std::string("Can't parse field-key of object ← ") + exception.what());
 		}
 
 		skipSpaces();
@@ -193,7 +193,7 @@ SObj* JsonSerializer::decodeObject()
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw std::runtime_error(std::string("Can't parse field-value of object: ") + exception.what());
+			throw std::runtime_error(std::string("Can't parse field-value of object ← ") + exception.what());
 		}
 
 		skipSpaces();
@@ -241,7 +241,7 @@ SArr* JsonSerializer::decodeArray()
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw std::runtime_error(std::string("Can't parse element of array: ") + exception.what());
+			throw std::runtime_error(std::string("Can't parse element of array ← ") + exception.what());
 		}
 
 		skipSpaces();
