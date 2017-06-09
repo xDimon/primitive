@@ -25,4 +25,20 @@
 
 class SNull: public SVal
 {
+	virtual operator std::string() const
+	{
+		return std::string("null");
+	};
+	virtual operator int() const
+	{
+		return 0;
+	};
+	virtual operator double() const
+	{
+		return 0.0;
+	};
+	virtual operator bool() const
+	{
+		return false;
+	};
 };

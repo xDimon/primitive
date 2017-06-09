@@ -100,63 +100,78 @@ public:
 		std::for_each(_elements.cbegin(), _elements.cend(), handler);
 	}
 
-	void lookup(const std::string& key, bool &value) const
+	void lookup(const char *key, int64_t &value, bool strict = false) const
 	{
 		auto element = get(key);
 		if (!element)
 		{
 			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
 		}
-		auto elementValue = dynamic_cast<SBool *>(element);
-		if (!elementValue)
-		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' isn't boolean");
-		}
-		value = elementValue->value();
-	}
-
-	void lookup(const char *key, double &value) const
-	{
-		auto element = get(key);
-		if (!element)
-		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
-		}
-		auto elementValue = dynamic_cast<const SFloat *>(element);
-		if (!elementValue)
-		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' isn't numeric");
-		}
-		value = elementValue->value();
-	}
-
-	void lookup(const char *key, int64_t &value) const
-	{
-		auto element = get(key);
-		if (!element)
-		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
-		}
-		auto elementValue = dynamic_cast<const SInt *>(element);
-		if (!elementValue)
+		if (!dynamic_cast<const SInt *>(element) && strict)
 		{
 			throw std::runtime_error(std::string() + "Field '" + key + "' isn't integer");
 		}
-		value = elementValue->value();
+		value = element->operator int();
 	}
 
-	void lookup(const std::string& key, std::string &value) const
+	void lookup(const std::string& key, bool &value, bool strict = false) const
 	{
 		auto element = get(key);
 		if (!element)
 		{
 			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
 		}
-		auto elementValue = dynamic_cast<SStr *>(element);
-		if (!elementValue)
+		if (!dynamic_cast<SBool *>(element) && strict)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' isn't boolean");
+		}
+		value = static_cast<bool>(element);
+	}
+
+	void lookup(const char *key, double &value, bool strict = false) const
+	{
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+		}
+		if (!dynamic_cast<const SFloat *>(element) && strict)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' isn't numeric");
+		}
+		value = element->operator double();
+	}
+
+	void lookup(const std::string& key, std::string &value, bool strict = false) const
+	{
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+		}
+		if (!dynamic_cast<SStr *>(element) && strict)
 		{
 			throw std::runtime_error(std::string() + "Field '" + key + "' isn't string");
 		}
-		value = elementValue->value();
+		value = element->operator std::string();
 	}
+
+	virtual operator std::string() const
+	{
+		std::ostringstream oss;
+		oss << "[object#" << this << "(" << _elements.size() << ")]";
+		return std::move(oss.str());
+	};
+	virtual operator int() const
+	{
+		return _elements.size();
+	};
+	virtual operator double() const
+	{
+		return _elements.size();
+	};
+	virtual operator bool() const
+	{
+		return !_elements.empty();
+	};
 };

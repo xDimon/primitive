@@ -41,4 +41,23 @@ public:
 	{
 		return _value;
 	}
+
+	virtual operator std::string() const
+	{
+		std::ostringstream oss;
+		oss << _value;
+		return std::move(oss.str());
+	};
+	virtual operator int() const
+	{
+		return _value;
+	};
+	virtual operator double() const
+	{
+		return _value;
+	};
+	virtual operator bool() const
+	{
+		return _value != 0;
+	};
 };

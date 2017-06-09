@@ -35,4 +35,21 @@ public:
 	{
 		return _value;
 	}
+
+	virtual operator std::string() const
+	{
+		return std::string(_value ? "true" : "false");
+	};
+	virtual operator int() const
+	{
+		return _value ? 1 : 0;
+	};
+	virtual operator double() const
+	{
+		return _value ? 1 : 0;
+	};
+	virtual operator bool() const
+	{
+		return _value;
+	};
 };

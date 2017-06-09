@@ -50,4 +50,28 @@ public:
 	{
 		return _value;
 	}
+
+	virtual operator std::string() const
+	{
+		std::ostringstream oss;
+		oss << "[";
+		for (size_t i = 0; i < _value.size(); ++i)
+		{
+			oss << std::hex << _value[i];
+		}
+		oss << "]";
+		return std::move(oss.str());
+	};
+	virtual operator int() const
+	{
+		return _value.size();
+	};
+	virtual operator double() const
+	{
+		return _value.size();
+	};
+	virtual operator bool() const
+	{
+		return !_value.empty();
+	};
 };

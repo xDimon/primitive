@@ -28,4 +28,9 @@ class SVal
 {
 public:
 	virtual ~SVal() {};
+
+	virtual operator std::string() const = 0;
+	virtual operator int() const = 0;
+	virtual operator double() const = 0;
+	virtual operator bool() const = 0;
 };

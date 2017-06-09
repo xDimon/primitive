@@ -21,9 +21,10 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string>
+
 #include "SVal.hpp"
+
+#include <sstream>
 
 class SStr : public SVal
 {
@@ -63,6 +64,56 @@ public:
 		bool operator()(const SStr* left, const SStr* right)
 		{
 			return left->value() < right->value();
+		}
+	};
+
+	virtual operator std::string() const
+	{
+		return _value;
+	};
+	virtual operator int() const
+	{
+		int64_t intVal;
+		std::istringstream iss(_value);
+		iss >> intVal;
+		return intVal;
+	};
+	virtual operator double() const
+	{
+		double fltVal;
+		std::istringstream iss(_value);
+		iss >> fltVal;
+		return fltVal;
+	};
+	virtual operator bool() const
+	{
+		if (_value.empty())
+		{
+			return false;
+		}
+		{
+			double fltVal;
+			std::istringstream iss(_value);
+			iss >> fltVal;
+			if (fltVal)
+			{
+				return true;
+			}
+		}
+		{
+			std::istringstream iss(_value);
+			for (;;)
+			{
+				auto c = iss.get();
+				if (c == -1)
+				{
+					return false;
+				}
+				if (c > ' ')
+				{
+					return true;
+				}
+			}
 		}
 	};
 };

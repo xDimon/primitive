@@ -62,4 +62,23 @@ public:
 	{
 		std::for_each(_elements.begin(), _elements.end(), handler);
 	}
+
+	virtual operator std::string() const
+	{
+		std::ostringstream oss;
+		oss << "[array#" << this << "(" << _elements.size() << ")]";
+		return std::move(oss.str());
+	};
+	virtual operator int() const
+	{
+		return _elements.size();
+	};
+	virtual operator double() const
+	{
+		return _elements.size();
+	};
+	virtual operator bool() const
+	{
+		return !_elements.empty();
+	};
 };
