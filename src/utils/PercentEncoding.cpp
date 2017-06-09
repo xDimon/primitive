@@ -178,11 +178,13 @@ static uint32_t decodePercentEscaped(std::istringstream& iss, bool& isUtf8)
 		}
 		catch(...)
 		{
+			iss.clear(iss.goodbit);
 			iss.seekg(p);
 			return static_cast<uint32_t>(fc);
 		}
 		if ((c & 0b11000000) != 0b10000000)
 		{
+			iss.clear(iss.goodbit);
 			iss.seekg(p);
 			return static_cast<uint32_t>(fc);
 		}

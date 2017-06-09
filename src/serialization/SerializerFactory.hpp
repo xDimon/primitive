@@ -21,10 +21,12 @@
 
 #pragma once
 
+#include "Serializer.hpp"
+
+#include "../configs/Setting.hpp"
+
 #include <memory>
 #include <map>
-#include "Serializer.hpp"
-#include "../configs/Setting.hpp"
 
 class SerializerFactory
 {

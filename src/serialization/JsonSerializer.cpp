@@ -118,6 +118,7 @@ SVal* JsonSerializer::decodeValue()
 						{
 							if (_iss.get() == '?')
 							{
+								_iss.clear(_iss.goodbit);
 								_iss.seekg(p);
 								return decodeBinary();;
 							}
@@ -125,6 +126,7 @@ SVal* JsonSerializer::decodeValue()
 					}
 				}
 			}
+			_iss.clear(_iss.goodbit);
 			_iss.seekg(p);
 			return decodeString();
 		}
@@ -556,9 +558,12 @@ SNum* JsonSerializer::decodeNumber()
 		auto c = _iss.get();
 		if (c == '.' || c == 'e' || c == 'E')
 		{
-			_iss.seekg(p);
 			SFloat::type value = 0;
+
+			_iss.clear(_iss.goodbit);
+			_iss.seekg(p);
 			_iss >> value;
+
 			return new SFloat(value);
 		}
 		else if (!isdigit(c) && c != '-')
@@ -567,9 +572,12 @@ SNum* JsonSerializer::decodeNumber()
 		}
 	}
 
-	_iss.seekg(p);
 	SInt::type value = 0;
+
+	_iss.clear(_iss.goodbit);
+	_iss.seekg(p);
 	_iss >> value;
+
 	return new SInt(value);
 }
 

@@ -172,6 +172,7 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 			// Looks like a float
 			SFloat::type value = 0;
 
+			iss.clear(iss.goodbit);
 			iss.seekg(p);
  			iss >> value;
 
@@ -193,6 +194,7 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 	// Looks like a integer
 	SInt::type value = 0;
 
+	iss.clear(iss.goodbit);
 	iss.seekg(p);
 	iss >> value;
 
