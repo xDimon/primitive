@@ -227,7 +227,7 @@ bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 		{
 			ServerTransport::Transmitter transmitter =
 				[&connection,opcode = context->getFrame()->opcode()]
-					(const char*data, size_t size, bool close){
+					(const char*data, size_t size, const std::string&, bool close){
 					WsFrame::send(connection, opcode, data, size);
 					if (close)
 					{

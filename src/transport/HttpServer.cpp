@@ -173,7 +173,7 @@ bool HttpServer::processing(std::shared_ptr<Connection> connection_)
 
 			ServerTransport::Transmitter transmitter =
 				[&connection]
-					(const char*data, size_t size, bool close){
+					(const char*data, size_t size, const std::string& contentType, bool close){
 
 					std::string out(data, size);
 					HttpResponse response(200);
@@ -181,7 +181,12 @@ bool HttpServer::processing(std::shared_ptr<Connection> connection_)
 					{
 						response << HttpHeader("Connection", "Close");
 					}
+					if (!contentType.empty())
+					{
+						response << HttpHeader("Content-Type", contentType);
+					}
 					response
+
 						<< out << "\r\n"
 						>> *connection;
 				};
