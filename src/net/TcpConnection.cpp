@@ -154,6 +154,11 @@ bool TcpConnection::processing()
 	return true;
 }
 
+bool TcpConnection::write(const void* data, size_t length)
+{
+	return WriterConnection::write(data, length);
+}
+
 bool TcpConnection::writeToSocket()
 {
 	_log.trace("Write into socket on %s", name().c_str());

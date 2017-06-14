@@ -99,4 +99,6 @@ public:
 	}
 
 	void close();
+
+	bool write(const void* data, size_t length) override;
 };
