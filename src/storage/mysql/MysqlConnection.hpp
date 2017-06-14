@@ -60,6 +60,22 @@ public:
 
 	void operator=(MysqlConnection const&) = delete;
 
+	virtual std::string escape(const std::string& str) override
+	{
+		std::string res;
+		res.reserve(str.length() * 2);
+		for (size_t i = 0; i < str.length(); ++i)
+		{
+			auto& c = str[i];
+			if (c == '\x00' || c == '\n' || c == '\r' || c == '\\' || c == '\'' || c == '"' || c == '\x1a')
+			{
+				res.push_back('\\');
+			}
+			res.push_back(c);
+		}
+		return std::move(res);
+	}
+
 	virtual bool alive() override
 	{
 		return !mysql_ping(&_mysql);

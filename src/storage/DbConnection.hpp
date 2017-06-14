@@ -66,6 +66,8 @@ public:
 		_captured--;
 	}
 
+	virtual std::string escape(const std::string& str) = 0;
+
 	virtual bool alive() = 0;
 
 	virtual bool startTransaction() = 0;
