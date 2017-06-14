@@ -19,6 +19,7 @@
 // WsFrame.cpp
 
 
+#include <cstring>
 #include "WsFrame.hpp"
 
 #include "../../utils/literals.hpp"
@@ -59,9 +60,10 @@ WsFrame::WsFrame(const char *begin, const char *end)
 		{
 			throw std::runtime_error("Not anough data");
 		}
-		_length = 0;
-		_length = (_length << 8) | *s++;
-		_length = (_length << 8) | *s++;
+		uint16_t length;
+		memcpy(&length, s, sizeof(length));
+		s += sizeof(length);
+		_length = be16toh(length);
 	}
 	else if (prelen == 127)
 	{
@@ -69,15 +71,10 @@ WsFrame::WsFrame(const char *begin, const char *end)
 		{
 			throw std::runtime_error("Not anough data");
 		}
-		_length = 0;
-		_length = (_length << 8) | *s++;
-		_length = (_length << 8) | *s++;
-		_length = (_length << 8) | *s++;
-		_length = (_length << 8) | *s++;
-		_length = (_length << 8) | *s++;
-		_length = (_length << 8) | *s++;
-		_length = (_length << 8) | *s++;
-		_length = (_length << 8) | *s++;
+		uint64_t length;
+		memcpy(&length, s, sizeof(length));
+		s += sizeof(length);
+		_length = be64toh(length);
 	}
 
 	if (_masked)
@@ -134,15 +131,15 @@ void WsFrame::send(std::shared_ptr<Writer> writer, Opcode code, const char *data
 	}
 	writer->write(&byte, sizeof(byte));
 
-	if (size > 125)
+	if (size > 65535)
 	{
-		uint16_t size16 = static_cast<uint16_t>(size);
-		writer->write(&size16, sizeof(size16));
-	}
-	else if (size > 65535)
-	{
-		uint64_t size64 = static_cast<uint64_t>(size);
+		uint64_t size64 = htobe64(static_cast<uint64_t>(size));
 		writer->write(&size64, sizeof(size64));
+	}
+	else if (size > 125)
+	{
+		uint16_t size16 = htobe16(static_cast<uint16_t>(size));
+		writer->write(&size16, sizeof(size16));
 	}
 
 	if (!masked)
