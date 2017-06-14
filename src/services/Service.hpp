@@ -41,8 +41,12 @@ public:
 	virtual ~Service();
 
 	virtual void activate(Server* server) = 0;
-
 	virtual void deactivate(Server* server) = 0;
+
+	const Setting& getSetting() const
+	{
+		return _setting;
+	}
 };
 
 #include "ServiceFactory.hpp"
