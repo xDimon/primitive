@@ -34,15 +34,20 @@ public:
 	DbHolder(std::shared_ptr<DbConnectionPool> dbPool)
 	: _pool(dbPool)
 	, _conn(dbPool->Capture())
-	{}
+	{
+		if (!_conn)
+		{
+			throw std::runtime_error("Can't database connect");
+		}
+	}
 
 	~DbHolder()
 	{
 		_pool->Release(_conn);
 	}
 
-	std::shared_ptr<DbConnection>& operator()()
+	DbConnection* operator->()
 	{
-		return _conn;
+		return _conn.get();
 	}
 };
