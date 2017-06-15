@@ -196,7 +196,7 @@ bool TcpConnection::writeToSocket()
 			return false;
 		}
 
-		_outBuff.skip(n);
+		_outBuff.skip(static_cast<size_t>(n));
 	}
 
 	return true;
@@ -258,7 +258,7 @@ bool TcpConnection::readFromSocket()
 			return false;
 		}
 
-		_inBuff.forward(n);
+		_inBuff.forward(static_cast<size_t>(n));
 
 		_log.debug("Read %d bytes (summary %d) on %s", n, _inBuff.dataLen(), name().c_str());
 	}

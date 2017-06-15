@@ -62,7 +62,7 @@ public:
 		return *this;
 	}
 
-	void insert(const std::string& key, SVal* value)
+	void insert(const std::string key, const SVal* value)
 	{
 		auto i = _elements.find(key);
 		if (i != _elements.end())
@@ -71,7 +71,7 @@ public:
 			_elements.erase(i);
 			delete value;
 		}
-		_elements.emplace(key, value);
+		_elements.emplace(key, const_cast<SVal*>(value));
 	}
 
 	void insert(const std::string key, SVal& value)
