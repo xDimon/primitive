@@ -27,6 +27,7 @@
 #include "../ServerTransport.hpp"
 
 #include "WsFrame.hpp"
+#include "../../sessions/Session.hpp"
 #include <memory>
 
 class WsContext: public Context
@@ -37,6 +38,8 @@ private:
 	std::shared_ptr<TcpConnection> _connection;
 	std::shared_ptr<WsFrame> _frame;
 	ServerTransport::Handler _handler;
+	ServerTransport::Transmitter _transmitter;
+	std::weak_ptr<Session> _session;
 
 public:
 	WsContext(std::shared_ptr<TcpConnection> connection)
@@ -69,6 +72,15 @@ public:
 		return _request;
 	}
 
+	void setTransmitter(ServerTransport::Transmitter transmitter)
+	{
+		_transmitter = transmitter;
+	}
+	void transmit(const char*data, size_t size, bool close)
+	{
+		_transmitter(data, size, "", close);
+	}
+
 	void setHandler(ServerTransport::Handler handler)
 	{
 		_handler = handler;
@@ -85,5 +97,14 @@ public:
 	std::shared_ptr<WsFrame>& getFrame()
 	{
 		return _frame;
+	}
+
+	void assignSession(const std::shared_ptr<Session>& session)
+	{
+		_session = session;
+	}
+	std::shared_ptr<Session> getSession()
+	{
+		return _session.lock();
 	}
 };

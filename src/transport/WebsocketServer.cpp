@@ -240,6 +240,7 @@ bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 					}
 				};
 
+			context->setTransmitter(transmitter);
 			context->handle(context->getFrame()->dataPtr(), context->getFrame()->dataLen(), transmitter);
 			context->getFrame().reset();
 			n++;
