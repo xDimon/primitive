@@ -22,7 +22,7 @@
 #include <cstring>
 #include "SHA256.hpp"
 
-const unsigned int SHA256::sha256_k[64] = //UL = uint32
+const uint32_t SHA256::sha256_k[64] =
 	{0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
 	 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
 	 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -40,12 +40,12 @@ const unsigned int SHA256::sha256_k[64] = //UL = uint32
 	 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
 	 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
-void SHA256::transform(const unsigned char* message, unsigned int block_nb)
+void SHA256::transform(const uint8_t* message, size_t block_nb)
 {
-	uint32 w[64];
-	uint32 wv[8];
-	uint32 t1, t2;
-	const unsigned char* sub_block;
+	uint32_t w[64];
+	uint32_t wv[8];
+	uint32_t t1, t2;
+	const uint8_t* sub_block;
 	int i;
 	int j;
 	for (i = 0; i < (int) block_nb; i++)
@@ -98,11 +98,11 @@ void SHA256::init()
 	m_tot_len = 0;
 }
 
-void SHA256::update(const unsigned char* message, unsigned int len)
+void SHA256::update(const uint8_t* message, size_t len)
 {
-	unsigned int block_nb;
-	unsigned int new_len, rem_len, tmp_len;
-	const unsigned char* shifted_message;
+	size_t block_nb;
+	size_t new_len, rem_len, tmp_len;
+	const uint8_t* shifted_message;
 	tmp_len = SHA224_256_BLOCK_SIZE - m_len;
 	rem_len = len < tmp_len ? len : tmp_len;
 	memcpy(&m_block[m_len], message, rem_len);
@@ -122,14 +122,13 @@ void SHA256::update(const unsigned char* message, unsigned int len)
 	m_tot_len += (block_nb + 1) << 6;
 }
 
-void SHA256::final(unsigned char* digest)
+void SHA256::final(uint8_t* digest)
 {
-	unsigned int block_nb;
-	unsigned int pm_len;
-	unsigned int len_b;
+	uint32_t block_nb;
+	uint32_t pm_len;
+	uint32_t len_b;
 	int i;
-	block_nb = (1 + ((SHA224_256_BLOCK_SIZE - 9)
-		< (m_len % SHA224_256_BLOCK_SIZE)));
+	block_nb = (1u + ((SHA224_256_BLOCK_SIZE - 9) < (m_len % SHA224_256_BLOCK_SIZE)));
 	len_b = (m_tot_len + m_len) << 3;
 	pm_len = block_nb << 6;
 	memset(m_block + m_len, 0, pm_len - m_len);
@@ -142,14 +141,14 @@ void SHA256::final(unsigned char* digest)
 	}
 }
 
-std::string SHA256::encode(const std::string &input)
+std::string SHA256::encode(const std::string& input)
 {
-	unsigned char digest[SHA256::DIGEST_SIZE];
+	uint8_t digest[SHA256::DIGEST_SIZE];
 	memset(digest, 0, SHA256::DIGEST_SIZE);
 
 	SHA256 ctx = SHA256();
 	ctx.init();
-	ctx.update((unsigned char*) input.c_str(), input.length());
+	ctx.update((uint8_t*) input.c_str(), input.length());
 	ctx.final(digest);
 
 	char buf[2 * SHA256::DIGEST_SIZE + 1];
@@ -161,15 +160,15 @@ std::string SHA256::encode(const std::string &input)
 	return std::string(buf);
 }
 
-std::string SHA256::encode_bin(const std::string &input)
+std::string SHA256::encode_bin(const std::string& input)
 {
-	unsigned char digest[SHA256::DIGEST_SIZE];
+	uint8_t digest[SHA256::DIGEST_SIZE];
 	memset(digest, 0, SHA256::DIGEST_SIZE);
 
 	SHA256 ctx = SHA256();
 	ctx.init();
-	ctx.update((unsigned char*) input.c_str(), input.length());
+	ctx.update((uint8_t*) input.c_str(), input.length());
 	ctx.final(digest);
 
-	return std::string(reinterpret_cast<char *>(&digest[0]), sizeof(digest));
+	return std::string(reinterpret_cast<char*>(&digest[0]), sizeof(digest));
 }

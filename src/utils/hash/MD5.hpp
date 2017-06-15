@@ -60,7 +60,7 @@ public:
 	void operator= (MD5 const&) = delete;
 
 	bool append(const void *data, size_t len);
-	bool append(const std::string str)
+	bool append(const std::string& str)
 	{
 		return append(str.data(), str.length());
 	}

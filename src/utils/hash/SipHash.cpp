@@ -65,7 +65,7 @@ static uint64_t u8to64_le(const uint8_t* p)
 }
 
 
-SipHash::SipHash(const char (&seed)[16])
+SipHash::SipHash(const char (& seed)[16])
 	: d_v0(0x736f6d6570736575ULL)
 	, d_v1(0x646f72616e646f6dULL)
 	, d_v2(0x6c7967656e657261ULL)
@@ -130,14 +130,15 @@ SipHash::result_type SipHash::computeHash()
 	result_type b = static_cast<uint64_t>(d_totalLength) << 56;
 	switch (d_bufSize)
 	{
-		case 7:b |= static_cast<uint64_t>(d_buf[6]) << 48;  // FALL THROUGH
-		case 6:b |= static_cast<uint64_t>(d_buf[5]) << 40;  // FALL THROUGH
-		case 5:b |= static_cast<uint64_t>(d_buf[4]) << 32;  // FALL THROUGH
-		case 4:b |= static_cast<uint64_t>(d_buf[3]) << 24;  // FALL THROUGH
-		case 3:b |= static_cast<uint64_t>(d_buf[2]) << 16;  // FALL THROUGH
-		case 2:b |= static_cast<uint64_t>(d_buf[1]) << 8;   // FALL THROUGH
-		case 1:b |= static_cast<uint64_t>(d_buf[0]);        // FALL THROUGH
-		case 0:break;
+		case 7: b |= static_cast<uint64_t>(d_buf[6]) << 48;  // FALL THROUGH
+		case 6: b |= static_cast<uint64_t>(d_buf[5]) << 40;  // FALL THROUGH
+		case 5: b |= static_cast<uint64_t>(d_buf[4]) << 32;  // FALL THROUGH
+		case 4: b |= static_cast<uint64_t>(d_buf[3]) << 24;  // FALL THROUGH
+		case 3: b |= static_cast<uint64_t>(d_buf[2]) << 16;  // FALL THROUGH
+		case 2: b |= static_cast<uint64_t>(d_buf[1]) << 8;   // FALL THROUGH
+		case 1: b |= static_cast<uint64_t>(d_buf[0]);        // FALL THROUGH
+		case 0: break;
+		default: break;
 	}
 	d_v3 ^= b;
 	sipround(d_v0, d_v1, d_v2, d_v3);

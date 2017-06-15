@@ -33,6 +33,7 @@
 #include <execinfo.h>
 #include <sys/prctl.h>
 #include <dlfcn.h>
+#include <cxxabi.h>
 
 static void SignalsHandler(int sig, siginfo_t* info, void* context);
 
@@ -46,7 +47,7 @@ const std::string& ExePath()
 		ssize_t len = readlink("/proc/self/exe", &path[0], path.size());
 		if (len > 0)
 		{
-			path.resize(len);
+			path.resize(static_cast<size_t>(len));
 			result.assign(path.begin(), path.end());
 		}
 	}
@@ -218,10 +219,10 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 		log.debug("--- begin backtrace ---");
 
 		char **strings = backtrace_symbols(bt, n);
-		for (int i = 0; i < n; i++)
-		{
-			log.debug(strings[i]);
-		}
+//		for (int i = 0; i < n; i++)
+//		{
+//			log.debug(strings[i]);
+//		}
 
 		for (int i = 0; i < n; i++)
 		{
@@ -229,6 +230,10 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 
 			dladdr(bt[0], &dli);
 
+			int status;
+			auto symbol = abi::__cxa_demangle(dli.dli_sname, 0, 0, &status);
+
+			log.info("%s(%s)", dli.dli_fname, symbol);
 			log.debug(strings[i]);
 		}
 

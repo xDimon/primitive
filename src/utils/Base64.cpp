@@ -96,13 +96,13 @@ std::string Base64::decode(std::string const &encoded_string)
 
 	while (length-- && (encoded_string[in_] != '='))
 	{
-		if (!is_base64(encoded_string[in_]))
+		if (!is_base64(static_cast<unsigned char>(encoded_string[in_])))
 		{
 			in_++;
 			continue;
 		}
 
-		char_array_4[i++] = encoded_string[in_];
+		char_array_4[i++] = static_cast<unsigned char>(encoded_string[in_]);
 		in_++;
 		if (i == 4)
 		{

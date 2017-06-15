@@ -21,7 +21,7 @@
 
 #include "PercentEncoding.hpp"
 
-#include "literals.hpp"
+#include "../utils/literals.hpp"
 
 #include <stdexcept>
 #include <sstream>
