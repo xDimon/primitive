@@ -226,7 +226,7 @@ bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 		if (context->getFrame()->opcode() == WsFrame::Opcode::Text || context->getFrame()->opcode() == WsFrame::Opcode::Binary)
 		{
 			ServerTransport::Transmitter transmitter =
-				[&connection,opcode = context->getFrame()->opcode()]
+				[connection,opcode = context->getFrame()->opcode()]
 					(const char*data, size_t size, const std::string&, bool close){
 					WsFrame::send(connection, opcode, data, size);
 					if (close)
@@ -238,6 +238,7 @@ bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 						WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
 						connection->close();
 					}
+					ConnectionManager::watch(connection);
 				};
 
 			context->setTransmitter(transmitter);
