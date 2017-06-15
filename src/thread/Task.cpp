@@ -110,7 +110,6 @@ void Task::saveContext(ucontext_t* tmpContext, ucontext_t* mainContext)
 	_tmpContext = tmpContext;
 	_mainContext = mainContext;
 
-	Log("Task").debug("Save context for comeback: main=%p, tmp=%p", _mainContext, _tmpContext);
 }
 
 void Task::restoreContext() const
@@ -120,9 +119,7 @@ void Task::restoreContext() const
 		return;
 	}
 
-	Log log("Coroutine");
 
-	log.debug("Change context for comeback: main=%p <- tmp=%p", _mainContext, _tmpContext);
 //	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
 	// при завершении таска вернуться в связанный контекст, и удалить предыдущий

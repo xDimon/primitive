@@ -28,8 +28,8 @@
 class SessionManager
 {
 private:
-	SessionManager();
-	virtual ~SessionManager();
+	SessionManager() {};
+	virtual ~SessionManager() {};
 
 	SessionManager(SessionManager const&) = delete;
 	void operator= (SessionManager const&) = delete;

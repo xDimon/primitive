@@ -69,7 +69,7 @@ private:                                                                    \
                                                                             \
 public:                                                                     \
     virtual ~Service();                                                     \
-    virtual void activate(Server *server);                                   \
+    virtual void activate(Server *server);                                  \
     virtual void deactivate(Server *server);                                \
                                                                             \
 private:                                                                    \

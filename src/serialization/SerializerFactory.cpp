@@ -20,9 +20,6 @@
 
 
 #include "SerializerFactory.hpp"
-#include "JsonSerializer.hpp"
-#include "TlvSerializer.hpp"
-#include "UrlSerializer.hpp"
 
 bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)())
 {

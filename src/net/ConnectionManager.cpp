@@ -32,12 +32,6 @@ ConnectionManager::ConnectionManager()
 {
 	_epfd = epoll_create(poolSize);
 	memset(_epev, 0, sizeof(_epev));
-
-	_accepted = 0;
-	_established = 0;
-	_establishedMax = 0;
-
-	_size = 0;
 }
 
 ConnectionManager::~ConnectionManager()
@@ -94,13 +88,7 @@ bool ConnectionManager::remove(std::shared_ptr<Connection> connection)
 
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
-	if (getInstance()._allConnections.erase(connection.get()))
-	{
-		if (std::dynamic_pointer_cast<TcpConnection>(connection))
-		{
-			getInstance()._established--;
-		}
-	}
+	getInstance()._allConnections.erase(connection.get());
 
 	getInstance()._log.trace("Call `epoll_ctl(DEL)` for %s in ConnectionManager::add()", connection->name().c_str());
 

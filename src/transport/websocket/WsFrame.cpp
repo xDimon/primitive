@@ -26,8 +26,8 @@
 
 size_t WsFrame::calcHeaderSize(const char data[2])
 {
-	uint8_t prelen = (data[1] >> 0) & 0x7F_u8;
-	uint8_t masked = (data[1] >> 7) & 0x01_u8;
+	uint8_t prelen = (static_cast<uint8_t>(data[1]) >> 0) & 0x7F_u8;
+	uint8_t masked = (static_cast<uint8_t>(data[1]) >> 7) & 0x01_u8;
 
 	return 2												// Стартовые байты
 		+ ((prelen <= 125) ? 0 : (prelen == 126) ? 2 : 8)	// Байты расширенной длины
@@ -43,7 +43,7 @@ WsFrame::WsFrame(const char *begin, const char *end)
 	_opcode = static_cast<Opcode>((s[0] >> 0) & 0x0F);
 	_masked = static_cast<bool>((s[1] >> 7) & 0x01);
 
-	uint8_t prelen = (s[1] >> 0) & 0x7F_u8;
+	uint8_t prelen = (static_cast<uint8_t>(s[1]) >> 0) & 0x7F_u8;
 	if ((s + 2) > end)
 	{
 		throw std::runtime_error("Not anough data");
@@ -86,7 +86,7 @@ WsFrame::WsFrame(const char *begin, const char *end)
 		_mask[0] = static_cast<uint8_t>(*s++);
 		_mask[1] = static_cast<uint8_t>(*s++);
 		_mask[2] = static_cast<uint8_t>(*s++);
-		_mask[3] = static_cast<uint8_t>(*s++);
+		_mask[3] = static_cast<uint8_t>(*s);
 	}
 	else
 	{
@@ -118,17 +118,17 @@ void WsFrame::applyMask()
 
 void WsFrame::send(std::shared_ptr<Writer> writer, Opcode code, const char *data, size_t size)
 {
-	bool masked = false;
+//	bool masked = false;
 	uint8_t byte;
 
 	byte = (1_u8 << 7) | static_cast<uint8_t>(code);
 	writer->write(&byte, sizeof(byte));
 
 	byte = static_cast<uint8_t>((size > 65535) ? 127 : (size > 125) ? 126 : size);
-	if (masked)
-	{
-		byte |= (1_u8 << 7);
-	}
+//	if (masked)
+//	{
+//		byte |= (1_u8 << 7);
+//	}
 	writer->write(&byte, sizeof(byte));
 
 	if (size > 65535)
@@ -142,34 +142,34 @@ void WsFrame::send(std::shared_ptr<Writer> writer, Opcode code, const char *data
 		writer->write(&size16, sizeof(size16));
 	}
 
-	if (!masked)
-	{
+//	if (!masked)
+//	{
 		writer->write(data, size);
 		return;
-	}
-
-	union {
-		uint32_t i;
-		uint8_t b[4];
-	} mask;
-
-	mask.i = static_cast<uint32_t>(std::rand());
-
-	for (size_t i = 0; i < sizeof(mask.b); i++)
-	{
-		writer->write(&mask.b[i], 1);
-	}
-
-	int i = 0;
-	while (size--)
-	{
-		byte = static_cast<uint8_t>(*data++) ^ mask.b[i++];
-
-		writer->write(&byte, sizeof(byte));
-
-		if (i == 4)
-		{
-			i = 0;
-		}
-	}
+//	}
+//
+//	union {
+//		uint32_t i;
+//		uint8_t b[4];
+//	} mask;
+//
+//	mask.i = static_cast<uint32_t>(std::rand());
+//
+//	for (size_t i = 0; i < sizeof(mask.b); i++)
+//	{
+//		writer->write(&mask.b[i], 1);
+//	}
+//
+//	int i = 0;
+//	while (size--)
+//	{
+//		byte = static_cast<uint8_t>(*data++) ^ mask.b[i++];
+//
+//		writer->write(&byte, sizeof(byte));
+//
+//		if (i == 4)
+//		{
+//			i = 0;
+//		}
+//	}
 }

@@ -45,15 +45,9 @@ private:
 
 public:
 	Log();
-
 	explicit Log(std::string name);
 
 	virtual ~Log();
-
-	virtual Log& log()
-	{
-		return *this;
-	}
 
 	void setName(std::string name);
 

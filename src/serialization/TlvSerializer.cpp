@@ -408,8 +408,8 @@ SNum* TlvSerializer::decodeInteger()
 	int bytes = 0;
 	bool negative = false;
 
-	auto c = static_cast<Token>(_iss.get());
-	switch (c)
+	auto token = static_cast<Token>(_iss.get());
+	switch (token)
 	{
 		case Token::NEG_INT_64:
 			negative = true;
@@ -575,7 +575,7 @@ void TlvSerializer::encodeInteger(const SInt* value)
 
 	bool negative = value->value() < 0;
 
-	uint64_t absValue = llabs(value->value());
+	uint64_t absValue = static_cast<uint64_t>(llabs(value->value()));
 
 	if (absValue == 0)
 	{
@@ -645,7 +645,7 @@ void TlvSerializer::encodeFloat(const SFloat* value)
 
 	double_t f64 = static_cast<double_t>(value->value());
 //	if (static_cast<decltype(value->value())>(f64) == value->value())
-	{
+//	{
 		char data[8];
 
 		memcpy(data, &htole64(f64), sizeof(data));
@@ -656,9 +656,9 @@ void TlvSerializer::encodeFloat(const SFloat* value)
 			_oss.put(data[i]);
 		}
 		return;
-	}
-
-	throw std::runtime_error("Loose precission");
+//	}
+//
+//	throw std::runtime_error("Loose precission");
 }
 
 void TlvSerializer::encodeArray(const SArr *value)

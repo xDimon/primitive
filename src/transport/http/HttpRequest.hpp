@@ -30,13 +30,10 @@
 class HttpRequest: public Buffer
 {
 public:
-	typedef std::shared_ptr<HttpRequest> Ptr;
-	typedef std::weak_ptr<HttpRequest> WPtr;
-
 	enum class Method {
+		UNKNOWN,
 		GET,
 		POST,
-		UNKNOWN
 	};
 
 private:
@@ -89,7 +86,7 @@ public:
 		return
 			_version == 100 ? "HTTP/1.0" :
 			_version == 101 ? "HTTP/1.1" :
-			"*protocol*";
+			"HTTP";
 	}
 
 	bool hasContentLength() const

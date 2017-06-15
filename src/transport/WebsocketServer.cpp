@@ -116,7 +116,7 @@ bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 				HttpResponse(404, "WebSocket Upgrade Failure")
 					<< HttpHeader("X-ServerTransport", "websocket", true)
 					<< HttpHeader("Connection", "Close")
-					<< "Not found service-Handler for uri " << context->getRequest()->uri().path()
+					<< "Not found service-handler for uri " << context->getRequest()->uri().path()
 					>> *connection;
 
 				connection->close();
@@ -133,7 +133,7 @@ bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 
 			if (!handler)
 			{
-				std::string msg("##Not found service-Handler for uri ");
+				std::string msg("##Not found service-handler for uri ");
 				msg += context->getRequest()->uri().path();
 				uint16_t code = htobe16(1008); // Policy Violation
 				memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
@@ -241,7 +241,7 @@ bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 				};
 
 			context->setTransmitter(transmitter);
-			context->handle(context->getFrame()->dataPtr(), context->getFrame()->dataLen(), transmitter);
+			context->handle(context->getFrame()->dataPtr(), context->getFrame()->dataLen());
 			context->getFrame().reset();
 			n++;
 			continue;

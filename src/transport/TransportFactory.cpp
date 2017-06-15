@@ -20,8 +20,6 @@
 
 
 #include "TransportFactory.hpp"
-#include "HttpServer.hpp"
-#include "../net/SslAcceptor.hpp"
 
 bool TransportFactory::reg(const std::string& name, std::shared_ptr<ServerTransport> (* creator)(const Setting&))
 {

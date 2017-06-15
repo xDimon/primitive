@@ -64,11 +64,6 @@ public:
 	static void hold();
 	static void unhold();
 
-	static void touch()
-	{
-		getInstance()._workersWakeupCondition.notify_one();
-	}
-
 private:
 	Log _log;
 

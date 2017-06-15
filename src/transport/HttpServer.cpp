@@ -25,12 +25,10 @@
 #include "../net/ConnectionManager.hpp"
 #include "../net/TcpConnection.hpp"
 #include "../server/Server.hpp"
-#include "../utils/Packet.hpp"
 #include "../utils/Time.hpp"
 #include "http/HttpContext.hpp"
 #include "HttpServer.hpp"
 #include "../serialization/SObj.hpp"
-#include "http/HttpResponse.hpp"
 
 REGISTER_TRANSPORT(http, HttpServer);
 
@@ -164,7 +162,7 @@ bool HttpServer::processing(std::shared_ptr<Connection> connection_)
 			if (!handler)
 			{
 				HttpResponse(404)
-					<< "Not found service-Handler for uri " << context->getRequest()->uri().path() << "\r\n"
+					<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
 					>> *connection;
 
 				context.reset();

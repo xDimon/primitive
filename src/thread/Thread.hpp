@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <mutex>
 #include "../log/Log.hpp"
 
 #define WITH_COROUTINE
@@ -32,7 +31,6 @@ class Thread
 private:
 	size_t _id;
 	Log _log;
-	std::mutex _mutex;
 	std::function<void()> _function;
 	std::thread _thread;
 	bool _finished;

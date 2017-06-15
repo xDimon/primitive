@@ -21,7 +21,6 @@
 
 #include "HttpUri.hpp"
 
-#include "../../utils/literals.hpp"
 #include "../../utils/PercentEncoding.hpp"
 
 #include <cstring>

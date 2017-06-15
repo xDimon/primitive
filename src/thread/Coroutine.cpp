@@ -20,7 +20,6 @@
 
 
 #include <ucontext.h>
-#include <sys/mman.h>
 #include "Coroutine.hpp"
 #include "ThreadPool.hpp"
 
@@ -55,28 +54,17 @@ void Coroutine(Task& task)
 				[&]() {
 					std::lock_guard<std::mutex> lockGuardTask(orderMutex);
 
-					Log log("CoroutineTask");
-
-					log.debug("Begin coroutine's task");
-
 					task();
-
-					log.debug("End coroutine's task");
 				}
 			);
 
-			log.debug("Switch context (detach coroutine)");
 		}
 
 		// переключиться на контекст входа в поток
 		Thread::self()->reenter();
-		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 	else
 	{
-		Log log("Coroutine");
-
-		log.debug("Switch context (reattach coroutine and continue)");
 
 //		munmap(tmpContext.uc_stack.ss_sp, tmpContext.uc_stack.ss_size);
 //		tmpContext.uc_stack.ss_sp = nullptr;

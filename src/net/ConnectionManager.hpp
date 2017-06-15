@@ -60,13 +60,6 @@ private:
 	/// Готовые подключения (имеющие необработанные события)
 	std::set<std::shared_ptr<Connection>> _readyConnections;
 
-	uint32_t _accepted;
-	uint32_t _established;
-	uint32_t _establishedMax;
-
-	// Количество одновременно обслуживаемых соединений
-	int _size;
-
 	int _epfd;
 	epoll_event _epev[poolSize];
 

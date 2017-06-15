@@ -22,21 +22,12 @@
 #include "TcpConnector.hpp"
 
 #include <arpa/inet.h>
-#include <netinet/tcp.h>
 #include <fcntl.h>
 #include <sstream>
 #include <cstring>
 #include <unistd.h>
-#include <chrono>
-#include <sys/param.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 
 #include "ConnectionManager.hpp"
-#include "TcpConnection.hpp"
 #include "../utils/ShutdownManager.hpp"
 #include "../thread/ThreadPool.hpp"
 
@@ -76,10 +67,9 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 	fcntl(_sock, F_SETFL, rrc | O_NONBLOCK);
 
 	int herr = 0;
-	int hres = 0;
 
 	// Список адресов по хосту
-	while ((hres = gethostbyname_r(_host.c_str(), &_hostbuf, _buff, _buffSize, &_hostptr, &herr)) == ERANGE)
+	while (gethostbyname_r(_host.c_str(), &_hostbuf, _buff, _buffSize, &_hostptr, &herr) == ERANGE)
 	{
 		// realloc
 		_buffSize <<= 1;

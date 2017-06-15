@@ -25,7 +25,6 @@
 #include <iomanip>
 #include "UrlSerializer.hpp"
 #include "../transport/http/HttpUri.hpp"
-#include "../utils/Base64.hpp"
 
 REGISTER_SERIALIZER(uri, UrlSerializer);
 
@@ -247,7 +246,7 @@ void UrlSerializer::encodeNumber(const std::string& keyline, const SNum* value)
 void UrlSerializer::encodeArray(const std::string& keyline, const SArr* value)
 {
 	int index = 0;
-	value->forEach([this,&keyline,&index](const SVal* value)
+	value->forEach([this,&keyline,&index](const SVal* element)
 	{
 		if (index > 0)
 		{
@@ -255,7 +254,7 @@ void UrlSerializer::encodeArray(const std::string& keyline, const SArr* value)
 		}
 		std::ostringstream oss;
 		oss << keyline << "[" << index++ << "]";
-		encodeValue(oss.str(), value);
+		encodeValue(oss.str(), element);
 	});
 }
 

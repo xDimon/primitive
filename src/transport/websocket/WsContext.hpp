@@ -30,7 +30,7 @@
 #include "../../sessions/Session.hpp"
 #include <memory>
 
-class WsContext: public Context
+class WsContext : public Context
 {
 private:
 	std::shared_ptr<HttpRequest> _request;
@@ -46,13 +46,16 @@ public:
 	: _established(false)
 	, _connection(connection)
 	{};
-	virtual ~WsContext() {};
+
+	virtual ~WsContext()
+	{};
 
 	void setEstablished()
 	{
 		_established = true;
 		_frame.reset();
 	}
+
 	bool established()
 	{
 		return _established;
@@ -67,16 +70,18 @@ public:
 	{
 		_request = request;
 	}
+
 	std::shared_ptr<HttpRequest>& getRequest()
 	{
 		return _request;
 	}
 
-	void setTransmitter(ServerTransport::Transmitter transmitter)
+	void setTransmitter(ServerTransport::Transmitter& transmitter)
 	{
 		_transmitter = transmitter;
 	}
-	void transmit(const char*data, size_t size, bool close)
+
+	void transmit(const char* data, size_t size, bool close)
 	{
 		_transmitter(data, size, "", close);
 	}
@@ -85,15 +90,17 @@ public:
 	{
 		_handler = handler;
 	}
-	void handle(const char*data, size_t size, ServerTransport::Transmitter transmitter)
+
+	void handle(const char* data, size_t size)
 	{
-		_handler(ptr(), data, size, transmitter);
+		_handler(ptr(), data, size, _transmitter);
 	}
 
 	void setFrame(std::shared_ptr<WsFrame>& frame)
 	{
 		_frame = frame;
 	}
+
 	std::shared_ptr<WsFrame>& getFrame()
 	{
 		return _frame;
@@ -103,6 +110,7 @@ public:
 	{
 		_session = session;
 	}
+
 	std::shared_ptr<Session> getSession()
 	{
 		return _session.lock();

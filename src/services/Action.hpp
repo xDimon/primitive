@@ -34,7 +34,7 @@ private:
 	mutable const char* _name;
 
 protected:
-	using Id = uint32_t;
+	using Id = int32_t;
 
 	static uint64_t _requestCount;
 	std::shared_ptr<Context> _context;
@@ -68,10 +68,6 @@ public:
 
 	virtual bool execute() = 0;
 
-	virtual bool isCanBeFirst() const
-	{
-		return false;
-	}
 
 	inline auto requestId() const
 	{
@@ -101,7 +97,7 @@ private:                                                                        
     ActionName(                                                                                 \
 		const std::shared_ptr<Context>& context,                                                \
 		const SVal* input,                                                                      \
-		ServerTransport::Transmitter transmitter                                                      \
+		ServerTransport::Transmitter transmitter                                                \
 	)                                                                                           \
     : Action(context, input, transmitter)                                                       \
     {};                                                                                         \
@@ -116,7 +112,7 @@ private:                                                                        
     static auto create(                                                                         \
 		const std::shared_ptr<Context>& context,                                                \
 		const SVal* input,                                                                      \
-		ServerTransport::Transmitter transmitter                                                      \
+		ServerTransport::Transmitter transmitter                                                \
 	)                                                                                           \
     {                                                                                           \
         return std::shared_ptr<Action>(new ActionName(context, input, transmitter));            \

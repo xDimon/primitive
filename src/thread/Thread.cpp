@@ -86,7 +86,6 @@ void Thread::reenter()
 	ucontext_t context;
 	ucontext_t retContext;
 
-//	_log.debug("make context");
 
 	// Инициализация контекста корутины. uc_link указывает на _parentContext, точку возврата при завершении корутины
 	getcontext(&context);
@@ -102,7 +101,6 @@ void Thread::reenter()
 	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 1, this);
 //	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 0);
 
-	_log.debug("get ret context %p", &retContext);
 
 	volatile bool first = true;
 
@@ -111,17 +109,12 @@ void Thread::reenter()
 	if (first)
 	{
 		first = false;
-		_log.debug("first set context %p", &context);
 
 		if (setcontext(&context))
 		{
 			throw std::runtime_error("Can't change context");
 		}
-
-		_log.debug("return from first context %p", &context);
 	}
-
-	_log.debug("free stack of first context %p", &context);
 
 //	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
 //	context.uc_stack.ss_sp = nullptr;

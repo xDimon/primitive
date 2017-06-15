@@ -30,9 +30,6 @@
 class WsFrame: public Buffer
 {
 public:
-	typedef std::shared_ptr<WsFrame> Ptr;
-	typedef std::weak_ptr<WsFrame> WPtr;
-
 	enum class Opcode {
 		Continue	= 0x00, // фрейм-продолжение для фрагментированного сообщения. Он интерпретируется, исходя из ближайшего предыдущего ненулевого типа.
 		Text 		= 0x01, // текстовый фрейм.

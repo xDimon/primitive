@@ -84,10 +84,6 @@ public:
 	{
 		return _closed;
 	}
-	inline bool isReady() const
-	{
-		return _ready;
-	}
 
 	inline void setReleased()
 	{

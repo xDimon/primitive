@@ -100,5 +100,4 @@ ServerTransport::Handler PacketServer::getHandler(std::string subject)
 {
 	// TODO реализовать
 	throw std::runtime_error("Not implemented");
-	return nullptr;
 }

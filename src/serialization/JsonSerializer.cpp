@@ -21,8 +21,6 @@
 
 #include "JsonSerializer.hpp"
 
-#include "SInt.hpp"
-#include "SFloat.hpp"
 #include "../utils/Base64.hpp"
 #include "../utils/literals.hpp"
 
@@ -406,7 +404,7 @@ SBinary* JsonSerializer::decodeBinary()
 
 	while (!_iss.eof())
 	{
-		int c = _iss.get();
+		auto c = _iss.get();
 		if (c == '"')
 		{
 			std::string decoded = Base64::decode(b64);
@@ -669,18 +667,19 @@ void JsonSerializer::encodeArray(const SArr* value)
 	_oss << "[";
 
 	bool empty = true;
-	value->forEach([this, &empty](const SVal* value)
-				   {
-					   if (!empty)
-					   {
-						   _oss << ",";
-					   }
-					   else
-					   {
-						   empty = false;
-					   }
-					   encodeValue(value);
-				   });
+	value->forEach(
+		[this, &empty](const SVal* element){
+			if (!empty)
+			{
+				_oss << ",";
+			}
+			else
+			{
+				empty = false;
+			}
+			encodeValue(element);
+   		}
+	);
 
 	_oss << "]";
 }

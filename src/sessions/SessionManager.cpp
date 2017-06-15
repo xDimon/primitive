@@ -21,16 +21,6 @@
 
 #include "SessionManager.hpp"
 
-SessionManager::SessionManager()
-{
-
-}
-
-SessionManager::~SessionManager()
-{
-
-}
-
 Session::HID SessionManager::hidBySid(const Session::SID& sid)
 {
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSid2hid);
