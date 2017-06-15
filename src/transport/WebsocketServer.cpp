@@ -54,6 +54,27 @@ bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
 
 	if (!context->established())
 	{
+		if (connection->dataLen() >= 22 && !memcmp(connection->dataPtr(), "<policy-file-request/>", 22))
+		{
+			const std::string& policyFile = R"(<?xml version="1.0"?>
+<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
+<cross-domain-policy>
+  <allow-access-from domain="*" secure="false" to-ports="*"/>
+  <allow-access-from domain="*" secure="true" to-ports="*"/>
+  <site-control permitted-cross-domain-policies="master-only"/>
+</cross-domain-policy>
+)";
+
+			char zero = 0;
+			connection->write(policyFile.c_str(), policyFile.length());
+			connection->write(&zero, 1);
+			connection->close();
+
+			_log.debug("Sent policy file");
+
+			return true;
+		}
+
 		// Проверка готовности заголовков
 		auto endHeaders = static_cast<const char *>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
 
