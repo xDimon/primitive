@@ -60,18 +60,49 @@ public:
 	{
 		return _scheme;
 	}
+	void setScheme(Scheme scheme)
+	{
+		_scheme = scheme;
+		if (!_port)
+		{
+			if (_scheme == Scheme::HTTP)
+			{
+				_port = 80;
+			}
+			else if (_scheme == Scheme::HTTPS)
+			{
+				_port = 443;
+			}
+		}
+	}
+
 	const std::string& host() const
 	{
 		return _host;
 	}
+	void setHost(const std::string& host)
+	{
+		_host = host;
+	}
+
 	uint16_t port() const
 	{
 		return _port;
 	}
+	void setPort(uint16_t port)
+	{
+		_port = port;
+	}
+
 	const std::string& path() const
 	{
 		return _path;
 	}
+	void setPath(const std::string& path)
+	{
+		_path = path;
+	}
+
 	bool hasQuery() const
 	{
 		return _hasQuery;
@@ -80,6 +111,15 @@ public:
 	{
 		return _query;
 	}
+	void setQuery(const std::string& query)
+	{
+		_query = query;
+		if (!_query.empty())
+		{
+			_hasQuery = true;
+		}
+	}
+
 	bool hasFragment() const
 	{
 		return _hasFragment;
@@ -88,10 +128,13 @@ public:
 	{
 		return _fragment;
 	}
-
-	void assignHost(const std::string& host)
+	void setFragment(const std::string& fragment)
 	{
-		_host = host;
+		_fragment = fragment;
+		if (!_fragment.empty())
+		{
+			_hasFragment = true;
+		}
 	}
 
 	static std::string urldecode(const std::string& input);

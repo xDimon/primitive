@@ -28,6 +28,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 
 HttpUri::HttpUri()
 : _scheme(Scheme::UNDEFINED)
@@ -176,8 +177,10 @@ const std::string& HttpUri::str() const
 	return _thisAsString;
 }
 
-std::string HttpUri::urldecode(const std::string& input)
+std::string HttpUri::urldecode(const std::string& input_)
 {
+	std::string input(input_);
+	std::replace(input.begin(), input.end(), '+', ' ');
 	return PercentEncoding::decode(input);
 }
 
