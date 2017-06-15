@@ -26,7 +26,7 @@
 #include "../net/TcpConnection.hpp"
 #include "../server/Server.hpp"
 #include "../utils/Base64.hpp"
-#include "../utils/SHA1.hpp"
+#include "../utils/hash/SHA1.hpp"
 #include "../utils/Time.hpp"
 #include "websocket/WsContext.hpp"
 #include "WebsocketServer.hpp"
