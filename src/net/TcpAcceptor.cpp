@@ -192,9 +192,9 @@ void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 		return;
 	}
 
-	auto connection = std::make_shared<TcpConnection>(transport, sock, cliaddr, false);
+	auto newConnection = std::make_shared<TcpConnection>(transport, sock, cliaddr, false);
 
-	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(connection->ptr())](){
+	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(newConnection->ptr())](){
 		auto connection = std::dynamic_pointer_cast<TcpConnection>(wp.lock());
 		if (!connection)
 		{
@@ -207,5 +207,5 @@ void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 		}
 	}, std::chrono::seconds(TcpConnection::timeout));
 
-	ConnectionManager::add(connection->ptr());
+	ConnectionManager::add(newConnection->ptr());
 }

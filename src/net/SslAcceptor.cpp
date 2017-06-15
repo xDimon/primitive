@@ -34,9 +34,9 @@ void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 {
 	std::shared_ptr<Transport> transport = _transport.lock();
 
-	auto connection = std::shared_ptr<Connection>(new SslConnection(transport, sock, cliaddr, _sslContext, false));
+	auto newConnection = std::shared_ptr<Connection>(new SslConnection(transport, sock, cliaddr, _sslContext, false));
 
-	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(connection->ptr())](){
+	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(newConnection->ptr())](){
 		auto connection = std::dynamic_pointer_cast<TcpConnection>(wp.lock());
 		if (!connection)
 		{
@@ -49,5 +49,5 @@ void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 		}
 	}, std::chrono::seconds(10));
 
-	ConnectionManager::add(connection->ptr());
+	ConnectionManager::add(newConnection->ptr());
 }
