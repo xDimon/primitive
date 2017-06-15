@@ -163,48 +163,73 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 	std::istringstream iss(strval);
 	auto p = iss.tellg();
 
-	while (!iss.eof())
+	auto c = iss.peek();
+	if (c == '-' || c == '+')
 	{
-		auto c = iss.get();
-		if (c == '.' || c == 'e' || c == 'E')
-		{
-			// Looks like a float
-			SFloat::type value = 0;
+		iss.ignore();
+	}
 
-			iss.clear(iss.goodbit);
-			iss.seekg(p);
- 			iss >> value;
-
-			// Remain data - it's not number
-			if (iss.get() != -1)
-			{
-				return new SStr(strval);
-			}
-
-			// No more data - it's float value
-			return new SFloat(value);
-		}
-		else if (!isdigit(c) && c != '-')
+	for (;;)
+	{
+		c = iss.get();
+		if (!isdigit(c))
 		{
 			break;
 		}
 	}
 
 	// Looks like a integer
-	SInt::type value = 0;
 
-	iss.clear(iss.goodbit);
-	iss.seekg(p);
-	iss >> value;
+	// No more data - it's integer value
+	if (c == -1)
+	{
+		SInt::type value = 0;
 
-	// Remain data - it's not number
-	if (iss.get() != -1)
+		iss.clear(iss.goodbit);
+		iss.seekg(p);
+		iss >> value;
+
+		return new SInt(value);
+	}
+
+	if (c != '.' && c != 'e' && c != 'E')
 	{
 		return new SStr(strval);
 	}
+	iss.ignore();
 
-	// No more data - it's integer value
-	return new SInt(value);
+	c = iss.peek();
+	if (c == '-' || c == '+')
+	{
+		iss.ignore();
+	}
+
+	for (;;)
+	{
+		c = iss.get();
+		if (!isdigit(c))
+		{
+			break;
+		}
+	}
+
+	// Looks like a float
+
+	// No more data - it's float value
+	if (c == -1)
+	{
+		SFloat::type value = 0;
+
+		iss.clear(iss.goodbit);
+		iss.seekg(p);
+		iss >> value;
+
+		return new SFloat(value);
+	}
+
+	// Remain data - it's not number
+
+	return new SStr(strval);
 }
 
 void UrlSerializer::encodeNull(const std::string& keyline, const SNull* value)
