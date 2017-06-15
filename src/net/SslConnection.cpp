@@ -28,7 +28,7 @@
 #include "ConnectionManager.hpp"
 #include "../transport/ServerTransport.hpp"
 
-SslConnection::SslConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in& sockaddr, std::shared_ptr<SSL_CTX> sslContext, bool outgoing)
+SslConnection::SslConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr_in& sockaddr, const std::shared_ptr<SSL_CTX>& sslContext, bool outgoing)
 : TcpConnection(transport, sock, sockaddr, outgoing)
 , _sslContext(sslContext)
 , _sslEstablished(false)

@@ -23,7 +23,7 @@
 
 #include <sstream>
 
-Config::Config(std::shared_ptr<Options>& options)
+Config::Config(const std::shared_ptr<Options>& options)
 : _options(options)
 {
 	auto &configPath = _options->getConfig();

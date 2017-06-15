@@ -32,7 +32,7 @@
 
 const int TcpConnection::timeout;
 
-TcpConnection::TcpConnection(std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr, bool outgoing)
+TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr, bool outgoing)
 : Connection(transport)
 , ReaderConnection()
 , WriterConnection()

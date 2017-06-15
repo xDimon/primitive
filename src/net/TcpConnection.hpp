@@ -63,7 +63,7 @@ public:
 	TcpConnection(const TcpConnection&) = delete;
 	void operator= (TcpConnection const&) = delete;
 
-	TcpConnection(std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
+	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
 	virtual ~TcpConnection();
 
 	const std::chrono::steady_clock::time_point& aTime() const

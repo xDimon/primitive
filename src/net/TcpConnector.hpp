@@ -56,8 +56,8 @@ private:
 
 public:
 	TcpConnector(
-		std::shared_ptr<ClientTransport>& transport,
-		std::string host,
+		const std::shared_ptr<ClientTransport>& transport,
+		const std::string& host,
 		std::uint16_t port
 	);
 	virtual ~TcpConnector();

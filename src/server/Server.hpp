@@ -44,7 +44,7 @@ private:
 	std::map<const std::string, std::shared_ptr<Service>> _services;
 
 public:
-	Server(std::shared_ptr<Config> &configs);
+	Server(const std::shared_ptr<Config> &configs);
 	virtual ~Server();
 
 	static Server& getInstance()
@@ -61,7 +61,7 @@ public:
 		return "Primitive";
 	}
 
-	bool addTransport(const std::string& name, std::shared_ptr<ServerTransport>& transport);
+	bool addTransport(const std::string& name, const std::shared_ptr<ServerTransport>& transport);
 
 	std::shared_ptr<ServerTransport> getTransport(const std::string& name);
 
@@ -71,7 +71,7 @@ public:
 
 	void removeTransport(const std::string& name);
 
-	bool addService(const std::string& name, std::shared_ptr<Service>& service);
+	bool addService(const std::string& name, const std::shared_ptr<Service>& service);
 
 	void removeService(const std::string& name);
 

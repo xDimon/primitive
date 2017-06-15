@@ -21,16 +21,13 @@
 
 #include "../net/SslAcceptor.hpp"
 #include "../thread/ThreadPool.hpp"
-#include "../transport/HttpServer.hpp"
 #include "Server.hpp"
-#include "../transport/TransportFactory.hpp"
 #include "../net/ConnectionManager.hpp"
-#include "../storage/mysql/MysqlConnectionPool.hpp"
 #include "../storage/DbManager.hpp"
 
 Server* Server::_instance = nullptr;
 
-Server::Server(std::shared_ptr<Config>& configs)
+Server::Server(const std::shared_ptr<Config>& configs)
 : _log("Server")
 , _configs(configs)
 {
@@ -114,7 +111,7 @@ void Server::wait()
 	ThreadPool::wait();
 }
 
-bool Server::addTransport(const std::string& name, std::shared_ptr<ServerTransport>& transport)
+bool Server::addTransport(const std::string& name, const std::shared_ptr<ServerTransport>& transport)
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	auto i = _transports.find(name);
@@ -203,7 +200,7 @@ void Server::stop()
 	_log.info("Server stop");
 }
 
-bool Server::addService(const std::string& name, std::shared_ptr<Service>& service)
+bool Server::addService(const std::string& name, const std::shared_ptr<Service>& service)
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 	auto i = _services.find(name);

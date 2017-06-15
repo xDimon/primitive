@@ -34,7 +34,7 @@
 #include "../utils/ShutdownManager.hpp"
 #include "../thread/ThreadPool.hpp"
 
-TcpAcceptor::TcpAcceptor(std::shared_ptr<ServerTransport>& transport, std::string& host, std::uint16_t port)
+TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port)
 : Acceptor(transport)
 , _host(host)
 , _port(port)

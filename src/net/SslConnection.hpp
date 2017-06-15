@@ -50,7 +50,7 @@ public:
 	void operator=(SslConnection const&) = delete;
 
 	SslConnection(
-		std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, std::shared_ptr<SSL_CTX> sslContext, bool isOutgoing
+		const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, const std::shared_ptr<SSL_CTX>& sslContext, bool isOutgoing
 	);
 	virtual ~SslConnection();
 

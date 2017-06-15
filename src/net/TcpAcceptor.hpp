@@ -34,7 +34,7 @@ protected:
 	std::mutex _mutex;
 
 public:
-	TcpAcceptor(std::shared_ptr<ServerTransport>& transport, std::string& host, std::uint16_t port);
+	TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port);
 	virtual ~TcpAcceptor();
 
 	virtual void watch(epoll_event &ev);
@@ -43,7 +43,7 @@ public:
 
 	virtual bool processing();
 
-	static std::shared_ptr<TcpAcceptor> create(std::shared_ptr<ServerTransport>& transport, std::string& host, std::uint16_t port)
+	static std::shared_ptr<TcpAcceptor> create(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port)
 	{
 		return std::make_shared<TcpAcceptor>(transport, host, port);
 	}

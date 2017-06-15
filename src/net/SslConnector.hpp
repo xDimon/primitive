@@ -34,7 +34,7 @@ private:
 	virtual void createConnection(int sock, const sockaddr_in& cliaddr);
 
 public:
-	SslConnector(std::shared_ptr<ClientTransport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext);
+	SslConnector(const std::shared_ptr<ClientTransport>& transport, std::string host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext);
 	virtual ~SslConnector() {};
 
 	static std::shared_ptr<Connection> create(std::shared_ptr<ClientTransport>& transport, std::string host, std::uint16_t port, std::shared_ptr<SSL_CTX>& sslContext)

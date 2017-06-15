@@ -47,7 +47,7 @@ TcpConnector::~TcpConnector()
 	_log.debug("TcpConnector '%s' destroyed", name().c_str());
 }
 
-TcpConnector::TcpConnector(std::shared_ptr<ClientTransport>& transport, std::string hostname, std::uint16_t port)
+TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& hostname, std::uint16_t port)
 : Connector(transport)
 , _host(std::move(hostname))
 , _port(port)

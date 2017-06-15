@@ -37,7 +37,7 @@ protected:
 	using Id = uint32_t;
 
 	static uint64_t _requestCount;
-	std::shared_ptr<Context>& _context;
+	std::shared_ptr<Context> _context;
 	const SVal* _input;
 	const SObj* _data;
 	ServerTransport::Transmitter _transmitter;
@@ -51,7 +51,7 @@ public:
 	void operator=(Action const&) = delete;
 
 	Action(
-		std::shared_ptr<Context>& context,
+		const std::shared_ptr<Context>& context,
 		const SVal* input,
 		ServerTransport::Transmitter _transmitter
 	);
@@ -99,7 +99,7 @@ private:                                                                        
     void operator= (ActionName const&) = delete;                                                \
                                                                                                 \
     ActionName(                                                                                 \
-		std::shared_ptr<Context>& context,                                                      \
+		const std::shared_ptr<Context>& context,                                                \
 		const SVal* input,                                                                      \
 		ServerTransport::Transmitter transmitter                                                      \
 	)                                                                                           \
@@ -114,7 +114,7 @@ public:                                                                         
                                                                                                 \
 private:                                                                                        \
     static auto create(                                                                         \
-		std::shared_ptr<Context>& context,                                                      \
+		const std::shared_ptr<Context>& context,                                                \
 		const SVal* input,                                                                      \
 		ServerTransport::Transmitter transmitter                                                      \
 	)                                                                                           \
