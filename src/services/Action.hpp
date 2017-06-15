@@ -38,12 +38,13 @@ protected:
 
 	static uint64_t _requestCount;
 	std::shared_ptr<Context> _context;
-	const SVal* _input;
-	const SObj* _data;
+	const SObj* _input;
+	const SVal* _data;
 	ServerTransport::Transmitter _transmitter;
 	Id _requestId;
 	Id _lastConfirmedEvent;
 	Id _lastConfirmedResponse;
+	mutable bool _answerSent;
 
 public:
 	Action() = delete;
@@ -68,6 +69,8 @@ public:
 
 	virtual bool execute() = 0;
 
+	virtual const SObj* response(const SVal* data = nullptr) const;
+	virtual const SObj* error(const std::string& message, const SVal* data = nullptr) const;
 
 	inline auto requestId() const
 	{

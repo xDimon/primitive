@@ -21,31 +21,35 @@
 
 #include <cxxabi.h>
 #include "Action.hpp"
-#include "../serialization/SObj.hpp"
 
 uint64_t Action::_requestCount = 0;
 
 Action::Action(const std::shared_ptr<Context>& context, const SVal* input, ServerTransport::Transmitter transmitter)
 : _context(context)
-, _input(input)
-, _data(dynamic_cast<const SObj *>(_input))
+, _input(dynamic_cast<const SObj *>(input))
+, _data(nullptr)
 , _transmitter(transmitter)
 , _requestId(0)
 , _lastConfirmedEvent(0)
 , _lastConfirmedResponse(0)
+, _answerSent(false)
 {
 	_name = nullptr;
 
-	if (_data)
+	if (!_input)
 	{
-		auto aux = dynamic_cast<const SObj*>(_data->get("_"));
-		if (aux)
-		{
-//			_requestId = aux->get("ri"); // request id
-//			_lastConfirmedResponse = aux->get("cr"); // confirmed response id
-//			_lastConfirmedEvent = aux->get("ce"); // confirmed event id
-		}
+		throw std::runtime_error("Input data isn't object");
 	}
+
+	auto aux = dynamic_cast<const SObj*>(_input->get("_"));
+	if (aux)
+	{
+		_requestId = aux->getAsInt("ri");
+		_lastConfirmedResponse = aux->getAsInt("cr");
+		_lastConfirmedEvent = aux->getAsInt("ce");
+	}
+
+	_data = dynamic_cast<const SVal*>(_input->get("data"));
 }
 
 Action::~Action()
@@ -53,8 +57,73 @@ Action::~Action()
 	_requestCount++;
 }
 
+const SObj* Action::response(const SVal* data) const
+{
+	if (_answerSent)
+	{
+		throw std::runtime_error("Internal error ← Answer already sent");
+	}
+
+	auto response = std::make_unique<SObj>();
+
+	if (_requestId)
+	{
+		auto aux = std::make_unique<SObj>();
+		aux->insert("ri", _requestId);
+		response->insert("_", aux.release());
+	}
+
+	response->insert("response", getName());
+
+	if (data)
+	{
+		response->insert("data", data);
+	}
+
+	_answerSent = true;
+
+	return response.release();
+}
+
+const SObj* Action::error(const std::string& message, const SVal* data) const
+{
+	if (_answerSent)
+	{
+		throw std::runtime_error("Internal error ← Answer already sent");
+	}
+
+	auto error = std::make_unique<SObj>();
+
+	if (_requestId)
+	{
+		auto aux = std::make_unique<SObj>();
+		aux->insert("ri", _requestId);
+		error->insert("_", aux.release());
+	}
+
+	error->insert("error", getName());
+
+	error->insert("message", message);
+
+	if (data)
+	{
+		error->insert("data", data);
+	}
+
+	_answerSent = true;
+
+	return error.release();
+}
+
 const char* Action::getName() const
 {
-	int status;
-	return _name ?: (_name = abi::__cxa_demangle(typeid(*this).name(), 0, 0, &status));
+	if (!_name)
+	{
+		int status;
+		auto reqName = _input ? dynamic_cast<const SStr*>(_input->get("request")) : nullptr;
+		_name = reqName ?
+				reqName->value().c_str() :
+				abi::__cxa_demangle(typeid(*this).name(), 0, 0, &status);
+	}
+	return _name;
 }
