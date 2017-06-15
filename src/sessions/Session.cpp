@@ -21,8 +21,10 @@
 
 #include "Session.hpp"
 
-Session::Session(Session::UID uid)
-: uid(uid)
+const char Session::_hidSeed[16] = {};
+
+Session::Session(Session::HID uid)
+: hid(uid)
 , _ready(false)
 {
 
@@ -30,10 +32,9 @@ Session::Session(Session::UID uid)
 
 Session::~Session()
 {
-
 }
 
-void Session::setSid(SID &sid)
+void Session::setSid(SID sid)
 {
 	_sid = sid;
 }

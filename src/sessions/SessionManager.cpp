@@ -31,52 +31,48 @@ SessionManager::~SessionManager()
 
 }
 
-Session::UID SessionManager::getUid(const Session::SID& sid)
+Session::HID SessionManager::hidBySid(const Session::SID& sid)
 {
-	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSid2uid);
-	auto i = getInstance()._sid2uid.find(sid);
-	return (i != getInstance()._sid2uid.end()) ? i->second : 0;
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSid2hid);
+	auto i = getInstance()._sid2hid.find(sid);
+	return (i != getInstance()._sid2hid.end()) ? i->second : 0;
 }
 
-std::shared_ptr<Session> SessionManager::getSession(Session::UID uid, bool load)
+std::shared_ptr<Session> SessionManager::putSession(std::shared_ptr<Session> session)
 {
+	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
+	auto i = getInstance()._sessions.find(session->hid);
+
+	if (i != getInstance()._sessions.end())
 	{
-		std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
-		auto i = getInstance()._sessions.find(uid);
-
-		if (i != getInstance()._sessions.end())
-		{
-			return i->second;
-		}
-
-		if (!load)
-		{
-			return std::move(std::shared_ptr<Session>());
-		}
+		session = i->second;
+		return session;
 	}
 
-	auto session = std::make_shared<Session>(uid);
 	if (!session->isReady())
 	{
-		return std::shared_ptr<Session>();
+		session = nullptr;
+		return session;
 	}
 
-	{
-		std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
-		auto i = getInstance()._sessions.find(uid);
-
-		if (i != getInstance()._sessions.end())
-		{
-			return i->second;
-		}
-
-		getInstance()._sessions.emplace(uid, session);
-	}
-
+	getInstance()._sessions.emplace(session->hid, session);
 	return session;
 }
 
-void SessionManager::closeSession(Session::UID uid)
+std::shared_ptr<Session> SessionManager::getSession(Session::HID uid)
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
+	auto i = getInstance()._sessions.find(uid);
+
+	if (i != getInstance()._sessions.end())
+	{
+		return i->second;
+	}
+
+	return std::move(std::shared_ptr<Session>());
+}
+
+void SessionManager::closeSession(Session::HID uid)
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
 	auto i = getInstance()._sessions.find(uid);
@@ -86,11 +82,11 @@ void SessionManager::closeSession(Session::UID uid)
 		return;
 	}
 
-	auto& sid = i->second->sid();
-	if (sid.size())
+	auto sid = i->second->sid();
+	if (sid)
 	{
-		std::lock_guard<std::mutex> lockGuard2(getInstance()._mutexSid2uid);
-		getInstance()._sid2uid.erase(sid);
+		std::lock_guard<std::mutex> lockGuard2(getInstance()._mutexSid2hid);
+		getInstance()._sid2hid.erase(sid);
 	}
 
 	getInstance()._sessions.erase(i);

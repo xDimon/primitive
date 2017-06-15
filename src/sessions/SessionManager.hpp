@@ -41,20 +41,22 @@ private:
 	}
 
 	/// Сопоставление sid => uid
-	std::map<Session::SID, Session::UID> _sid2uid;
-	std::mutex _mutexSid2uid;
+	std::map<Session::SID, Session::HID> _sid2hid;
+	std::mutex _mutexSid2hid;
 
 	/// Пул сессий
-	std::map<Session::UID, std::shared_ptr<Session>> _sessions;
+	std::map<Session::HID, std::shared_ptr<Session>> _sessions;
 	std::recursive_mutex _mutexSessions;
 
 public:
-	/// Получить UID ассоциированый с SID
-	static Session::UID getUid(const Session::SID& sid);
+	/// Получить HID по SID
+	static Session::HID hidBySid(const Session::SID& sid);
 
-	/// Получить/загрузить сессию по UID
-	static std::shared_ptr<Session> getSession(Session::UID uid, bool load = false);
+	/// Получить сессию по HID
+	static std::shared_ptr<Session> getSession(Session::HID hid);
 
 	/// Закрыть сессию
-	static void closeSession(Session::UID uid);
+	static void closeSession(Session::HID hid);
+
+	static std::shared_ptr<Session> putSession(std::shared_ptr<Session> session);
 };

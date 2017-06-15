@@ -22,31 +22,47 @@
 #pragma once
 
 #include <memory>
+#include "../utils/Shareable.hpp"
+#include "../utils/Context.hpp"
 
-class Session
+class Session : public Shareable<Session>
 {
 public:
-	typedef std::string SID;
-	typedef uint64_t UID;
+	typedef uint64_t HID;
+	typedef uint64_t SID;
 
-private:
-	const UID uid;
+protected:
+	static const char _hidSeed[16];
+
+public:
+	const HID hid;
+
+protected:
 	SID _sid;
-
+	std::weak_ptr<Context> _context;
 	bool _ready;
 
 public:
-	Session(UID uid);
-	~Session();
+	Session(HID hid);
+	virtual ~Session();
 
 	const bool isReady() const
 	{
 		return _ready;
 	}
 
-	const SID& sid() const
+	const SID sid() const
 	{
 		return _sid;
 	}
-	void setSid(SID& sid);
+	void setSid(SID sid);
+
+	void assignContext(const std::shared_ptr<Context>& context)
+	{
+		_context = context;
+	}
+	std::shared_ptr<Context> getContext()
+	{
+		return _context.lock();
+	}
 };
