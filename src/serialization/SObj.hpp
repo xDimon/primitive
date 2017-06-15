@@ -79,7 +79,35 @@ public:
 		insert(key, &value);
 	}
 
-	void insert(const std::string key, SInt::type value)
+	void insert(const std::string key, uint64_t value)
+	{
+		insert(key, new SInt(value));
+	}
+	void insert(const std::string key, int64_t value)
+	{
+		insert(key, new SInt(value));
+	}
+	void insert(const std::string key, uint32_t value)
+	{
+		insert(key, new SInt(value));
+	}
+	void insert(const std::string key, int32_t value)
+	{
+		insert(key, new SInt(value));
+	}
+	void insert(const std::string key, uint16_t value)
+	{
+		insert(key, new SInt(value));
+	}
+	void insert(const std::string key, int16_t value)
+	{
+		insert(key, new SInt(value));
+	}
+	void insert(const std::string key, uint8_t value)
+	{
+		insert(key, new SInt(value));
+	}
+	void insert(const std::string key, int8_t value)
 	{
 		insert(key, new SInt(value));
 	}
@@ -90,6 +118,10 @@ public:
 	}
 
 	void insert(const std::string key, const std::string value)
+	{
+		insert(key, new SStr(value));
+	}
+	void insert(const std::string key, const char* value)
 	{
 		insert(key, new SStr(value));
 	}
@@ -121,6 +153,11 @@ public:
 	{
 		return get(key);
 	}
+	int64_t getAsInt(const std::string& key, int64_t defaultValue = 0LL) const
+	{
+		auto val = get(key);
+		return val ? val->operator int() : defaultValue;
+	}
 
 	void forEach(std::function<void(const std::pair<const std::string, const SVal*>&)> handler) const
 	{
@@ -139,6 +176,49 @@ public:
 			throw std::runtime_error(std::string() + "Field '" + key + "' isn't integer");
 		}
 		value = element->operator int();
+	}
+//	template<typename T>
+//	void lookup(const char *key, T &value, bool strict = false) const
+//	{
+//		int64_t tmp;
+//		lookup(key, tmp, strict);
+//		value = (decltype(value))(tmp);
+//	}
+	void lookup(const char *key, int32_t &value, bool strict = false) const
+	{
+		int64_t tmp;
+		lookup(key, tmp, strict);
+		value = (decltype(value))(tmp);
+	}
+	void lookup(const char *key, uint32_t &value, bool strict = false) const
+	{
+		int64_t tmp;
+		lookup(key, tmp, strict);
+		value = (decltype(value))(tmp);
+	}
+	void lookup(const char *key, int16_t &value, bool strict = false) const
+	{
+		int64_t tmp;
+		lookup(key, tmp, strict);
+		value = (decltype(value))(tmp);
+	}
+	void lookup(const char *key, uint16_t &value, bool strict = false) const
+	{
+		int64_t tmp;
+		lookup(key, tmp, strict);
+		value = (decltype(value))(tmp);
+	}
+	void lookup(const char *key, int8_t &value, bool strict = false) const
+	{
+		int64_t tmp;
+		lookup(key, tmp, strict);
+		value = (decltype(value))(tmp);
+	}
+	void lookup(const char *key, uint8_t &value, bool strict = false) const
+	{
+		int64_t tmp;
+		lookup(key, tmp, strict);
+		value = (decltype(value))(tmp);
 	}
 
 	void lookup(const std::string& key, bool &value, bool strict = false) const
