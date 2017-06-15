@@ -47,19 +47,12 @@ void DbConnectionPool::touch()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_captured.empty() && _pool.empty())
 	{
-		try
-		{
-			auto conn = create();
-			_pool.push_front(conn);
-		}
-		catch(...)
-		{
-			throw;
-		}
+		auto conn = create();
+		_pool.push_front(conn);
 	}
 }
 
-std::shared_ptr<DbConnection> DbConnectionPool::Capture()
+std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
@@ -78,9 +71,7 @@ std::shared_ptr<DbConnection> DbConnectionPool::Capture()
 
 			conn->capture();
 
-			_captured.insert(std::make_pair(std::this_thread::get_id(), conn));
-
-			conn.reset();
+			return std::move(conn);
 		}
 
 		_mutex.lock();
@@ -135,7 +126,7 @@ std::shared_ptr<DbConnection> DbConnectionPool::Capture()
 	}
 }
 
-void DbConnectionPool::Release(std::shared_ptr<DbConnection> conn)
+void DbConnectionPool::releaseDbConnection(const std::shared_ptr<DbConnection>& conn)
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
@@ -151,7 +142,7 @@ void DbConnectionPool::Release(std::shared_ptr<DbConnection> conn)
 	}
 	else
 	{
-//		Log::warning("Internal error: release connection when counter of capture is zero");
+		_log.warn("Internal error: release connection when counter of capture is zero");
 	}
 
 	// После высвобождения соединение все еще захвачено (согласно счетчику)
@@ -162,7 +153,7 @@ void DbConnectionPool::Release(std::shared_ptr<DbConnection> conn)
 
 	if (conn->inTransaction())
 	{
-//		Log::warningf("Internal error: finaly release connection when counter of incompleted transaction is '%lu'", (*conn)->transaction);
+		_log.warn("Internal error: finaly release connection when counter of incompleted transaction nozero");
 
 		while (conn->inTransaction())
 		{
@@ -173,6 +164,4 @@ void DbConnectionPool::Release(std::shared_ptr<DbConnection> conn)
 	_captured.erase(i);
 
 	_pool.push_front(conn);
-
-	return;
 }

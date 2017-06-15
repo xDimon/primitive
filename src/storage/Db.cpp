@@ -16,38 +16,4 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.06.02
 
-// DbHolder.hpp
-
-
-#pragma once
-
-
-#include "DbConnection.hpp"
-
-class DbHolder
-{
-private:
-	std::shared_ptr<DbConnectionPool> _pool;
-	std::shared_ptr<DbConnection> _conn;
-
-public:
-	DbHolder(std::shared_ptr<DbConnectionPool> dbPool)
-	: _pool(dbPool)
-	, _conn(dbPool->Capture())
-	{
-		if (!_conn)
-		{
-			throw std::runtime_error("Can't database connect");
-		}
-	}
-
-	~DbHolder()
-	{
-		_pool->Release(_conn);
-	}
-
-	DbConnection* operator->()
-	{
-		return _conn.get();
-	}
-};
+// Db.cpp

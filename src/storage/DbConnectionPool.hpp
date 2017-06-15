@@ -49,7 +49,31 @@ public:
 
 	void touch();
 
-	std::shared_ptr<DbConnection> Capture();
+	std::shared_ptr<DbConnection> captureDbConnection();
 
-	void Release(std::shared_ptr<DbConnection> conn);
+	void releaseDbConnection(const std::shared_ptr<DbConnection>& conn);
+
+	virtual void close() = 0;
 };
+
+#include "DbConnectionPoolFactory.hpp"
+
+#define REGISTER_DBCONNECTIONPOOL(Type,Class) const bool Class::__dummy = \
+    DbConnectionPoolFactory::reg(                                                               \
+        #Type,                                                                                  \
+        [](const Setting& setting){                                                             \
+            return std::shared_ptr<DbConnectionPool>(new Class(setting));                       \
+        }                                                                                       \
+    );
+
+#define DECLARE_DBCONNECTIONPOOL(Class) \
+private:                                                                                        \
+    Class(const Setting& setting);                                                              \
+    Class(const Class&) = delete;                                                               \
+    void operator=(Class const&) = delete;                                                      \
+                                                                                                \
+public:                                                                                         \
+	virtual void close() override;                                                              \
+                                                                                                \
+private:                                                                                        \
+    static const bool __dummy;

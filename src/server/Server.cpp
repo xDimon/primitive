@@ -26,6 +26,7 @@
 #include "../transport/TransportFactory.hpp"
 #include "../net/ConnectionManager.hpp"
 #include "../storage/mysql/MysqlConnectionPool.hpp"
+#include "../storage/DbManager.hpp"
 
 Server* Server::_instance = nullptr;
 
@@ -48,13 +49,12 @@ Server::Server(std::shared_ptr<Config>& configs)
 
 		for (const auto& setting : settings)
 		{
-			_database = std::make_shared<MysqlConnectionPool>(setting);
-			_database->touch();
+			DbManager::openPool(setting);
 		}
 	}
 	catch (const std::runtime_error& exception)
 	{
-		_log.error("Can't create database connection pool: %s", exception.what());
+		_log.error("Can't create one of database connection pool: %s", exception.what());
 	}
 
 	try

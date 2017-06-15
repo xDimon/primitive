@@ -59,14 +59,6 @@ MysqlConnection::MysqlConnection(
 
 MysqlConnection::~MysqlConnection()
 {
-	if (captured())
-	{
-		auto pool = _pool.lock();
-		if (pool)
-		{
-			pool->Release(ptr());
-		}
-	}
 	mysql_close(&_mysql);
 }
 
@@ -141,7 +133,7 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 	// Выполнение запроса
 	if (mysql_query(&_mysql, sql.c_str()) != 0)
 	{
-//		Log::errorf(0, "MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(&_mysql), mysql_error(&_mysql), sql.c_str());
+		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(&_mysql), mysql_error(&_mysql), sql.c_str());
 		return false;
 	}
 

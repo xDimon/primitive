@@ -31,7 +31,7 @@ class DbResult;
 
 class DbConnectionPool;
 
-class DbConnection
+class DbConnection : public Shareable<DbConnection>
 {
 private:
 	static size_t _lastId;
@@ -49,21 +49,37 @@ public:
 	{};
 
 	virtual ~DbConnection()
-	{};
-
-	bool captured() const
 	{
-		return _captured != 0;
+		if (_captured)
+		{
+			throw std::runtime_error("Destroy of captured connection ");
+		}
+	};
+
+	size_t captured() const
+	{
+		return _captured;
 	}
 
-	void capture()
+	size_t capture()
 	{
-		_captured++;
+		Log("DB").debug("DBConn#%p captured -> %llu", this, _captured+1);
+		return ++_captured;
 	}
 
-	void release()
+	size_t release()
 	{
+		Log("DB").debug("DBConn#%p released -> %llu", this, _captured-1);
 		_captured--;
+		if (!_captured)
+		{
+			auto pool = _pool.lock();
+			if (pool)
+			{
+				pool->releaseDbConnection(ptr());
+			}
+		}
+		return _captured;
 	}
 
 	virtual std::string escape(const std::string& str) = 0;
@@ -77,6 +93,6 @@ public:
 	virtual bool commit() = 0;
 	virtual bool rollback() = 0;
 
-	virtual bool query(const std::string& query, DbResult* res = nullptr, size_t* affected = nullptr, size_t* insertId = nullptr) = 0;
-	virtual bool multiQuery(const std::string& sql) = 0;
+	virtual bool query(const std::string& query, DbResult* res = nullptr, size_t* affected = nullptr, size_t* insertId = nullptr) __attribute_warn_unused_result__ = 0;
+	virtual bool multiQuery(const std::string& sql) __attribute_warn_unused_result__ = 0;
 };

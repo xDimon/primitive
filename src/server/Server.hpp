@@ -40,8 +40,6 @@ private:
 
 	std::shared_ptr<Config> _configs;
 
-	std::shared_ptr<DbConnectionPool> _database;
-
 	std::map<const std::string, std::shared_ptr<ServerTransport>> _transports;
 	std::map<const std::string, std::shared_ptr<Service>> _services;
 
@@ -56,15 +54,6 @@ public:
 			throw std::runtime_error("Server isn't instantiate yet");
 		}
 		return *_instance;
-	}
-
-	static auto getDatabase()
-	{
-		if (!_instance)
-		{
-			throw std::runtime_error("Server isn't instantiate yet");
-		}
-		return _instance->_database;
 	}
 
 	static std::string httpName()

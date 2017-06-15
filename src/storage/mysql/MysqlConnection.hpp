@@ -28,7 +28,7 @@
 
 class MysqlConnectionPool;
 
-class MysqlConnection : public Shareable<MysqlConnection>, public DbConnection
+class MysqlConnection : public DbConnection
 {
 private:
 	size_t _transaction;

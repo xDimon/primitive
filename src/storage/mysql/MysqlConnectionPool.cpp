@@ -22,26 +22,19 @@
 #include <sstream>
 #include "MysqlConnectionPool.hpp"
 #include "MysqlConnection.hpp"
+#include "MysqlLibHelper.hpp"
 
-MysqlLibHelper::MysqlLibHelper()
-{
-	if (mysql_library_init(0, nullptr, nullptr))
-	{
-		throw std::runtime_error("Could not initialize MySQL library");
-	}
-}
-
-MysqlLibHelper::~MysqlLibHelper()
-{
-	mysql_library_end();
-}
-
-MysqlLibHelper MysqlConnectionPool::_helper;
+REGISTER_DBCONNECTIONPOOL(mysql, MysqlConnectionPool)
 
 MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 : DbConnectionPool(setting)
 , _dbport(0)
 {
+	if (!MysqlLibHelper::isReady())
+	{
+		throw std::runtime_error("MySQL library isn't ready");
+	}
+
 	if (setting.exists("dbsocket"))
 	{
 		setting.lookupValue("dbsocket", _dbsocket);
@@ -117,4 +110,9 @@ std::shared_ptr<DbConnection> MysqlConnectionPool::create()
 			_dbport
 		);
 	}
+}
+
+void MysqlConnectionPool::close()
+{
+	// TODO реализовать закрытие
 }

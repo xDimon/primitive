@@ -14,9 +14,34 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.06.02
+// File created on: 2017.06.15
 
-// DbHolder.cpp
+// MysqlLibHelper.hpp
 
 
-#include "DbHolder.hpp"
+#pragma once
+
+
+class MysqlLibHelper final
+{
+private:
+	MysqlLibHelper();
+	~MysqlLibHelper();
+
+	MysqlLibHelper(MysqlLibHelper const&) = delete;
+	void operator= (MysqlLibHelper const&) = delete;
+
+	static MysqlLibHelper &getInstance()
+	{
+		static MysqlLibHelper instance;
+		return instance;
+	}
+
+	bool _ready;
+
+public:
+	static bool isReady()
+	{
+		return getInstance()._ready;
+	}
+};

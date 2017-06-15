@@ -14,32 +14,27 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.05.08
+// File created on: 2017.06.15
 
-// MysqlConnectionPool.hpp
+// MysqlLibHelper.cpp
 
 
-#pragma once
+#include "MysqlLibHelper.hpp"
 
-#include "../DbConnectionPool.hpp"
+#include <mysql.h>
+#include <stdexcept>
 
-#include <string>
-#include <thread>
-#include <mutex>
-#include <map>
-#include <deque>
-
-class MysqlConnectionPool : public DbConnectionPool
+MysqlLibHelper::MysqlLibHelper()
 {
-private:
-	std::string _dbname;
-	std::string _dbsocket;
-	std::string _dbserver;
-	std::string _dbuser;
-	std::string _dbpass;
-	unsigned int _dbport;
+	if (mysql_library_init(0, nullptr, nullptr))
+	{
+		_ready = false;
+		throw std::runtime_error("Could not initialize MySQL library");
+	}
+	_ready = true;
+}
 
-	std::shared_ptr<DbConnection> create();
-
-	DECLARE_DBCONNECTIONPOOL(MysqlConnectionPool)
-};
+MysqlLibHelper::~MysqlLibHelper()
+{
+	mysql_library_end();
+}

@@ -14,32 +14,43 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.05.08
+// File created on: 2017.06.15
 
-// MysqlConnectionPool.hpp
+// DbManager.hpp
 
 
 #pragma once
 
-#include "../DbConnectionPool.hpp"
 
-#include <string>
-#include <thread>
+#include "DbConnectionPool.hpp"
+#include "Db.hpp"
+
 #include <mutex>
-#include <map>
-#include <deque>
 
-class MysqlConnectionPool : public DbConnectionPool
+class DbManager final
 {
 private:
-	std::string _dbname;
-	std::string _dbsocket;
-	std::string _dbserver;
-	std::string _dbuser;
-	std::string _dbpass;
-	unsigned int _dbport;
+	DbManager() {};
+	virtual ~DbManager() {};
 
-	std::shared_ptr<DbConnection> create();
+	DbManager(DbManager const&) = delete;
+	void operator= (DbManager const&) = delete;
 
-	DECLARE_DBCONNECTIONPOOL(MysqlConnectionPool)
+	static DbManager &getInstance()
+	{
+		static DbManager instance;
+		return instance;
+	}
+
+	std::map<std::string, std::shared_ptr<DbConnectionPool>> _pools;
+	std::mutex _mutex;
+
+public:
+	static std::shared_ptr<DbConnectionPool> openPool(const Setting& setting, bool replace = false);
+
+	static std::shared_ptr<DbConnectionPool> getPool(const std::string& name);
+
+	static void closePool(const std::string& name, bool force);
+
+	static Db getConnection(const std::string& name);
 };
