@@ -26,7 +26,7 @@
 
 REGISTER_TRANSPORT(packet, PacketServer);
 
-bool PacketServer::processing(std::shared_ptr<Connection> connection_)
+bool PacketServer::processing(const std::shared_ptr<Connection>& connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
@@ -96,7 +96,7 @@ void PacketServer::bindHandler(const std::string& selector, ServerTransport::Han
 	throw std::runtime_error("Not implemented");
 }
 
-ServerTransport::Handler PacketServer::getHandler(std::string subject)
+ServerTransport::Handler PacketServer::getHandler(const std::string& subject)
 {
 	// TODO реализовать
 	throw std::runtime_error("Not implemented");

@@ -290,7 +290,7 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 	ConnectionManager::add(newConnection);
 }
 
-void TcpConnector::addConnectedHandler(std::function<void(std::shared_ptr<TcpConnection>)> handler)
+void TcpConnector::addConnectedHandler(std::function<void(const std::shared_ptr<TcpConnection>&)> handler)
 {
 	_connectHandler = std::move(handler);
 }

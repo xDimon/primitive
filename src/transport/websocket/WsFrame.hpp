@@ -78,5 +78,5 @@ public:
 
 	static size_t calcHeaderSize(const char data[2]);
 
-	static void send(std::shared_ptr<Writer>, Opcode code, const char *data, size_t size);
+	static void send(const std::shared_ptr<Writer>&, Opcode code, const char* data, size_t size);
 };

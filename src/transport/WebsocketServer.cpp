@@ -34,7 +34,7 @@
 
 REGISTER_TRANSPORT(websocket, WebsocketServer);
 
-bool WebsocketServer::processing(std::shared_ptr<Connection> connection_)
+bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
@@ -326,8 +326,9 @@ void WebsocketServer::bindHandler(const std::string& selector, ServerTransport::
 	_handlers.emplace(selector, handler);
 }
 
-ServerTransport::Handler WebsocketServer::getHandler(std::string subject)
+ServerTransport::Handler WebsocketServer::getHandler(const std::string& subject_)
 {
+	auto subject = subject_;
 	do
 	{
 		auto i = _handlers.upper_bound(subject);

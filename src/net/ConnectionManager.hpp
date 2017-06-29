@@ -70,20 +70,20 @@ private:
 	std::shared_ptr<Connection> capture();
 
 	/// Освободить соединение
-	void release(std::shared_ptr<Connection> conn);
+	void release(const std::shared_ptr<Connection>& conn);
 
 public:
 	/// Добавить соединение для наблюдения
-	static void watch(std::shared_ptr<Connection> connection);
+	static void watch(const std::shared_ptr<Connection>& connection);
 
 	/// Зарегистрировать соединение
-	static void add(std::shared_ptr<Connection> connection);
+	static void add(const std::shared_ptr<Connection>& connection);
 
 	/// Удалить регистрацию соединения
-	static bool remove(std::shared_ptr<Connection> connection);
+	static bool remove(const std::shared_ptr<Connection>& connection);
 
 	/// Проверить и вернуть отложенные события
-	static uint32_t rotateEvents(std::shared_ptr<Connection> connection);
+	static uint32_t rotateEvents(const std::shared_ptr<Connection>& connection);
 
 	/// Обработка событий
 	static void dispatch();

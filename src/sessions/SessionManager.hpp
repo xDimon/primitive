@@ -58,5 +58,5 @@ public:
 	/// Закрыть сессию
 	static void closeSession(Session::HID hid);
 
-	static std::shared_ptr<Session> putSession(std::shared_ptr<Session> session);
+	static std::shared_ptr<Session> putSession(const std::shared_ptr<Session>& session);
 };

@@ -44,14 +44,14 @@ ConnectionManager::~ConnectionManager()
 	}
 	for (auto& connection : connections)
 	{
-		remove(std::shared_ptr<Connection>(connection));
+		remove(connection);
 	}
 	close(_epfd);
 	_epfd = -1;
 }
 
 /// Зарегистрировать соединение
-void ConnectionManager::add(std::shared_ptr<Connection> connection)
+void ConnectionManager::add(const std::shared_ptr<Connection>& connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 
@@ -79,7 +79,7 @@ void ConnectionManager::add(std::shared_ptr<Connection> connection)
 }
 
 /// Удалить регистрацию соединения
-bool ConnectionManager::remove(std::shared_ptr<Connection> connection)
+bool ConnectionManager::remove(const std::shared_ptr<Connection>& connection)
 {
 	if (!connection)
 	{
@@ -104,14 +104,14 @@ bool ConnectionManager::remove(std::shared_ptr<Connection> connection)
 	return true;
 }
 
-uint32_t ConnectionManager::rotateEvents(std::shared_ptr<Connection> connection)
+uint32_t ConnectionManager::rotateEvents(const std::shared_ptr<Connection>& connection)
 {
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 	uint32_t events = connection->rotateEvents();
 	return events;
 }
 
-void ConnectionManager::watch(std::shared_ptr<Connection> connection)
+void ConnectionManager::watch(const std::shared_ptr<Connection>& connection)
 {
 	// Для известных соенинений проверяем состояние захваченности
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
@@ -198,7 +198,7 @@ void ConnectionManager::wait()
 				}
 				for (auto& connection : connections)
 				{
-					remove(std::shared_ptr<Connection>(connection));
+					remove(connection);
 				}
 
 				_mutex.unlock();
@@ -320,7 +320,7 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 }
 
 /// Освободить соединение
-void ConnectionManager::release(std::shared_ptr<Connection> connection)
+void ConnectionManager::release(const std::shared_ptr<Connection>& connection)
 {
 //	_log.trace("Enter into ConnectionManager::release() for %s", connection->name().c_str());
 

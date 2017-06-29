@@ -66,7 +66,7 @@ public:
 
 	virtual bool processing() override;
 
-	void addConnectedHandler(std::function<void(std::shared_ptr<TcpConnection>)>);
+	void addConnectedHandler(std::function<void(const std::shared_ptr<TcpConnection>&)>);
 	void addErrorHandler(std::function<void()>);
 
 	void onConnect(std::shared_ptr<TcpConnection> connection)
@@ -84,7 +84,7 @@ public:
 		}
 	}
 
-	static std::shared_ptr<TcpConnector> create(std::shared_ptr<ClientTransport>& transport, std::string& host, std::uint16_t port)
+	static std::shared_ptr<TcpConnector> create(const std::shared_ptr<ClientTransport>& transport, std::string& host, std::uint16_t port)
 	{
 		return std::make_shared<TcpConnector>(transport, host, port);
 	}

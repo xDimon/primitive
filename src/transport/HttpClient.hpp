@@ -44,5 +44,5 @@ public:
 		_log.debug("Transport '%s' destroyed", name().c_str());
 	}
 
-	virtual bool processing(std::shared_ptr<Connection> connection) override;
+	virtual bool processing(const std::shared_ptr<Connection>& connection) override;
 };

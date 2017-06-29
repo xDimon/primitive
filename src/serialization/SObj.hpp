@@ -45,7 +45,7 @@ public:
 		while (!_elements.empty())
 		{
 			auto i = _elements.begin();
-			auto value = const_cast<SVal*>(i->second);
+			auto value = i->second;
 			_elements.erase(i);
 			delete value;
 		}

@@ -37,5 +37,5 @@ public:
 	Transport();
 	virtual ~Transport();
 
-	virtual bool processing(std::shared_ptr<Connection> connection) = 0;
+	virtual bool processing(const std::shared_ptr<Connection>& connection) = 0;
 };

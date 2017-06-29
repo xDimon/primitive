@@ -48,10 +48,10 @@ public:
 	virtual bool disable() final;
 
 	typedef std::function<void(const char*, size_t, const std::string&, bool)> Transmitter;
-	typedef std::function<void(std::shared_ptr<Context>, const char*, size_t, Transmitter)> Handler;
+	typedef std::function<void(const std::shared_ptr<Context>&, const char*, size_t, Transmitter)> Handler;
 
 	virtual void bindHandler(const std::string& selector, Handler handler) = 0;
-	virtual Handler getHandler(std::string subject) = 0;
+	virtual Handler getHandler(const std::string& subject) = 0;
 };
 
 #include "TransportFactory.hpp"
@@ -83,9 +83,9 @@ public:                                                                         
         _log.debug("Transport '%s' destroyed", name().c_str());                                 \
     }                                                                                           \
                                                                                                 \
-    virtual bool processing(std::shared_ptr<Connection> connection) override;                   \
+    virtual bool processing(const std::shared_ptr<Connection>& connection) override;            \
     virtual void bindHandler(const std::string& selector, ServerTransport::Handler Handler) override; \
-    virtual ServerTransport::Handler getHandler(std::string subject) override;                        \
+    virtual ServerTransport::Handler getHandler(const std::string& subject) override;           \
                                                                                                 \
 private:                                                                                        \
     static const bool __dummy;

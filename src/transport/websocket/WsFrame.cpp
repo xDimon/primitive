@@ -116,7 +116,7 @@ void WsFrame::applyMask()
 	}
 }
 
-void WsFrame::send(std::shared_ptr<Writer> writer, Opcode code, const char *data, size_t size)
+void WsFrame::send(const std::shared_ptr<Writer>& writer, Opcode code, const char* data, size_t size)
 {
 //	bool masked = false;
 	uint8_t byte;

@@ -29,7 +29,7 @@
 class SArr: public SVal
 {
 private:
-	std::vector<const SVal*> _elements;
+	std::vector<SVal*> _elements;
 
 public:
 	SArr() = default;
@@ -38,7 +38,7 @@ public:
 	{
 		for (auto element : _elements)
 		{
-			delete const_cast<SVal*>(element);
+			delete element;
 		}
 	};
 

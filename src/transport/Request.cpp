@@ -86,7 +86,7 @@ bool Request::connect()
 		{
 			connector.reset(new TcpConnector(_clientTransport, _uri.host(), _uri.port()));
 		}
-		connector->addConnectedHandler([this](std::shared_ptr<TcpConnection> connection){
+		connector->addConnectedHandler([this](const std::shared_ptr<TcpConnection>& connection){
 			Log("_").debug("connected");
 			_state = State::CONNECTED;
 			connection->addCompleteHandler([this](const std::shared_ptr<Context>&context_){

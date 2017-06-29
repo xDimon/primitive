@@ -32,7 +32,7 @@
 
 REGISTER_TRANSPORT(http, HttpServer);
 
-bool HttpServer::processing(std::shared_ptr<Connection> connection_)
+bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
@@ -227,8 +227,9 @@ void HttpServer::bindHandler(const std::string& selector, ServerTransport::Handl
 	_handlers.emplace(selector, handler);
 }
 
-ServerTransport::Handler HttpServer::getHandler(std::string subject)
+ServerTransport::Handler HttpServer::getHandler(const std::string& subject_)
 {
+	auto subject = subject_;
 	do
 	{
 		auto i = _handlers.upper_bound(subject);
