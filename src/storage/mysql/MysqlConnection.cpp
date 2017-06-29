@@ -33,7 +33,15 @@ MysqlConnection::MysqlConnection(
 : DbConnection(pool)
 , _transaction(0)
 {
+	my_bool false_ = (my_bool)0;
+	unsigned int waitTimeout = 5;
+
 	mysql_init(&_mysql);
+	mysql_options(&_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+0:00';\n");
+	mysql_options(&_mysql, MYSQL_OPT_RECONNECT, &false_);
+	mysql_options(&_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+	mysql_options(&_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &waitTimeout);
+
 	if (!mysql_real_connect(&_mysql, dbserver.c_str(), dbuser.c_str(), dbpass.c_str(), dbname.c_str(), dbport, nullptr, 0))
 	{
 		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(&_mysql));
@@ -50,7 +58,15 @@ MysqlConnection::MysqlConnection(
 : DbConnection(pool)
 , _transaction(0)
 {
+	my_bool false_ = (my_bool)0;
+	unsigned int waitTimeout = 5;
+
 	mysql_init(&_mysql);
+	mysql_options(&_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+0:00';\n");
+	mysql_options(&_mysql, MYSQL_OPT_RECONNECT, &false_);
+	mysql_options(&_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+	mysql_options(&_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &waitTimeout);
+
 	if (!mysql_real_connect(&_mysql, nullptr, dbuser.c_str(), dbpass.c_str(), dbname.c_str(), 0, dbsocket.c_str(), 0))
 	{
 		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(&_mysql));

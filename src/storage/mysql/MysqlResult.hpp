@@ -32,6 +32,15 @@ private:
 	MYSQL_RES* _data;
 
 public:
+	MysqlResult()
+	: _data(nullptr)
+	{}
+
+	virtual ~MysqlResult()
+	{
+		mysql_free_result(_data);
+	}
+
 	void set(MYSQL_RES* value)
 	{
 		_data = value;
