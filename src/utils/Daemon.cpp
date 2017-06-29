@@ -139,6 +139,7 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGSEGV:
 				if (fatalError)
 				{
+					P7_Exceptional_Flush();
 					raise(sig);
 				}
 				fatalError = 1;
@@ -151,6 +152,7 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGBUS:
 				if (fatalError)
 				{
+					P7_Exceptional_Flush();
 					raise(sig);
 				}
 				fatalError = true;
@@ -163,6 +165,7 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGABRT:
 				if (fatalError)
 				{
+					P7_Exceptional_Flush();
 					raise(sig);
 				}
 				fatalError = true;
@@ -176,6 +179,7 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGFPE:
 				if (fatalError)
 				{
+					P7_Exceptional_Flush();
 					raise(sig);
 				}
 				fatalError = true;
@@ -244,6 +248,8 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 
 	if (needAbort)
 	{
+		Log::finalFlush();;
+
 		exit(EXIT_FAILURE);
 	}
 

@@ -94,4 +94,9 @@ public:
 	void flush()
 	{
 	}
+
+	static void finalFlush()
+	{
+		P7_Exceptional_Flush();
+	}
 };

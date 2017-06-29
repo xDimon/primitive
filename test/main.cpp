@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 
 	log.info("Stop daemon");
 
-	P7_Exceptional_Flush();
+	Log::finalFlush();
 
 	return 0;
 }
