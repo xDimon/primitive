@@ -73,6 +73,11 @@ SVal* TlvSerializer::decode(const std::string &data, bool strict)
 	_iss.str(data);
 	_iss.clear(_iss.goodbit);
 
+	if (_iss.eof() || _iss.peek() == -1)
+	{
+		throw std::runtime_error("No data for parsing");
+	}
+
 	SVal* value = nullptr;
 
 	try
@@ -109,6 +114,11 @@ std::string TlvSerializer::encode(const SVal* value)
 
 SVal* TlvSerializer::decodeValue()
 {
+	if (_iss.eof())
+	{
+		throw std::runtime_error("Unexpect out of data during parse value");
+	}
+
 	Token token = static_cast<Token>(_iss.peek());
 	switch (token)
 	{

@@ -35,6 +35,11 @@ SVal* JsonSerializer::decode(const std::string& data, bool strict)
 
 	SVal* value = nullptr;
 
+	if (_iss.eof() || _iss.peek() == -1)
+	{
+		throw std::runtime_error("No data for parsing");
+	}
+
 	try
 	{
 		value = decodeValue();
@@ -87,6 +92,11 @@ void JsonSerializer::skipSpaces()
 SVal* JsonSerializer::decodeValue()
 {
 	skipSpaces();
+
+	if (_iss.eof())
+	{
+		throw std::runtime_error("Unexpect out of data during parse value");
+	}
 
 	switch (_iss.peek())
 	{
