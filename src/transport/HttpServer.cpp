@@ -169,6 +169,8 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 				return true;
 			}
 
+			context->setHandler(std::move(handler));
+
 			ServerTransport::Transmitter transmitter =
 				[&connection]
 					(const char*data, size_t size, const std::string& contentType, bool close){
@@ -189,7 +191,9 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 						>> *connection;
 				};
 
-			handler(context, context->getRequest()->dataPtr(), context->getRequest()->dataLen(), transmitter);
+			context->setTransmitter(transmitter);
+
+			context->handle(context->getRequest()->dataPtr(), context->getRequest()->dataLen());
 
 			context->getRequest().reset();
 			n++;
