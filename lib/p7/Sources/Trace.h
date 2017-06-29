@@ -39,6 +39,7 @@
 
 #define P7TRACE_MODULES_POOL_SIZE                                           (32)
 #define P7TRACE_MODULES_MAX_SIZE                                           (512)
+#define P7TRACE_MEMORY_ALIGNMENT                                             (8)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +164,8 @@ public:
     void *Alloc(size_t i_szBuffer)
     {
         tUINT8 *l_pReturn = NULL;
+
+        i_szBuffer = (i_szBuffer + P7TRACE_MEMORY_ALIGNMENT - 1) & ~(P7TRACE_MEMORY_ALIGNMENT - 1);
 
         if (    (m_pCurrent)
              && ((m_szCurrent - m_szCurrentUsed) >= i_szBuffer)
@@ -461,8 +464,13 @@ class CP7Trace:
 
     tUINT8            *m_pVargs;
     size_t             m_szVargs;
+
+    stTrace_Conf       m_sConf;
+
 public:
-    CP7Trace(IP7_Client *i_pClient, const tXCHAR *i_pName); //for arguments description see P7_Client.h
+    CP7Trace(IP7_Client         *i_pClient, 
+             const tXCHAR       *i_pName, 
+             const stTrace_Conf *i_pConf); //for arguments description see P7_Client.h
     virtual ~CP7Trace();
 
     tBOOL Is_Initialized();

@@ -68,6 +68,7 @@ class CClBaical:
     CTPData_Window       m_cPacket_Data_Report;
     CTPClient_Ping       m_cPacket_Alive;
     CTPClient_Bye        m_cPacket_Bye;
+    tBOOL                m_bBig_Endian;
 
     CMEvent              m_cConn_Event;
     tBOOL                m_bConn_Event;

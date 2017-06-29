@@ -85,11 +85,27 @@ extern "C"
 
 ////////////////////////////////////////////////////////////////////////////////
 //P7_Create_Client
-P7_EXPORT IP7_Trace * __cdecl P7_Create_Trace(IP7_Client   *i_pClient, 
-                                              const tXCHAR *i_pName
-                                              )
+P7_EXPORT IP7_Trace * __cdecl P7_Create_Trace(IP7_Client         *i_pClient, 
+                                              const tXCHAR       *i_pName,
+                                              const stTrace_Conf *i_pConf
+                                             )
 {
-    CP7Trace *l_pReturn = new CP7Trace(i_pClient, i_pName);
+    //Check parameters
+    if (i_pConf)
+    {
+        if (    (    (!i_pConf->qwTimestamp_Frequency)
+                  && (i_pConf->pTimestamp_Callback)
+                )
+             || (    (i_pConf->qwTimestamp_Frequency)
+                  && (!i_pConf->pTimestamp_Callback)
+                )
+           )
+        {
+            return NULL;    
+        }
+    }
+
+    CP7Trace *l_pReturn = new CP7Trace(i_pClient, i_pName, i_pConf);
 
     //if not initialized - remove
     if (    (l_pReturn)
@@ -108,15 +124,16 @@ P7_EXPORT IP7_Trace * __cdecl P7_Create_Trace(IP7_Client   *i_pClient,
 //P7_Get_Shared_Trace
 P7_EXPORT IP7_Trace * __cdecl P7_Get_Shared_Trace(const tXCHAR *i_pName)
 {
-    IP7_Trace *l_pReturn = NULL;
-    tUINT32    l_dwLen1  = PStrLen(TRACE_SHARED_PREFIX);
-    tUINT32    l_dwLen2  = PStrLen(i_pName);
-    tXCHAR    *l_pName   = (tXCHAR *)malloc(sizeof(tXCHAR) * (l_dwLen1 + l_dwLen2 + 16));
+    size_t     l_szPadding = 16;
+    IP7_Trace *l_pReturn   = NULL;
+    tUINT32    l_dwLen1    = PStrLen(TRACE_SHARED_PREFIX);
+    tUINT32    l_dwLen2    = PStrLen(i_pName);
+    tXCHAR    *l_pName     = (tXCHAR *)malloc(sizeof(tXCHAR) * (l_dwLen1 + l_dwLen2 + l_szPadding));
 
     if (l_pName)
     {
-        PStrCpy(l_pName, l_dwLen1 + l_dwLen2 + 16, TRACE_SHARED_PREFIX);
-        PStrCpy(l_pName + l_dwLen1, l_dwLen2 + 16, i_pName);
+        PStrCpy(l_pName, l_dwLen1 + l_dwLen2 + l_szPadding, TRACE_SHARED_PREFIX);
+        PStrCpy(l_pName + l_dwLen1, l_dwLen2 + l_szPadding, i_pName);
         if (CShared::E_OK == CShared::Lock(l_pName, 250))
         {
             if (CShared::Read(l_pName, (tUINT8*)&l_pReturn, sizeof(IP7_Trace*)))
@@ -613,9 +630,10 @@ CP7Trace_Desc::CP7Trace_Desc(CMemoryManager &i_rMemory,
 
         sP7Trace_Format *l_pHeader_Desc = (sP7Trace_Format *)(m_pBuffer + l_dwOffset);
 
-        l_pHeader_Desc->sCommon.dwSize     = m_dwSize;
-        l_pHeader_Desc->sCommon.dwType     = EP7USER_TYPE_TRACE;
-        l_pHeader_Desc->sCommon.dwSubType  = EP7TRACE_TYPE_DESC;
+        INIT_EXT_HEADER(l_pHeader_Desc->sCommonRaw, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_DESC, m_dwSize);
+        //l_pHeader_Desc->sCommon.dwSize     = m_dwSize;
+        //l_pHeader_Desc->sCommon.dwType     = EP7USER_TYPE_TRACE;
+        //l_pHeader_Desc->sCommon.dwSubType  = EP7TRACE_TYPE_DESC;
 
         l_pHeader_Desc->wArgs_Len          = (tUINT16)m_dwArgs_Count;
         l_pHeader_Desc->wID                = i_wID;
@@ -773,9 +791,10 @@ CP7Trace_Desc::CP7Trace_Desc(CMemoryManager &i_rMemory,
         tUINT32          l_dwOffset     = 0;
         sP7Trace_Format *l_pHeader_Desc = (sP7Trace_Format *)(m_pBuffer + l_dwOffset);
 
-        l_pHeader_Desc->sCommon.dwSize     = m_dwSize;
-        l_pHeader_Desc->sCommon.dwType     = EP7USER_TYPE_TRACE;
-        l_pHeader_Desc->sCommon.dwSubType  = EP7TRACE_TYPE_DESC;
+        INIT_EXT_HEADER(l_pHeader_Desc->sCommonRaw, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_DESC, m_dwSize);
+        //l_pHeader_Desc->sCommon.dwSize     = m_dwSize;
+        //l_pHeader_Desc->sCommon.dwType     = EP7USER_TYPE_TRACE;
+        //l_pHeader_Desc->sCommon.dwSubType  = EP7TRACE_TYPE_DESC;
 
         l_pHeader_Desc->wArgs_Len          = (tUINT16)m_dwArgs_Count;
         l_pHeader_Desc->wID                = i_wID;
@@ -929,7 +948,9 @@ tUINT16 CP7Trace_Desc::Get_ID()
 
 ////////////////////////////////////////////////////////////////////////////////
 // CP7Trace                                       
-CP7Trace::CP7Trace(IP7_Client *i_pClient, const tXCHAR *i_pName)
+CP7Trace::CP7Trace(IP7_Client         *i_pClient, 
+                   const tXCHAR       *i_pName,
+                   const stTrace_Conf *i_pConf)
     : m_lReference(1)
     , m_dwSequence(0)
     , m_pClient(i_pClient)
@@ -951,6 +972,15 @@ CP7Trace::CP7Trace(IP7_Client *i_pClient, const tXCHAR *i_pName)
     , m_pVargs(NULL)
     , m_szVargs(0)
 {
+    if (i_pConf)
+    {
+        m_sConf = *i_pConf;
+    }
+    else
+    {
+        memset(&m_sConf, 0, sizeof(m_sConf));
+    }
+
     memset(&m_sCS, 0, sizeof(m_sCS));
     
     LOCK_CREATE(m_sCS);
@@ -978,12 +1008,14 @@ CP7Trace::CP7Trace(IP7_Client *i_pClient, const tXCHAR *i_pName)
 
     if (m_bInitialized)
     {
-        m_sHeader_Info.sCommon.dwSize    = sizeof(sP7Trace_Info);
-        m_sHeader_Info.sCommon.dwType    = EP7USER_TYPE_TRACE;
-        m_sHeader_Info.sCommon.dwSubType = EP7TRACE_TYPE_INFO;
+        INIT_EXT_HEADER(m_sHeader_Info.sCommonRaw, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_INFO, sizeof(m_sHeader_Info));
+        //m_sHeader_Info.sCommon.dwSize    = sizeof(sP7Trace_Info);
+        //m_sHeader_Info.sCommon.dwType    = EP7USER_TYPE_TRACE;
+        //m_sHeader_Info.sCommon.dwSubType = EP7TRACE_TYPE_INFO;
 
-        m_sHeader_Data.sCommon.dwType    = EP7USER_TYPE_TRACE;
-        m_sHeader_Data.sCommon.dwSubType = EP7TRACE_TYPE_DATA;
+        INIT_EXT_HEADER(m_sHeader_Data.sCommonRaw, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_DATA, 0);
+        //m_sHeader_Data.sCommon.dwType    = EP7USER_TYPE_TRACE;
+        //m_sHeader_Data.sCommon.dwSubType = EP7TRACE_TYPE_DATA;
 
         if (i_pName)
         {
@@ -994,8 +1026,16 @@ CP7Trace::CP7Trace(IP7_Client *i_pClient, const tXCHAR *i_pName)
             PUStrCpy(m_sHeader_Info.pName, P7TRACE_NAME_LENGTH, TM("Unknown"));
         }
 
-        m_sHeader_Info.qwTimer_Frequency = GetPerformanceFrequency();
-        m_sHeader_Info.qwTimer_Value     = GetPerformanceCounter();
+        if (m_sConf.qwTimestamp_Frequency)
+        {
+            m_sHeader_Info.qwTimer_Frequency = m_sConf.qwTimestamp_Frequency;
+            m_sHeader_Info.qwTimer_Value     = m_sConf.pTimestamp_Callback(m_sConf.pContext);
+        }
+        else
+        {
+            m_sHeader_Info.qwTimer_Frequency = GetPerformanceFrequency();
+            m_sHeader_Info.qwTimer_Value     = GetPerformanceCounter();
+        }
 
         GetEpochTime(&m_sHeader_Info.dwTime_Hi, &m_sHeader_Info.dwTime_Lo);
 
@@ -1221,18 +1261,18 @@ void CP7Trace::On_Receive(tUINT32 i_dwChannel, tUINT8 *i_pBuffer, tUINT32 i_dwSi
 
     LOCK_ENTER(m_sCS);
 
-    sP7Ext_Header *l_pHeader = (sP7Ext_Header *)i_pBuffer;
-
-    if (    (l_pHeader)
+    if (    (i_pBuffer)
          && (i_dwSize > sizeof(sP7Ext_Header))
        )
     {
-        //i_pBuffer += sizeof(sP7Ext_Header);
+        sP7Ext_Raw l_sHeader = *(sP7Ext_Raw*)i_pBuffer;
 
-        if (    (EP7USER_TYPE_TRACE == l_pHeader->dwType)
-             && (EP7TRACE_TYPE_VERB == l_pHeader->dwSubType)
+        if (    (EP7USER_TYPE_TRACE == GET_EXT_HEADER_TYPE(l_sHeader))
+             && (EP7TRACE_TYPE_VERB == GET_EXT_HEADER_SUBTYPE(l_sHeader))
            )
         {
+            sP7Trace_Module *l_pModule = NULL;
+
             //if it is old protocol and field wModuleID isn't included into command
             //or if module ID is 0
             if (    (i_dwSize < sizeof(sP7Trace_Verb))
@@ -1254,12 +1294,19 @@ void CP7Trace::On_Receive(tUINT32 i_dwChannel, tUINT8 *i_pBuffer, tUINT32 i_dwSi
                     if (l_pModules->dwUsed > l_wModuleID)
                     {
                         l_pModules->pData[l_wModuleID].eVerbosity = ((sP7Trace_Verb*)i_pBuffer)->eVerbosity;
+                        l_pModule = &l_pModules->pData[l_wModuleID];
+                        break;
                     }
                     else
                     {
                         l_wModuleID -= l_pModules->dwUsed;
                     }
                 }//while (l_pEl = m_cThreadsR.Get_Next(l_pEl))
+            }
+
+            if (m_sConf.pVerbosity_Callback)
+            {
+                m_sConf.pVerbosity_Callback(m_sConf.pContext, l_pModule, ((sP7Trace_Verb*)i_pBuffer)->eVerbosity);
             }
         }
     }
@@ -1357,6 +1404,11 @@ void CP7Trace::On_Status(tUINT32 i_dwChannel, const sP7C_Status *i_pStatus)
         }//(i_pStatus->dwResets != m_sStatus.dwResets) ...
 
         m_sStatus = *i_pStatus;
+
+        if (m_sConf.pConnect_Callback)
+        {
+            m_sConf.pConnect_Callback(m_sConf.pContext, m_sStatus.bConnected);
+        }
     }
     LOCK_EXIT(m_sCS);
 }// On_Status
@@ -1421,12 +1473,21 @@ tBOOL CP7Trace::Register_Thread(const tXCHAR *i_pName, tUINT32 i_dwThreadId)
     l_pThread = &l_pThreads->pData[l_pThreads->dwUsed];
     l_pThreads->dwUsed ++;
 
-    l_pThread->sCommon.dwSize    = sizeof(sP7Trace_Thread_Start);
-    l_pThread->sCommon.dwType    = EP7USER_TYPE_TRACE;
-    l_pThread->sCommon.dwSubType = EP7TRACE_TYPE_THREAD_START;
+    INIT_EXT_HEADER(l_pThread->sCommonRaw, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_THREAD_START, sizeof(sP7Trace_Thread_Start));
+    //l_pThread->sCommon.dwSize    = sizeof(sP7Trace_Thread_Start);
+    //l_pThread->sCommon.dwType    = EP7USER_TYPE_TRACE;
+    //l_pThread->sCommon.dwSubType = EP7TRACE_TYPE_THREAD_START;
 
-    l_pThread->dwThreadID        = (!i_dwThreadId) ? CProc::Get_Thread_Id() : i_dwThreadId;
-    l_pThread->qwTimer           = GetPerformanceCounter();
+    l_pThread->dwThreadID = (!i_dwThreadId) ? CProc::Get_Thread_Id() : i_dwThreadId;
+
+    if (! m_sConf.pTimestamp_Callback )
+    {
+        l_pThread->qwTimer = GetPerformanceCounter();
+    }
+    else
+    {
+        l_pThread->qwTimer = m_sConf.pTimestamp_Callback(m_sConf.pContext);
+    }
 
 #ifdef UTF8_ENCODING
     PStrCpy(l_pThread->pName, P7TRACE_THREAD_NAME_LENGTH, i_pName);
@@ -1554,12 +1615,20 @@ tBOOL CP7Trace::Unregister_Thread(tUINT32 i_dwThreadId)
     l_pStop = &l_pStopped->pData[l_pStopped->dwUsed];
     l_pStopped->dwUsed ++;
 
-    l_pStop->sCommon.dwSize    = sizeof(sP7Trace_Thread_Stop);
-    l_pStop->sCommon.dwType    = EP7USER_TYPE_TRACE;
-    l_pStop->sCommon.dwSubType = EP7TRACE_TYPE_THREAD_STOP;
+    INIT_EXT_HEADER(l_pStop->sCommonRaw, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_THREAD_STOP, sizeof(sP7Trace_Thread_Stop));
+    //l_pStop->sCommon.dwSize    = sizeof(sP7Trace_Thread_Stop);
+    //l_pStop->sCommon.dwType    = EP7USER_TYPE_TRACE;
+    //l_pStop->sCommon.dwSubType = EP7TRACE_TYPE_THREAD_STOP;
 
-    l_pStop->dwThreadID        = i_dwThreadId;
-    l_pStop->qwTimer           = GetPerformanceCounter();
+    l_pStop->dwThreadID = i_dwThreadId;
+    if (! m_sConf.pTimestamp_Callback )
+    {
+        l_pStop->qwTimer = GetPerformanceCounter();
+    }
+    else
+    {
+        l_pStop->qwTimer = m_sConf.pTimestamp_Callback(m_sConf.pContext);
+    }
                  
     if (m_pChk_Curs >= m_pChk_Tail)
     {
@@ -1567,7 +1636,7 @@ tBOOL CP7Trace::Unregister_Thread(tUINT32 i_dwThreadId)
     }
 
     m_pChk_Curs->pData  = l_pStop;
-    m_pChk_Curs->dwSize = l_pStop->sCommon.dwSize;
+    m_pChk_Curs->dwSize = GET_EXT_HEADER_SIZE(l_pStop->sCommonRaw);
 
     m_dwChk_Size        += m_pChk_Curs->dwSize;
     m_pChk_Curs ++;
@@ -1697,9 +1766,10 @@ tBOOL CP7Trace::Register_Module(const tXCHAR *i_pName, IP7_Trace::hModule *o_hMo
     l_pModule = &l_pModules->pData[l_pModules->dwUsed];
     l_pModules->dwUsed ++;
 
-    l_pModule->sCommon.dwSize    = sizeof(sP7Trace_Module);
-    l_pModule->sCommon.dwType    = EP7USER_TYPE_TRACE;
-    l_pModule->sCommon.dwSubType = EP7TRACE_TYPE_MODULE;
+    INIT_EXT_HEADER(l_pModule->sCommonRaw, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_MODULE, sizeof(sP7Trace_Module));
+    //l_pModule->sCommon.dwSize    = sizeof(sP7Trace_Module);
+    //l_pModule->sCommon.dwType    = EP7USER_TYPE_TRACE;
+    //l_pModule->sCommon.dwSubType = EP7TRACE_TYPE_MODULE;
 
     l_pModule->eVerbosity        = m_eVerbosity;
     l_pModule->wModuleID         = m_wLast_ModuleID++;
@@ -1811,16 +1881,18 @@ void CP7Trace::Set_Verbosity(IP7_Trace::hModule i_hModule, eP7Trace_Level i_eVer
 
     l_pChunk = m_pChk_Curs;
 
-    l_sCmd.sCommon.dwSize    = sizeof(sP7Trace_Verb);
-    l_sCmd.sCommon.dwType    = EP7USER_TYPE_TRACE;
-    l_sCmd.sCommon.dwSubType = EP7TRACE_TYPE_VERB;
+
+    INIT_EXT_HEADER(l_sCmd.sCommonRaw, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_VERB, sizeof(sP7Trace_Verb));
+    //l_sCmd.sCommon.dwSize    = sizeof(sP7Trace_Verb);
+    //l_sCmd.sCommon.dwType    = EP7USER_TYPE_TRACE;
+    //l_sCmd.sCommon.dwSubType = EP7TRACE_TYPE_VERB;
 
     l_sCmd.eVerbosity        = i_eVerbosity;
     l_sCmd.wModuleID         = (i_hModule) ? ((sP7Trace_Module*)i_hModule)->wModuleID : 0;
 
     l_pChunk->pData          = &l_sCmd;
-    l_pChunk->dwSize         = l_sCmd.sCommon.dwSize;
-    l_dwSize                += l_sCmd.sCommon.dwSize;
+    l_pChunk->dwSize         = GET_EXT_HEADER_SIZE(l_sCmd.sCommonRaw);
+    l_dwSize                += GET_EXT_HEADER_SIZE(l_sCmd.sCommonRaw);
 
     l_pChunk++;
 
@@ -1928,14 +2000,13 @@ void CP7Trace::Flush()
 
     sP7C_Data_Chunk *l_pChunk  = m_pChk_Curs;
     tUINT32          l_dwSize  = m_dwChk_Size;
-    sP7Ext_Header    l_sHeader = { EP7USER_TYPE_TRACE, 
-                                   EP7TRACE_TYPE_CLOSE,
-                                   sizeof(sP7Ext_Header)
-                                 };
+    sP7Ext_Raw       l_sHeader;
+
+    INIT_EXT_HEADER(l_sHeader, EP7USER_TYPE_TRACE, EP7TRACE_TYPE_CLOSE, sizeof(sP7Ext_Raw));
 
     l_pChunk->pData  = &l_sHeader;
-    l_pChunk->dwSize = l_sHeader.dwSize;
-    l_dwSize        += l_sHeader.dwSize;
+    l_pChunk->dwSize = sizeof(sP7Ext_Raw);
+    l_dwSize        += sizeof(sP7Ext_Raw);
 
     l_pChunk++;
 
@@ -2168,17 +2239,26 @@ tBOOL CP7Trace::Trace_Managed(tUINT16            i_wTrace_ID,
     }
 
     //adding trace parameters to chunk
-    m_sHeader_Data.sCommon.dwSize = sizeof(m_sHeader_Data); 
+    SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, sizeof(m_sHeader_Data));
+    //m_sHeader_Data.sCommon.dwSize = sizeof(m_sHeader_Data); 
 
-    m_sHeader_Data.bLevel         = (tUINT8)i_eLevel;
-    m_sHeader_Data.bProcessor     = (tUINT8)CProc::Get_Processor();
-    m_sHeader_Data.dwThreadID     = CProc::Get_Thread_Id();
-    m_sHeader_Data.wID            = l_pDesc->Get_ID();
-    m_sHeader_Data.dwSequence     = m_dwSequence;
-    m_sHeader_Data.qwTimer        = GetPerformanceCounter();
+    m_sHeader_Data.bLevel     = (tUINT8)i_eLevel;
+    m_sHeader_Data.bProcessor = (tUINT8)CProc::Get_Processor();
+    m_sHeader_Data.dwThreadID = CProc::Get_Thread_Id();
+    m_sHeader_Data.wID        = l_pDesc->Get_ID();
+    m_sHeader_Data.dwSequence = m_dwSequence;
 
-    l_pChunk->dwSize              = sizeof(m_sHeader_Data);
-    l_pChunk->pData               = &m_sHeader_Data;
+    if (! m_sConf.pTimestamp_Callback )
+    {
+        m_sHeader_Data.qwTimer = GetPerformanceCounter();
+    }
+    else
+    {
+       m_sHeader_Data.qwTimer = m_sConf.pTimestamp_Callback(m_sConf.pContext);
+    }
+
+    l_pChunk->dwSize = sizeof(m_sHeader_Data);
+    l_pChunk->pData  = &m_sHeader_Data;
 
     l_pChunk ++;
 
@@ -2191,10 +2271,11 @@ tBOOL CP7Trace::Trace_Managed(tUINT16            i_wTrace_ID,
     l_pChunk->dwSize = (tUINT32)((PStrLen(i_pMessage) + 1) * sizeof(tXCHAR));
     l_pChunk->pData  = (void*)i_pMessage;
 
-    m_sHeader_Data.sCommon.dwSize += l_pChunk->dwSize;
+    SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, GET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw) + l_pChunk->dwSize);
+    //m_sHeader_Data.sCommon.dwSize += l_pChunk->dwSize;
     l_pChunk++;
 
-    l_dwSize += m_sHeader_Data.sCommon.dwSize;
+    l_dwSize += GET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw);
 
     if (ECLIENT_STATUS_OK != m_pClient->Sent(m_dwChannel_ID,
                                              m_pChk_Head,
@@ -2372,17 +2453,26 @@ __forceinline tBOOL CP7Trace::Trace_Raw(tUINT16            i_wTrace_ID,
     }
 
     //we should also add all variable parameters length ... later
-    m_sHeader_Data.sCommon.dwSize = sizeof(m_sHeader_Data); 
+    SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, sizeof(m_sHeader_Data));
+    //m_sHeader_Data.sCommon.dwSize = sizeof(m_sHeader_Data); 
 
-    m_sHeader_Data.bLevel         = (tUINT8)i_eLevel;
-    m_sHeader_Data.bProcessor     = (tUINT8)CProc::Get_Processor();
-    m_sHeader_Data.dwThreadID     = CProc::Get_Thread_Id();
-    m_sHeader_Data.wID            = l_pDesc->Get_ID();
-    m_sHeader_Data.dwSequence     = m_dwSequence;
-    m_sHeader_Data.qwTimer        = GetPerformanceCounter();
+    m_sHeader_Data.bLevel     = (tUINT8)i_eLevel;
+    m_sHeader_Data.bProcessor = (tUINT8)CProc::Get_Processor();
+    m_sHeader_Data.dwThreadID = CProc::Get_Thread_Id();
+    m_sHeader_Data.wID        = l_pDesc->Get_ID();
+    m_sHeader_Data.dwSequence = m_dwSequence;
 
-    l_pChunk->dwSize              = sizeof(m_sHeader_Data);
-    l_pChunk->pData               = &m_sHeader_Data;
+    if (! m_sConf.pTimestamp_Callback )
+    {
+        m_sHeader_Data.qwTimer = GetPerformanceCounter();
+    }
+    else
+    {
+       m_sHeader_Data.qwTimer = m_sConf.pTimestamp_Callback(m_sConf.pContext);
+    }
+
+    l_pChunk->dwSize = sizeof(m_sHeader_Data);
+    l_pChunk->pData  = &m_sHeader_Data;
 
     l_pChunk ++;
 
@@ -2525,13 +2615,14 @@ __forceinline tBOOL CP7Trace::Trace_Raw(tUINT16            i_wTrace_ID,
             l_pVArgs += sizeof(wchar_t*);
         }
 
-        m_sHeader_Data.sCommon.dwSize += l_pChunk->dwSize;
+        SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, GET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw) + l_pChunk->dwSize);
+        //m_sHeader_Data.sCommon.dwSize += l_pChunk->dwSize;
 
         l_pChunk ++;
         l_pBlocks++;
     }
 
-    l_dwSize += m_sHeader_Data.sCommon.dwSize;
+    l_dwSize += GET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw);//m_sHeader_Data.sCommon.dwSize;
 
     if (ECLIENT_STATUS_OK != m_pClient->Sent(m_dwChannel_ID,
                                              m_pChk_Head,

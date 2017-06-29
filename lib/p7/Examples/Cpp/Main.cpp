@@ -14,6 +14,7 @@ void __cdecl Connect(void *i_pContext, tBOOL i_bConnect)
     printf("Connect=%d\n", (tUINT32)i_bConnect);
 }
 
+
 int main(int i_iArgC, char* i_pArgV[])
 {
     IP7_Client        *l_pClient    = NULL;

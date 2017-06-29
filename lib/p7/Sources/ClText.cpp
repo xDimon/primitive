@@ -149,7 +149,8 @@ CClText::fnFormat GetFormatFunction(const tXCHAR *i_pField)
 
 ////////////////////////////////////////////////////////////////////////////////
 sTraceDescEx::sTraceDescEx(const sP7Trace_Format *i_pFormat,
-                           CFormatter::sBuffer   *i_pBuffer
+                           CFormatter::sBuffer   *i_pBuffer,
+                           tBOOL                  i_bBigEndian
                           )
     : sTraceDesc()
     , pBuffer(NULL)
@@ -217,6 +218,11 @@ sTraceDescEx::sTraceDescEx(const sP7Trace_Format *i_pFormat,
         szFileName = PStrLen(pFileName);
 
         pFormatter = new CFormatter(pFormat, pArgs, (size_t)dwArgsLen, i_pBuffer);
+
+        if (i_bBigEndian)
+        {
+            pFormatter->EnableBigEndian();
+        }
     }
 }
 
@@ -266,7 +272,7 @@ sTraceDescEx::~sTraceDescEx()
 
 ////////////////////////////////////////////////////////////////////////////////
 //CTxtChannel()
-CTxtChannel::CTxtChannel(const sP7Trace_Info *i_pInfo)
+CTxtChannel::CTxtChannel(const sP7Trace_Info *i_pInfo, tBOOL i_bBig_Endian)
     : m_qwStreamTime(0ull)
     , m_qwTimer_Value(i_pInfo->qwTimer_Value)
     , m_qwTimer_Frequency(i_pInfo->qwTimer_Frequency)
@@ -276,6 +282,7 @@ CTxtChannel::CTxtChannel(const sP7Trace_Info *i_pInfo)
     , m_qwTimeLast(i_pInfo->qwTimer_Value)
     , m_szName(0)
     , m_pBuffer(NULL)
+    , m_bBig_Endian(i_bBig_Endian)
 {
 #ifdef UTF8_ENCODING
     Convert_UTF16_To_UTF8(i_pInfo->pName, (tACHAR*)m_pName, P7TRACE_NAME_LENGTH);
@@ -348,7 +355,7 @@ void CTxtChannel::PutFormat(const sP7Trace_Format *i_pDesc)
     if (NULL == m_cDesc[i_pDesc->wID])
     {
         m_cDesc.Put_Data(m_cDesc.Get_ByIndex(i_pDesc->wID), 
-                         new sTraceDescEx(i_pDesc, m_pBuffer), 
+                         new sTraceDescEx(i_pDesc, m_pBuffer, m_bBig_Endian), 
                          TRUE
                         );
     }
@@ -606,6 +613,7 @@ CClText::CClText(tXCHAR **i_pArgs, tINT32 i_iCount)
     , m_pBuffer_Current(0)
     , m_dwBuffer_Size(0)
     , m_dwBuffers_Count(0)
+    , m_bBig_Endian(FALSE)
     , m_pChunk(0)
     , m_szChunkMax(0)
     , m_szChunkUsd(0)
@@ -726,6 +734,13 @@ eClient_Status CClText::Init_Base(tXCHAR **i_pArgs,
 {
     eClient_Status l_eReturn    = ECLIENT_STATUS_WRONG_FORMAT;
     tXCHAR        *l_pFormatStr = NULL;
+    tUINT32        l_dwEndian   = 0x1;
+    tUINT8         l_bLittleE   = *(tUINT8*)&l_dwEndian;
+
+    if (!l_bLittleE)
+    {
+        m_bBig_Endian = TRUE;
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     //getting pool size
@@ -1440,10 +1455,19 @@ eClient_Status CClText::Parse_Packet(tUINT32 i_dwChannel,
     size_t         l_szOffset = 0;
     sP7Ext_Header *l_pHeader  = (sP7Ext_Header *)i_pPacket;
     CTxtChannel  *&l_pChannel = m_pTxtCh[i_dwChannel];
+    sP7Ext_Raw     l_sRaw; //not initialized on purpose
 
     while (l_szOffset < i_szPacket)    
     {
         l_pHeader = (sP7Ext_Header *)(i_pPacket + l_szOffset);
+
+        //N.B.: Bits reconstruction, sP7Ext_Header is formed manually to avoid complier influence to bit fields (Using structures with 
+        //      bit fields isn't regulated by standard, every compiler is free to use own bits ordering). Headers formed in Trace or 
+        //      Telemetry may be used on different systems and they have to be unified
+        l_sRaw.dwBits = ((sP7Ext_Raw*)l_pHeader)->dwBits; 
+        l_pHeader->dwType    = GET_EXT_HEADER_TYPE(l_sRaw);
+        l_pHeader->dwSubType = GET_EXT_HEADER_SUBTYPE(l_sRaw);
+        l_pHeader->dwSize    = GET_EXT_HEADER_SIZE(l_sRaw);
 
         if (l_pChannel)
         {
@@ -1509,7 +1533,7 @@ eClient_Status CClText::Parse_Packet(tUINT32 i_dwChannel,
                     delete l_pChannel;
                 }
 
-                l_pChannel = new CTxtChannel((const sP7Trace_Info*)l_pHeader);
+                l_pChannel = new CTxtChannel((const sP7Trace_Info*)l_pHeader, m_bBig_Endian);
             }
             else
             {

@@ -576,7 +576,8 @@ eClient_Status CClFile::Sent(tUINT32          i_dwChannel_ID,
                             )
 {
     eClient_Status   l_eReturn       = ECLIENT_STATUS_OK;
-    sH_User_Data     l_sHeader       = {i_dwSize + (tUINT32)sizeof(l_sHeader), i_dwChannel_ID};
+    tUINT32          l_dwTotal_Size  = i_dwSize + (tUINT32)sizeof(sH_User_Raw);
+    sH_User_Raw      l_sHeader       = {INIT_USER_HEADER(l_dwTotal_Size, i_dwChannel_ID)};
     sP7C_Data_Chunk  l_sHeader_Chunk = {&l_sHeader, (tUINT32)sizeof(l_sHeader)};
     //Wanr: variables without default value!
     tBOOL            l_bExit;
@@ -593,7 +594,7 @@ eClient_Status CClFile::Sent(tUINT32          i_dwChannel_ID,
 
     if (    (NULL                            == i_pChunks)
          || (0                               >= i_dwCount)
-         || (USER_PACKET_MAX_SIZE            <= l_sHeader.dwSize) 
+         || (USER_PACKET_MAX_SIZE            <= l_dwTotal_Size) 
          || (USER_PACKET_CHANNEL_ID_MAX_SIZE <= i_dwChannel_ID)
        )
     {
@@ -637,7 +638,7 @@ eClient_Status CClFile::Sent(tUINT32          i_dwChannel_ID,
                     + ((m_pBuffer_Current) ? (m_dwBuffer_Size - (tUINT32)m_pBuffer_Current->szUsed) : 0);
 
     //if size is more than available ...
-    if (l_dwFree_Size < l_sHeader.dwSize)
+    if (l_dwFree_Size < l_dwTotal_Size)
     {
         l_eReturn = ECLIENT_STATUS_NO_FREE_BUFFERS;
         ATOMIC_INC(&m_lReject_Mem);

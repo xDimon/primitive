@@ -137,6 +137,7 @@ protected:
         intmax_t  iMax;
         uintmax_t uMax;
         tDOUBLE   d64;
+        tUINT8    pData[32];
     };
 
     enum eSize
@@ -230,6 +231,7 @@ protected:
     sP7Trace_Arg *m_pArgs;
     size_t        m_szArgs;
     tBOOL         m_bError;
+    tBOOL         m_bLittleEndian;
 public:
     ////////////////////////////////////////////////////////////////////////////
     //CFormatter
@@ -243,6 +245,7 @@ public:
         , m_pArgs(i_pArgs)
         , m_szArgs(i_szArgs)
         , m_bError(FALSE)
+        , m_bLittleEndian(TRUE)
     {
         const tXCHAR *l_pCursor    = i_pFormat;
         const tXCHAR *l_pHead      = i_pFormat;
@@ -522,7 +525,12 @@ public:
         m_szArgs = 0;
     }//~CFormatter
 
-
+    ////////////////////////////////////////////////////////////////////////////
+    //EnableBigEndian
+    void EnableBigEndian()
+    {
+        m_bLittleEndian = FALSE;
+    }
 
 #define FORMAT_SIGN\
     if (l_bMinus) {*l_pIter++ = TM('-');}\
@@ -621,6 +629,19 @@ public:
     i_pValues += sizeof(SRC_TYPE);\
 //#define COPY_STR
 
+#define COPY_ARG(DstVar, SrcSignificantSize, SrcTotalSize)\
+    if (m_bLittleEndian)\
+    {\
+        memcpy(&(DstVar), i_pValues, min((SrcSignificantSize), (SrcTotalSize)));\
+    }\
+    else\
+    {\
+        memcpy(((tUINT8*)&(DstVar)) + (sizeof(DstVar) - (SrcSignificantSize)), \
+                i_pValues + ((SrcTotalSize) - (SrcSignificantSize)), \
+                SrcSignificantSize\
+                );\
+    }\
+//#define COPY_ARG
 
     ////////////////////////////////////////////////////////////////////////////
     //Format
@@ -687,7 +708,7 @@ public:
 
             if (FORMATTER_ARG_WIDTH == l_iWidth)
             {
-                memcpy(&l_iWidth, i_pValues, sizeof(tINT32));
+                COPY_ARG(l_iWidth, sizeof(tINT32), l_pP7Args->bSize);
                 i_pValues += l_pP7Args->bSize; 
                 l_pP7Args ++;
 
@@ -698,7 +719,7 @@ public:
             }
             if (FORMATTER_ARG_PRECISION == l_iPrecision)
             {
-                memcpy(&l_iPrecision, i_pValues, sizeof(tINT32));
+                COPY_ARG(l_iPrecision, sizeof(tINT32), l_pP7Args->bSize);
                 i_pValues += l_pP7Args->bSize; 
                 l_pP7Args ++;
                 if (0 > l_iPrecision)
@@ -713,25 +734,25 @@ public:
                 if (P7TRACE_ARG_TYPE_INT32 == l_pP7Args->bType)
                 {
                     tINT32 l_iVal = 0;
-                    memcpy(&l_iVal, i_pValues, sizeof(tINT32));
+                    COPY_ARG(l_iVal, sizeof(tINT32), l_pP7Args->bSize);
                     l_uValue.iMax = l_iVal; 
                 }
                 else if (P7TRACE_ARG_TYPE_INT64 == l_pP7Args->bType)
                 {
                     tINT64 l_iVal = 0ll;
-                    memcpy(&l_iVal, i_pValues, sizeof(tINT64));
+                    COPY_ARG(l_iVal, sizeof(tINT64), l_pP7Args->bSize);
                     l_uValue.iMax = l_iVal;
                 }
                 else if (P7TRACE_ARG_TYPE_INT16 == l_pP7Args->bType)
                 {
                     tINT16 l_iVal = 0;
-                    memcpy(&l_iVal, i_pValues, sizeof(tINT16));
+                    COPY_ARG(l_iVal, sizeof(tINT16), l_pP7Args->bSize);
                     l_uValue.iMax = l_iVal; 
                 }
                 else if (P7TRACE_ARG_TYPE_INT8 == l_pP7Args->bType)
                 {
                     tINT8 l_iVal = 0;
-                    memcpy(&l_iVal, i_pValues, sizeof(tINT8));
+                    COPY_ARG(l_iVal, sizeof(tINT8), l_pP7Args->bSize);
                     l_uValue.iMax = l_iVal; 
                 }
                 else //if (P7TRACE_ARG_TYPE_INTMAX == l_pP7Args->bType)
@@ -755,20 +776,20 @@ public:
             else if (eTypeUintDec == l_pArg->eType)
             {
                 l_uValue.uMax = 0ull;
-                memcpy(&l_uValue.uMax, i_pValues, min(g_pSize[l_pP7Args->bType], l_pP7Args->bSize));
+                COPY_ARG(l_uValue.uMax, g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
                 FORMAT_DIGIT(10ull, g_pHEX, FORMAT_NO_SIGN, FORMAT_NO_PREFIX);
             }
             else if (eTypeUintHex == l_pArg->eType)
             {
                 l_uValue.uMax = 0ull;
-                memcpy(&l_uValue.uMax, i_pValues, min(g_pSize[l_pP7Args->bType], l_pP7Args->bSize));
+                COPY_ARG(l_uValue.uMax, g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
                 if (l_pArg->bFlagGrid) {l_iWidth -=2;} //0x
                 FORMAT_DIGIT(16ull, g_pHex, FORMAT_NO_SIGN, FORMAT_X_PREFIX);
             }
             else if (eTypeUintHEX == l_pArg->eType)
             {
                 l_uValue.uMax = 0ull;
-                memcpy(&l_uValue.uMax, i_pValues, min(g_pSize[l_pP7Args->bType], l_pP7Args->bSize));
+                COPY_ARG(l_uValue.uMax, g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
                 if (l_pArg->bFlagGrid) {l_iWidth -=2;} //0x
                 FORMAT_DIGIT(16ull, g_pHEX, FORMAT_NO_SIGN, FORMAT_X_PREFIX);
 
@@ -849,7 +870,7 @@ public:
             else if (eTypeUintBin == l_pArg->eType)
             {
                 l_uValue.uMax = 0ull;
-                memcpy(&l_uValue.uMax, i_pValues, min(g_pSize[l_pP7Args->bType], l_pP7Args->bSize));
+                COPY_ARG(l_uValue.uMax, g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
                 if (l_pArg->bFlagGrid) {l_iWidth --;}//b
                 FORMAT_DIGIT(2ull, g_pHEX, FORMAT_NO_SIGN, FORMAT_B_PREFIX);
             }
@@ -915,33 +936,39 @@ public:
                 //7 bytes max for UTF-8 + zero
                 if ((i_szBuffer - l_szReturn) < 7) {l_bError = TRUE; break;}
 
-                l_uValue.uMax = 0ull;
-                memcpy(&l_uValue.uMax, i_pValues, g_pSize[l_pP7Args->bType]);
-
                 if (P7TRACE_ARG_TYPE_CHAR == l_pP7Args->bType)
                 {
-                    *(o_pBuffer + l_szReturn++) = l_uValue.i8;
+                    tINT8 l_iVal = 0;
+                    COPY_ARG(l_iVal, g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
+
+                    *(o_pBuffer + l_szReturn++) = l_iVal;
                 }
                 else if (P7TRACE_ARG_TYPE_CHAR16 == l_pP7Args->bType)
                 {
+                    tINT16 l_iVal = 0;
+                    COPY_ARG(l_iVal, g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
+
                 #ifdef UTF8_ENCODING
-                    l_szReturn += (size_t)Convert_UTF16_To_UTF8((tWCHAR*)&l_uValue.uMax, 
+                    tWCHAR l_pWstr[2] = {l_iVal, 0};
+                    l_szReturn += (size_t)Convert_UTF16_To_UTF8((tWCHAR*)l_pWstr, 
                                                                 o_pBuffer + l_szReturn, 
                                                                 (tUINT32)(i_szBuffer - l_szReturn)
                                                                );
                 #else
-                    *(o_pBuffer + l_szReturn++) = l_uValue.u16;
+                    *(o_pBuffer + l_szReturn++) = l_iVal;
                 #endif                             
                 }
                 else if (P7TRACE_ARG_TYPE_CHAR32 == l_pP7Args->bType)
                 {
+                    tUINT32 l_pVal[2] = {0, 0};
+                    COPY_ARG(l_pVal[0], g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
                 #ifdef UTF8_ENCODING
-                    l_szReturn += (size_t)Convert_UTF32_To_UTF8((tUINT32*)&l_uValue.uMax,
+                    l_szReturn += (size_t)Convert_UTF32_To_UTF8((tUINT32*)l_pVal,
                                                                 o_pBuffer + l_szReturn, 
                                                                 (tUINT32)(i_szBuffer - l_szReturn)
                                                                );
                 #else
-                    l_szReturn += (size_t)Convert_UTF32_To_UTF16((tUINT32*)&l_uValue.uMax, 
+                    l_szReturn += (size_t)Convert_UTF32_To_UTF16((tUINT32*)l_pVal, 
                                                                 o_pBuffer + l_szReturn, 
                                                                 (tUINT32)(i_szBuffer - l_szReturn)
                                                                );
@@ -951,7 +978,7 @@ public:
             else if (eTypePointer == l_pArg->eType)
             {
                 l_uValue.uMax = 0ull;
-                memcpy(&l_uValue.uMax, i_pValues, l_pP7Args->bSize);
+                COPY_ARG(l_uValue.uMax, l_pP7Args->bSize, l_pP7Args->bSize);
                 l_iWidth -=2; //0x
                 FORMAT_DIGIT(16ull, g_pHEX, FORMAT_NO_SIGN, FORMAT_X_PREFIX);
             }
@@ -1013,7 +1040,7 @@ public:
             else if (eTypeUintOct == l_pArg->eType)
             {
                 l_uValue.uMax = 0ull;
-                memcpy(&l_uValue.uMax, i_pValues, min(g_pSize[l_pP7Args->bType], l_pP7Args->bSize));
+                COPY_ARG(l_uValue.uMax, g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
                 if (l_pArg->bFlagGrid) {l_iWidth --;}//0
                 FORMAT_DIGIT(8ull, g_pHEX, FORMAT_NO_SIGN, FORMAT_0_PREFIX);
             }

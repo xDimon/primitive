@@ -615,6 +615,7 @@ l_lExit:
 // Here we check ability of few P7 trace to work with different formats       //
 ////////////////////////////////////////////////////////////////////////////////
 
+#define TEST_03_COUNT                                                  "/Count="
 
 ////////////////////////////////////////////////////////////////////////////////
 //Test_03
@@ -622,6 +623,7 @@ int Test_03(int i_iArgC, char* i_pArgV[])
 {
     IP7_Client        *l_pClient  = NULL;
     tBOOL              l_bExit    = FALSE;
+    tUINT32            l_dwCount  = 1;
     IP7_Trace         *l_pTrace   = NULL;
     IP7_Trace::hModule l_hModule  = NULL;
     const tXCHAR      *l_pName    = TM("Formats test");
@@ -634,10 +636,22 @@ int Test_03(int i_iArgC, char* i_pArgV[])
         {
             printf("This test create one P7 client and one P7.Trace for sending\n");
             printf("different traces with all possible argument's formats\n");
-            printf("There is no additional command line arguments for this test\n");
+            printf("Command line arguments:\n");
+            printf("/Count    : Count iterations\n");
+            printf("            Default value - 1, min 1, max - uint32\n");
+            printf("            Example: /Count=10000\n");
             goto l_lExit;
         }
+        else if (0 == STRNICMP(i_pArgV[l_iI], TEST_03_COUNT, LENGTH(TEST_03_COUNT)-1))
+        {
+            sscanf(i_pArgV[l_iI] + LENGTH(TEST_01_COUNT) - 1, "%d", &l_dwCount);
+            if (1 > l_dwCount)
+            {
+                l_dwCount = 1;
+            }
+        }
     }
+
 
     l_pClient = P7_Create_Client(NULL);
     if (NULL == l_pClient)
@@ -665,7 +679,7 @@ int Test_03(int i_iArgC, char* i_pArgV[])
         printf("Error: Register_Thread() failed\n");
     }
 
-    //for (int l_iI = 0; l_iI < 100; l_iI++)
+    for (tUINT32 l_iI = 0; l_iI < l_dwCount; l_iI++)
     {
         ////////////////////////////////////////////////////////////////////////////
         l_pTrace->P7_DEBUG(l_hModule, TM("Strings test"), 0);
@@ -946,6 +960,21 @@ int Test_03(int i_iArgC, char* i_pArgV[])
 
 
         ////////////////////////////////////////////////////////////////////////////
+        l_pTrace->P7_DEBUG(l_hModule, TM("Pointer"), 0);
+
+    #if defined(GTX64)
+        l_pTrace->P7_DEBUG(l_hModule, 
+                           TM("%p (0xDEADBEEFCDCDCDCD), %s (Some string)"), 
+                           0xDEADBEEFCDCDCDCDull,
+                           TM("Some string"));
+    #else
+        l_pTrace->P7_DEBUG(l_hModule, 
+                           TM("%p (0xDEADBEEF), %s (Some string)"), 
+                           0xDEADBEEFu,
+                           TM("Some string"));
+    #endif
+
+        ////////////////////////////////////////////////////////////////////////////
         l_pTrace->P7_DEBUG(l_hModule, TM("Long VA test"), 0);
 
         l_pTrace->P7_INFO(l_hModule, 
@@ -1009,7 +1038,7 @@ int Test_03(int i_iArgC, char* i_pArgV[])
                          );
 
         l_pTrace->P7_INFO(l_hModule,
-                          TM("Hex  %#012X (%%#012X = 0x0000DEADBEEF) | {%#-*.*X} (%%#*.*X = {0x00DEADBEEF  }})"),
+                          TM("Hex  %#012X (%%#012X = 0x00DEADBEEF) | {%#-*.*X} (%%#-14.10X = {0x00DEADBEEF  }})"),
                           (tUINT32)0xDEADBEEF,
                           14,
                           10,

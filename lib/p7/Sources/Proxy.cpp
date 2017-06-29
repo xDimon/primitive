@@ -245,11 +245,12 @@ P7_EXPORT tINT32 __cdecl P7_Telemetry_Release(hP7_Telemetry i_hTelemetry)
 
 ////////////////////////////////////////////////////////////////////////////////
 //P7_Trace_Create_Trace
-P7_EXPORT hP7_Trace __cdecl P7_Trace_Create(hP7_Client    i_hClient,
-                                            const tXCHAR *i_pName
+P7_EXPORT hP7_Trace __cdecl P7_Trace_Create(hP7_Client          i_hClient,
+                                            const tXCHAR       *i_pName,
+                                            const stTrace_Conf *i_pConf
                                            )
 {
-    return P7_Create_Trace(static_cast<IP7_Client *>(i_hClient), i_pName); 
+    return P7_Create_Trace(static_cast<IP7_Client *>(i_hClient), i_pName, i_pConf); 
 }//P7_Trace_Create_Trace
 
 

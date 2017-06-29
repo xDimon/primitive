@@ -45,8 +45,8 @@ class CClTextFile
     CWString           m_pDir;
     eRolling           m_eRolling;
     tUINT64            m_qwRolling_Value;
-    tUINT32            m_dwWrite_Tick;
     tUINT32            m_dwFile_Tick;
+    tUINT32            m_dwWrite_Tick;
     tUINT64            m_qwFile_Size;
     tUINT32            m_dwFiles_Max_Count;
     CBList<CWString*>  m_cFiles;

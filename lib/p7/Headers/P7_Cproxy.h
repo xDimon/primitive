@@ -343,6 +343,20 @@ typedef void* hP7_Trace_Module;
 #define  P7_TRACE_LEVEL_CRITICAL  5
 
 
+typedef void (__cdecl *fnTrace_Verbosity)(void            *i_pContext, 
+                                          hP7_Trace_Module i_hModule, 
+                                          tUINT32          i_dwVerbosity);
+
+typedef struct 
+{
+    void              *pContext;              //context to be passed back to callbacks 
+    tUINT64            qwTimestamp_Frequency; //count ticks per second, works in cooperation with pTimestamp_Callback 
+    fnGet_Time_Stamp   pTimestamp_Callback;   //callback for getting user timestamps, works in cooperation with qwTimestamp_Frequency 
+    fnTrace_Verbosity  pVerbosity_Callback;   //Callback to notify user when verbosity has been changed
+    fnConnect          pConnect_Callback;     //Callback notifies user when connection with Baical is established/closed
+} stTrace_Conf;
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //P7_TRACE_ADD macro for trace function calling simplification
 #define P7_TRACE_ADD(i_hTrace,\
@@ -365,13 +379,15 @@ typedef void* hP7_Trace_Module;
 ////////////////////////////////////////////////////////////////////////////////
 //P7_Trace_Create_Trace - function create new instance of IP7_Trace object
 //See documentation for details.
-extern P7_EXPORT hP7_Trace __cdecl P7_Trace_Create(hP7_Client    i_hClient,
-                                                   const tXCHAR *i_pName
+extern P7_EXPORT hP7_Trace __cdecl P7_Trace_Create(hP7_Client          i_hClient,
+                                                   const tXCHAR       *i_pName,
+                                                   const stTrace_Conf *i_pConf
                                                   );
 
 //dll/so function prototype
-typedef hP7_Trace (__cdecl *fnP7_Trace_Create)(hP7_Client    i_hClient,
-                                               const tXCHAR *i_pName
+typedef hP7_Trace (__cdecl *fnP7_Trace_Create)(hP7_Client          i_hClient,
+                                               const tXCHAR       *i_pName,
+                                               const stTrace_Conf *i_pConf
                                               );
 
 

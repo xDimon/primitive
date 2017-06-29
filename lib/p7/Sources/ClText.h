@@ -40,7 +40,9 @@ struct sTraceDescEx
     tUINT32       dwArgsLen;
     CFormatter   *pFormatter;
 
-    sTraceDescEx(const sP7Trace_Format *i_pFormat, CFormatter::sBuffer *i_pBuffer);
+    sTraceDescEx(const sP7Trace_Format *i_pFormat, 
+                 CFormatter::sBuffer   *i_pBuffer, 
+                 tBOOL                  i_bBigEndian);
     ~sTraceDescEx();
 };
 
@@ -144,12 +146,14 @@ protected:
     tXCHAR                m_pName[P7TRACE_NAME_LENGTH];
     size_t                m_szName;
     CFormatter::sBuffer  *m_pBuffer;
+    tBOOL                 m_bBig_Endian;
+
 
 
     //Time conversion for Linux
     //http://stackoverflow.com/questions/2408976/struct-timeval-to-printable-format
 public:
-    CTxtChannel(const sP7Trace_Info *i_pInfo);
+    CTxtChannel(const sP7Trace_Info *i_pInfo, tBOOL i_bBig_Endian);
     ~CTxtChannel();
     void  PutFormat(const sP7Trace_Format *i_pDesc);
     void  PutModule(const sP7Trace_Module *i_pMod);
@@ -217,6 +221,9 @@ private:
     sBuffer           *m_pBuffer_Current;
     tUINT32            m_dwBuffer_Size;
     tUINT32            m_dwBuffers_Count;
+
+    tBOOL              m_bBig_Endian;
+
 
     tUINT8            *m_pChunk;
     size_t             m_szChunkMax;

@@ -119,6 +119,27 @@ PRAGMA_PACK_ENTER(4) //alignment is now 4, MS Only//////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 // common user header for extensions (like trace or telemetry)
+
+#define INIT_EXT_HEADER(iHeaderRaw, iType, iSubType, iSize)\
+    iHeaderRaw.dwBits = \
+    (((iType) & ((1 << P7_EXTENSION_TYPE_BITS_COUNT) - 1)) |\
+    (((iSubType) & ((1 << P7_EXTENSION_SUB_TYPE_BITS_COUNT) - 1)) << P7_EXTENSION_TYPE_BITS_COUNT) |\
+    (((iSize) & ((1 << P7_EXTENSION_PACKET_SIZE_BITS_COUNT) - 1)) << (P7_EXTENSION_TYPE_BITS_COUNT + P7_EXTENSION_SUB_TYPE_BITS_COUNT)))
+
+#define GET_EXT_HEADER_SIZE(iHeaderRaw)\
+    (iHeaderRaw.dwBits >> (P7_EXTENSION_TYPE_BITS_COUNT + P7_EXTENSION_SUB_TYPE_BITS_COUNT))
+
+#define GET_EXT_HEADER_TYPE(iHeaderRaw)\
+    (iHeaderRaw.dwBits & ((1 << P7_EXTENSION_TYPE_BITS_COUNT) - 1))
+
+#define GET_EXT_HEADER_SUBTYPE(iHeaderRaw)\
+    ((iHeaderRaw.dwBits >> P7_EXTENSION_TYPE_BITS_COUNT) & ((1 << P7_EXTENSION_SUB_TYPE_BITS_COUNT) - 1))
+
+#define SET_EXT_HEADER_SIZE(iHeaderRaw, iSize)\
+    iHeaderRaw.dwBits = \
+    (iHeaderRaw.dwBits & ((1 << (P7_EXTENSION_TYPE_BITS_COUNT + P7_EXTENSION_SUB_TYPE_BITS_COUNT)) - 1)) |\
+    (((iSize) & ((1 << P7_EXTENSION_PACKET_SIZE_BITS_COUNT) - 1)) << (P7_EXTENSION_TYPE_BITS_COUNT + P7_EXTENSION_SUB_TYPE_BITS_COUNT))
+
 struct sP7Ext_Header
 {
    tUINT32 dwType   :P7_EXTENSION_TYPE_BITS_COUNT;     //eP7User_Type
@@ -127,14 +148,20 @@ struct sP7Ext_Header
    tUINT32 dwSize   :P7_EXTENSION_PACKET_SIZE_BITS_COUNT; 
    //At the end of structure we put serialized data
 } ATTR_PACK(4);
-//N.B.: extension packets can follow one by one in data packets.
 
+struct sP7Ext_Raw //mapping of sP7Ext_Header
+{
+   tUINT32 dwBits;
+} ATTR_PACK(4);
+
+GASSERT(sizeof(sP7Ext_Header) == sizeof(sP7Ext_Raw));
+
+//N.B.: extension packets can follow one by one in data packets.
 PRAGMA_PACK_EXIT()//4///////////////////////////////////////////////////////////
 
 
 
 PRAGMA_PACK_ENTER(2) //alignment is now 2, MS Only//////////////////////////////
-
 
 #define P7_DAMP_FILE_MARKER_V1                           (0x45D2AC71ECF32CA6ULL)
 #define P7_DAMP_FILE_HOST_LENGTH                                           (256)
@@ -160,7 +187,11 @@ struct sP7File_Header
 //trace info header
 struct sP7Trace_Info
 {
-    sP7Ext_Header sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     //Contains a 64-bit value representing the number of 100-nanosecond intervals 
     //since January 1, 1601 (UTC). In windows we use FILETIME structure for 
     //representing
@@ -194,7 +225,11 @@ struct sP7Trace_Arg
 //trace description header
 struct sP7Trace_Format
 {
-    sP7Ext_Header sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     tUINT16       wID;
     tUINT16       wLine;
     tUINT16       wModuleID;  //Module ID, who send trace
@@ -209,7 +244,11 @@ struct sP7Trace_Format
 //trace data header
 struct sP7Trace_Data
 {
-    sP7Ext_Header sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     tUINT16       wID;          //trace ID
     tUINT8        bLevel;       //eP7Trace_Level
     tUINT8        bProcessor;   //Processor number
@@ -223,7 +262,11 @@ struct sP7Trace_Data
 //trace verbosity header
 struct sP7Trace_Verb
 {
-    sP7Ext_Header    sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     eP7Trace_Level   eVerbosity;
     tUINT16          wModuleID;
 } ATTR_PACK(2);
@@ -232,7 +275,11 @@ struct sP7Trace_Verb
 //Thread start info
 struct sP7Trace_Thread_Start
 {
-    sP7Ext_Header sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     tUINT32       dwThreadID;                        //Thread ID
     tUINT64       qwTimer;                           //High resolution timer value
     char          pName[P7TRACE_THREAD_NAME_LENGTH]; //Thread name (UTF-8) 
@@ -241,7 +288,11 @@ struct sP7Trace_Thread_Start
 //Thread stop info
 struct sP7Trace_Thread_Stop
 {
-    sP7Ext_Header sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     tUINT32       dwThreadID; //Thread ID
     tUINT64       qwTimer;    //High resolution timer value
 } ATTR_PACK(2);
@@ -249,7 +300,11 @@ struct sP7Trace_Thread_Stop
 //Module info
 struct sP7Trace_Module
 {
-    sP7Ext_Header  sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     tUINT16        wModuleID; 
     eP7Trace_Level eVerbosity;
     char           pName[P7TRACE_MODULE_NAME_LENGTH]; //name (UTF-8) 
@@ -263,7 +318,11 @@ struct sP7Trace_Module
 //telemetry info header
 struct sP7Tel_Info
 {
-    sP7Ext_Header sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     //Contains a 64-bit value representing the number of 100-nanosecond intervals 
     //since January 1, 1601 (UTC). In windows we use FILETIME structure for 
     //representing
@@ -283,7 +342,11 @@ struct sP7Tel_Info
 //Telemetry counter description
 struct sP7Tel_Counter
 {
-    sP7Ext_Header sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     tUINT8        bID;
     tUINT8        bOn;
     tINT64        llMin;
@@ -295,7 +358,11 @@ struct sP7Tel_Counter
 //telemetry counter On/Off verbosity header
 struct sP7Tel_Enable
 {
-    sP7Ext_Header    sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     tUINT8           bID;
     tUINT8           bOn;
 } ATTR_PACK(2);
@@ -304,7 +371,11 @@ struct sP7Tel_Enable
 //Telemetry counter value
 struct sP7Tel_Value
 {
-    sP7Ext_Header sCommon;
+    union
+    {
+        sP7Ext_Header sCommon;
+        sP7Ext_Raw    sCommonRaw;
+    };
     tUINT8        bID;
     tUINT8        bSeqN; 
     tUINT64       qwTimer;      //High resolution timer value

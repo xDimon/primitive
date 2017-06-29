@@ -46,6 +46,10 @@ enum eFD_Type
 };
 
 
+//Uncomment this macro to artificially create network errors, allows to test
+//protocols for durability, value is equal to % of errors
+//#define UDP_SOCKET_ERRORS_CHANCE 2.0f 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Class for providing basic functionality over udp socket
 class CUDP_Socket
@@ -321,97 +325,18 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////
     //CUDP_Socket::Send
-    eSocket_Status Send(char *i_pBuffer, tUINT32 i_dwSize)
+    eSocket_Status Send(const char *i_pBuffer, tUINT32 i_dwSize)
     {
         return Send((sockaddr *)&m_tAddress, m_dwAddress_Size, i_pBuffer, i_dwSize);
-//         eSocket_Status l_eResult = UDP_SOCKET_OK;
-// 
-//         if (INVALID_SOCKET_VAL == m_hSocket)
-//         {
-//             return UDP_SOCKET_NOT_INITIALIZED;
-//         }
-// 
-//         ////////////////////////////////////////////////////////////////////////
-//         //Uncomment this code to generate errors on sending*
-//         ////////////////////////////////////////////////////////////////////////
-//         //#ifdef _DEBUG                                           
-//         //    //it generate digits 0 .. 32767                     
-//         //    //probability to get 0 .. 256 = ~0.75%              
-//         //    //probability to get 0 ..  96 = ~0.28%              
-//         //                                                        
-//         //    tUINT32 l_dwRValue = rand();                          
-//         //                                                        
-//         //    if (92 >= l_dwRValue)                               
-//         //    {                                                   
-//         //        if (48 <= l_dwRValue) // 50% do not sent        
-//         //        {                                               
-//         //            return l_eResult;                           
-//         //        }                                               
-//         //        else //50% damage size                          
-//         //        {                                               
-//         //            i_dwSize = i_dwSize / 2;                    
-//         //        }                                               
-//         //    }                                                   
-//         //#endif                                                  
-// 
-//         if (    (NULL == i_pBuffer) 
-//              || (0    == i_dwSize)
-//            )
-//         {
-//             return UDP_SOCKET_WRONG_PARAMETERS;
-//         }
-// 
-//         tUINT32        l_dwSent     = 0;
-//         tINT32         l_iRes     = SOCKET_ERROR;
-//         eSocket_Status l_eReadyResult = UDP_SOCKET_OK;
-// 
-//         while (l_dwSent < i_dwSize)
-//         {
-//             l_eReadyResult = Is_Ready(FD_TYPE_WRITE, SENT_SELECT_TIMEOUT);
-//             if (UDP_SOCKET_OK == l_eReadyResult)
-//             {
-//                 l_iRes = send(m_hSocket, 
-//                                   i_pBuffer + l_dwSent, 
-//                                   i_dwSize - l_dwSent, 
-//                                   0
-//                                  );
-// 
-//                 if (SOCKET_ERROR == l_iRes)
-//                 {
-//                     JOURNAL_ERROR(m_pLog,
-//                                   TM("Send fail, error=%d !"), 
-//                                   GET_SOCKET_ERROR()
-//                                  );
-// 
-//                     l_eResult = UDP_SOCKET_SEND_ERROR;
-//                     break;
-//                 }
-//                 else
-//                 {
-//                     l_dwSent += l_iRes;
-//                 }
-//             }
-//             else
-//             {
-//                 if (UDP_SOCKET_NOT_READY != l_eReadyResult)
-//                 {
-//                     l_eResult = UDP_SOCKET_SELECT_ERROR;
-//                     break;
-//                 }
-//             }
-//         }
-// 
-//         return l_eResult;
     }//CUDP_Socket::Send
-
 
 
     ////////////////////////////////////////////////////////////////////////////
     //CUDP_Socket::Send
-    eSocket_Status Send(sockaddr *i_pAddress, 
-                        tUINT32   i_dwAddress_Size,
-                        char     *i_pBuffer, 
-                        tUINT32   i_dwSize
+    eSocket_Status Send(sockaddr   *i_pAddress, 
+                        tUINT32     i_dwAddress_Size,
+                        const char *i_pBuffer, 
+                        tUINT32     i_dwSize
                        )
     {
         eSocket_Status l_eResult = UDP_SOCKET_OK;
@@ -421,28 +346,26 @@ public:
             return UDP_SOCKET_NOT_INITIALIZED;
         }
 
-        ////////////////////////////////////////////////////////////////////////
-        //Uncomment this code to generate errors on sending*
-        ////////////////////////////////////////////////////////////////////////
-        //#ifdef _DEBUG                                           
-        //    //it generate digits 0 .. 32767                     
-        //    //probability to get 0 .. 256 = ~0.75%              
-        //    //probability to get 0 ..  96 = ~0.28%              
-        //                                                        
-        //    tUINT32 l_dwRValue = rand();                          
-        //                                                        
-        //    if (92 >= l_dwRValue)                               
-        //    {                                                   
-        //        if (48 <= l_dwRValue) // 50% do not sent        
-        //        {                                               
-        //            return l_eResult;                           
-        //        }                                               
-        //        else //50% damage size                          
-        //        {                                               
-        //            i_dwSize = i_dwSize / 2;                    
-        //        }                                               
-        //    }                                                   
-        //#endif                                                  
+        #if defined(UDP_SOCKET_ERRORS_CHANCE)
+        {
+            tINT32 l_iChance = rand(); //it generate digits -32767 .. 0 .. 32767
+            tINT32 l_iLimit  = (tINT32)((32767.0f * UDP_SOCKET_ERRORS_CHANCE) / 100.0f);
+
+            if (0 > l_iChance) l_iChance = -l_iChance;
+
+            if (l_iLimit >= l_iChance)                               
+            {                                                   
+                if ((l_iLimit / 2) <= l_iChance) // 50% do not sent        
+                {                                               
+                    return l_eResult;                           
+                }                                               
+                else //50% damage size                          
+                {                                               
+                    i_dwSize = i_dwSize / 2;                    
+                }                                               
+            }                                                   
+        }
+        #endif                                                  
 
         if (    (NULL == i_pBuffer) 
              || (NULL == i_pAddress)

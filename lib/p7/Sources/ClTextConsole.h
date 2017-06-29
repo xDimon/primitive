@@ -48,9 +48,9 @@ public:
                               )
     {
     #ifdef UTF8_ENCODING
-        printf(i_pFmtLog, 0);
+        printf("%s", i_pFmtLog);
     #else
-        wprintf(i_pFmtLog);
+        wprintf(L"%s", i_pFmtLog);
     #endif                             
         printf("\n");
         return ECLIENT_STATUS_OK;

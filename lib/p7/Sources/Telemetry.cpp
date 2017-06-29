@@ -133,9 +133,10 @@ CP7Tel_Counter::CP7Tel_Counter(tUINT8        i_bID,
 {
     memset(&m_sCounter, 0, sizeof(sP7Tel_Counter));
 
-    m_sCounter.sCommon.dwSize     = sizeof(sP7Tel_Counter);
-    m_sCounter.sCommon.dwType     = EP7USER_TYPE_TELEMETRY;
-    m_sCounter.sCommon.dwSubType  = EP7TEL_TYPE_COUNTER;
+    INIT_EXT_HEADER(m_sCounter.sCommonRaw, EP7USER_TYPE_TELEMETRY, EP7TEL_TYPE_COUNTER, sizeof(sP7Tel_Counter));
+    //m_sCounter.sCommon.dwSize     = sizeof(sP7Tel_Counter);
+    //m_sCounter.sCommon.dwType     = EP7USER_TYPE_TELEMETRY;
+    //m_sCounter.sCommon.dwSubType  = EP7TEL_TYPE_COUNTER;
 
     m_sCounter.bID     = i_bID;
     m_sCounter.bOn     = i_bOn;
@@ -266,9 +267,10 @@ CP7Telemetry::CP7Telemetry(IP7_Client *i_pClient, const tXCHAR *i_pName, const s
 
     if (m_bInitialized)
     {
-        m_sHeader_Info.sCommon.dwSize    = sizeof(sP7Trace_Info);
-        m_sHeader_Info.sCommon.dwType    = EP7USER_TYPE_TELEMETRY;
-        m_sHeader_Info.sCommon.dwSubType = EP7TEL_TYPE_INFO;
+        INIT_EXT_HEADER(m_sHeader_Info.sCommonRaw, EP7USER_TYPE_TELEMETRY, EP7TEL_TYPE_INFO, sizeof(sP7Trace_Info));
+        //m_sHeader_Info.sCommon.dwSize    = sizeof(sP7Trace_Info);
+        //m_sHeader_Info.sCommon.dwType    = EP7USER_TYPE_TELEMETRY;
+        //m_sHeader_Info.sCommon.dwSubType = EP7TEL_TYPE_INFO;
 
         if (i_pName)
         {
@@ -294,9 +296,10 @@ CP7Telemetry::CP7Telemetry(IP7_Client *i_pClient, const tXCHAR *i_pName, const s
 
         m_sHeader_Info.qwFlags   = 0;
 
-        m_sValue.sCommon.dwSize         = sizeof(sP7Tel_Value); 
-        m_sValue.sCommon.dwType         = EP7USER_TYPE_TELEMETRY;
-        m_sValue.sCommon.dwSubType      = EP7TEL_TYPE_VALUE;
+        INIT_EXT_HEADER(m_sValue.sCommonRaw, EP7USER_TYPE_TELEMETRY, EP7TEL_TYPE_VALUE, sizeof(sP7Tel_Value));
+        //m_sValue.sCommon.dwSize         = sizeof(sP7Tel_Value); 
+        //m_sValue.sCommon.dwType         = EP7USER_TYPE_TELEMETRY;
+        //m_sValue.sCommon.dwSubType      = EP7TEL_TYPE_VALUE;
     }
 
     if (m_bInitialized)
@@ -380,16 +383,14 @@ void CP7Telemetry::On_Receive(tUINT32 i_dwChannel, tUINT8 *i_pBuffer, tUINT32 i_
 
     LOCK_ENTER(m_sCS);
 
-    sP7Ext_Header *l_pHeader = (sP7Ext_Header *)i_pBuffer;
-
-    if (    (l_pHeader)
+    if (    (i_pBuffer)
          && (i_dwSize > sizeof(sP7Ext_Header))
        )
     {
-        //i_pBuffer += sizeof(sP7Ext_Header);
+        sP7Ext_Raw l_sHeader = *(sP7Ext_Raw*)i_pBuffer;
 
-        if (    (EP7USER_TYPE_TELEMETRY == l_pHeader->dwType)
-             && (EP7TEL_TYPE_ENABLE == l_pHeader->dwSubType)
+        if (    (EP7USER_TYPE_TELEMETRY == GET_EXT_HEADER_TYPE(l_sHeader))
+             && (EP7TEL_TYPE_ENABLE == GET_EXT_HEADER_SUBTYPE(l_sHeader))
            )
         {
             sP7Tel_Enable *l_pEnable = (sP7Tel_Enable*)i_pBuffer;
@@ -442,7 +443,7 @@ void CP7Telemetry::On_Status(tUINT32 i_dwChannel, const sP7C_Status *i_pStatus)
             while (*l_pIter)
             {
                 l_pChunk->pData  = &((*l_pIter)->m_sCounter);
-                l_pChunk->dwSize = (*l_pIter)->m_sCounter.sCommon.dwSize;
+                l_pChunk->dwSize = GET_EXT_HEADER_SIZE((*l_pIter)->m_sCounter.sCommonRaw);//(*l_pIter)->m_sCounter.sCommon.dwSize;
                 l_dwSize        += l_pChunk->dwSize;
                 l_pChunk ++;
                 l_pIter++;
@@ -576,7 +577,7 @@ tBOOL CP7Telemetry::Create(const tXCHAR  *i_pName,
         }
 
         l_pChunk->pData  = &(m_pCounters[m_dwUsed]->m_sCounter);
-        l_pChunk->dwSize = m_pCounters[m_dwUsed]->m_sCounter.sCommon.dwSize;
+        l_pChunk->dwSize = GET_EXT_HEADER_SIZE(m_pCounters[m_dwUsed]->m_sCounter.sCommonRaw);//m_pCounters[m_dwUsed]->m_sCounter.sCommon.dwSize;
         l_dwSize        += l_pChunk->dwSize;
         l_pChunk ++;
 
@@ -692,7 +693,7 @@ tBOOL CP7Telemetry::Add(tUINT8 i_bID, tINT64 i_llValue)
         while (*l_pIter)
         {
             l_pChunk->pData  = &((*l_pIter)->m_sCounter);
-            l_pChunk->dwSize = (*l_pIter)->m_sCounter.sCommon.dwSize;
+            l_pChunk->dwSize = GET_EXT_HEADER_SIZE((*l_pIter)->m_sCounter.sCommonRaw);//(*l_pIter)->m_sCounter.sCommon.dwSize;
             l_dwSize        += l_pChunk->dwSize;
             l_pChunk ++;
             l_pIter++;
@@ -718,7 +719,7 @@ tBOOL CP7Telemetry::Add(tUINT8 i_bID, tINT64 i_llValue)
         }
         
         l_pChunk->pData  = &m_sValue;
-        l_pChunk->dwSize = m_sValue.sCommon.dwSize;
+        l_pChunk->dwSize = GET_EXT_HEADER_SIZE(m_sValue.sCommonRaw);//m_sValue.sCommon.dwSize;
         l_dwSize        += l_pChunk->dwSize;
 
         l_pChunk ++;
@@ -801,12 +802,9 @@ void CP7Telemetry::Flush()
     //sending data
     if (RESET_UNDEFINED != m_dwResets_Counters)
     {
-        sP7Ext_Header   l_sHeader = { EP7USER_TYPE_TELEMETRY, 
-                                        EP7TEL_TYPE_CLOSE,
-                                        sizeof(sP7Ext_Header)
-                                    };
-
-        sP7C_Data_Chunk l_sChunk = {&l_sHeader, l_sHeader.dwSize};
+        sP7Ext_Raw l_sHeader;
+        INIT_EXT_HEADER(l_sHeader, EP7USER_TYPE_TELEMETRY, EP7TEL_TYPE_CLOSE, sizeof(sP7Ext_Raw));
+        sP7C_Data_Chunk l_sChunk = {&l_sHeader, sizeof(sP7Ext_Raw)};
 
         m_pClient->Sent(m_dwChannel_ID, &l_sChunk, 1, l_sChunk.dwSize);
     }

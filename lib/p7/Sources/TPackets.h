@@ -21,14 +21,14 @@
 // N.B.: In this file I remove all checks for valid pointers and packets       /
 //       because this job is made outside by packet pool.                      /
 ////////////////////////////////////////////////////////////////////////////////
-#ifndef TACKETS_H
-#define TACKETS_H
+#ifndef TPACKETS_H
+#define TPACKETS_H
 
 #define CLIENT_PROTOCOL_VERSION                                         (0x0007)
 
 //this value can store 32 bits but to avoid overflow we reduce it
-#define TPACKET_MAX_ID                                              (0xFFFFFFF) 
-#define TPACKET_PROCESS_NAME_MAX_LEN                                (96) 
+#define TPACKET_MAX_ID                                               (0xFFFFFFF) 
+#define TPACKET_PROCESS_NAME_MAX_LEN                                        (96) 
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,12 +48,34 @@ enum eTPacket_Type
     ETPACKET_TYPE_UNASSIGNED      = 0xF
 };
 
+enum eTPacket_Endian
+{
+    ETP_LITTLE_ENDIAN   = 0,
+    ETP_BIG_ENDIAN         ,
+    ETP_MAX_ENDIAN
+};
+
 #define TPACKET_MIN_SIZE                                                 (0x200) 
 #define TPACKET_MAX_SIZE                                                (0xFF00) 
 
 ////////////////////////////////////////////////////////////////////////////////
 //Transport Packet flags
-#define TPACKET_FLAG_EXTRA_DATA                                         (0x0001)
+#define TPACKET_FLAG_EXTRA_DATA                                         (0x001u) // 1 << 0
+#define TPACKET_FLAG_ARCH_64                                            (0x002u) // 1 << 1
+#define TPACKET_FLAG_RESERVED_02                                        (0x004u) // 1 << 2
+#define TPACKET_FLAG_BIG_ENDIAN_SRV                                     (0x008u) // 1 << 3
+#define TPACKET_FLAG_RESERVED_04                                        (0x010u) // 1 << 4
+#define TPACKET_FLAG_RESERVED_05                                        (0x020u) // 1 << 5
+#define TPACKET_FLAG_RESERVED_06                                        (0x040u) // 1 << 6
+#define TPACKET_FLAG_RESERVED_07                                        (0x080u) // 1 << 7
+#define TPACKET_FLAG_RESERVED_08                                        (0x100u) // 1 << 8
+#define TPACKET_FLAG_RESERVED_09                                        (0x200u) // 1 << 9
+#define TPACKET_FLAG_RESERVED_10                                        (0x400u) // 1 << 10
+#define TPACKET_FLAG_BIG_ENDIAN_CLN                                     (0x800u) // 1 << 11
+
+#define TPACKET_TYPE_MASK                                                 (0xFu)
+#define TPACKET_FLAGS_MASK                                             (0xFFF0u)
+#define TPACKET_FLAGS_OFFSET                                                (4u)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -68,8 +90,9 @@ struct sH_Common
 {
     tUINT32  dwCRC32;
     tUINT32  dwID;
-    tUINT16  wType:4;
-    tUINT16  wFlags:12;
+    tUINT16  wBits; //[0..3] - Type, [4..15] - flags
+    //tUINT16  wType:4;
+    //tUINT16  wFlags:12;
     //We are working through UDP, so the packet size is limited to 65k. 
     //The minimum guaranteed size of the packet 576 bytes, user size is 512 bytes.
     tUINT16  wSize; 
@@ -123,11 +146,22 @@ struct sH_Data_Window_Report
 // #define USER_PACKET_MAX_SIZE                  (1 << USER_PACKET_SIZE_BITS_COUNT)
 // #define USER_PACKET_CHANNEL_ID_MAX_SIZE (1 << USER_PACKET_CHANNEL_ID_BITS_COUNT)
 
-struct sH_User_Data //user data header
+#define INIT_USER_HEADER(iSize, iChannel_Id) (iSize | (iChannel_Id << USER_PACKET_SIZE_BITS_COUNT))
+#define GET_USER_HEADER_SIZE(iBits) (iBits & ((1 << USER_PACKET_SIZE_BITS_COUNT) - 1))
+#define GET_USER_HEADER_CHANNEL_ID(iBits) ((iBits >> USER_PACKET_SIZE_BITS_COUNT) & ((1 << USER_PACKET_CHANNEL_ID_BITS_COUNT) - 1))
+
+struct sH_User_Raw //user data header
 {
-    tUINT32 dwSize       :USER_PACKET_SIZE_BITS_COUNT; 
-    tUINT32 dwChannel_ID :USER_PACKET_CHANNEL_ID_BITS_COUNT;
+    tUINT32 dwBits;
 } ATTR_PACK(2);
+
+struct sH_User_Data //user data header, map for sH_User_Raw
+{
+    tUINT32 dwSize       :USER_PACKET_SIZE_BITS_COUNT;       //<< 28 bits for Size
+    tUINT32 dwChannel_ID :USER_PACKET_CHANNEL_ID_BITS_COUNT; //<< 5  bits for ChannelId
+} ATTR_PACK(2);
+
+GASSERT(sizeof(sH_User_Data) == sizeof(sH_User_Raw));
 
 PRAGMA_PACK_EXIT()
 
@@ -226,6 +260,17 @@ public:
     } //CTPacket::~CTPacket
 
     ////////////////////////////////////////////////////////////////////////////
+    //CTPacket::Chage_Endianness
+    virtual void Chage_Endianness()
+    {
+        m_pHeader->dwCRC32    = ntohl(m_pHeader->dwCRC32);
+        m_pHeader->dwID       = ntohl(m_pHeader->dwID);
+        m_pHeader->wBits      = ntohs(m_pHeader->wBits);
+        m_pHeader->wClient_ID = ntohs(m_pHeader->wClient_ID);
+        m_pHeader->wSize      = ntohs(m_pHeader->wSize);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
     //CTPacket::Get_Initialized
     tBOOL Get_Initialized()
     {
@@ -239,7 +284,7 @@ public:
     {
         m_pHeader->dwID       = i_dwPacket_ID;
         m_pHeader->wClient_ID = i_wClient_ID;
-        m_pHeader->dwCRC32    = Calculate_CRC();
+        m_pHeader->dwCRC32    = Calculate_CRC(m_pHeader->wSize);
     }//CTPacket::Finalize
 
 
@@ -262,8 +307,17 @@ public:
     //CTPacket::Get_Type
     eTPacket_Type Get_Type()
     {
-        return (eTPacket_Type)m_pHeader->wType;
+        return (eTPacket_Type)(m_pHeader->wBits & TPACKET_TYPE_MASK);
     }//CTPacket::Get_Type
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPacket::Set_Type
+    void Set_Type(eTPacket_Type i_eType)
+    {
+        m_pHeader->wBits &= ~TPACKET_TYPE_MASK; //clear type
+        m_pHeader->wBits |= (i_eType & TPACKET_TYPE_MASK); //set new one
+    }//CTPacket::Get_Flags
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -278,7 +332,22 @@ public:
     //CTPacket::Is_Damaged
     tBOOL Is_Damaged()
     {
-        return (Calculate_CRC() != m_pHeader->dwCRC32);
+        return (Calculate_CRC(m_pHeader->wSize) != m_pHeader->dwCRC32);
+    }//CTPacket::Is_Damaged
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPacket::Is_Damaged
+    tBOOL Is_Damaged(tBOOL i_bSwapBytes)
+    {
+        if (i_bSwapBytes)
+        {
+            return (Calculate_CRC(ntohs(m_pHeader->wSize)) != ntohl(m_pHeader->dwCRC32));
+        }
+        else
+        {
+            return (Calculate_CRC(m_pHeader->wSize) != m_pHeader->dwCRC32);
+        }
     }//CTPacket::Is_Damaged
 
 
@@ -286,7 +355,23 @@ public:
     //CTPacket::Get_Flags
     tUINT16 Get_Flags()
     {
-        return m_pHeader->wFlags; 
+        return (m_pHeader->wBits & TPACKET_FLAGS_MASK) >> TPACKET_FLAGS_OFFSET; 
+    }//CTPacket::Get_Flags
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPacket::Set_Flag
+    void Set_Flag(tUINT16 i_wFlag)
+    {
+        m_pHeader->wBits |= (i_wFlag << TPACKET_FLAGS_OFFSET) & TPACKET_FLAGS_MASK; 
+    }//CTPacket::Get_Flags
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPacket::Clr_Flag
+    void Clr_Flag(tUINT16 i_wFlag)
+    {
+        m_pHeader->wBits &= ~((i_wFlag << TPACKET_FLAGS_OFFSET) & TPACKET_FLAGS_MASK); 
     }//CTPacket::Get_Flags
 
 
@@ -295,6 +380,13 @@ public:
     tUINT8 *Get_Buffer()
     {
         return m_pBuffer;
+    }//CTPacket::Get_Buffer
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPacket::Get_Buffer
+    tUINT32 Get_Crc()
+    {
+        return m_pHeader->dwCRC32;
     }//CTPacket::Get_Buffer
 
     ////////////////////////////////////////////////////////////////////////////
@@ -324,10 +416,10 @@ public:
             return FALSE;
         }
 
-        m_pBuffer       = i_pPacket->Get_Buffer();
-        m_dwBuffer_Size = i_pPacket->Get_Buffer_Size();
+        m_pBuffer       = i_pPacket->m_pBuffer;
+        m_dwBuffer_Size = i_pPacket->m_dwBuffer_Size;
         m_pHeader       = (sH_Common*)m_pBuffer;
-        m_dwPool_ID     = i_pPacket->Get_Pool_ID();
+        m_dwPool_ID     = i_pPacket->m_dwPool_ID;
 
         return (NULL != m_pBuffer);
     }//CTPacket::Attach
@@ -353,18 +445,17 @@ public:
 protected:
     ////////////////////////////////////////////////////////////////////////////
     //CTPacket::Calculate_CRC
-    tUINT32 Calculate_CRC()
+    tUINT32 Calculate_CRC(size_t i_szLength)
     {
-        tUINT32 l_dwOffset = offsetof(sH_Common, dwCRC32) + sizeof(m_pHeader->dwCRC32);
-        tUINT32 l_dwLength = m_pHeader->wSize;
+        size_t l_szOffset = offsetof(sH_Common, dwCRC32) + sizeof(m_pHeader->dwCRC32);
 
         //this is absolute minimum size of the packet
-        if (sizeof(sH_Common) > l_dwLength)
+        if (sizeof(sH_Common) > i_szLength)
         {
-            l_dwLength = sizeof(sH_Common); 
+            i_szLength = sizeof(sH_Common); 
         }
 
-        return Get_CRC32(m_pBuffer + l_dwOffset, l_dwLength - l_dwOffset);
+        return Get_CRC32(m_pBuffer + l_szOffset, i_szLength - l_szOffset);
     }//CTPacket::Calculate_CRC
 };//CTPacket
 
@@ -391,7 +482,7 @@ public:
         if (m_pHeader)
         {
             m_pHeader->wSize = CLIENT_INITIAL_SIZE;
-            m_pHeader->wType  = ETPT_CLIENT_HELLO;
+            CTPacket::Set_Type(ETPT_CLIENT_HELLO);
 
             m_pInitial = (sH_Client_Hello*)(m_pBuffer + sizeof(sH_Common));
         }
@@ -412,6 +503,29 @@ public:
         }
     }//CTPClient_Hello::CTPClient_Hello
         
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPClient_Hello::Chage_Endianness
+    virtual void Chage_Endianness()
+    {
+        m_pInitial->wProtocol_Version       = ntohs(m_pInitial->wProtocol_Version);
+        m_pInitial->wData_Max_Size          = ntohs(m_pInitial->wData_Max_Size);
+        m_pInitial->dwProcess_ID            = ntohl(m_pInitial->dwProcess_ID);
+        m_pInitial->dwProcess_Start_Time_Hi = ntohl(m_pInitial->dwProcess_Start_Time_Hi);
+        m_pInitial->dwProcess_Start_Time_Lo = ntohl(m_pInitial->dwProcess_Start_Time_Lo);
+
+        tWCHAR *l_pBegin = m_pInitial->pProcess_Name;
+        tWCHAR *l_pEnd   = m_pInitial->pProcess_Name + TPACKET_PROCESS_NAME_MAX_LEN;
+
+        while (    (*l_pBegin)
+                && (l_pBegin < l_pEnd)
+                )
+        {
+            *l_pBegin = ntohs(*l_pBegin);
+
+            l_pBegin ++;
+        }
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     //CTPClient_Hello::Fill
@@ -506,13 +620,13 @@ public:
     tUINT32 Get_Process_Time_Hi()
     {
         if (FALSE == m_bInitialized)
-           
         {
             return 0;
         }
 
         return m_pInitial->dwProcess_Start_Time_Hi;
     }//CTPClient_Hello::Get_Process_Times
+
 
     ////////////////////////////////////////////////////////////////////////////
     //CTPClient_Hello::Get_Process_Time_Low
@@ -581,7 +695,7 @@ public:
         if (m_pHeader)
         {
             m_pHeader->wSize = sizeof(sH_Common);
-            m_pHeader->wType  = ETPT_CLIENT_DATA;
+            CTPacket::Set_Type(ETPT_CLIENT_DATA);
         }
     }//CTPClient_Data::Initialize
 
@@ -663,7 +777,7 @@ public:
     {
         if (m_pHeader)
         {
-            m_pHeader->wType = ETPT_CLIENT_DATA;
+            CTPacket::Set_Type(ETPT_CLIENT_DATA);
             CTPacket::Finalize(i_dwPacket_ID, i_wClient_ID);
         }
     }//CTPClient_Data::Finalize
@@ -688,7 +802,7 @@ public:
         if (m_bInitialized)
         {
             m_pHeader->wSize = CLIENT_DATA_REPORT_SIZE;
-            m_pHeader->wType  = ETPT_CLIENT_DATA_REPORT;
+            CTPacket::Set_Type(ETPT_CLIENT_DATA_REPORT);
 
             m_pReport = (sH_Data_Window*)(m_pBuffer + sizeof(sH_Common));
         }
@@ -726,6 +840,15 @@ public:
 
         return TRUE;
     }
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPClient_Data_Report::Chage_Endianness
+    virtual void Chage_Endianness()
+    {
+        m_pReport->dwFirst_ID = ntohl(m_pReport->dwFirst_ID);
+        m_pReport->dwLast_ID  = ntohl(m_pReport->dwLast_ID);
+    }//CTPClient_Data_Report::Chage_Endianness
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -770,7 +893,7 @@ public:
         if (m_bInitialized)
         {
             m_pHeader->wSize = CLIENT_ALIVE_SIZE;
-            m_pHeader->wType = ETPT_CLIENT_PING;
+            CTPacket::Set_Type(ETPT_CLIENT_PING);
         }
     }//CTPClient_Ping::CTPClient_Ping
 };
@@ -793,7 +916,7 @@ public:
         if (m_bInitialized)
         {
             m_pHeader->wSize = CLIENT_BYE_SIZE;
-            m_pHeader->wType  = ETPT_CLIENT_BYE;
+            CTPacket::Set_Type(ETPT_CLIENT_BYE);
         }
     }//CTPClient_Ping::CTPClient_Ping
 };//CTPClient_Ping
@@ -817,9 +940,7 @@ public:
     {
         if (m_bInitialized)
         {
-            m_pHeader->wSize  = ACKNOWLEDGMENT_SIZE;
-            m_pHeader->wType  = ETPT_ACKNOWLEDGMENT;
-
+            Reset();
             m_pResponse = (sH_Packet_Ack*)(m_pBuffer + sizeof(sH_Common));
         }
     }//CTPServer_Response::CTPServer_Response
@@ -841,6 +962,18 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////
+    //CTPServer_Response::Reset
+    void Reset()
+    {
+        m_pHeader->dwCRC32    = 0u;
+        m_pHeader->dwID       = 0u;
+        m_pHeader->wBits      = 0;
+        m_pHeader->wClient_ID = 0;
+        m_pHeader->wSize      = ACKNOWLEDGMENT_SIZE;
+        CTPacket::Set_Type(ETPT_ACKNOWLEDGMENT);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
     //CTPServer_Response::Fill
     tBOOL Fill(tUINT32 i_dwSource_ID, tUINT16 i_wResult)
     {
@@ -856,6 +989,14 @@ public:
 
         return TRUE;
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPServer_Response::Chage_Endianness
+    virtual void Chage_Endianness()
+    {
+        m_pResponse->dwSource_ID = ntohl(m_pResponse->dwSource_ID);
+        m_pResponse->wResult     = ntohs(m_pResponse->wResult);
+    }//CTPServer_Response::Chage_Endianness
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -885,6 +1026,28 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////
+    //CTPServer_Response::Finalize
+    virtual void Finalize(tUINT32 i_dwPacket_ID, 
+                          tUINT16 i_wClient_ID, 
+                          tBOOL   i_bSwapBytes)
+    {
+        m_pHeader->dwID       = i_dwPacket_ID;
+        m_pHeader->wClient_ID = i_wClient_ID;
+
+        if (!i_bSwapBytes)
+        {
+            m_pHeader->dwCRC32 = Calculate_CRC(m_pHeader->wSize);
+        }
+        else
+        {
+            CTPacket::Chage_Endianness();
+            Chage_Endianness();    
+            m_pHeader->dwCRC32 = ntohl(Calculate_CRC(ntohs(m_pHeader->wSize)));
+        }
+    }//CTPServer_Response::Finalize
+
+
+    ////////////////////////////////////////////////////////////////////////////
     //CTPServer_Response::Set_Extra
     void Set_Extra(tUINT8 *i_pData, tUINT32 i_dwSize)
     {
@@ -906,7 +1069,7 @@ public:
 
         m_pHeader->wSize = (tUINT16)(ACKNOWLEDGMENT_SIZE + i_dwSize);
 
-        m_pHeader->wFlags = m_pHeader->wFlags | TPACKET_FLAG_EXTRA_DATA;
+        CTPacket::Set_Flag(TPACKET_FLAG_EXTRA_DATA);
     }//CTPClient_Data_Report::Set_Extra
 
 
@@ -922,7 +1085,7 @@ public:
         }
 
         m_pHeader->wSize = ACKNOWLEDGMENT_SIZE;
-        m_pHeader->wFlags = m_pHeader->wFlags & (~TPACKET_FLAG_EXTRA_DATA);
+        CTPacket::Clr_Flag(TPACKET_FLAG_EXTRA_DATA);
     }//CTPClient_Data_Report::Clr_Extra
 };//CTPServer_Response
 
@@ -950,11 +1113,10 @@ public:
     {
         if (m_bInitialized)
         {
-            m_pHeader->wSize  = SERVER_REPORT_SIZE;
-            m_pHeader->wType  = ETPT_SERVER_DATA_REPORT;
-            m_dwCount         = m_pHeader->wSize - SERVER_REPORT_HEADER_SIZE;
+            Reset();
 
             m_pReport = (sH_Data_Window_Report*)(m_pBuffer + sizeof(sH_Common));
+            m_dwCount = m_pHeader->wSize - SERVER_REPORT_HEADER_SIZE;
         }
     }//CTPServer_Report::CTPServer_Report
 
@@ -974,6 +1136,20 @@ public:
             m_dwCount = m_pHeader->wSize - SERVER_REPORT_HEADER_SIZE;
         }
     }//CTPServer_Report::CTPServer_Report
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPServer_Report::Reset
+    void Reset()
+    {
+        m_pHeader->dwCRC32    = 0u;
+        m_pHeader->dwID       = 0u;
+        m_pHeader->wBits      = 0;
+        m_pHeader->wClient_ID = 0;
+        m_pHeader->wSize      = SERVER_REPORT_SIZE;
+
+        CTPacket::Set_Type(ETPT_SERVER_DATA_REPORT);
+    }//CTPServer_Report::Reset
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1054,6 +1230,37 @@ public:
         m_pReport->dwSource_ID = i_dw_Source_ID;
         return TRUE;
     }//CTPServer_Report::Fill
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPServer_Report::Finalize
+    virtual void Finalize(tUINT32 i_dwPacket_ID, 
+                          tUINT16 i_wClient_ID, 
+                          tBOOL   i_bSwapBytes)
+    {
+        m_pHeader->dwID       = i_dwPacket_ID;
+        m_pHeader->wClient_ID = i_wClient_ID;
+
+        if (!i_bSwapBytes)
+        {
+            m_pHeader->dwCRC32 = Calculate_CRC(m_pHeader->wSize);
+        }
+        else
+        {
+            CTPacket::Chage_Endianness();
+            Chage_Endianness();    
+            m_pHeader->dwCRC32 = ntohl(Calculate_CRC(ntohs(m_pHeader->wSize)));
+        }
+    }//CTPServer_Report::Finalize
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    //CTPServer_Report::Chage_Endianness
+    virtual void Chage_Endianness()
+    {
+        m_pReport->dwSource_ID = ntohl(m_pReport->dwSource_ID);
+    }//CTPServer_Report::Chage_Endianness
+
 
 private:
     ////////////////////////////////////////////////////////////////////////////
@@ -1189,4 +1396,4 @@ inline void Packet_Print(IJournal     *i_pLog,
     }
 }
 
-#endif //TACKETS_H
+#endif //TPACKETS_H

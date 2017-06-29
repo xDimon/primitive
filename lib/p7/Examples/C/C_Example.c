@@ -54,7 +54,7 @@ int main(int i_iArgC, char* i_pArgV[])
     g_hClient = P7_Client_Create(TM("/P7.Sink=Baical /P7.Addr=127.0.0.1 /P7.Pool=16000"));
     //using the client create telemetry & trace channels
     g_hTel    = P7_Telemetry_Create(g_hClient, TM("TelemetryChannel"), NULL);
-    g_hTrace  = P7_Trace_Create(g_hClient, TM("TraceChannel"));
+    g_hTrace  = P7_Trace_Create(g_hClient, TM("TraceChannel"), NULL);
 
     if (    (NULL == g_hClient)
          || (NULL == g_hTel)
