@@ -22,7 +22,7 @@
 #pragma once
 
 #include <memory>
-#include "../options/Options.hpp"
+#include "Options.hpp"
 #include <libconfig.h++>
 
 class Config: public libconfig::Config
