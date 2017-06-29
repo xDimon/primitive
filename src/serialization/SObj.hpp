@@ -158,6 +158,11 @@ public:
 		auto val = get(key);
 		return val ? val->operator int() : defaultValue;
 	}
+	double getAsFlt(const std::string& key, double defaultValue = 0.0) const
+	{
+		auto val = get(key);
+		return val ? val->operator double() : defaultValue;
+	}
 	std::string getAsStr(const std::string& key, const std::string& defaultValue = "") const
 	{
 		auto val = get(key);
