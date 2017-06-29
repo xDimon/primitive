@@ -63,13 +63,11 @@ public:
 
 	size_t capture()
 	{
-		Log("DB").debug("DBConn#%p captured -> %llu", this, _captured+1);
 		return ++_captured;
 	}
 
 	size_t release()
 	{
-		Log("DB").debug("DBConn#%p released -> %llu", this, _captured-1);
 		_captured--;
 		if (!_captured)
 		{

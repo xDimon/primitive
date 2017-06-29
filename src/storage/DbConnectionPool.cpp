@@ -136,21 +136,6 @@ void DbConnectionPool::releaseDbConnection(const std::shared_ptr<DbConnection>& 
 		return;
 	}
 
-	if (conn->captured())
-	{
-		conn->release();
-	}
-	else
-	{
-		_log.warn("Internal error: release connection when counter of capture is zero");
-	}
-
-	// После высвобождения соединение все еще захвачено (согласно счетчику)
-	if (conn->captured())
-	{
-		return;
-	}
-
 	if (conn->inTransaction())
 	{
 		_log.warn("Internal error: finaly release connection when counter of incompleted transaction nozero");

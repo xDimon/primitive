@@ -30,9 +30,6 @@
 
 class ActionFactory
 {
-public:
-	typedef std::function<std::shared_ptr<Action>()> Creator;
-
 private:
 	ActionFactory()
 	{};
