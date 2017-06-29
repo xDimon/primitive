@@ -158,6 +158,11 @@ public:
 		auto val = get(key);
 		return val ? val->operator int() : defaultValue;
 	}
+	std::string getAsStr(const std::string& key, const std::string& defaultValue = "") const
+	{
+		auto val = get(key);
+		return val ? val->operator std::string() : defaultValue;
+	}
 
 	void forEach(std::function<void(const std::pair<const std::string, const SVal*>&)> handler) const
 	{
