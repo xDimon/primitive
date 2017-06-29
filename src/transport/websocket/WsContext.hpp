@@ -21,24 +21,20 @@
 
 #pragma once
 
-#include "../../utils/Context.hpp"
+
+#include "../TransportContext.hpp"
 #include "../http/HttpRequest.hpp"
 #include "../../net/TcpConnection.hpp"
-#include "../ServerTransport.hpp"
-
 #include "WsFrame.hpp"
 #include "../../sessions/Session.hpp"
-#include <memory>
 
-class WsContext : public Context
+class WsContext : public TransportContext
 {
 private:
 	std::shared_ptr<HttpRequest> _request;
 	bool _established;
 	std::shared_ptr<TcpConnection> _connection;
 	std::shared_ptr<WsFrame> _frame;
-	ServerTransport::Handler _handler;
-	ServerTransport::Transmitter _transmitter;
 	std::weak_ptr<Session> _session;
 
 public:
@@ -74,26 +70,6 @@ public:
 	std::shared_ptr<HttpRequest>& getRequest()
 	{
 		return _request;
-	}
-
-	void setTransmitter(ServerTransport::Transmitter& transmitter)
-	{
-		_transmitter = transmitter;
-	}
-
-	void transmit(const char* data, size_t size, bool close)
-	{
-		_transmitter(data, size, "", close);
-	}
-
-	void setHandler(ServerTransport::Handler handler)
-	{
-		_handler = handler;
-	}
-
-	void handle(const char* data, size_t size)
-	{
-		_handler(ptr(), data, size, _transmitter);
 	}
 
 	void setFrame(std::shared_ptr<WsFrame>& frame)

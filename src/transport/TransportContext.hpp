@@ -14,42 +14,43 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.28
+// File created on: 2017.06.27
 
-// HttpContext.hpp
+// TransportContext.hpp
 
 
 #pragma once
 
-#include "HttpRequest.hpp"
-#include "HttpResponse.hpp"
-#include "../TransportContext.hpp"
-#include <memory>
 
-class HttpContext: public TransportContext
+#include "../utils/Context.hpp"
+#include "ServerTransport.hpp"
+
+class TransportContext : public Context
 {
-private:
-	std::shared_ptr<HttpRequest> _request;
-	std::shared_ptr<HttpResponse> _response;
+protected:
+	ServerTransport::Handler _handler;
+	ServerTransport::Transmitter _transmitter;
 
 public:
-	virtual ~HttpContext() {};
+	virtual ~TransportContext()	{};
 
-	void setRequest(std::shared_ptr<HttpRequest>& request)
+	void setTransmitter(ServerTransport::Transmitter& transmitter)
 	{
-		_request = request;
-	}
-	std::shared_ptr<HttpRequest>& getRequest()
-	{
-		return _request;
+		_transmitter = transmitter;
 	}
 
-	void setResponse(std::shared_ptr<HttpResponse>& response)
+	void transmit(const char* data, size_t size, const std::string& type, bool close)
 	{
-		_response = response;
+		_transmitter(data, size, type, close);
 	}
-	std::shared_ptr<HttpResponse>& getResponse()
+
+	void setHandler(ServerTransport::Handler handler)
 	{
-		return _response;
+		_handler = handler;
+	}
+
+	void handle(const char* data, size_t size)
+	{
+		_handler(ptr(), data, size, _transmitter);
 	}
 };
