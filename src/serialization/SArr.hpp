@@ -21,10 +21,17 @@
 
 #pragma once
 
+#include <sstream>
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <stddef.h>
+#include "SStr.hpp"
 #include "SVal.hpp"
+#include "SBool.hpp"
+#include "SInt.hpp"
+#include "SFloat.hpp"
+#include "SNull.hpp"
 
 class SArr: public SVal
 {
@@ -56,6 +63,26 @@ public:
 	void insert(SVal* value)
 	{
 		_elements.emplace_back(value);
+	}
+	void insert(SFloat::type value)
+	{
+		insert(new SFloat(value));
+	}
+	void insert(const std::string value)
+	{
+		insert(new SStr(value));
+	}
+	void insert(const char* value)
+	{
+		insert(new SStr(value));
+	}
+	void insert(bool value)
+	{
+		insert(new SBool(value));
+	}
+	void insert(nullptr_t)
+	{
+		insert(new SNull());
 	}
 
 	void forEach(std::function<void (const SVal*)> handler) const
