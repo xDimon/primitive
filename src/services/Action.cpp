@@ -24,9 +24,14 @@
 
 uint64_t Action::_requestCount = 0;
 
-Action::Action(const std::shared_ptr<Context>& context, const SVal* input, ServerTransport::Transmitter transmitter)
-: _context(context)
-, _input(dynamic_cast<const SObj *>(input))
+Action::Action(
+	const std::shared_ptr<Service>& service,
+	const std::shared_ptr<Context>& context,
+	const SVal* input_,
+	ServerTransport::Transmitter transmitter
+)
+: _service(service)
+, _context(context)
 , _data(nullptr)
 , _transmitter(transmitter)
 , _requestId(0)
@@ -34,14 +39,25 @@ Action::Action(const std::shared_ptr<Context>& context, const SVal* input, Serve
 , _lastConfirmedResponse(0)
 , _answerSent(false)
 {
-	_name = nullptr;
+	auto input = dynamic_cast<const SObj *>(input_);
 
-	if (!_input)
+	if (!input)
 	{
 		throw std::runtime_error("Input data isn't object");
 	}
 
-	auto aux = dynamic_cast<const SObj*>(_input->get("_"));
+	auto reqName = dynamic_cast<const SStr*>(input->get("request"));
+	if (reqName)
+	{
+		_actionName = reqName->value();
+	}
+	else
+	{
+		int status;
+		_actionName = abi::__cxa_demangle(typeid(*this).name(), 0, 0, &status);
+	}
+
+	auto aux = dynamic_cast<const SObj*>(input->get("_"));
 	if (aux)
 	{
 		_requestId = aux->getAsInt("ri");
@@ -49,7 +65,7 @@ Action::Action(const std::shared_ptr<Context>& context, const SVal* input, Serve
 		_lastConfirmedEvent = aux->getAsInt("ce");
 	}
 
-	_data = dynamic_cast<const SVal*>(_input->get("data"));
+	_data = dynamic_cast<const SVal*>(input->get("data"));
 }
 
 Action::~Action()
@@ -59,11 +75,6 @@ Action::~Action()
 
 const SObj* Action::response(const SVal* data) const
 {
-	if (_answerSent)
-	{
-		throw std::runtime_error("Internal error ← Answer already sent");
-	}
-
 	auto response = std::make_unique<SObj>();
 
 	if (_requestId)
@@ -73,11 +84,16 @@ const SObj* Action::response(const SVal* data) const
 		response->insert("_", aux.release());
 	}
 
-	response->insert("response", getName());
+	response->insert("response", _actionName);
 
 	if (data)
 	{
 		response->insert("data", data);
+	}
+
+	if (_answerSent)
+	{
+		throw std::runtime_error("Internal error ← Answer already sent");
 	}
 
 	_answerSent = true;
@@ -87,11 +103,6 @@ const SObj* Action::response(const SVal* data) const
 
 const SObj* Action::error(const std::string& message, const SVal* data) const
 {
-	if (_answerSent)
-	{
-		throw std::runtime_error("Internal error ← Answer already sent");
-	}
-
 	auto error = std::make_unique<SObj>();
 
 	if (_requestId)
@@ -101,7 +112,7 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 		error->insert("_", aux.release());
 	}
 
-	error->insert("error", getName());
+	error->insert("error", _actionName);
 
 	error->insert("message", message);
 
@@ -110,20 +121,12 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 		error->insert("data", data);
 	}
 
+	if (_answerSent)
+	{
+		throw std::runtime_error("Internal error ← Answer already sent");
+	}
+
 	_answerSent = true;
 
 	return error.release();
-}
-
-const char* Action::getName() const
-{
-	if (!_name)
-	{
-		int status;
-		auto reqName = _input ? dynamic_cast<const SStr*>(_input->get("request")) : nullptr;
-		_name = reqName ?
-				reqName->value().c_str() :
-				abi::__cxa_demangle(typeid(*this).name(), 0, 0, &status);
-	}
-	return _name;
 }

@@ -27,18 +27,18 @@
 #include "../serialization/SVal.hpp"
 #include "../serialization/SObj.hpp"
 #include "../transport/ServerTransport.hpp"
+#include "Service.hpp"
 
 class Action
 {
-private:
-	mutable const char* _name;
-
 protected:
 	using Id = int32_t;
 
+	std::string _actionName;
+
 	static uint64_t _requestCount;
+	std::shared_ptr<Service> _service;
 	std::shared_ptr<Context> _context;
-	const SObj* _input;
 	const SVal* _data;
 	ServerTransport::Transmitter _transmitter;
 	Id _requestId;
@@ -52,6 +52,7 @@ public:
 	void operator=(Action const&) = delete;
 
 	Action(
+		const std::shared_ptr<Service>& service,
 		const std::shared_ptr<Context>& context,
 		const SVal* input,
 		ServerTransport::Transmitter _transmitter
@@ -62,8 +63,6 @@ public:
 	{
 		return _requestCount;
 	}
-
-	const char* getName() const;
 
 	virtual bool validate() = 0;
 
@@ -98,11 +97,12 @@ private:                                                                        
     void operator= (ActionName const&) = delete;                                                \
                                                                                                 \
     ActionName(                                                                                 \
+		const std::shared_ptr<Service>& service,                                                \
 		const std::shared_ptr<Context>& context,                                                \
 		const SVal* input,                                                                      \
 		ServerTransport::Transmitter transmitter                                                \
 	)                                                                                           \
-    : Action(context, input, transmitter)                                                       \
+    : Action(service, context, input, transmitter)                                              \
     {};                                                                                         \
                                                                                                 \
 public:                                                                                         \
@@ -113,11 +113,12 @@ public:                                                                         
                                                                                                 \
 private:                                                                                        \
     static auto create(                                                                         \
+		const std::shared_ptr<Service>& service,                                                \
 		const std::shared_ptr<Context>& context,                                                \
 		const SVal* input,                                                                      \
 		ServerTransport::Transmitter transmitter                                                \
 	)                                                                                           \
     {                                                                                           \
-        return std::shared_ptr<Action>(new ActionName(context, input, transmitter));            \
+        return std::shared_ptr<Action>(new ActionName(service, context, input, transmitter));   \
     }                                                                                           \
     static const bool __dummy_for_reg_call;
