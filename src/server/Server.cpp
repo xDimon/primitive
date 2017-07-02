@@ -24,6 +24,7 @@
 #include "Server.hpp"
 #include "../net/ConnectionManager.hpp"
 #include "../storage/DbManager.hpp"
+#include "../extra/Applications.hpp"
 
 Server* Server::_instance = nullptr;
 
@@ -39,6 +40,20 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	_instance = this;
 
 	_log.info("Server instantiate");
+
+	try
+	{
+		const auto& settings = _configs->getRoot()["applications"];
+
+		for (const auto& setting : settings)
+		{
+			Applications::add(setting);
+		}
+	}
+	catch (const std::exception& exception)
+	{
+		_log.error("Can't init one of application ← %s", exception.what());
+	}
 
 	try
 	{
