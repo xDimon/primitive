@@ -30,17 +30,43 @@
 int main(int argc, char *argv[])
 {
 	Log log("Main");
-
 	log.info("Start daemon");
 
 	SetProcessName();
 	StartManageSignals();
 
-	auto options = std::make_shared<Options>(argc, argv);
+	std::shared_ptr<Options> options;
+	try
+	{
+		options = std::make_shared<Options>(argc, argv);
+	}
+	catch (const std::exception& exception)
+	{
+		log.critical("Fail get opptions ← %s", exception.what());
+		exit(EXIT_FAILURE);
+	}
 
-	auto configs = std::make_shared<Config>(options);
+	std::shared_ptr<Config> configs;
+	try
+	{
+		configs = std::make_shared<Config>(options);
+	}
+	catch (const std::exception& exception)
+	{
+		log.critical("Fail get configuration ← %s", exception.what());
+		exit(EXIT_FAILURE);
+	}
 
-	auto server = std::make_shared<Server>(configs);
+	std::shared_ptr<Server> server;
+	try
+	{
+		server = std::make_shared<Server>(configs);
+	}
+	catch (const std::exception& exception)
+	{
+		log.error("Fail init server ← %s", exception.what());
+		exit(EXIT_FAILURE);
+	}
 
 //	SetDaemonMode();
 

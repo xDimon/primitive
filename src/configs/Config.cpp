@@ -26,27 +26,35 @@
 Config::Config(const std::shared_ptr<Options>& options)
 : _options(options)
 {
-	auto &configPath = _options->getConfig();
+	if (!_options)
+	{
+		throw std::runtime_error("Bad options");
+	}
+
+	auto& configPath = _options->getConfig();
 
 	try
 	{
 		libconfig::Config::readFile(configPath.c_str());
 	}
-	catch (const libconfig::FileIOException &fioex)
+	catch (const libconfig::FileIOException& fioex)
 	{
 		std::ostringstream ss;
 		ss << "Can't read config file: " << fioex.what();
 		throw std::runtime_error(ss.str());
 	}
-	catch (const libconfig::ParseException &pex)
+	catch (const libconfig::ParseException& pex)
 	{
 		std::ostringstream ss;
 		ss << "Parse error at " << pex.getFile() << ":" << pex.getLine() << " - " << pex.getError();
 		throw std::runtime_error(ss.str());
 	}
+	catch (const std::exception& exception)
+	{
+		throw;
+	}
 }
 
 Config::~Config()
 {
-
 }
