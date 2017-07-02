@@ -24,6 +24,8 @@
 
 #include "../utils/Shareable.hpp"
 #include "../utils/Named.hpp"
+#include <set>
+#include "ServicePart.hpp"
 #include "../serialization/SerializerFactory.hpp"
 #include "../log/Log.hpp"
 
@@ -35,10 +37,12 @@ protected:
 	Log _log;
 	const Setting& _setting;
 
+	std::set<std::shared_ptr<ServicePart>> _parts;
+
 	Service(const Setting& setting);
 
 public:
-	virtual ~Service();
+	virtual ~Service() {};
 
 	virtual void activate(Server* server) = 0;
 	virtual void deactivate(Server* server) = 0;

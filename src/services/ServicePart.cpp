@@ -14,35 +14,9 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.05.30
+// File created on: 2017.07.02
 
-// Service.cpp
+// ServicePart.cpp
 
 
-#include <sstream>
-#include "Service.hpp"
-
-Service::Service(const Setting& setting)
-: _log("Service")
-, _setting(setting)
-{
-	if (setting.exists("name"))
-	{
-		setting.lookupValue("name", _name);
-	}
-	if (!_name.length() && setting.exists("type"))
-	{
-		std::string type;
-		setting.lookupValue("type", type);
-
-		std::ostringstream ss;
-		ss << "_service[" << type << "]";
-		_name = std::move(ss.str());
-	}
-	if (!_name.length())
-	{
-		std::ostringstream ss;
-		ss << "_service[" << std::hex << this << "]";
-		_name = std::move(ss.str());
-	}
-}
+#include "ServicePart.hpp"
