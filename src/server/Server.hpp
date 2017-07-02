@@ -40,7 +40,6 @@ private:
 
 	std::shared_ptr<Config> _configs;
 
-	std::map<const std::string, std::shared_ptr<ServerTransport>> _transports;
 	std::map<const std::string, std::shared_ptr<Service>> _services;
 
 public:
@@ -60,16 +59,6 @@ public:
 	{
 		return "Primitive";
 	}
-
-	bool addTransport(const std::string& name, const std::shared_ptr<ServerTransport>& transport);
-
-	std::shared_ptr<ServerTransport> getTransport(const std::string& name);
-
-	void enableTransport(const std::string& name);
-
-	void disableTransport(const std::string& name);
-
-	void removeTransport(const std::string& name);
 
 	bool addService(const std::string& name, const std::shared_ptr<Service>& service);
 

@@ -25,6 +25,7 @@
 #include "../net/ConnectionManager.hpp"
 #include "../storage/DbManager.hpp"
 #include "../extra/Applications.hpp"
+#include "../transport/Transports.hpp"
 
 Server* Server::_instance = nullptr;
 
@@ -66,7 +67,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	}
 	catch (const std::runtime_error& exception)
 	{
-		_log.error("Can't create one of database connection pool: %s", exception.what());
+		_log.error("Can't init one of database connection pool ← %s", exception.what());
 	}
 
 	try
@@ -75,17 +76,12 @@ Server::Server(const std::shared_ptr<Config>& configs)
 
 		for (const auto& setting : settings)
 		{
-			auto transport = TransportFactory::create(setting);
-
-			if (!addTransport(transport->name(), transport))
-			{
-				throw std::runtime_error(std::string("Already exists transport with the same name ('") + transport->name() + "')");
-			}
+			Transports::add(setting);
 		}
 	}
 	catch (const std::runtime_error& exception)
 	{
-		_log.error("Can't add transport: %s", exception.what());
+		_log.error("Can't init one of transport ← %s", exception.what());
 	}
 
 	try
@@ -109,7 +105,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	}
 	catch (const std::runtime_error& exception)
 	{
-		_log.error("Can't add service: %s", exception.what());
+		_log.error("Can't add service ← %s", exception.what());
 	}
 
 	ThreadPool::enqueue(ConnectionManager::dispatch);
@@ -126,68 +122,6 @@ void Server::wait()
 	ThreadPool::wait();
 }
 
-bool Server::addTransport(const std::string& name, const std::shared_ptr<ServerTransport>& transport)
-{
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	auto i = _transports.find(name);
-	if (i != _transports.end())
-	{
-		return false;
-	}
-	_log.debug("Transport '%s' added", name.c_str());
-	_transports.emplace(name, transport->ptr());
-	return true;
-}
-
-std::shared_ptr<ServerTransport> Server::getTransport(const std::string& name)
-{
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	auto i = _transports.find(name);
-	if (i == _transports.end())
-	{
-		return nullptr;
-	}
-	return i->second;
-}
-
-void Server::enableTransport(const std::string& name)
-{
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	auto i = _transports.find(name);
-	if (i == _transports.end())
-	{
-		return;
-	}
-	auto& transport = i->second;
-	transport->enable();
-}
-
-void Server::disableTransport(const std::string& name)
-{
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	auto i = _transports.find(name);
-	if (i == _transports.end())
-	{
-		return;
-	}
-	auto& transport = i->second;
-	transport->disable();
-}
-
-void Server::removeTransport(const std::string& name)
-{
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	auto i = _transports.find(name);
-	if (i == _transports.end())
-	{
-		return;
-	}
-	auto& transport = i->second;
-	transport->disable();
-	_transports.erase(i);
-	_log.debug("Transport '%s' removed", name.c_str());
-}
-
 void Server::start()
 {
 	_log.info("Server start");
@@ -195,20 +129,12 @@ void Server::start()
 	ThreadPool::hold();
 	ThreadPool::setThreadNum(3);
 
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	for (auto &&item : _transports)
-	{
-		item.second->enable();
-	}
+	Transports::enableAll();
 }
 
 void Server::stop()
 {
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	for (auto &&item : _transports)
-	{
-		item.second->disable();
-	}
+	Transports::disableAll();
 
 	ThreadPool::unhold();
 
