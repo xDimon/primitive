@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
 	Log log("Main");
 	log.info("Start daemon");
 
+	ShutdownManager::doAtShutdown(Log::finalFlush);
+
 	SetProcessName();
 	StartManageSignals();
 
@@ -80,7 +82,5 @@ int main(int argc, char *argv[])
 
 	log.info("Stop daemon");
 
-	Log::finalFlush();
-
-	return 0;
+	exit(EXIT_SUCCESS);
 }

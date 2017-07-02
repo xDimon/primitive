@@ -22,6 +22,17 @@
 #include "ShutdownManager.hpp"
 #include "../thread/ThreadPool.hpp"
 
+ShutdownManager::ShutdownManager()
+: _shutingdown(false)
+{
+	atexit(ShutdownManager::shutdown);
+};
+
+ShutdownManager::~ShutdownManager()
+{
+	shutdown();
+};
+
 void ShutdownManager::doAtShutdown(std::function<void()> handler)
 {
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
@@ -35,14 +46,17 @@ void ShutdownManager::shutdown()
 
 //	ThreadPool::hold();
 
-	getInstance()._shutingdown = true;
-
-	for (auto handler : getInstance()._handlers)
+	if (!getInstance()._shutingdown)
 	{
-		handler();
+		getInstance()._shutingdown = true;
+
+		for (auto handler : getInstance()._handlers)
+		{
+			handler();
+		}
 	}
 
-	getInstance()._handlers.clear();
+//	getInstance()._handlers.clear();
 
 //	ThreadPool::unhold();
 }

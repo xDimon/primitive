@@ -28,10 +28,8 @@
 class ShutdownManager
 {
 private:
-	ShutdownManager()
-	: _shutingdown(false)
-	{};
-	virtual ~ShutdownManager() {};
+	ShutdownManager();
+	virtual ~ShutdownManager();
 
 	ShutdownManager(ShutdownManager const&) = delete;
 	void operator= (ShutdownManager const&) = delete;
