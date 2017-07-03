@@ -141,7 +141,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 					>> *connection;
 
 				connection->close();
-				context.reset();
+				connection->resetContext();
 				return true;
 			}
 
@@ -159,8 +159,8 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				uint16_t code = htobe16(1008); // Policy Violation
 				memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
 				WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
-				context.reset();
 				connection->close();
+				connection->resetContext();
 				return true;
 			}
 
@@ -179,7 +179,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				>> *connection;
 
 			connection->close();
-
+			connection->resetContext();
 			return true;
 		}
 	}
@@ -296,8 +296,8 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 		{
 			_log.debug("CLOSE-FRAME: %zu bytes", context->getFrame()->dataLen());
 			WsFrame::send(connection, WsFrame::Opcode::Close, "Bye!", 4);
-			context.reset();
 			connection->close();
+			connection->resetContext();
 			n++;
 			break;
 		}
@@ -305,7 +305,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 		{
 			_log.debug("UNSUPPORTED-FRAME(#%d): %zu bytes", static_cast<int>(context->getFrame()->opcode()), context->getFrame()->dataLen());
 			WsFrame::send(connection, WsFrame::Opcode::Close, "Unsupported opcode", 21);
-			context.reset();
+			connection->resetContext();
 			n++;
 			break;
 		}

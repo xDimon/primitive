@@ -165,7 +165,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
 					>> *connection;
 
-				context.reset();
+				connection->resetContext();
 				return true;
 			}
 
@@ -186,7 +186,6 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 						response << HttpHeader("Content-Type", contentType);
 					}
 					response
-
 						<< out << "\r\n"
 						>> *connection;
 				};
@@ -195,7 +194,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 
 			context->handle(context->getRequest()->dataPtr(), context->getRequest()->dataLen());
 
-			context->getRequest().reset();
+			connection->resetContext();
 			n++;
 			continue;
 		}
@@ -211,8 +210,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 				>> *connection;
 		}
 
-		context->getRequest().reset();
-
+		connection->resetContext();
 		n++;
 	}
 

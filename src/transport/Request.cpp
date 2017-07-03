@@ -37,11 +37,6 @@ bool Request::execute()
 	{
 		case State::INIT:
 			return this->connect();
-			break;
-
-
-
-			break;
 
 		case State::CONNECT_IN_PROGRESS:
 			break;

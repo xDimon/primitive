@@ -66,13 +66,17 @@ public:
 	Connection(const std::shared_ptr<Transport>& transport);
 	virtual ~Connection();
 
-	void setContext(const std::shared_ptr<Context>& context)
-	{
-		_context = std::move(context) ;
-	}
-	std::shared_ptr<Context> getContext()
+	std::shared_ptr<Context>& getContext()
 	{
 		return _context;
+	}
+	void setContext(const std::shared_ptr<Context>& context)
+	{
+		_context = std::move(context);
+	}
+	void resetContext()
+	{
+		_context.reset();
 	}
 
 	inline int fd() const
