@@ -105,7 +105,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	}
 	catch (const std::runtime_error& exception)
 	{
-		_log.error("Can't add service ← %s", exception.what());
+		_log.error("Can't init one of service ← %s", exception.what());
 	}
 
 	ThreadPool::enqueue(ConnectionManager::dispatch);
@@ -149,8 +149,7 @@ bool Server::addService(const std::string& name, const std::shared_ptr<Service>&
 	{
 		return false;
 	}
-	_log.debug("Service '%s' added", name.c_str());
-	service->activate(this);
+	service->activate();
 	_services.emplace(name, service->ptr());
 
 	return true;
@@ -165,7 +164,6 @@ void Server::removeService(const std::string& name)
 		return;
 	}
 	auto& service = i->second;
-	service->deactivate(this);
+	service->deactivate();
 	_services.erase(i);
-	_log.debug("Service '%s' removed", name.c_str());
 }

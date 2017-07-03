@@ -44,8 +44,8 @@ protected:
 public:
 	virtual ~Service() {};
 
-	virtual void activate(Server* server) = 0;
-	virtual void deactivate(Server* server) = 0;
+	virtual void activate() = 0;
+	virtual void deactivate() = 0;
 
 	const Setting& getSetting() const
 	{
@@ -73,8 +73,8 @@ private:                                                                    \
                                                                             \
 public:                                                                     \
     virtual ~Service();                                                     \
-    virtual void activate(Server *server);                                  \
-    virtual void deactivate(Server *server);                                \
+    virtual void activate();                                                \
+    virtual void deactivate();                                              \
                                                                             \
 private:                                                                    \
     static const bool __dummy;
