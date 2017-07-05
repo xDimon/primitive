@@ -167,3 +167,14 @@ void Server::removeService(const std::string& name)
 	service->deactivate();
 	_services.erase(i);
 }
+
+std::shared_ptr<Service> Server::getService(const std::string& name)
+{
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
+	auto i = _services.find(name);
+	if (i == _services.end())
+	{
+		return nullptr;
+	}
+	return i->second;
+}

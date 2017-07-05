@@ -61,7 +61,7 @@ public:
 	}
 
 	bool addService(const std::string& name, const std::shared_ptr<Service>& service);
-
+	std::shared_ptr<Service> getService(const std::string& name);
 	void removeService(const std::string& name);
 
 	void start();
