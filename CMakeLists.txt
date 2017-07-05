@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 2.8)
 
 # Имя проекта
 set(CODENAME "primitive")
@@ -31,11 +31,14 @@ else ()
     message(STATUS "Try to install `ccache` for faster compilation")
 endif ()
 
-# Задаем стандарт С++14
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -rdynamic -O0 -g")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -rdynamic")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -rdynamic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -rdynamic -O0 -g")
+
+#set(CMAKE_FIND_LIBRARY_SUFFIXES ".a;.so")
+#set(BUILD_SHARED_LIBRARIES OFF)
+#set(CMAKE_EXE_LINKER_FLAGS "-Wl,export-dynamic-static")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
@@ -90,10 +93,10 @@ foreach(F ${${CODENAME}_INCLUDES})
 	include_directories(${F})
 endforeach()
 
-message(STATUS "Project libraries:")
-foreach(F ${${CODENAME}_LIBRARIES})
-	message(STATUS "  ${F}")
-endforeach()
+#message(STATUS "Project libraries:")
+#foreach(F ${${CODENAME}_LIBRARIES})
+#	message(STATUS "  ${F}")
+#endforeach()
 
 add_subdirectory(src)
 
