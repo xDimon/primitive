@@ -25,13 +25,16 @@
 
 class SBool: public SVal
 {
+public:
+	typedef bool type;
+
 private:
 	bool _value;
 
 public:
 	SBool(bool value): _value(value) {};
 
-	auto value() const
+	bool value() const
 	{
 		return _value;
 	}

@@ -39,7 +39,7 @@ public:
 	: _value(value)
 	{}
 
-	auto value() const
+	type value() const
 	{
 		return _value;
 	}
