@@ -589,7 +589,7 @@ SNum* JsonSerializer::decodeNumber()
 	return new SInt(value);
 }
 
-void JsonSerializer::encodeNull(const SNull* value)
+void JsonSerializer::encodeNull(const SNull*)
 {
 	_oss << "null";
 }

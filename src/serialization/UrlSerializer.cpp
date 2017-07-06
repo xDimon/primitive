@@ -46,7 +46,7 @@ struct tokens: std::ctype<char>
     }
 };
 
-SVal* UrlSerializer::decode(const std::string& data, bool strict)
+SVal* UrlSerializer::decode(const std::string& data, bool)
 {
 	_iss.str(data);
 	_iss.imbue(std::locale(std::locale(), new tokens()));
@@ -232,7 +232,7 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 	return new SStr(strval);
 }
 
-void UrlSerializer::encodeNull(const std::string& keyline, const SNull* value)
+void UrlSerializer::encodeNull(const std::string& keyline, const SNull*)
 {
 	_oss << keyline << "=" << "*null*";
 }
@@ -247,7 +247,7 @@ void UrlSerializer::encodeString(const std::string& keyline, const SStr* value)
 	_oss << keyline << "=" << HttpUri::urlencode(value->value());
 }
 
-void UrlSerializer::encodeBinary(const std::string& keyline, const SBinary* value)
+void UrlSerializer::encodeBinary(const std::string& keyline, const SBinary*)
 {
 	_oss << "*binary*";
 }

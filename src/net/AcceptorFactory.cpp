@@ -42,15 +42,7 @@ std::shared_ptr<Acceptor> AcceptorFactory::create(const Setting& setting)
 std::shared_ptr<AcceptorFactory::Creator> AcceptorFactory::creator(const Setting& setting)
 {
 	std::string host;
-	try
-	{
-		if (!setting.exists("host"))
-		{
-			throw libconfig::SettingNotFoundException("");
-		}
-		setting.lookupValue("host", host);
-	}
-	catch (const libconfig::SettingNotFoundException& exception)
+	if (!setting.lookupValue("host", host) || host.empty())
 	{
 		throw std::runtime_error("Bad config or host undefined");
 	}

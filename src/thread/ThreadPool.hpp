@@ -21,15 +21,13 @@
 
 #pragma once
 
-#include <thread>
-#include <vector>
-#include <queue>
-#include <condition_variable>
-#include <future>
+#include <mutex>
 #include <map>
-#include "Thread.hpp"
-#include "../log/Log.hpp"
+#include <deque>
+#include <condition_variable>
+#include <queue>
 #include "Task.hpp"
+#include "Thread.hpp"
 
 class ThreadPool final
 {

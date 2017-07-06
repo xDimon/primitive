@@ -35,7 +35,7 @@ typedef struct md5_state_s {
     md5_byte_t buf[64];		/* accumulate block */
 } md5_state_t;
 
-class MD5
+class MD5 final
 {
 public:
 	static const size_t BytesHashLength = 16;

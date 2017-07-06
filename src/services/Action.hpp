@@ -32,7 +32,7 @@
 class Action
 {
 protected:
-	using Id = int32_t;
+	using Id = int64_t;
 
 	std::string _actionName;
 

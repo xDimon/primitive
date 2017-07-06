@@ -249,7 +249,7 @@ bool SslConnection::writeToSocket()
 			break;
 		}
 
-		int n = SSL_write(_sslConnect, _outBuff.dataPtr(), _outBuff.dataLen()); // TODO продумать запись порциями
+		int n = SSL_write(_sslConnect, _outBuff.dataPtr(), (_outBuff.dataLen() > 1<<12) ? (1<<12) : static_cast<int>(_outBuff.dataLen()));
 		if (n > 0)
 		{
 			_outBuff.skip(static_cast<size_t>(n));
@@ -322,7 +322,7 @@ bool SslConnection::readFromSocket()
 
 		_inBuff.prepare(1<<12);
 
-		int n = SSL_read(_sslConnect, _inBuff.spacePtr(), _inBuff.spaceLen());
+		int n = SSL_read(_sslConnect, _inBuff.spacePtr(), (_inBuff.spaceLen() > 1<<12) ? (1<<12) : static_cast<int>(_inBuff.spaceLen()));
 		if (n > 0)
 		{
 			_inBuff.forward(static_cast<size_t>(n));

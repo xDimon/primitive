@@ -121,12 +121,12 @@ SslHelper::SslHelper()
 	OpenSSL_add_all_algorithms();
 	SSL_library_init();
 
-	BIO *cbio = BIO_new_mem_buf(certificate.data(), -1);
+	BIO *cbio = BIO_new_mem_buf(const_cast<char *>(certificate.data()), -1);
 	X509 *cert = PEM_read_bio_X509(cbio, nullptr, 0, nullptr);
 	BIO_free(cbio);
 	assert(cert != nullptr);
 
-	BIO *kbio = BIO_new_mem_buf(key.data(), -1);
+	BIO *kbio = BIO_new_mem_buf(const_cast<char *>(key.data()), -1);
 	RSA *rsa = PEM_read_bio_RSAPrivateKey(kbio, nullptr, 0, nullptr);
 	BIO_free(kbio);
 	assert(rsa != nullptr);

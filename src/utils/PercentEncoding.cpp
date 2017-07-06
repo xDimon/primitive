@@ -38,7 +38,7 @@ static const std::string unreserved =
 static const std::string reserved =
 	"!*'();:@&=+$,/?%#[]";
 
-inline static bool need_encode(unsigned char c)
+inline static bool need_encode(char c)
 {
 	if (unreserved.find(c) != std::string::npos)
 	{

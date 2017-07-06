@@ -21,8 +21,7 @@
 
 #include "ThreadPool.hpp"
 
-#include <iostream>
-#include "../utils/Time.hpp"
+
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()

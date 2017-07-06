@@ -20,8 +20,6 @@
 
 
 #include "DbManager.hpp"
-#include "mysql/MysqlConnectionPool.hpp"
-#include "DbConnectionPoolFactory.hpp"
 
 std::shared_ptr<DbConnectionPool> DbManager::openPool(const Setting& setting, bool replace)
 {
