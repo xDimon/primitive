@@ -37,9 +37,11 @@ std::string httpDate(std::time_t* ts_)
 	}
 	std::tm tm;
 	::localtime_r(&ts, &tm);
-	std::ostringstream ss;
-	ss << std::put_time(&tm, "%a, %d %b %Y %H:%M:%S %Z");
-	return ss.str();
+
+	char buff[40];
+	std::strftime(buff, sizeof(buff), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+
+	return std::move(std::string(buff));
 }
 
 Timestamp interval(Time::Interval interval, size_t number)
