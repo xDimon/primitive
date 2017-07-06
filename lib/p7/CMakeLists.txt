@@ -28,7 +28,7 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Headers/")
 
 set_property(TARGET p7 APPEND PROPERTY INCLUDE_DIRECTORIES "${P7_AUX_INCLUDE_DIRS}")
 
-target_link_libraries(p7 PRIVATE pthread rt)
+target_link_libraries(p7 pthread rt)
 
 set(P7_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Headers" PARENT_SCOPE)
 set(P7_LIBRARIES p7 PARENT_SCOPE)
