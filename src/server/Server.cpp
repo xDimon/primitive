@@ -46,8 +46,11 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	{
 		const auto& settings = _configs->getRoot()["applications"];
 
-		for (const auto& setting : settings)
+		for (auto i = 0; i < settings.getLength(); i++)
 		{
+			const auto& setting = settings[i];
+//		for (const auto& setting : settings)
+//		{
 			Applications::add(setting);
 		}
 	}
@@ -60,8 +63,11 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	{
 		const auto& settings = _configs->getRoot()["databases"];
 
-		for (const auto& setting : settings)
+		for (auto i = 0; i < settings.getLength(); i++)
 		{
+			const auto& setting = settings[i];
+//		for (const auto& setting : settings)
+//		{
 			DbManager::openPool(setting);
 		}
 	}
@@ -74,8 +80,11 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	{
 		const auto& settings = _configs->getRoot()["transports"];
 
-		for (const auto& setting : settings)
+		for (auto i = 0; i < settings.getLength(); i++)
 		{
+			const auto& setting = settings[i];
+//		for (const auto& setting : settings)
+//		{
 			Transports::add(setting);
 		}
 	}
@@ -88,8 +97,11 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	{
 		const auto& settings = _configs->getRoot()["services"];
 
-		for (const auto& setting : settings)
+		for (auto i = 0; i < settings.getLength(); i++)
 		{
+			const auto& setting = settings[i];
+//		for (const auto& setting : settings)
+//		{
 			auto service = ServiceFactory::create(setting);
 
 			if (!addService(service->name(), service))
