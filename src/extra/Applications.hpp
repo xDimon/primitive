@@ -41,7 +41,7 @@ private:
 		return instance;
 	}
 
-	std::map<std::string, std::shared_ptr<Application>> _apps;
+	std::map<std::string, const std::shared_ptr<Application>> _apps;
 	std::mutex _mutex;
 
 public:

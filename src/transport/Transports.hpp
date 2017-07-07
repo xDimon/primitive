@@ -43,7 +43,7 @@ private:
 		return instance;
 	}
 
-	std::map<std::string, std::shared_ptr<ServerTransport>> _registry;
+	std::map<std::string, const std::shared_ptr<ServerTransport>> _registry;
 	std::mutex _mutex;
 
 public:

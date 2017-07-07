@@ -52,7 +52,7 @@ private:
 	std::mutex _epool_mutex;
 
 	/// Реестр подключений
-	std::map<const Connection *, std::shared_ptr<Connection>> _allConnections;
+	std::map<const Connection *, const std::shared_ptr<Connection>> _allConnections;
 
 	/// Захваченные подключения
 	std::set<std::shared_ptr<Connection>> _capturedConnections;

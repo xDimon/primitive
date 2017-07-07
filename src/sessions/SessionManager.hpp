@@ -45,7 +45,7 @@ private:
 	std::mutex _mutexSid2hid;
 
 	/// Пул сессий
-	std::map<Session::HID, std::shared_ptr<Session>> _sessions;
+	std::map<Session::HID, const std::shared_ptr<Session>> _sessions;
 	std::recursive_mutex _mutexSessions;
 
 public:
