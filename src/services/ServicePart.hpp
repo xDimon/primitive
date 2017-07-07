@@ -24,9 +24,23 @@
 
 #include "../utils/Shareable.hpp"
 
-class ServicePart : public Shareable<ServicePart>
+class Service;
+
+class ServicePart// : public Shareable<ServicePart>
 {
+protected:
+	std::weak_ptr<Service> _service;
+
 public:
-	ServicePart() {};
-	virtual ~ServicePart() {};
+	ServicePart(const std::shared_ptr<Service>& service)
+	: _service(service)
+	{
+		if (_service.expired())
+		{
+			throw std::runtime_error("Bad service");
+		}
+	}
+	virtual ~ServicePart()
+	{
+	}
 };
