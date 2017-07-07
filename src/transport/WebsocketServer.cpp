@@ -68,6 +68,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			connection->write(policyFile.c_str(), policyFile.length());
 			connection->write(&zero, 1);
 			connection->close();
+			connection->resetContext();
 
 			_log.debug("Sent policy file");
 
@@ -257,6 +258,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 						WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
 						connection->close();
+						connection->resetContext();
 					}
 					ConnectionManager::watch(connection);
 				};
@@ -304,7 +306,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 		{
 			_log.debug("UNSUPPORTED-FRAME(#%d): %zu bytes", static_cast<int>(context->getFrame()->opcode()), context->getFrame()->dataLen());
 			WsFrame::send(connection, WsFrame::Opcode::Close, "Unsupported opcode", 21);
-			connection->resetContext();
+			context->getFrame().reset();
 			n++;
 			break;
 		}
