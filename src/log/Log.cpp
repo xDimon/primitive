@@ -24,11 +24,13 @@
 
 Log::Log(std::string name)
 {
-	//get shared P7 trace object 1
-	_tracer.reset(LoggerManager::getLogTrace());
-	if (!_tracer)
+	if (LoggerManager::enabled)
 	{
-		throw std::runtime_error("Can't get shared p7-channel");
+		_tracer.reset(LoggerManager::getLogTrace());
+		if (!_tracer)
+		{
+			throw std::runtime_error("Can't get shared p7-channel");
+		}
 	}
 
 	module = nullptr;
@@ -49,5 +51,8 @@ void Log::setName(std::string name)
 {
 	name.resize(18, ' ');
 
-	_tracer->Register_Module(name.c_str(), &module);
+	if (_tracer)
+	{
+		_tracer->Register_Module(name.c_str(), &module);
+	}
 }

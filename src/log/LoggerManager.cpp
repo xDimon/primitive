@@ -23,31 +23,35 @@
 #include <thread>
 #include "LoggerManager.hpp"
 
+bool LoggerManager::enabled = true;
+
 LoggerManager::LoggerManager()
 {
-    //create P7 client object
-    _logClient = P7_Create_Client("/P7.Sink=Console /P7.Pool=32768 /P7.Format=%tm\t%tn\t%mn\t%lv\t%ms");
-    if (!_logClient)
-    {
-        throw std::runtime_error("Can't create p7-client");
-    }
+	_logClient = P7_Create_Client("/P7.Sink=Console /P7.Pool=32768 /P7.Format=%tm\t%tn\t%mn\t%lv\t%ms");
+	if (!_logClient)
+	{
+		throw std::runtime_error("Can't create p7-client");
+	}
 
-    //create P7 trace object 1
-    _logTrace = P7_Create_Trace(_logClient, "TraceChannel");
-    if (!_logTrace)
-    {
+	_logTrace = P7_Create_Trace(_logClient, "TraceChannel");
+	if (!_logTrace)
+	{
 		throw std::runtime_error("Can't create p7-channel");
-    }
+	}
 	_logTrace->Share("TraceChannel");
 
 	uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
 	_logTrace->Register_Thread("MainThread", tid);
 
-//	P7_Set_Crash_Handler();
+	P7_Set_Crash_Handler();
+
+	enabled = true;
 }
 
 LoggerManager::~LoggerManager()
 {
+	enabled = false;
+
     if (_logTrace)
     {
         _logTrace->Release();

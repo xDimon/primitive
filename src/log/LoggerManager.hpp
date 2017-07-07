@@ -46,6 +46,8 @@ private:
 	IP7_Trace *_logTrace;
 
 public:
+	static bool enabled;
+
 	static bool regThread(std::string threadName);
 	static bool unregThread();
 

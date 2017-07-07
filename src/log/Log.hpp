@@ -55,7 +55,10 @@ public:
 	void trace(const char* fmt, const Args& ... args)
 	{
 #if defined(LOG_TRACE_ON)
-		_tracer->P7_TRACE(module, fmt, args...);
+		if (_tracer)
+		{
+			_tracer->P7_TRACE(module, fmt, args...);
+		}
 #endif // defined(LOG_TRACE_ON)
 	}
 
@@ -63,32 +66,47 @@ public:
 	void debug(const char* fmt, const Args& ... args)
 	{
 #if defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
-		_tracer->P7_DEBUG(module, fmt, args...);
+		if (_tracer)
+		{
+			_tracer->P7_DEBUG(module, fmt, args...);
+		}
 #endif // defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
 	}
 
 	template<typename... Args>
 	void info(const char* fmt, const Args& ... args)
 	{
-		_tracer->P7_INFO(module, fmt, args...);
+		if (_tracer)
+		{
+			_tracer->P7_INFO(module, fmt, args...);
+		}
 	}
 
 	template<typename... Args>
 	void warn(const char* fmt, const Args& ... args)
 	{
-		_tracer->P7_WARNING(module, fmt, args...);
+		if (_tracer)
+		{
+			_tracer->P7_WARNING(module, fmt, args...);
+		}
 	}
 
 	template<typename... Args>
 	void error(const char* fmt, const Args& ... args)
 	{
-		_tracer->P7_ERROR(module, fmt, args...);
+		if (_tracer)
+		{
+			_tracer->P7_ERROR(module, fmt, args...);
+		}
 	}
 
 	template<typename... Args>
 	void critical(const char* fmt, const Args& ... args)
 	{
-		_tracer->P7_CRITICAL(module, fmt, args...);
+		if (_tracer)
+		{
+			_tracer->P7_CRITICAL(module, fmt, args...);
+		}
 	}
 
 	void flush()
