@@ -47,8 +47,11 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 
 	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
 
+	char ip[64];
+	inet_ntop(AF_INET, &_sockaddr.sin_addr, ip, sizeof(ip));
+
 	std::ostringstream ss;
-	ss << "[" << _sock << "][" << inet_ntoa(_sockaddr.sin_addr) << ":" << htons(_sockaddr.sin_port) << "]";
+	ss << "[" << _sock << "][" << ip << ":" << htons(_sockaddr.sin_port) << "]";
 	_name = std::move(ss.str());
 
 	_log.debug("TcpConnection '%s' created", name().c_str());
