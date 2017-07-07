@@ -42,6 +42,10 @@ DbConnectionPool::DbConnectionPool(const Setting& setting)
 	_log.debug("DbConnectionPool '%s' created", _name.c_str());
 }
 
+DbConnectionPool::~DbConnectionPool()
+{
+}
+
 void DbConnectionPool::touch()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
@@ -59,7 +63,7 @@ std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 	auto i = _captured.find(std::this_thread::get_id());
 	if (i != _captured.end())
 	{
-		auto conn = std::move(i->second);
+		auto conn = i->second;
 
 		_captured.erase(i);
 
@@ -68,6 +72,8 @@ std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 		if (conn->alive())
 		{
 			_mutex.lock();
+
+			_captured.insert(std::make_pair(std::this_thread::get_id(), conn));
 
 			conn->capture();
 

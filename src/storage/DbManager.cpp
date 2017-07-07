@@ -65,7 +65,7 @@ std::shared_ptr<DbConnectionPool> DbManager::getPool(const std::string& name)
 {
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
-	auto i = getInstance()._pools.find(name);
+	const auto& i = getInstance()._pools.find(name);
 	if (i == getInstance()._pools.end())
 	{
 		return std::shared_ptr<DbConnectionPool>();
@@ -99,5 +99,7 @@ void DbManager::closePool(const std::string& name, bool force)
 
 Db DbManager::getConnection(const std::string& name)
 {
-	return getPool(name);
+	auto pool = getPool(name);
+
+	return pool;
 }

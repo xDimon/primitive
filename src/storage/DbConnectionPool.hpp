@@ -39,13 +39,14 @@ private:
 	Log _log;
 	std::recursive_mutex _mutex;
 
-	std::map<std::thread::id, std::shared_ptr<DbConnection>> _captured;
+	std::map<std::thread::id, const std::shared_ptr<DbConnection>> _captured;
 	std::deque<std::shared_ptr<DbConnection>> _pool;
 
 	virtual std::shared_ptr<DbConnection> create() = 0;
 
 public:
 	DbConnectionPool(const Setting& setting);
+	virtual ~DbConnectionPool();
 
 	void touch();
 

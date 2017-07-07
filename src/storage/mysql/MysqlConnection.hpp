@@ -67,7 +67,7 @@ public:
 		for (size_t i = 0; i < str.length(); ++i)
 		{
 			auto& c = str[i];
-			if (c == '\x00' || c == '\n' || c == '\r' || c == '\\' || c == '\'' || c == '"' || c == '\x1a')
+			if (c == '\x00' || c == '\n' || c == '\r' || c == '\\' || c == '\'' || c == '"' || c == '\x1A')
 			{
 				res.push_back('\\');
 			}

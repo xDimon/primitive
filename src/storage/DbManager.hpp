@@ -42,7 +42,7 @@ private:
 		return instance;
 	}
 
-	std::map<std::string, std::shared_ptr<DbConnectionPool>> _pools;
+	std::map<std::string, const std::shared_ptr<DbConnectionPool>> _pools;
 	std::mutex _mutex;
 
 public:
