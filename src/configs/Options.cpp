@@ -26,6 +26,10 @@ Options::Options(int argc, char **argv)
 	_configFile = "etc/config.conf";
 }
 
+Options::~Options()
+{
+}
+
 const std::string& Options::getConfig() const
 {
 	return _configFile;

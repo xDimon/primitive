@@ -31,6 +31,7 @@ private:
 
 public:
 	Options(int argc, char *argv[]);
+	virtual ~Options();
 
 	const std::string& getConfig() const;
 };

@@ -37,21 +37,15 @@ Config::Config(const std::shared_ptr<Options>& options)
 	{
 		libconfig::Config::readFile(configPath.c_str());
 	}
-	catch (const libconfig::FileIOException& fioex)
+	catch (const libconfig::ParseException& exception)
 	{
 		std::ostringstream ss;
-		ss << "Can't read config file: " << fioex.what();
-		throw std::runtime_error(ss.str());
-	}
-	catch (const libconfig::ParseException& pex)
-	{
-		std::ostringstream ss;
-		ss << "Parse error at " << pex.getFile() << ":" << pex.getLine() << " - " << pex.getError();
+		ss << "Parse error at " << exception.getFile() << ":" << exception.getLine() << " - " << exception.getError();
 		throw std::runtime_error(ss.str());
 	}
 	catch (const std::exception& exception)
 	{
-		throw;
+		throw std::runtime_error(std::string() + "Can't read config file: " + exception.what());
 	}
 }
 
