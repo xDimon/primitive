@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 	Log log("Main");
 	log.info("Start daemon");
 
-	ShutdownManager::doAtShutdown(Log::finalFlush);
+//	atexit(Log::finalFlush);
 
 	SetProcessName();
 	StartManageSignals();
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 	catch (const std::exception& exception)
 	{
 		log.critical("Fail get opptions ← %s", exception.what());
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	std::shared_ptr<Config> configs;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	catch (const std::exception& exception)
 	{
 		log.critical("Fail get configuration ← %s", exception.what());
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	std::shared_ptr<Server> server;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 	catch (const std::exception& exception)
 	{
 		log.error("Fail init server ← %s", exception.what());
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 //	SetDaemonMode();
@@ -82,5 +82,5 @@ int main(int argc, char *argv[])
 
 	log.info("Stop daemon");
 
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }

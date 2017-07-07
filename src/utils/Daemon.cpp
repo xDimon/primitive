@@ -139,10 +139,10 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGSEGV:
 				if (fatalError)
 				{
-					P7_Exceptional_Flush();
+					Log::finalFlush();
 					raise(sig);
 				}
-				fatalError = 1;
+				fatalError = true;
 				log.info("Sigmentation fail. Terminate daemon!");
 				log.flush();
 				needBacktrace = true;
@@ -152,7 +152,7 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGBUS:
 				if (fatalError)
 				{
-					P7_Exceptional_Flush();
+					Log::finalFlush();
 					raise(sig);
 				}
 				fatalError = true;
@@ -165,7 +165,7 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGABRT:
 				if (fatalError)
 				{
-					P7_Exceptional_Flush();
+					Log::finalFlush();
 					raise(sig);
 				}
 				fatalError = true;
@@ -179,7 +179,7 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGFPE:
 				if (fatalError)
 				{
-					P7_Exceptional_Flush();
+					Log::finalFlush();
 					raise(sig);
 				}
 				fatalError = true;

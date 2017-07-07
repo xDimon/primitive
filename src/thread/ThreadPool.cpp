@@ -66,6 +66,12 @@ void ThreadPool::unhold()
 	--getInstance()._hold;
 }
 
+bool ThreadPool::stops()
+{
+	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
+	return !getInstance()._workerNumber;
+}
+
 void ThreadPool::setThreadNum(size_t num)
 {
 	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
@@ -97,6 +103,10 @@ void ThreadPool::createThread()
 			if (_tasks.empty())
 			{
 				return !_hold;
+			}
+			else if (!_workerNumber)
+			{
+				return true;
 			}
 			else
 			{
@@ -214,9 +224,20 @@ void ThreadPool::wait()
 					delete thread;
 				}
 			}
-			if (pool._hold == 0 && /* pool._tasks.empty() && */ pool._workers.empty())
+			if (pool._hold == 0 /* && pool._tasks.empty() */)
 			{
-				break;
+				if (pool._workers.empty())
+				{
+					break;
+				}
+				if (!pool._workerNumber)
+				{
+//					if (pool._tasks.empty())
+					{
+//						pool._workersWakeupCondition.notify_one();
+						pool._workersWakeupCondition.notify_all();
+					}
+				}
 			}
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));

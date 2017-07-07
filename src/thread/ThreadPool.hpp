@@ -62,6 +62,8 @@ public:
 	static void hold();
 	static void unhold();
 
+	static bool stops();
+
 private:
 	Log _log;
 

@@ -40,7 +40,7 @@ private:
 
 	std::shared_ptr<Config> _configs;
 
-	std::map<const std::string, std::shared_ptr<Service>> _services;
+	std::map<const std::string, const std::shared_ptr<Service>> _services;
 
 public:
 	Server(const std::shared_ptr<Config> &configs);

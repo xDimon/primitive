@@ -22,6 +22,7 @@
 #include <ucontext.h>
 #include "Task.hpp"
 #include "../log/Log.hpp"
+#include "ThreadPool.hpp"
 
 Task::Task()
 : _function()
@@ -79,7 +80,7 @@ void Task::operator=(Task const &&that)
 
 bool Task::operator()()
 {
-	if (!_immediately && Clock::now() < _until)
+	if (!_immediately && Clock::now() < _until && !ThreadPool::stops())
 	{
 		return false;
 	}

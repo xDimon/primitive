@@ -146,7 +146,18 @@ void Server::start()
 
 void Server::stop()
 {
+	std::lock_guard<std::recursive_mutex> guard(_mutex);
+	while (!getInstance()._services.empty())
+	{
+		auto i = getInstance()._services.begin();
+		auto& service = i->second;
+		service->deactivate();
+		getInstance()._services.erase(i);
+	}
+
 	Transports::disableAll();
+
+	ThreadPool::setThreadNum(0);
 
 	ThreadPool::unhold();
 
