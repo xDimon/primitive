@@ -137,7 +137,7 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 
 		connection->onComplete();
 
-		context.reset();
+		connection->resetContext();
 		n++;
 	}
 

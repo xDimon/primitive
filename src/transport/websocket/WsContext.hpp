@@ -38,7 +38,7 @@ private:
 	std::weak_ptr<Session> _session;
 
 public:
-	WsContext(std::shared_ptr<TcpConnection> connection)
+	WsContext(const std::shared_ptr<TcpConnection>& connection)
 	: _established(false)
 	, _connection(connection)
 	{};
@@ -62,33 +62,42 @@ public:
 		return _connection;
 	}
 
-	void setRequest(std::shared_ptr<HttpRequest>& request)
-	{
-		_request = request;
-	}
-
-	std::shared_ptr<HttpRequest>& getRequest()
+	const std::shared_ptr<HttpRequest>& getRequest()
 	{
 		return _request;
 	}
+	void setRequest(const std::shared_ptr<HttpRequest>& request)
+	{
+		_request = request;
+	}
+	void resetRequest()
+	{
+		_request.reset();
+	}
 
-	void setFrame(std::shared_ptr<WsFrame>& frame)
+	const std::shared_ptr<WsFrame>& getFrame()
+	{
+		return _frame;
+	}
+	void setFrame(const std::shared_ptr<WsFrame>& frame)
 	{
 		_frame = frame;
 	}
-
-	std::shared_ptr<WsFrame>& getFrame()
+	void resetFrame()
 	{
-		return _frame;
+		_frame.reset();
 	}
 
 	void assignSession(const std::shared_ptr<Session>& session)
 	{
 		_session = session;
 	}
-
 	std::shared_ptr<Session> getSession()
 	{
 		return _session.lock();
+	}
+	void resetSession()
+	{
+		_session.reset();
 	}
 };

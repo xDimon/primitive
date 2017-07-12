@@ -60,6 +60,7 @@ std::string escape(const std::string& string)
 			default: ret.push_back(c);
 		}
 	}
+
 	return std::move(ret);
 }
 

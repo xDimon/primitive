@@ -164,6 +164,8 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
 					>> *connection;
 
+				_log.debug("RESPONSE: 404 Not found service-handler for uri %s", context->getRequest()->uri().path().c_str());
+
 				connection->resetContext();
 				return true;
 			}
@@ -171,7 +173,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 			context->setHandler(std::move(handler));
 
 			ServerTransport::Transmitter transmitter =
-				[&connection]
+				[this,&connection]
 					(const char*data, size_t size, const std::string& contentType, bool close){
 
 					std::string out(data, size);
@@ -187,6 +189,8 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					response
 						<< out << "\r\n"
 						>> *connection;
+
+					_log.debug("RESPONSE: 200");
 				};
 
 			context->setTransmitter(transmitter);
@@ -207,6 +211,8 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 				<< HttpHeader("Connection", "Close")
 //				<< serializer()->encode(&output) << "\r\n"
 				>> *connection;
+
+			_log.debug("RESPONSE: 200");
 		}
 
 		connection->resetContext();

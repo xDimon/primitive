@@ -53,8 +53,10 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 	if (!context->established())
 	{
-		if (connection->dataLen() >= 22 && !memcmp(connection->dataPtr(), "<policy-file-request/>", 22))
+		if (connection->dataLen() >= 23 && !memcmp(connection->dataPtr(), "<policy-file-request/>\0", 23))
 		{
+			connection->skip(23);
+
 			const std::string& policyFile = R"(<?xml version="1.0"?>
 <!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>
@@ -67,8 +69,6 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			char zero = 0;
 			connection->write(policyFile.c_str(), policyFile.length());
 			connection->write(&zero, 1);
-			connection->close();
-			connection->resetContext();
 
 			_log.debug("Sent policy file");
 
@@ -86,11 +86,13 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 		if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
 		{
+			connection->skip(endHeaders - connection->dataPtr());
+
 			_log.debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
 
-			HttpResponse(400)
+			HttpResponse(400, "Bad request")
 				<< HttpHeader("Connection", "close")
-				<< "Headers data too large\n"
+				<< "Headers data too large\r\n"
 				>> *connection;
 
 			return true;
@@ -102,8 +104,18 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 		try
 		{
+			std::shared_ptr<HttpRequest> request;
+
 			// Читаем запрос
-			auto request = std::make_shared<HttpRequest>(connection->dataPtr(), connection->dataPtr() + headersSize);
+			try
+			{
+				request = std::make_shared<HttpRequest>(connection->dataPtr(), connection->dataPtr() + headersSize);
+			}
+			catch (...)
+			{
+				connection->skip(headersSize);
+				throw;
+			}
 
 			// Пропускаем байты заголовка
 			connection->skip(headersSize);
@@ -137,7 +149,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				HttpResponse(404, "WebSocket Upgrade Failure")
 					<< HttpHeader("X-ServerTransport", "websocket", true)
 					<< HttpHeader("Connection", "Close")
-					<< "Not found service-handler for uri " << context->getRequest()->uri().path()
+					<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
 					>> *connection;
 
 				connection->close();
@@ -164,7 +176,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				return true;
 			}
 
-			context->getRequest().reset();
+			context->setRequest(nullptr);
 
 			context->setHandler(std::move(handler));
 
@@ -175,7 +187,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			HttpResponse(400)
 				<< HttpHeader("X-ServerTransport", "websocket", true)
 				<< HttpHeader("Connection", "Close")
-				<< exception.what()
+				<< exception.what() << "\r\n"
 				>> *connection;
 
 			connection->close();
@@ -227,7 +239,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 		}
 
 		// Читаем данные фрейма
-		if (context->getFrame()->contentLength() > context->getFrame()->dataLen())
+		if (context->getFrame()->contentLength() >= context->getFrame()->dataLen())
 		{
 			size_t len = std::min(context->getFrame()->contentLength() - context->getFrame()->dataLen(), connection->dataLen());
 
@@ -252,7 +264,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 					WsFrame::send(connection, opcode, data, size);
 					if (close)
 					{
-						std::string msg("##Bye!");
+						std::string msg("##Bye!\n");
 						uint16_t code = htobe16(1000); // Normal Closure
 						memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
 
@@ -265,7 +277,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 			context->setTransmitter(transmitter);
 			context->handle(context->getFrame()->dataPtr(), context->getFrame()->dataLen());
-			context->getFrame().reset();
+			context->setFrame(nullptr);
 			n++;
 			continue;
 		}
@@ -273,7 +285,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 //		{
 //			_log.debug("TEXT-FRAME: \"%s\" %zu bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
 //			WsFrame::send(connection, WsFrame::Opcode::Text, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
-//			context->getFrame().reset();
+//			context->setFrame(nullptr);
 //			n++;
 //			continue;
 //		}
@@ -281,22 +293,27 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 //		{
 //			_log.debug("BINARY-FRAME: %zu bytes", context->getFrame()->dataLen());
 //			WsFrame::send(connection, WsFrame::Opcode::Text, "Received binary data", 21);
-//			context->getFrame().reset();
+//			context->setFrame(nullptr);
 //			n++;
 //			continue;
 //		}
 		else if (context->getFrame()->opcode() == WsFrame::Opcode::Ping)
 		{
-			WsFrame::send(connection, WsFrame::Opcode::Pong, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
 			_log.debug("PING-FRAME: %zu bytes", context->getFrame()->dataLen());
-			context->getFrame().reset();
+
+			WsFrame::send(connection, WsFrame::Opcode::Pong, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+			context->setFrame(nullptr);
 			n++;
 			continue;
 		}
 		else if (context->getFrame()->opcode() == WsFrame::Opcode::Close)
 		{
 			_log.debug("CLOSE-FRAME: %zu bytes", context->getFrame()->dataLen());
-			WsFrame::send(connection, WsFrame::Opcode::Close, "Bye!", 4);
+
+			std::string msg("##Bye!\n");
+			uint16_t code = htobe16(1000); // Normal Closure
+			memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
+			WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
 			connection->close();
 			connection->resetContext();
 			n++;
@@ -305,8 +322,13 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 		else
 		{
 			_log.debug("UNSUPPORTED-FRAME(#%d): %zu bytes", static_cast<int>(context->getFrame()->opcode()), context->getFrame()->dataLen());
-			WsFrame::send(connection, WsFrame::Opcode::Close, "Unsupported opcode", 21);
-			context->getFrame().reset();
+
+			std::string msg("##Unsupported opcode\n");
+			uint16_t code = htobe16(1003); // Unsupported data
+			memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
+			WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
+			connection->close();
+			connection->resetContext();
 			n++;
 			break;
 		}

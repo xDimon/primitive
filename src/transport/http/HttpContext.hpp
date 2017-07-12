@@ -35,20 +35,20 @@ private:
 public:
 	virtual ~HttpContext() {};
 
-	void setRequest(std::shared_ptr<HttpRequest>& request)
+	void setRequest(const std::shared_ptr<HttpRequest>& request)
 	{
 		_request = request;
 	}
-	std::shared_ptr<HttpRequest>& getRequest()
+	std::shared_ptr<HttpRequest> getRequest()
 	{
 		return _request;
 	}
 
-	void setResponse(std::shared_ptr<HttpResponse>& response)
+	void setResponse(const std::shared_ptr<HttpResponse>& response)
 	{
 		_response = response;
 	}
-	std::shared_ptr<HttpResponse>& getResponse()
+	std::shared_ptr<HttpResponse> getResponse()
 	{
 		return _response;
 	}
