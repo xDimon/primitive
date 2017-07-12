@@ -22,13 +22,15 @@
 #include "Options.hpp"
 
 Options::Options(int argc, char **argv)
-#ifdef PROJECT_NAME
-	#define HELPER4QUOTE(N) #N
-	: cxxopts::Options(HELPER4QUOTE(PROJECT_NAME), "Description of program (?)")
-	#undef HELPER4QUOTE
+#define PRIMITIVE_DEF_NAME primitive
+#define HELPER4QUOTE(N) #N
+#if defined(PROJECT_NAME) && (PROJECT_NAME!=PRIMITIVE_DEF_NAME)
+: cxxopts::Options(HELPER4QUOTE(PROJECT_NAME), "Description of program")
 #else
-	#error "PROJECT_NAME undefined"
+: cxxopts::Options(HELPER4QUOTE(PRIMITIVE_DEF_NAME), "Description of program")
 #endif
+#undef HELPER4QUOTE
+#undef PRIMITIVE_DEF_NAME
 {
 	add_options()
 	("c,config", "Path to config file", cxxopts::value<std::string>(_configFile), "[config] helper (?)")
