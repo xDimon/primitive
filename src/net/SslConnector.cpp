@@ -25,7 +25,12 @@
 #include "../thread/ThreadPool.hpp"
 #include "ConnectionManager.hpp"
 
-SslConnector::SslConnector(const std::shared_ptr<ClientTransport>& transport, std::string host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& context)
+SslConnector::SslConnector(
+	const std::shared_ptr<ClientTransport>& transport,
+	const std::string& host,
+	std::uint16_t port,
+	const std::shared_ptr<SSL_CTX>& context
+)
 : TcpConnector(transport, host, port)
 , _sslContext(context)
 {

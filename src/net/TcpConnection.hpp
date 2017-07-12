@@ -55,7 +55,7 @@ protected:
 
 	std::chrono::steady_clock::time_point _accessTime;
 
-	std::function<void(std::shared_ptr<Context>&)> _completeHandler;
+	std::function<void(const std::shared_ptr<Context>&)> _completeHandler;
 	std::function<void()> _errorHandler;
 
 public:

@@ -20,17 +20,18 @@
 
 
 #include "MysqlConnection.hpp"
+#include "MysqlConnectionPool.hpp"
 #include "MysqlResult.hpp"
 
 MysqlConnection::MysqlConnection(
-	std::shared_ptr<DbConnectionPool> pool,
+	const std::shared_ptr<DbConnectionPool>& pool,
 	const std::string& dbname,
 	const std::string& dbuser,
 	const std::string& dbpass,
 	const std::string& dbserver,
 	unsigned int dbport
 )
-: DbConnection(pool)
+: DbConnection(std::dynamic_pointer_cast<MysqlConnectionPool>(pool))
 , _transaction(0)
 {
 	my_bool false_ = (my_bool)0;
@@ -39,8 +40,8 @@ MysqlConnection::MysqlConnection(
 	mysql_init(&_mysql);
 	mysql_options(&_mysql, MYSQL_OPT_RECONNECT, &false_);
 	mysql_options(&_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &waitTimeout);
-	mysql_options(&_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+0:00';\n");
 	mysql_options(&_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+	mysql_options(&_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+0:00';\n");
 
 	if (!mysql_real_connect(
 		&_mysql,
@@ -58,7 +59,7 @@ MysqlConnection::MysqlConnection(
 }
 
 MysqlConnection::MysqlConnection(
-	std::shared_ptr<DbConnectionPool> pool,
+	const std::shared_ptr<DbConnectionPool>& pool,
 	const std::string& dbname,
 	const std::string& dbuser,
 	const std::string& dbpass,
@@ -71,12 +72,21 @@ MysqlConnection::MysqlConnection(
 	unsigned int waitTimeout = 5;
 
 	mysql_init(&_mysql);
-	mysql_options(&_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+0:00';\n");
 	mysql_options(&_mysql, MYSQL_OPT_RECONNECT, &false_);
-	mysql_options(&_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
 	mysql_options(&_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &waitTimeout);
+	mysql_options(&_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+	mysql_options(&_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+0:00';\n");
 
-	if (!mysql_real_connect(&_mysql, nullptr, dbuser.c_str(), dbpass.c_str(), dbname.c_str(), 0, dbsocket.c_str(), 0))
+	if (!mysql_real_connect(
+		&_mysql,
+		nullptr,
+		dbuser.c_str(),
+		dbpass.c_str(),
+		dbname.c_str(),
+		0,
+		dbsocket.c_str(),
+		0
+	))
 	{
 		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(&_mysql));
 	}

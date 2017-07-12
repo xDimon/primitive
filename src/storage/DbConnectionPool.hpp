@@ -72,8 +72,10 @@ private:                                                                        
     Class(const Setting& setting);                                                              \
     Class(const Class&) = delete;                                                               \
     void operator=(Class const&) = delete;                                                      \
-                                                                                                \
+																								\
 public:                                                                                         \
+  	virtual ~Class() {};                                                                        \
+                                                                                                \
 	virtual void close() override;                                                              \
                                                                                                 \
 private:                                                                                        \

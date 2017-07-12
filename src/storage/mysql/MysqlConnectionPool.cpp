@@ -89,24 +89,24 @@ std::shared_ptr<DbConnection> MysqlConnectionPool::create()
 {
 	if (_dbsocket.length())
 	{
-		return std::move(std::make_shared<MysqlConnection>(
+		return std::make_shared<MysqlConnection>(
 			ptr(),
 			_dbname,
 			_dbuser,
 			_dbpass,
 			_dbsocket
-		));
+		);
 	}
 	else
 	{
-		return  std::move(std::make_shared<MysqlConnection>(
+		return std::make_shared<MysqlConnection>(
 			ptr(),
 			_dbname,
 			_dbuser,
 			_dbpass,
 			_dbserver,
 			_dbport
-		));
+		);
 	}
 }
 

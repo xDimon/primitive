@@ -63,7 +63,7 @@ std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 	auto i = _captured.find(std::this_thread::get_id());
 	if (i != _captured.end())
 	{
-		auto conn = i->second;
+		auto conn = std::move(i->second);
 
 		_captured.erase(i);
 

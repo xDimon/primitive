@@ -33,7 +33,7 @@ class ServerTransport;
 class AcceptorFactory
 {
 public:
-	typedef std::function<std::shared_ptr<Connection>(std::shared_ptr<ServerTransport>&)> Creator;
+	typedef std::function<std::shared_ptr<Connection>(const std::shared_ptr<ServerTransport>&)> Creator;
 
 private:
 	AcceptorFactory()

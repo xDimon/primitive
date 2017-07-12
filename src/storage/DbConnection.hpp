@@ -42,11 +42,16 @@ protected:
 	std::weak_ptr<DbConnectionPool> _pool;
 
 public:
-	DbConnection(std::shared_ptr<DbConnectionPool> pool)
+	DbConnection(const std::shared_ptr<DbConnectionPool>& pool)
 	: id(++_lastId)
 	, _captured(0)
 	, _pool(pool)
-	{};
+	{
+		if (_pool.expired())
+		{
+			throw std::runtime_error("Attempt create DbConnection with wrong pool");
+		}
+	}
 
 	virtual ~DbConnection()
 	{
@@ -54,7 +59,7 @@ public:
 		{
 			throw std::runtime_error("Destroy of captured connection ");
 		}
-	};
+	}
 
 	size_t captured() const
 	{

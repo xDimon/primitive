@@ -38,7 +38,7 @@ private:
 
 public:
 	MysqlConnection(
-		std::shared_ptr<DbConnectionPool> pool,
+		const std::shared_ptr<DbConnectionPool>& pool,
 		const std::string& dbname,
 		const std::string& dbuser,
 		const std::string& dbpass,
@@ -47,7 +47,7 @@ public:
 	);
 
 	MysqlConnection(
-		std::shared_ptr<DbConnectionPool> pool,
+		const std::shared_ptr<DbConnectionPool>& pool,
 		const std::string& dbname,
 		const std::string& dbuser,
 		const std::string& dbpass,

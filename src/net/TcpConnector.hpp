@@ -51,7 +51,7 @@ private:
 	virtual void createConnection(int sock, const sockaddr_in& cliaddr);
 
 // protected:
-	std::function<void(std::shared_ptr<TcpConnection>)> _connectHandler;
+	std::function<void(const std::shared_ptr<TcpConnection>&)> _connectHandler;
 	std::function<void()> _errorHandler;
 
 public:
@@ -69,7 +69,7 @@ public:
 	void addConnectedHandler(std::function<void(const std::shared_ptr<TcpConnection>&)>);
 	void addErrorHandler(std::function<void()>);
 
-	void onConnect(std::shared_ptr<TcpConnection> connection)
+	void onConnect(const std::shared_ptr<TcpConnection>& connection)
 	{
 		if (_connectHandler)
 		{
@@ -84,7 +84,7 @@ public:
 		}
 	}
 
-	static std::shared_ptr<TcpConnector> create(const std::shared_ptr<ClientTransport>& transport, std::string& host, std::uint16_t port)
+	static std::shared_ptr<TcpConnector> create(const std::shared_ptr<ClientTransport>& transport, const std::string& host, std::uint16_t port)
 	{
 		return std::make_shared<TcpConnector>(transport, host, port);
 	}
