@@ -30,9 +30,6 @@
 
 class SerializerFactory
 {
-public:
-	typedef std::function<std::shared_ptr<Serializer>()> Creator;
-
 private:
 	SerializerFactory()
 	{};
@@ -50,9 +47,9 @@ private:
 		return instance;
 	}
 
-	std::map<std::string, std::shared_ptr<Serializer>(*)()> _creators;
+	std::map<std::string, std::shared_ptr<Serializer>(*)(uint32_t)> _creators;
 
 public:
-	static bool reg(const std::string& name, std::shared_ptr<Serializer>(*)());
-	static std::shared_ptr<Serializer> create(const std::string& type);
+	static bool reg(const std::string& name, std::shared_ptr<Serializer>(*)(uint32_t));
+	static std::shared_ptr<Serializer> create(const std::string& type, uint32_t flags = 0);
 };

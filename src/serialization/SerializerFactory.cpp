@@ -21,7 +21,7 @@
 
 #include "SerializerFactory.hpp"
 
-bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)())
+bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)(uint32_t flags))
 {
 	auto& factory = getInstance();
 
@@ -34,7 +34,7 @@ bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer>
 	return true;
 }
 
-std::shared_ptr<Serializer> SerializerFactory::create(const std::string& type)
+std::shared_ptr<Serializer> SerializerFactory::create(const std::string& type, uint32_t flags)
 {
 	auto& factory = getInstance();
 
@@ -43,5 +43,5 @@ std::shared_ptr<Serializer> SerializerFactory::create(const std::string& type)
 	{
 		throw std::runtime_error("Unknown serializer type");
 	}
-	return std::move(i->second());
+	return std::move(i->second(flags));
 }

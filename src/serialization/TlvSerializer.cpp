@@ -67,7 +67,7 @@ enum class Token {
 	UNKNOWN		= 255
 };
 
-SVal* TlvSerializer::decode(const std::string& data, bool strict)
+SVal* TlvSerializer::decode(const std::string& data)
 {
 	_iss.str(data);
 	_iss.clear(_iss.goodbit);
@@ -89,7 +89,7 @@ SVal* TlvSerializer::decode(const std::string& data, bool strict)
 	}
 
 	// Проверяем лишние данные в конце
-	if (!_iss.eof() && strict)
+	if (!_iss.eof() && (_flags & Serializer::STRICT))
 	{
 		throw std::runtime_error("Redundant bytes after parsed data");
 	}

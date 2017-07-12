@@ -28,7 +28,7 @@
 
 REGISTER_SERIALIZER(json, JsonSerializer);
 
-SVal* JsonSerializer::decode(const std::string& data, bool strict)
+SVal* JsonSerializer::decode(const std::string& data)
 {
 	_iss.str(data);
 	_iss.clear();
@@ -51,7 +51,7 @@ SVal* JsonSerializer::decode(const std::string& data, bool strict)
 
 	// Проверяем лишние символы в конце
 	skipSpaces();
-	if (!_iss.eof() && strict)
+	if (!_iss.eof() && (_flags & Serializer::STRICT))
 	{
 		throw std::runtime_error("Redundant bytes after parsed data");
 	}
@@ -604,7 +604,7 @@ void JsonSerializer::encodeString(const std::string& string)
 	_oss.put('"');
 	for (size_t i = 0; i < string.length(); i++)
 	{
-		auto c = string[i];
+		auto c = static_cast<uint8_t>(string[i]);
 		switch (c)
 		{
 			case '"':
@@ -640,7 +640,69 @@ void JsonSerializer::encodeString(const std::string& string)
 				_oss.put('r');
 				break;
 			default:
-				_oss.put(c);
+				if (!(_flags & ESCAPED_UNICODE))
+				{
+					_oss.put(c);
+					break;
+				}
+				// Некорректный символ
+				if (c > 0b1111'1101)
+				{
+					throw std::runtime_error("Bad symbol in string value");
+				}
+				// Однобайтовый символ
+				else if (c < 0b1000'0000)
+				{
+					_oss.put(c);
+				}
+				else
+				{
+					int bytes;
+					uint32_t chr = 0;
+					if ((c & 0b11111100) == 0b11111100)
+					{
+						bytes = 6;
+						chr = static_cast<uint8_t>(c) & 0b1_u8;
+					}
+					else if ((c & 0b11111000) == 0b11111000)
+					{
+						bytes = 5;
+						chr = static_cast<uint8_t>(c) & 0b11_u8;
+					}
+					else if ((c & 0b11110000) == 0b11110000)
+					{
+						bytes = 4;
+						chr = static_cast<uint8_t>(c) & 0b111_u8;
+					}
+					else if ((c & 0b11100000) == 0b11100000)
+					{
+						bytes = 3;
+						chr = static_cast<uint8_t>(c) & 0b1111_u8;
+					}
+					else if ((c & 0b11000000) == 0b11000000)
+					{
+						bytes = 2;
+						chr = static_cast<uint8_t>(c) & 0b11111_u8;
+					}
+					else
+					{
+						throw std::runtime_error("Bad symbol in string value");
+					}
+					while (--bytes)
+					{
+						if (++i >= string.length())
+						{
+							throw std::runtime_error("Unxpected end of data during parse utf8 symbol");
+						}
+						c = static_cast<uint8_t>(string[i]);
+						if ((c & 0b11000000) != 0b10000000)
+						{
+							throw std::runtime_error("Bad symbol in string value");
+						}
+						chr = (chr << 6) | (c & 0b0011'1111);
+					}
+					_oss << "\\u" << std::setw(4) << std::setfill('0') << std::hex << chr;
+				}
 		}
 	}
 	_oss.put('"');

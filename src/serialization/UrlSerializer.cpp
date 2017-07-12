@@ -46,7 +46,7 @@ struct tokens: std::ctype<char>
     }
 };
 
-SVal* UrlSerializer::decode(const std::string& data, bool)
+SVal* UrlSerializer::decode(const std::string& data)
 {
 	_iss.str(data);
 	_iss.imbue(std::locale(std::locale(), new tokens()));

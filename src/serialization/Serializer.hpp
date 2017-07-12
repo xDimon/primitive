@@ -26,7 +26,18 @@
 class Serializer
 {
 public:
-	virtual SVal* decode(const std::string &data, bool strict = false) = 0;
+	static const uint32_t STRICT = 1u<<0;
+
+protected:
+	uint32_t _flags;
+
+public:
+	Serializer(uint32_t flags)
+	: _flags(flags)
+	{}
+	virtual ~Serializer() {};
+
+	virtual SVal* decode(const std::string &data) = 0;
 	virtual std::string encode(const SVal* value) = 0;
 };
 
@@ -35,19 +46,21 @@ public:
 #define REGISTER_SERIALIZER(Type,Class) const bool Class::__dummy = \
     SerializerFactory::reg(                                                                     \
         #Type,                                                                                  \
-        [](){                                                                                   \
-            return std::shared_ptr<Serializer>(new Class());                                    \
+        [](uint32_t flags){                                                                     \
+            return std::shared_ptr<Serializer>(new Class(flags));                               \
         }                                                                                       \
     );
 
 #define DECLARE_SERIALIZER(Class) \
 private:                                                                                        \
-    Class(): Serializer() {}                                                                    \
+    Class(uint32_t flags): Serializer(flags) {}                                                 \
     Class(const Class&) = delete;                                                               \
     void operator=(Class const&) = delete;                                                      \
                                                                                                 \
 public:                                                                                         \
-	virtual SVal* decode(const std::string &data, bool strict = false) override;                \
+	virtual ~Class() {};																		\
+                                                                                                \
+	virtual SVal* decode(const std::string &data) override;                                     \
 	virtual std::string encode(const SVal* value) override;                           	        \
                                                                                                 \
 private:                                                                                        \
