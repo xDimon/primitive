@@ -30,7 +30,11 @@ Options::Options(int argc, char **argv)
 	#error "PROJECT_NAME undefined"
 #endif
 {
-	_configFile = "etc/config.conf";
+	add_options()
+	("c,config", "Path to config file", cxxopts::value<std::string>(_configFile), "[config] helper (?)")
+	;
+
+	parse(argc, argv);
 }
 
 Options::~Options()
