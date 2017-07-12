@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 
 # Имя проекта
-set(CODENAME "primitive")
-project(${CODENAME})
+set(PROJECT_NAME "primitive")
+project(${PROJECT_NAME})
+
+set(CODENAME ${PROJECT_NAME})
 
 string(TOUPPER ${CODENAME} CODENAMEUC)
 
@@ -31,8 +33,10 @@ else ()
     message(STATUS "Try to install `ccache` for faster compilation")
 endif ()
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DPROJECT_NAME=${CODENAME}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -rdynamic -O0 -g")
 
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -DPROJECT_NAME=${CODENAME}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -rdynamic -O0 -g")
 

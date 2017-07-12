@@ -19,6 +19,10 @@
 // main.cpp
 
 
+#ifndef PROJECT_NAME
+#define PROJECT_NAME Primitive
+#endif
+
 #include <iostream>
 #include "../src/thread/ThreadPool.hpp"
 #include "../src/configs/Options.hpp"

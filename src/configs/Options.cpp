@@ -22,6 +22,13 @@
 #include "Options.hpp"
 
 Options::Options(int argc, char **argv)
+#ifdef PROJECT_NAME
+	#define HELPER4QUOTE(N) #N
+	: cxxopts::Options(HELPER4QUOTE(PROJECT_NAME), "Description of program (?)")
+	#undef HELPER4QUOTE
+#else
+	#error "PROJECT_NAME undefined"
+#endif
 {
 	_configFile = "etc/config.conf";
 }

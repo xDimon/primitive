@@ -23,8 +23,9 @@
 
 #include <memory>
 #include <string>
+#include "../../lib/cxxopts/include/cxxopts.hpp"
 
-class Options
+class Options: protected cxxopts::Options
 {
 private:
 	std::string _configFile;

@@ -57,7 +57,13 @@ public:
 
 	static std::string httpName()
 	{
-		return "Primitive";
+		#ifdef PROJECT_NAME
+			#define HELPER4QUOTE(N) #N
+			return HELPER4QUOTE(PROJECT_NAME);
+			#undef HELPER4QUOTE
+		#else
+			#error "PROJECT_NAME undefined"
+		#endif
 	}
 
 	bool addService(const std::string& name, const std::shared_ptr<Service>& service);
