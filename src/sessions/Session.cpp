@@ -23,11 +23,18 @@
 
 const char Session::_hidSeed[16] = {};
 
-Session::Session(Session::HID uid)
-: hid(uid)
+Session::Session(
+	const std::shared_ptr<Service>& service,
+	Session::HID uid
+)
+: _service(service)
+, hid(uid)
 , _ready(false)
 {
-
+	if (!_service)
+	{
+		throw std::runtime_error("Bad service");
+	}
 }
 
 Session::~Session()

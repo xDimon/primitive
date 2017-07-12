@@ -24,6 +24,7 @@
 #include <memory>
 #include "../utils/Shareable.hpp"
 #include "../utils/Context.hpp"
+#include "../services/Service.hpp"
 
 class Session : public Shareable<Session>
 {
@@ -34,6 +35,9 @@ public:
 protected:
 	static const char _hidSeed[16];
 
+protected:
+	std::shared_ptr<Service> _service;
+
 public:
 	const HID hid;
 
@@ -43,7 +47,10 @@ protected:
 	bool _ready;
 
 public:
-	Session(HID hid);
+	Session(
+		const std::shared_ptr<Service>& service,
+		HID hid
+	);
 	virtual ~Session();
 
 	const bool isReady() const
