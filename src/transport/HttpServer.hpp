@@ -27,5 +27,5 @@ class HttpServer : public ServerTransport
 {
 	DECLARE_TRANSPORT(HttpServer);
 
-	std::map<std::string, ServerTransport::Handler> _handlers;
+	std::map<std::string, std::shared_ptr<ServerTransport::Handler>> _handlers;
 };

@@ -27,5 +27,5 @@ class WebsocketServer : public ServerTransport
 {
 	DECLARE_TRANSPORT(WebsocketServer);
 
-	std::map<std::string, ServerTransport::Handler> _handlers;
+	std::map<std::string, std::shared_ptr<ServerTransport::Handler>> _handlers;
 };

@@ -178,7 +178,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 			context->setRequest(nullptr);
 
-			context->setHandler(std::move(handler));
+			context->setHandler(handler);
 
 			context->setEstablished();
 		}
@@ -258,26 +258,30 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 		if (context->getFrame()->opcode() == WsFrame::Opcode::Text || context->getFrame()->opcode() == WsFrame::Opcode::Binary)
 		{
-			ServerTransport::Transmitter transmitter =
-				[connection,opcode = context->getFrame()->opcode()]
-					(const char*data, size_t size, const std::string&, bool close){
-					WsFrame::send(connection, opcode, data, size);
-					if (close)
+			context->setTransmitter(
+				std::make_shared<ServerTransport::Transmitter>(
+					[connection,opcode = context->getFrame()->opcode()]
+					(const char*data, size_t size, const std::string&, bool close)
 					{
-						std::string msg("##Bye!\n");
-						uint16_t code = htobe16(1000); // Normal Closure
-						memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
+						WsFrame::send(connection, opcode, data, size);
+						if (close)
+						{
+							std::string msg("##Bye!\n");
+							uint16_t code = htobe16(1000); // Normal Closure
+							memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
 
-						WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
-						connection->close();
-						connection->resetContext();
+							WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
+							connection->close();
+							connection->resetContext();
+						}
+						ConnectionManager::watch(connection);
 					}
-					ConnectionManager::watch(connection);
-				};
+				)
+			);
 
-			context->setTransmitter(transmitter);
-			context->handle(context->getFrame()->dataPtr(), context->getFrame()->dataLen());
-			context->setFrame(nullptr);
+			context->handle();
+
+			context->resetFrame();
 			n++;
 			continue;
 		}
@@ -302,7 +306,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			_log.debug("PING-FRAME: %zu bytes", context->getFrame()->dataLen());
 
 			WsFrame::send(connection, WsFrame::Opcode::Pong, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
-			context->setFrame(nullptr);
+			context->resetFrame();
 			n++;
 			continue;
 		}
@@ -339,7 +343,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 	return true;
 }
 
-void WebsocketServer::bindHandler(const std::string& selector, ServerTransport::Handler handler)
+void WebsocketServer::bindHandler(const std::string& selector, const std::shared_ptr<ServerTransport::Handler>& handler)
 {
 	if (_handlers.find(selector) != _handlers.end())
 	{
@@ -349,7 +353,7 @@ void WebsocketServer::bindHandler(const std::string& selector, ServerTransport::
 	_handlers.emplace(selector, handler);
 }
 
-ServerTransport::Handler WebsocketServer::getHandler(const std::string& subject_)
+std::shared_ptr<ServerTransport::Handler> WebsocketServer::getHandler(const std::string& subject_)
 {
 	auto subject = subject_;
 	do

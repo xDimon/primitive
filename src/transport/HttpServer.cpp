@@ -172,30 +172,32 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 
 			context->setHandler(std::move(handler));
 
-			ServerTransport::Transmitter transmitter =
-				[this,&connection]
-					(const char*data, size_t size, const std::string& contentType, bool close){
-
-					std::string out(data, size);
-					HttpResponse response(200);
-					if (close)
+			context->setTransmitter(
+				std::make_shared<ServerTransport::Transmitter>(
+					[this,&connection]
+					(const char*data, size_t size, const std::string& contentType, bool close)
 					{
-						response << HttpHeader("Connection", "Close");
+
+						std::string out(data, size);
+						HttpResponse response(200);
+						if (close)
+						{
+							response << HttpHeader("Connection", "Close");
+						}
+						if (!contentType.empty())
+						{
+							response << HttpHeader("Content-Type", contentType);
+						}
+						response
+							<< out << "\r\n"
+							>> *connection;
+
+						_log.debug("RESPONSE: 200");
 					}
-					if (!contentType.empty())
-					{
-						response << HttpHeader("Content-Type", contentType);
-					}
-					response
-						<< out << "\r\n"
-						>> *connection;
+				)
+			);
 
-					_log.debug("RESPONSE: 200");
-				};
-
-			context->setTransmitter(transmitter);
-
-			context->handle(context->getRequest()->dataPtr(), context->getRequest()->dataLen());
+			context->handle();
 
 			connection->resetContext();
 			n++;
@@ -224,7 +226,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 	return false;
 }
 
-void HttpServer::bindHandler(const std::string& selector, ServerTransport::Handler handler)
+void HttpServer::bindHandler(const std::string& selector, const std::shared_ptr<ServerTransport::Handler>& handler)
 {
 	if (_handlers.find(selector) != _handlers.end())
 	{
@@ -234,7 +236,7 @@ void HttpServer::bindHandler(const std::string& selector, ServerTransport::Handl
 	_handlers.emplace(selector, handler);
 }
 
-ServerTransport::Handler HttpServer::getHandler(const std::string& subject_)
+std::shared_ptr<ServerTransport::Handler> HttpServer::getHandler(const std::string& subject_)
 {
 	auto subject = subject_;
 	do

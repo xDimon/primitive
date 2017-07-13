@@ -28,29 +28,35 @@
 class TransportContext : public Context
 {
 protected:
-	ServerTransport::Handler _handler;
-	ServerTransport::Transmitter _transmitter;
+	std::shared_ptr<ServerTransport::Handler> _handler;
+	std::shared_ptr<ServerTransport::Transmitter> _transmitter;
 
 public:
 	virtual ~TransportContext()	{};
 
-	void setTransmitter(ServerTransport::Transmitter& transmitter)
+	void setTransmitter(const std::shared_ptr<ServerTransport::Transmitter>& transmitter)
 	{
 		_transmitter = transmitter;
 	}
 
 	void transmit(const char* data, size_t size, const std::string& type, bool close)
 	{
-		_transmitter(data, size, type, close);
+		if (_transmitter)
+		{
+			(*_transmitter)(data, size, type, close);
+		}
 	}
 
-	void setHandler(ServerTransport::Handler handler)
+	void setHandler(const std::shared_ptr<ServerTransport::Handler>& handler)
 	{
 		_handler = handler;
 	}
 
-	void handle(const char* data, size_t size)
+	void handle()
 	{
-		_handler(ptr(), data, size, _transmitter);
+		if (_handler)
+		{
+			(*_handler)(ptr());
+		}
 	}
 };

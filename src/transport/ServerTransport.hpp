@@ -48,10 +48,10 @@ public:
 	virtual bool disable() final;
 
 	typedef std::function<void(const char*, size_t, const std::string&, bool)> Transmitter;
-	typedef std::function<void(const std::shared_ptr<Context>&, const char*, size_t, Transmitter)> Handler;
+	typedef std::function<void(const std::shared_ptr<Context>&)> Handler;
 
-	virtual void bindHandler(const std::string& selector, Handler handler) = 0;
-	virtual Handler getHandler(const std::string& subject) = 0;
+	virtual void bindHandler(const std::string& selector, const std::shared_ptr<Handler>& handler) = 0;
+	virtual std::shared_ptr<Handler> getHandler(const std::string& subject) = 0;
 };
 
 #include "TransportFactory.hpp"
@@ -84,8 +84,8 @@ public:                                                                         
     }                                                                                           \
                                                                                                 \
     virtual bool processing(const std::shared_ptr<Connection>& connection) override;            \
-    virtual void bindHandler(const std::string& selector, ServerTransport::Handler Handler) override; \
-    virtual ServerTransport::Handler getHandler(const std::string& subject) override;           \
+    virtual void bindHandler(const std::string& selector, const std::shared_ptr<Handler>&) override; \
+    virtual std::shared_ptr<Handler> getHandler(const std::string& subject) override;           \
                                                                                                 \
 private:                                                                                        \
     static const bool __dummy;
