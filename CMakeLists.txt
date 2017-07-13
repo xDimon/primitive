@@ -37,9 +37,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -rdynamic -O0 -g")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -rdynamic -O0 -g")
 
-#set(CMAKE_FIND_LIBRARY_SUFFIXES ".a;.so")
-#set(BUILD_SHARED_LIBRARIES OFF)
-#set(CMAKE_EXE_LINKER_FLAGS "-Wl,export-dynamic-static")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+#set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
