@@ -69,6 +69,7 @@ public:
 
 	bool operator()()
 	{
+		_error.clear();
 		return execute();
 	}
 

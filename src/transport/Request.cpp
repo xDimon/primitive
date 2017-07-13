@@ -27,6 +27,7 @@ Request::Request(const HttpUri& uri, HttpRequest::Method method, const std::stri
 , _method(method)
 , _uri(std::move(uri))
 , _body(body)
+, _error("Not executed")
 , _state(State::INIT)
 {
 }
