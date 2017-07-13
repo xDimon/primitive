@@ -26,7 +26,7 @@
 
 class Service;
 
-class ServicePart// : public Shareable<ServicePart>
+class ServicePart : public Shareable<ServicePart>
 {
 protected:
 	std::weak_ptr<Service> _service;
