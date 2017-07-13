@@ -31,10 +31,9 @@ class MysqlConnectionPool;
 class MysqlConnection : public DbConnection
 {
 private:
-	size_t _transaction;
+	mutable	MYSQL* _mysql;
 
-	//mutable
-	MYSQL _mysql;
+	size_t _transaction;
 
 public:
 	MysqlConnection(
@@ -78,7 +77,7 @@ public:
 
 	virtual bool alive() override
 	{
-		return !mysql_ping(&_mysql);
+		return !mysql_ping(_mysql);
 	}
 
 	virtual bool startTransaction() override;

@@ -19,6 +19,7 @@
 // MysqlConnection.cpp
 
 
+#include <cstring>
 #include "MysqlConnection.hpp"
 #include "MysqlConnectionPool.hpp"
 #include "MysqlResult.hpp"
@@ -32,30 +33,39 @@ MysqlConnection::MysqlConnection(
 	unsigned int dbport
 )
 : DbConnection(std::dynamic_pointer_cast<MysqlConnectionPool>(pool))
+, _mysql(nullptr)
 , _transaction(0)
 {
-	my_bool false_ = (my_bool)0;
-	unsigned int waitTimeout = 5;
+	my_bool on = (my_bool)0;
+	unsigned int timeout = 5;
 
-	mysql_init(&_mysql);
-	mysql_options(&_mysql, MYSQL_OPT_RECONNECT, &false_);
-	mysql_options(&_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &waitTimeout);
-	mysql_options(&_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
-	mysql_options(&_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+0:00';\n");
+	_mysql = mysql_init(_mysql);
+	if (!_mysql)
+	{
+		throw std::runtime_error("Can't init mysql connection");
+	}
+
+	mysql_options(_mysql, MYSQL_OPT_RECONNECT, &on);
+	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+	mysql_options(_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+00:00';\n");
 
 	if (!mysql_real_connect(
-		&_mysql,
+		_mysql,
 		dbserver.c_str(),
 		dbuser.c_str(),
 		dbpass.c_str(),
 		dbname.c_str(),
 		dbport,
 		nullptr,
-		0
+		CLIENT_REMEMBER_OPTIONS
 	))
 	{
-		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(&_mysql));
+		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
 	}
+
+	timeout = 900;
+	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
 }
 
 MysqlConnection::MysqlConnection(
@@ -66,35 +76,44 @@ MysqlConnection::MysqlConnection(
 	const std::string& dbsocket
 )
 : DbConnection(pool)
+, _mysql(nullptr)
 , _transaction(0)
 {
-	my_bool false_ = (my_bool)0;
-	unsigned int waitTimeout = 5;
+	my_bool on = (my_bool)0;
+	unsigned int timeout = 5;
 
-	mysql_init(&_mysql);
-	mysql_options(&_mysql, MYSQL_OPT_RECONNECT, &false_);
-	mysql_options(&_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &waitTimeout);
-	mysql_options(&_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
-	mysql_options(&_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+0:00';\n");
+	_mysql = mysql_init(_mysql);
+	if (!_mysql)
+	{
+		throw std::runtime_error("Can't init mysql connection");
+	}
+
+	mysql_options(_mysql, MYSQL_OPT_RECONNECT, &on);
+	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+	mysql_options(_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+00:00';\n");
 
 	if (!mysql_real_connect(
-		&_mysql,
+		_mysql,
 		nullptr,
 		dbuser.c_str(),
 		dbpass.c_str(),
 		dbname.c_str(),
 		0,
 		dbsocket.c_str(),
-		0
+		CLIENT_REMEMBER_OPTIONS
 	))
 	{
-		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(&_mysql));
+		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
 	}
+
+	timeout = 900;
+	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
 }
 
 MysqlConnection::~MysqlConnection()
 {
-	mysql_close(&_mysql);
+	mysql_close(_mysql);
 }
 
 bool MysqlConnection::startTransaction()
@@ -116,7 +135,7 @@ bool MysqlConnection::startTransaction()
 
 bool MysqlConnection::deadlockDetected()
 {
-	return mysql_errno(&_mysql) == 1213;
+	return mysql_errno(_mysql) == 1213;
 }
 
 bool MysqlConnection::commit()
@@ -166,28 +185,28 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 	auto result = dynamic_cast<MysqlResult *>(res);
 
 	// Выполнение запроса
-	if (mysql_query(&_mysql, sql.c_str()) != 0)
+	if (mysql_query(_mysql, sql.c_str()) != 0)
 	{
-		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(&_mysql), mysql_error(&_mysql), sql.c_str());
+		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 		return false;
 	}
 
 	if (affected)
 	{
-		*affected = mysql_affected_rows(&_mysql);
+		*affected = mysql_affected_rows(_mysql);
 	}
 
 	if (insertId)
 	{
-		*insertId = mysql_insert_id(&_mysql);
+		*insertId = mysql_insert_id(_mysql);
 	}
 
 	if (res != nullptr)
 	{
-		result->set(mysql_store_result(&_mysql));
-		if (!result->get() && mysql_errno(&_mysql))
+		result->set(mysql_store_result(_mysql));
+		if (!result->get() && mysql_errno(_mysql))
 		{
-			Log("mysql").error("MySQL store result error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(&_mysql), mysql_error(&_mysql), sql.c_str());
+			Log("mysql").error("MySQL store result error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 			return false;
 		}
 	}
@@ -197,24 +216,27 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 
 bool MysqlConnection::multiQuery(const std::string& sql)
 {
-	mysql_set_server_option(&_mysql, MYSQL_OPTION_MULTI_STATEMENTS_ON);
+	mysql_set_server_option(_mysql, MYSQL_OPTION_MULTI_STATEMENTS_ON);
 
 	// Выполнение запроса
-	if (mysql_query(&_mysql, sql.c_str()) != 0)
+	if (mysql_query(_mysql, sql.c_str()) != 0)
 	{
-		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(&_mysql), mysql_error(&_mysql), sql.c_str());
+		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
+
+		mysql_set_server_option(_mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 		return false;
 	}
 
 	do
 	{
-		MYSQL_RES* result = mysql_store_result(&_mysql);
+		MYSQL_RES* result = mysql_store_result(_mysql);
 		if (result)
 		{
 			mysql_free_result(result);
 		}
 	}
-	while (mysql_next_result(&_mysql) == 0);
+	while (mysql_next_result(_mysql) == 0);
 
+	mysql_set_server_option(_mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 	return true;
 }
