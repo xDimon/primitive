@@ -25,10 +25,9 @@
 
 Event::Id Event::_eventCount = 0;
 
-Event::Event(const std::shared_ptr<Context>& context, const SVal* data, ServerTransport::Transmitter transmitter)
+Event::Event(const std::shared_ptr<Context>& context, const SVal* data)
 : _context(context)
 , _data(data)
-, _transmitter(transmitter)
 , _eventId(0)
 {
 	_name = nullptr;

@@ -40,7 +40,6 @@ protected:
 	std::shared_ptr<Service> _service;
 	std::shared_ptr<Context> _context;
 	const SVal* _data;
-	ServerTransport::Transmitter _transmitter;
 	Id _requestId;
 	Id _lastConfirmedEvent;
 	Id _lastConfirmedResponse;
@@ -54,8 +53,7 @@ public:
 	Action(
 		const std::shared_ptr<Service>& service,
 		const std::shared_ptr<Context>& context,
-		const SVal* input,
-		ServerTransport::Transmitter _transmitter
+		const SVal* input
 	);
 	virtual ~Action();
 
@@ -99,10 +97,9 @@ private:                                                                        
     ActionName(                                                                                 \
 		const std::shared_ptr<Service>& service,                                                \
 		const std::shared_ptr<Context>& context,                                                \
-		const SVal* input,                                                                      \
-		ServerTransport::Transmitter transmitter                                                \
+		const SVal* input                                                                       \
 	)                                                                                           \
-    : Action(service, context, input, transmitter)                                              \
+    : Action(service, context, input)                                                           \
     {};                                                                                         \
                                                                                                 \
 public:                                                                                         \
@@ -115,10 +112,9 @@ private:                                                                        
     static auto create(                                                                         \
 		const std::shared_ptr<Service>& service,                                                \
 		const std::shared_ptr<Context>& context,                                                \
-		const SVal* input,                                                                      \
-		ServerTransport::Transmitter transmitter                                                \
+		const SVal* input                                                                       \
 	)                                                                                           \
     {                                                                                           \
-        return std::shared_ptr<Action>(new ActionName(service, context, input, transmitter));   \
+        return std::shared_ptr<Action>(new ActionName(service, context, input));                \
     }                                                                                           \
     static const bool __dummy_for_reg_call;

@@ -47,9 +47,16 @@ private:
 		return instance;
 	}
 
-	std::map<std::string, std::shared_ptr<Event>(*)(const std::shared_ptr<Context>&, const SVal*, ServerTransport::Transmitter)> _creators;
+	std::map<std::string, std::shared_ptr<Event>(*)(const std::shared_ptr<Context>&, const SVal*)> _creators;
 
 public:
-	static bool reg(const std::string& name, std::shared_ptr<Event>(* creator)(const std::shared_ptr<Context>&, const SVal*, ServerTransport::Transmitter));
-	static std::shared_ptr<Event> create(const std::string& name, const std::shared_ptr<Context>& context, const SVal* input, ServerTransport::Transmitter transmitter);
+	static bool reg(
+		const std::string& name,
+		std::shared_ptr<Event>(* creator)(const std::shared_ptr<Context>&, const SVal*)
+	);
+	static std::shared_ptr<Event> create(
+		const std::string& name,
+		const std::shared_ptr<Context>& context,
+		const SVal* input
+	);
 };

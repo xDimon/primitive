@@ -21,7 +21,7 @@
 
 #include "EventFactory.hpp"
 
-bool EventFactory::reg(const std::string& name, std::shared_ptr<Event>(* creator)(const std::shared_ptr<Context>&, const SVal*, ServerTransport::Transmitter))
+bool EventFactory::reg(const std::string& name, std::shared_ptr<Event>(* creator)(const std::shared_ptr<Context>&, const SVal*))
 {
 	auto& factory = getInstance();
 
@@ -34,7 +34,7 @@ bool EventFactory::reg(const std::string& name, std::shared_ptr<Event>(* creator
 	return true;
 }
 
-std::shared_ptr<Event> EventFactory::create(const std::string& name, const std::shared_ptr<Context>& context, const SVal* input, ServerTransport::Transmitter transmitter)
+std::shared_ptr<Event> EventFactory::create(const std::string& name, const std::shared_ptr<Context>& context, const SVal* input)
 {
 	auto& factory = getInstance();
 
@@ -43,5 +43,5 @@ std::shared_ptr<Event> EventFactory::create(const std::string& name, const std::
 	{
 		return nullptr;
 	}
-	return i->second(context, input, transmitter);
+	return i->second(context, input);
 }

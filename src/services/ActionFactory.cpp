@@ -23,7 +23,11 @@
 
 bool ActionFactory::reg(
 	const std::string& name,
-	std::shared_ptr<Action>(* creator)(const std::shared_ptr<Service>&, const std::shared_ptr<Context>&, const SVal*, ServerTransport::Transmitter)
+	std::shared_ptr<Action>(* creator)(
+		const std::shared_ptr<Service>&,
+		const std::shared_ptr<Context>&,
+		const SVal*
+	)
 )
 {
 	auto& factory = getInstance();
@@ -41,8 +45,7 @@ std::shared_ptr<Action> ActionFactory::create(
 	const std::string& name,
 	const std::shared_ptr<Service>& service,
 	const std::shared_ptr<Context>& context,
-	const SVal* input,
-	ServerTransport::Transmitter transmitter
+	const SVal* input
 )
 {
 	auto& factory = getInstance();
@@ -52,5 +55,5 @@ std::shared_ptr<Action> ActionFactory::create(
 	{
 		return nullptr;
 	}
-	return i->second(service, context, input, transmitter);
+	return i->second(service, context, input);
 }

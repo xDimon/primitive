@@ -39,7 +39,6 @@ protected:
 	static Id _eventCount;
 	std::shared_ptr<Context> _context;
 	const SVal* _data;
-	ServerTransport::Transmitter _transmitter;
 	Id _eventId;
 
 public:
@@ -49,8 +48,7 @@ public:
 
 	Event(
 		const std::shared_ptr<Context>& context,
-		const SVal* input,
-		ServerTransport::Transmitter _transmitter
+		const SVal* input
 	);
 	virtual ~Event();
 
@@ -70,10 +68,9 @@ private:                                                                        
                                                                                                 \
     EventName(                                                                                  \
 		const std::shared_ptr<Context>& context,                                                \
-		const SVal* input,                                                                      \
-		ServerTransport::Transmitter transmitter                                                \
+		const SVal* input                                                                       \
 	)                                                                                           \
-    : Event(context, input, transmitter)                                                        \
+    : Event(context, input)                                                                     \
     {};                                                                                         \
                                                                                                 \
 public:                                                                                         \
@@ -82,10 +79,9 @@ public:                                                                         
 private:                                                                                        \
     static auto create(                                                                         \
 		const std::shared_ptr<Context>& context,                                                \
-		const SVal* input,                                                                      \
-		ServerTransport::Transmitter transmitter                                                \
+		const SVal* input                                                                       \
 	)                                                                                           \
     {                                                                                           \
-        return std::shared_ptr<Event>(new EventName(context, input, transmitter));              \
+        return std::shared_ptr<Event>(new EventName(context, input));                           \
     }                                                                                           \
     static const bool __dummy_for_reg_call;

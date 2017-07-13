@@ -27,13 +27,11 @@ uint64_t Action::_requestCount = 0;
 Action::Action(
 	const std::shared_ptr<Service>& service,
 	const std::shared_ptr<Context>& context,
-	const SVal* input_,
-	ServerTransport::Transmitter transmitter
+	const SVal* input_
 )
 : _service(service)
 , _context(context)
 , _data(nullptr)
-, _transmitter(transmitter)
 , _requestId(0)
 , _lastConfirmedEvent(0)
 , _lastConfirmedResponse(0)

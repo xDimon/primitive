@@ -52,8 +52,7 @@ private:
 		std::shared_ptr<Action>(*)(
 			const std::shared_ptr<Service>&,
 			const std::shared_ptr<Context>&,
-			const SVal*,
-			ServerTransport::Transmitter
+			const SVal*
 		)
 	> _creators;
 
@@ -63,15 +62,13 @@ public:
 		std::shared_ptr<Action>(* creator)(
 			const std::shared_ptr<Service>&,
 			const std::shared_ptr<Context>&,
-			const SVal*,
-			ServerTransport::Transmitter
+			const SVal*
 		)
 	);
 	static std::shared_ptr<Action> create(
 		const std::string& name,
 		const std::shared_ptr<Service>& service,
 		const std::shared_ptr<Context>& context,
-		const SVal* input,
-		ServerTransport::Transmitter transmitter
+		const SVal* input
 	);
 };
