@@ -42,13 +42,20 @@ public:
 
 	virtual ~SObj()
 	{
-		while (!_elements.empty())
+//		while (!_elements.empty())
+//		{
+//			auto i = _elements.begin();
+//			auto value = i->second;
+//			_elements.erase(i);
+//			delete value;
+//		}
+
+		for (auto& i : _elements)
 		{
-			auto i = _elements.begin();
-			auto value = i->second;
-			_elements.erase(i);
-			delete value;
+			delete i.second;
+			i.second = nullptr;
 		}
+		_elements.clear();
 	};
 
 	SObj(SObj&& tmp)
