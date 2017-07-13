@@ -120,9 +120,6 @@ void Task::restoreContext() const
 		return;
 	}
 
-
-//	std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
 	// при завершении таска вернуться в связанный контекст, и удалить предыдущий
 	if (swapcontext(_tmpContext, _mainContext))
 	{

@@ -128,7 +128,6 @@ void ThreadPool::createThread()
 			{
 				std::unique_lock<std::mutex> lock(_queueMutex);
 
-//				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 //				auto now = std::chrono::steady_clock::now();
 //				if (!_tasks.empty()) log.trace("Wait: task =%20lld", _tasks.top().until());
 //				log.trace("Wait: until=%20lld", waitUntil);
@@ -240,7 +239,7 @@ void ThreadPool::wait()
 				}
 			}
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 

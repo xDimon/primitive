@@ -163,7 +163,6 @@ void ConnectionManager::wait()
 		{
 			if (errno != EINTR)
 			{
-				std::this_thread::sleep_for(std::chrono::seconds(1));
 				_log.warn("epoll_wait error (%s) in ConnectionManager::wait()", strerror(errno));
 			}
 			continue;
