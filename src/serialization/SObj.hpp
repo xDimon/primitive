@@ -35,22 +35,14 @@
 class SObj : public SVal
 {
 private:
-	std::map<std::string, SVal*> _elements;
+	std::map<const std::string, SVal*> _elements;
 
 public:
 	SObj() = default;
 
 	virtual ~SObj()
 	{
-//		while (!_elements.empty())
-//		{
-//			auto i = _elements.begin();
-//			auto value = i->second;
-//			_elements.erase(i);
-//			delete value;
-//		}
-
-		for (auto& i : _elements)
+		for (auto i : _elements)
 		{
 			delete i.second;
 			i.second = nullptr;
@@ -74,11 +66,13 @@ public:
 		auto i = _elements.find(key);
 		if (i != _elements.end())
 		{
-			auto value = const_cast<SVal*>(i->second);
-			_elements.erase(i);
-			delete value;
+			delete i->second;
+			i->second = const_cast<SVal*>(value);
 		}
-		_elements.emplace(key, const_cast<SVal*>(value));
+		else
+		{
+			_elements.emplace(key, const_cast<SVal*>(value));
+		}
 	}
 
 	void insert(const std::string key, SVal& value)
