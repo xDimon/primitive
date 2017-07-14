@@ -100,6 +100,7 @@ void ThreadPool::createThread()
 //								std::chrono::time_point<std::chrono::steady_clock>::max();
 
 		auto continueCondition = [this,&waitUntil](){
+			std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
 			if (_tasks.empty())
 			{
 				return !_hold;
@@ -211,7 +212,7 @@ void ThreadPool::wait()
 	{
 		// Wait end all threads
 		{
-			std::unique_lock<std::mutex> lock(pool._queueMutex);
+			std::unique_lock<std::mutex> qLock(pool._queueMutex);
 			for (auto i = pool._workers.begin(); i != pool._workers.end(); )
 			{
 				auto ci = i++;
@@ -223,7 +224,8 @@ void ThreadPool::wait()
 					delete thread;
 				}
 			}
-			if (pool._hold == 0 /* && pool._tasks.empty() */)
+			std::unique_lock<std::mutex> cLock(getInstance()._counterMutex);
+			if (!pool._hold)
 			{
 				if (pool._workers.empty())
 				{
@@ -231,11 +233,7 @@ void ThreadPool::wait()
 				}
 				if (!pool._workerNumber)
 				{
-//					if (pool._tasks.empty())
-					{
-//						pool._workersWakeupCondition.notify_one();
-						pool._workersWakeupCondition.notify_all();
-					}
+					pool._workersWakeupCondition.notify_all();
 				}
 			}
 		}
