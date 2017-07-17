@@ -33,8 +33,18 @@ SslAcceptor::SslAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 {
 	std::shared_ptr<Transport> transport = _transport.lock();
+	if (!transport)
+	{
+		return;
+	}
 
-	auto newConnection = std::shared_ptr<Connection>(new SslConnection(transport, sock, cliaddr, _sslContext, false));
+	auto newConnection = std::make_shared<SslConnection>(transport, sock, cliaddr, _sslContext, false);
+	if (!newConnection)
+	{
+		return;
+	}
+
+	newConnection->setTtl(std::chrono::seconds(TcpConnection::timeout));
 
 	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(newConnection->ptr())](){
 		auto connection = std::dynamic_pointer_cast<TcpConnection>(wp.lock());
@@ -42,12 +52,12 @@ void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 		{
 			return;
 		}
-		if (std::chrono::steady_clock::now() > connection->aTime() + std::chrono::seconds(10))
+		if (connection->expired())
 		{
 			Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
 			connection->close();
 		}
-	}, std::chrono::seconds(10));
+	}, newConnection->expireTime());
 
 	ConnectionManager::add(newConnection->ptr());
 }

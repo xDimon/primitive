@@ -193,6 +193,12 @@ void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 	}
 
 	auto newConnection = std::make_shared<TcpConnection>(transport, sock, cliaddr, false);
+	if (!newConnection)
+	{
+		return;
+	}
+
+	newConnection->setTtl(std::chrono::seconds(TcpConnection::timeout));
 
 	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(newConnection->ptr())](){
 		auto connection = std::dynamic_pointer_cast<TcpConnection>(wp.lock());
@@ -200,12 +206,12 @@ void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 		{
 			return;
 		}
-		if (std::chrono::steady_clock::now() > connection->aTime() + std::chrono::seconds(TcpConnection::timeout))
+		if (connection->expired())
 		{
 			Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
 			connection->close();
 		}
-	}, std::chrono::seconds(TcpConnection::timeout));
+	}, newConnection->expireTime());
 
 	ConnectionManager::add(newConnection->ptr());
 }

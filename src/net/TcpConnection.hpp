@@ -53,7 +53,7 @@ protected:
 
 	virtual bool writeToSocket();
 
-	std::chrono::steady_clock::time_point _accessTime;
+	std::chrono::steady_clock::time_point _expireTime;
 
 	std::function<void(const std::shared_ptr<Context>&)> _completeHandler;
 	std::function<void()> _errorHandler;
@@ -66,9 +66,17 @@ public:
 	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
 	virtual ~TcpConnection();
 
-	const std::chrono::steady_clock::time_point& aTime() const
+	void setTtl(std::chrono::milliseconds ttl)
 	{
-		return _accessTime;
+		_expireTime = std::chrono::steady_clock::now() + ttl;
+	}
+	const bool expired() const
+	{
+		return _expireTime <= std::chrono::steady_clock::now();
+	}
+	const auto& expireTime() const
+	{
+		return _expireTime;
 	}
 
 	bool noRead() const
