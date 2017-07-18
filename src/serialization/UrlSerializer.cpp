@@ -169,12 +169,16 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 		iss.ignore();
 	}
 
-	for (;;)
+	for (auto i = 0;;)
 	{
 		c = iss.get();
 		if (!isdigit(c))
 		{
 			break;
+		}
+		if (++i > 19)
+		{
+			return new SStr(strval);
 		}
 	}
 
@@ -183,7 +187,7 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 	// No more data - it's integer value
 	if (c == -1)
 	{
-		SInt::type value = 0;
+		uint64_t value = 0;
 
 		iss.clear(iss.goodbit);
 		iss.seekg(p);
