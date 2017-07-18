@@ -49,11 +49,10 @@ public:
 
 	static size_t genThreadId();
 
-	static void enqueue(Task& task);
-	static void enqueue(Task&& task);
-	static void enqueue(Task::Func function);
-	static void enqueue(Task::Func function, Task::Duration delay);
-	static void enqueue(Task::Func function, Task::Time time);
+	static void enqueue(const std::shared_ptr<Task::Func>& function);
+	static void enqueue(const std::shared_ptr<Task::Func>& function, Task::Duration delay);
+	static void enqueue(const std::shared_ptr<Task::Func>& function, Task::Time time);
+	static void enqueue(const std::shared_ptr<Task>& task);
 
 	static void wait();
 
@@ -77,7 +76,7 @@ private:
 	std::map<const std::thread::id, Thread*> _workers;
 
 	// the task queue
-	std::priority_queue<Task, std::deque<Task>> _tasks;
+	std::priority_queue<Task, std::deque<std::shared_ptr<Task>>> _tasks;
 
 	// synchronization
 	std::mutex _queueMutex;

@@ -21,8 +21,6 @@
 
 #include "ThreadPool.hpp"
 
-
-
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
 : _log("ThreadPool")
@@ -111,7 +109,7 @@ void ThreadPool::createThread()
 			}
 			else
 			{
-				waitUntil = _tasks.top().until();
+				waitUntil = _tasks.top()->until();
 				return waitUntil <= std::chrono::steady_clock::now();
 			}
 		};
@@ -122,7 +120,7 @@ void ThreadPool::createThread()
 
 		for (;;)
 		{
-			Task task;
+			std::shared_ptr<Task> task;
 
 			log.trace("Wait task on thread");
 
@@ -167,11 +165,11 @@ void ThreadPool::createThread()
 
 			// Execute task
 			log.debug("Begin execution task on thread");
-			bool done = task();
+			bool done = (*task)();
 			if (!done)
 			{
 				std::unique_lock<std::mutex> lock(_queueMutex);
-				waitUntil = task.until();
+				waitUntil = task->until();
 				_tasks.emplace(std::move(task));
 			}
 			else
@@ -251,48 +249,38 @@ Thread *ThreadPool::getCurrent()
 	return i->second;
 }
 
-void ThreadPool::enqueue(Task& task)
+void ThreadPool::enqueue(const std::shared_ptr<Task>& task)
 {
 	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
 
-	getInstance()._tasks.emplace(std::move(task));
-
-//	getInstance()._log.trace("  Wake up One worker (%d)", __LINE__);
-	getInstance()._workersWakeupCondition.notify_one();
-}
-
-void ThreadPool::enqueue(Task&& task)
-{
-	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
-
-	getInstance()._tasks.emplace(std::move(task));
+	getInstance()._tasks.emplace(task);
 
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
-void ThreadPool::enqueue(Task::Func function)
+void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function)
 {
 	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
 
-	getInstance()._tasks.emplace(std::move(function));
+	getInstance()._tasks.emplace(std::make_shared<Task>(function));
 
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
-void ThreadPool::enqueue(Task::Func function, Task::Duration delay)
+void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function, Task::Duration delay)
 {
 	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
 
-	getInstance()._tasks.emplace(std::move(function), delay);
+	getInstance()._tasks.emplace(std::make_shared<Task>(function, delay));
 
 	getInstance()._workersWakeupCondition.notify_one();
 }
 
-void ThreadPool::enqueue(Task::Func function, Task::Time time)
+void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function, Task::Time time)
 {
 	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
 
-	getInstance()._tasks.emplace(std::move(function), time);
+	getInstance()._tasks.emplace(std::make_shared<Task>(function, time));
 
 	getInstance()._workersWakeupCondition.notify_one();
 }

@@ -33,8 +33,8 @@ Task::Task()
 {
 }
 
-Task::Task(Func function)
-: _function(std::move(function))
+Task::Task(const std::shared_ptr<Func>& function)
+: _function(function)
 , _until(Time::min())
 , _immediately(true)
 , _tmpContext(nullptr)
@@ -42,8 +42,8 @@ Task::Task(Func function)
 {
 }
 
-Task::Task(Func function, Duration delay)
-: _function(std::move(function))
+Task::Task(const std::shared_ptr<Func>& function, Duration delay)
+: _function(function)
 , _until(Clock::now() + delay)
 , _immediately(false)
 , _tmpContext(nullptr)
@@ -51,8 +51,8 @@ Task::Task(Func function, Duration delay)
 {
 }
 
-Task::Task(Func function, Time time)
-: _function(std::move(function))
+Task::Task(const std::shared_ptr<Func>& function, Time time)
+: _function(function)
 , _until(time)
 , _immediately(false)
 , _tmpContext(nullptr)
@@ -85,7 +85,7 @@ bool Task::operator()()
 		return false;
 	}
 
-	_function();
+	(*_function)();
 
 	return true;
 }

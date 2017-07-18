@@ -49,15 +49,17 @@ void Coroutine(Task& task)
 			std::lock_guard<std::mutex> lockGuardCoro(orderMutex);
 
 			// создать таск связанный с сохраненным контекстом и положить в очередь
-			ThreadPool::enqueue(
 
-				[&]() {
+			auto taskWrapper = std::make_shared<Task::Func>(
+				[&]()
+				{
 					std::lock_guard<std::mutex> lockGuardTask(orderMutex);
 
 					task();
 				}
 			);
 
+			ThreadPool::enqueue(taskWrapper);
 		}
 
 		// переключиться на контекст входа в поток
@@ -65,11 +67,8 @@ void Coroutine(Task& task)
 	}
 	else
 	{
-
 //		munmap(tmpContext.uc_stack.ss_sp, tmpContext.uc_stack.ss_size);
 //		tmpContext.uc_stack.ss_sp = nullptr;
 //		tmpContext.uc_stack.ss_size = 0;
 	}
-
-	return;
 }

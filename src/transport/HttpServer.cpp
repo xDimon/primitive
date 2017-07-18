@@ -108,6 +108,8 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 
 			// Пропускаем байты заголовка
 			connection->skip(headersSize);
+
+			connection->setTtl(std::chrono::seconds(5));
 		}
 
 		// Читаем тело запроса
@@ -125,11 +127,10 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 
 					if (context->getRequest()->contentLength() > context->getRequest()->dataLen())
 					{
-						_log.debug(
-							"Not anough data for read request body (%zu < %zu)",
-							context->getRequest()->dataLen(),
-							context->getRequest()->contentLength()
-						);
+						connection->setTtl(std::chrono::seconds(5));
+
+						_log.debug("Not anough data for read request body ({%zu < %zu)",
+									context->getRequest()->dataLen(), context->getRequest()->contentLength());
 						break;
 					}
 				}
@@ -142,6 +143,8 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 
 				if (!connection->noRead())
 				{
+					connection->setTtl(std::chrono::seconds(5));
+
 					_log.debug("Not read all request body yet (read %zu)", context->getRequest()->dataLen());
 					break;
 				}
@@ -167,6 +170,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 				_log.debug("RESPONSE: 404 Not found service-handler for uri %s", context->getRequest()->uri().path().c_str());
 
 				connection->resetContext();
+				connection->setTtl(std::chrono::seconds(0));
 				return true;
 			}
 
@@ -193,6 +197,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 							>> *connection;
 
 						_log.debug("RESPONSE: 200");
+						connection->setTtl(std::chrono::seconds(15));
 					}
 				)
 			);
@@ -215,6 +220,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 				>> *connection;
 
 			_log.debug("RESPONSE: 200");
+			connection->setTtl(std::chrono::seconds(5));
 		}
 
 		connection->resetContext();

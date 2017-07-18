@@ -66,9 +66,12 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 </cross-domain-policy>
 )";
 
-			char zero = 0;
 			connection->write(policyFile.c_str(), policyFile.length());
+
+			char zero = 0;
 			connection->write(&zero, 1);
+
+			connection->setTtl(std::chrono::seconds(5));
 
 			_log.debug("Sent policy file");
 
@@ -80,6 +83,8 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 		if (!endHeaders && connection->dataLen() < (1 << 12))
 		{
+			connection->setTtl(std::chrono::seconds(5));
+
 			_log.debug("Not anough data for read headers (%zu bytes)", connection->dataLen());
 			return true;
 		}
@@ -95,6 +100,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				<< "Headers data too large\r\n"
 				>> *connection;
 
+			connection->setTtl(std::chrono::seconds(1));
 			return true;
 		}
 
@@ -181,6 +187,8 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			context->setHandler(handler);
 
 			context->setEstablished();
+
+			connection->setTtl(std::chrono::seconds(10));
 		}
 		catch (std::runtime_error &exception)
 		{
@@ -217,6 +225,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				{
 					_log.debug("No more data");
 				}
+				connection->setTtl(std::chrono::seconds(60));
 				break;
 			}
 
@@ -225,6 +234,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			if (connection->dataLen() < headerSize)
 			{
 				_log.debug("Not anough data for get frame header (%zu < %zu)", connection->dataLen(), headerSize);
+				connection->setTtl(std::chrono::seconds(60));
 				break;
 			}
 
@@ -250,6 +260,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			if (context->getFrame()->contentLength() > context->getFrame()->dataLen())
 			{
 				_log.debug("Not anough data for read frame body (%zu < %zu)", context->getFrame()->dataLen(), context->getFrame()->contentLength());
+				connection->setTtl(std::chrono::seconds(60));
 				break;
 			}
 		}
@@ -282,6 +293,9 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			context->handle();
 
 			context->resetFrame();
+
+			connection->setTtl(std::chrono::seconds(900));
+
 			n++;
 			continue;
 		}
@@ -306,7 +320,11 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			_log.debug("PING-FRAME: %zu bytes", context->getFrame()->dataLen());
 
 			WsFrame::send(connection, WsFrame::Opcode::Pong, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+
 			context->resetFrame();
+
+			connection->setTtl(std::chrono::seconds(900));
+
 			n++;
 			continue;
 		}

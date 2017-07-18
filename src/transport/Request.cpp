@@ -22,7 +22,7 @@
 #include "Request.hpp"
 
 Request::Request(const HttpUri& uri, HttpRequest::Method method, const std::string& body)
-: Task([this](){return operator()();})
+: Task(std::make_shared<Task::Func>([this](){return operator()();}))
 , _clientTransport(new HttpClient())
 , _method(method)
 , _uri(std::move(uri))

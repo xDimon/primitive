@@ -46,22 +46,54 @@ void SslConnector::createConnection(int sock, const sockaddr_in &cliaddr)
 
 	auto newConnection = std::shared_ptr<TcpConnection>(new SslConnection(transport, sock, cliaddr, _sslContext, true));
 
-	newConnection->setTtl(std::chrono::seconds(TcpConnection::timeout));
-
 	onConnect(newConnection);
 
-	ThreadPool::enqueue([wp = std::weak_ptr<Connection>(newConnection->ptr())](){
-		auto connection = std::dynamic_pointer_cast<TcpConnection>(wp.lock());
-		if (!connection)
+	newConnection->setTtl(std::chrono::seconds(15));
+
+	class TimeoutWatcher: public Shareable<TimeoutWatcher>
+	{
+	private:
+		std::weak_ptr<Connection> _wp;
+
+	public:
+		TimeoutWatcher(const std::shared_ptr<Connection>& connection): _wp(connection) {};
+
+		void operator()()
 		{
-			return;
+			auto connection = std::dynamic_pointer_cast<TcpConnection>(_wp.lock());
+			if (!connection)
+			{
+				return;
+			}
+			if (connection->expired())
+			{
+				Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
+				connection->close();
+			}
+			else
+			{
+				ThreadPool::enqueue(
+					std::make_shared<std::function<void()>>(
+						[p = ptr()](){
+							(*p)();
+						}
+					),
+					connection->expireTime()
+				);
+			}
 		}
-		if (connection->expired())
-		{
-			Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
-			connection->close();
-		}
-	}, newConnection->expireTime());
+	};
+
+	auto tow = std::make_shared<TimeoutWatcher>(newConnection);
+
+	ThreadPool::enqueue(
+		std::make_shared<std::function<void()>>(
+			[p = tow](){
+				(*p)();
+			}
+		),
+		newConnection->expireTime()
+	);
 
 	ConnectionManager::remove(ptr());
 	ConnectionManager::add(newConnection->ptr());

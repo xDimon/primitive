@@ -353,14 +353,18 @@ void ConnectionManager::dispatch()
 
 		getInstance()._log.debug("Enqueue %s for procession", connection->name().c_str());
 
-		ThreadPool::enqueue([connection](){
-			getInstance()._log.trace("Begin processing on %s", connection->name().c_str());
+		auto task = std::make_shared<Task::Func>(
+			[connection](){
+				getInstance()._log.trace("Begin processing on %s", connection->name().c_str());
 
-			bool status = connection->processing();
+				bool status = connection->processing();
 
-			getInstance().release(connection);
+				getInstance().release(connection);
 
-			getInstance()._log.trace("End processing on %s: %s", connection->name().c_str(), status ? "success" : "fail");
-		});
+				getInstance()._log.trace("End processing on %s: %s", connection->name().c_str(), status ? "success" : "fail");
+			}
+		);
+
+		ThreadPool::enqueue(task);
 	}
 }

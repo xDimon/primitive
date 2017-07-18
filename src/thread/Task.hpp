@@ -25,6 +25,7 @@
 #include <functional>
 #include <chrono>
 #include <sys/ucontext.h>
+#include <memory>
 
 class Task
 {
@@ -35,7 +36,7 @@ public:
 	using Time = Clock::time_point;
 
 private:
-	Func _function;
+	std::shared_ptr<Func> _function;
 	Time _until;
 	bool _immediately;
 
@@ -48,9 +49,9 @@ protected:
 
 public:
 	Task();
-	explicit Task(Func function);
-	Task(Func function, Duration delay);
-	Task(Func function, Time time);
+	Task(const std::shared_ptr<Func>& function);
+	Task(const std::shared_ptr<Func>& function, Duration delay);
+	Task(const std::shared_ptr<Func>& function, Time time);
 	Task(Task const &&that);
 
 	virtual ~Task() {}
@@ -60,6 +61,11 @@ public:
 	bool operator<(const Task &that) const;
 
 	virtual bool operator()();
+
+	const std::shared_ptr<Func> func() const
+	{
+		return _function;
+	}
 
 	const Time& until() const
 	{

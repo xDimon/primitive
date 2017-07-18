@@ -120,7 +120,11 @@ Server::Server(const std::shared_ptr<Config>& configs)
 		_log.error("Can't init one of service ← %s", exception.what());
 	}
 
-	ThreadPool::enqueue(ConnectionManager::dispatch);
+	ThreadPool::enqueue(
+		std::make_shared<Task::Func>(
+			ConnectionManager::dispatch
+		)
+	);
 }
 
 Server::~Server()
