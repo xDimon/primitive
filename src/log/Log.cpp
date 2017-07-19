@@ -22,7 +22,8 @@
 #include "Log.hpp"
 #include "LoggerManager.hpp"
 
-Log::Log(std::string name)
+Log::Log(const std::string& name, Detail detail)
+: _detail(detail)
 {
 	if (LoggerManager::enabled)
 	{
@@ -38,17 +39,18 @@ Log::Log(std::string name)
 	setName(name);
 }
 
-Log::Log()
-: Log("-")
-{
-}
-
 Log::~Log()
 {
 }
 
-void Log::setName(std::string name)
+void Log::setDetail(Detail detail)
 {
+	_detail = detail;
+}
+
+void Log::setName(const std::string& name_)
+{
+	auto name = name_;
 	name.resize(18, ' ');
 
 	if (_tracer)

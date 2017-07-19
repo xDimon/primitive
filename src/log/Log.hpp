@@ -39,17 +39,31 @@ struct IP7_Trace_Deleter
 
 class Log final
 {
+public:
+	enum class Detail
+	{
+		TRACE,
+		DEBUG,
+		INFO,
+		WARN,
+		ERROR,
+		CRITICAL
+	};
+
 private:
 	std::unique_ptr<IP7_Trace, IP7_Trace_Deleter> _tracer;
 	IP7_Trace::hModule module;
 
+	Detail _detail;
+
 public:
-	Log();
-	explicit Log(std::string name);
+	explicit Log(const std::string& name, Detail detail = Detail::INFO);
+	Log() : Log("") {};
 
 	virtual ~Log();
 
-	void setName(std::string name);
+	void setName(const std::string& name);
+	void setDetail(Detail detail);
 
 	template<typename... Args>
 	void trace(const char* fmt, const Args& ... args)
