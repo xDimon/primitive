@@ -33,14 +33,12 @@ class WsContext : public TransportContext
 private:
 	std::shared_ptr<HttpRequest> _request;
 	bool _established;
-	std::shared_ptr<TcpConnection> _connection;
 	std::shared_ptr<WsFrame> _frame;
 	std::weak_ptr<Session> _session;
 
 public:
 	WsContext(const std::shared_ptr<TcpConnection>& connection)
 	: _established(false)
-	, _connection(connection)
 	{};
 
 	virtual ~WsContext()
@@ -55,11 +53,6 @@ public:
 	bool established()
 	{
 		return _established;
-	}
-
-	std::shared_ptr<TcpConnection> connection()
-	{
-		return _connection;
 	}
 
 	const std::shared_ptr<HttpRequest>& getRequest()
