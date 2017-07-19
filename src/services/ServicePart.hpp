@@ -23,6 +23,7 @@
 
 
 #include "../utils/Shareable.hpp"
+#include "../log/Log.hpp"
 
 class Service;
 
@@ -30,6 +31,7 @@ class ServicePart : public Shareable<ServicePart>
 {
 protected:
 	std::weak_ptr<Service> _service;
+	Log _log;
 
 public:
 	ServicePart(const std::shared_ptr<Service>& service)
