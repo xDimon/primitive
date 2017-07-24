@@ -44,8 +44,6 @@ void ShutdownManager::shutdown()
 {
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
-//	ThreadPool::hold();
-
 	if (!getInstance()._shutingdown)
 	{
 		getInstance()._shutingdown = true;
@@ -55,8 +53,4 @@ void ShutdownManager::shutdown()
 			handler();
 		}
 	}
-
-//	getInstance()._handlers.clear();
-
-//	ThreadPool::unhold();
 }

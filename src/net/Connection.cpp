@@ -29,6 +29,7 @@ Connection::Connection(const std::shared_ptr<Transport>& transport)
 : _log("Connection")
 , _transport(transport)
 , _sock(-1)
+, _timeout(false)
 , _closed(true)
 , _error(false)
 {

@@ -35,7 +35,7 @@ private:
 	virtual ~Transports() = default;
 
 	Transports(Transports const&) = delete;
-	void operator= (Transports const&) = delete;
+	void operator=(Transports const&) = delete;
 
 	static Transports &getInstance()
 	{

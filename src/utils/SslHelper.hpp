@@ -31,7 +31,7 @@ private:
 	virtual ~SslHelper();
 
 	SslHelper(SslHelper const&) = delete;
-	void operator= (SslHelper const&) = delete;
+	void operator=(SslHelper const&) = delete;
 
 	static SslHelper &getInstance()
 	{
