@@ -31,9 +31,6 @@ protected:
 	Buffer _outBuff;
 
 public:
-	WriterConnection() {}
-	virtual ~WriterConnection() {}
-
 	virtual inline char * spacePtr() const
 	{
 		return _outBuff.spacePtr();

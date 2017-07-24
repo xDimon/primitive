@@ -44,10 +44,6 @@ ServerTransport::ServerTransport(const Setting& setting)
 	_acceptorCreator = AcceptorFactory::creator(setting);
 }
 
-ServerTransport::~ServerTransport()
-{
-}
-
 bool ServerTransport::enable()
 {
 	if (!_acceptor.expired())

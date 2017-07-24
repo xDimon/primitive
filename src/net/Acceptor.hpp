@@ -30,6 +30,6 @@
 class Acceptor : public Connection
 {
 public:
-	Acceptor(const std::shared_ptr<ServerTransport>& transport);
-	virtual ~Acceptor();
+	explicit Acceptor(const std::shared_ptr<ServerTransport>& transport);
+	~Acceptor() override = default;
 };

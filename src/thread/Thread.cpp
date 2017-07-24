@@ -29,7 +29,7 @@
 #include <ucontext.h>
 #include <climits>
 
-Thread::Thread(std::function<void()> function)
+Thread::Thread(std::function<void()>& function)
 : _id(ThreadPool::genThreadId())
 , _log("Thread")
 , _function(std::move(function))

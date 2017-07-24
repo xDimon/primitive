@@ -33,10 +33,6 @@ Event::Event(const std::shared_ptr<Context>& context, const SVal* data)
 	_name = nullptr;
 }
 
-Event::~Event()
-{
-}
-
 const SObj* Event::event()
 {
 	auto event = std::make_unique<SObj>();

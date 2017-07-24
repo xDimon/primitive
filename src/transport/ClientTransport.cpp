@@ -28,7 +28,3 @@ ClientTransport::ClientTransport()
 	ss << "_client#" << this;
 	_name = std::move(ss.str());
 }
-
-ClientTransport::~ClientTransport()
-{
-}

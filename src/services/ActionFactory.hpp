@@ -28,14 +28,10 @@
 #include "Action.hpp"
 #include "../transport/ServerTransport.hpp"
 
-class ActionFactory
+class ActionFactory final
 {
 private:
-	ActionFactory()
-	{};
-
-	virtual ~ActionFactory()
-	{};
+	ActionFactory() = default;
 
 	ActionFactory(ActionFactory const&) = delete;
 

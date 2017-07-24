@@ -31,8 +31,8 @@
 class Transports
 {
 private:
-	Transports() {};
-	virtual ~Transports() {};
+	Transports() = default;
+	virtual ~Transports() = default;
 
 	Transports(Transports const&) = delete;
 	void operator= (Transports const&) = delete;

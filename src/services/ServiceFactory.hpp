@@ -25,14 +25,10 @@
 #include <map>
 #include "Service.hpp"
 
-class ServiceFactory
+class ServiceFactory final
 {
 private:
-	ServiceFactory()
-	{};
-
-	virtual ~ServiceFactory()
-	{};
+	ServiceFactory() = default;
 
 	ServiceFactory(ServiceFactory const&) = delete;
 

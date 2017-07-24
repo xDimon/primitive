@@ -46,7 +46,7 @@ protected:
 public:
 	Buffer();
 
-	virtual ~Buffer();
+	virtual ~Buffer() = default;
 
 	inline auto& mutex()
 	{ return _mutex; }

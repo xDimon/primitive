@@ -29,5 +29,5 @@ class ClientTransport : public Shareable<ClientTransport>, public Transport
 {
 public:
 	ClientTransport();
-	virtual ~ClientTransport();
+	~ClientTransport() override = default;
 };

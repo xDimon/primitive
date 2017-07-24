@@ -65,7 +65,7 @@ public:
 		const std::string& body = std::string()
 	);
 
-	virtual ~Request() {};
+	~Request() override = default;
 
 	bool operator()()
 	{

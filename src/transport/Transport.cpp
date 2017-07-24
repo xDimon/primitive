@@ -29,8 +29,3 @@ Transport::Transport()
 	ss << "_transport#" << this;
 	_name = std::move(ss.str());
 }
-
-Transport::~Transport()
-{
-
-}

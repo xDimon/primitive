@@ -24,5 +24,5 @@
 class DbResult
 {
 public:
-	virtual ~DbResult() {}
+	virtual ~DbResult() = default;
 };

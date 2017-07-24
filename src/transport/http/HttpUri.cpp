@@ -53,10 +53,6 @@ HttpUri::HttpUri(std::string uri)
 	}
 }
 
-HttpUri::~HttpUri()
-{
-}
-
 void HttpUri::parse(const char *string, size_t length)
 {
 	auto s = string;

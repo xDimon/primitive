@@ -48,7 +48,3 @@ Config::Config(const std::shared_ptr<Options>& options)
 		throw std::runtime_error(std::string() + "Can't read config file: " + exception.what());
 	}
 }
-
-Config::~Config()
-{
-}

@@ -417,10 +417,6 @@ MD5::MD5(const void *data, size_t len)
 	md5_append(&_state, (const md5_byte_t *)data, len);
 }
 
-MD5::~MD5()
-{
-}
-
 bool MD5::append(const void *data, size_t len)
 {
 	if (!_finalized)

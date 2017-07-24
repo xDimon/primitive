@@ -53,7 +53,7 @@ public:
 		}
 	}
 
-	virtual ~DbConnection()
+	~DbConnection() override
 	{
 		if (_captured > 0)
 		{

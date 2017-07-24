@@ -27,14 +27,10 @@
 #include "../configs/Setting.hpp"
 #include "ServerTransport.hpp"
 
-class TransportFactory
+class TransportFactory final
 {
 private:
-	TransportFactory()
-	{};
-
-	virtual ~TransportFactory()
-	{};
+	TransportFactory() = default;
 
 	TransportFactory(TransportFactory const&) = delete;
 

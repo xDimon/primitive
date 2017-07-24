@@ -46,7 +46,7 @@ private:
 
 public:
 	DbConnectionPool(const Setting& setting);
-	virtual ~DbConnectionPool();
+	virtual ~DbConnectionPool() = default;
 
 	void touch();
 
@@ -74,9 +74,9 @@ private:                                                                        
     void operator=(Class const&) = delete;                                                      \
 																								\
 public:                                                                                         \
-  	virtual ~Class() {};                                                                        \
+  	~Class() override = default;                                                                \
                                                                                                 \
-	virtual void close() override;                                                              \
+	void close() override;                                                                      \
                                                                                                 \
 private:                                                                                        \
     static const bool __dummy;

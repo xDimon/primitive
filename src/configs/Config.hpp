@@ -31,6 +31,6 @@ private:
 	std::shared_ptr<Options> _options;
 
 public:
-	Config(const std::shared_ptr<Options>& options);
-	virtual ~Config();
+	explicit Config(const std::shared_ptr<Options>& options);
+	~Config() override = default;
 };

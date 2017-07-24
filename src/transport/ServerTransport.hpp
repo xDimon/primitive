@@ -41,8 +41,8 @@ private:
 	std::weak_ptr<Connection> _acceptor;
 
 public:
-	ServerTransport(const Setting& setting);
-	virtual ~ServerTransport();
+	explicit ServerTransport(const Setting& setting);
+	~ServerTransport() override = default ;
 
 	virtual bool enable() final;
 	virtual bool disable() final;

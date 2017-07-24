@@ -29,7 +29,3 @@ Acceptor::Acceptor(const std::shared_ptr<ServerTransport>& transport)
 	ss << "[__acceptor#" << this << "][" << _sock << "]";
 	_name = std::move(ss.str());
 }
-
-Acceptor::~Acceptor()
-{
-}

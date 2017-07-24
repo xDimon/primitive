@@ -37,10 +37,6 @@ Session::Session(
 	}
 }
 
-Session::~Session()
-{
-}
-
 void Session::setSid(SID sid)
 {
 	_sid = sid;

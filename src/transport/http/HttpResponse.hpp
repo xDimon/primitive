@@ -57,7 +57,7 @@ private:
 public:
 	HttpResponse(int status, std::string message = std::string());
 	HttpResponse(const char *begin, const char *end);
-	~HttpResponse();
+	~HttpResponse() override = default;
 
 	HttpResponse& addHeader(const std::string& name, const std::string& value, bool replace = false);
 

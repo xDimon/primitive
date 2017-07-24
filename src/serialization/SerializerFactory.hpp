@@ -28,14 +28,10 @@
 #include <memory>
 #include <map>
 
-class SerializerFactory
+class SerializerFactory final
 {
 private:
-	SerializerFactory()
-	{};
-
-	virtual ~SerializerFactory()
-	{};
+	SerializerFactory() = default;
 
 	SerializerFactory(SerializerFactory const&) = delete;
 

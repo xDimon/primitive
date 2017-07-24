@@ -50,7 +50,7 @@ public:
 		const std::shared_ptr<Context>& context,
 		const SVal* input
 	);
-	virtual ~Event();
+	virtual ~Event() = default;
 
 	const char* getName() const;
 
@@ -74,7 +74,7 @@ private:                                                                        
     {};                                                                                         \
                                                                                                 \
 public:                                                                                         \
-    virtual ~EventName() {};                                                                    \
+    ~EventName() override = default;                                                            \
                                                                                                 \
 private:                                                                                        \
     static auto create(                                                                         \

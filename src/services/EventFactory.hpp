@@ -28,14 +28,10 @@
 #include "Event.hpp"
 #include "../transport/ServerTransport.hpp"
 
-class EventFactory
+class EventFactory final
 {
 private:
-	EventFactory()
-	{};
-
-	virtual ~EventFactory()
-	{};
+	EventFactory() = default;
 
 	EventFactory(EventFactory const&) = delete;
 

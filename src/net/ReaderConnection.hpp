@@ -31,9 +31,6 @@ protected:
 	Buffer _inBuff;
 
 public:
-	ReaderConnection() {}
-	virtual ~ReaderConnection() {}
-
 	virtual inline const char * dataPtr() const
 	{
 		return _inBuff.dataPtr();

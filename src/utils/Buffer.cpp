@@ -31,10 +31,6 @@ Buffer::Buffer()
 {
 }
 
-Buffer::~Buffer()
-{
-}
-
 const std::vector<char>& Buffer::data()
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);

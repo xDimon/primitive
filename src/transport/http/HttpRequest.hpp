@@ -51,7 +51,7 @@ private:
 
 public:
 	HttpRequest(const char *begin, const char *end);
-	virtual ~HttpRequest() {};
+	~HttpRequest() override = default;
 
 	const HttpUri& uri() const
 	{

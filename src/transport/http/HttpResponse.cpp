@@ -137,10 +137,6 @@ HttpResponse::HttpResponse(const char *begin, const char *end)
 	}
 }
 
-HttpResponse::~HttpResponse()
-{
-}
-
 const char* HttpResponse::parseResponseLine(const char *string, const char *end)
 {
 	auto s = string;

@@ -30,17 +30,13 @@ class Connection;
 class Acceptor;
 class ServerTransport;
 
-class AcceptorFactory
+class AcceptorFactory final
 {
 public:
 	typedef std::function<std::shared_ptr<Connection>(const std::shared_ptr<ServerTransport>&)> Creator;
 
 private:
-	AcceptorFactory()
-	{};
-
-	virtual ~AcceptorFactory()
-	{};
+	AcceptorFactory() = default;
 
 	AcceptorFactory(AcceptorFactory const&) = delete;
 

@@ -39,10 +39,6 @@ Options::Options(int argc, char **argv)
 	parse(argc, argv);
 }
 
-Options::~Options()
-{
-}
-
 const std::string& Options::getConfig() const
 {
 	return _configFile;

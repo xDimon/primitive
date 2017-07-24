@@ -27,7 +27,7 @@ template<class T>
 class Shareable: public std::enable_shared_from_this<T>
 {
 public:
-	virtual ~Shareable() {};
+	virtual ~Shareable() = default;
 
 	inline std::shared_ptr<T> ptr()
 	{

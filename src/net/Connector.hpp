@@ -30,5 +30,5 @@ class Connector : public Connection
 {
 public:
 	explicit Connector(const std::shared_ptr<ClientTransport>& transport);
-	virtual ~Connector();
+	~Connector() override = default;
 };

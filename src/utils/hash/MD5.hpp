@@ -54,7 +54,7 @@ public:
 	: MD5(str.data(), str.length())
 	{
 	}
-	virtual ~MD5();
+	~MD5() = default;
 
 	MD5(const MD5&) = delete;
 	void operator= (MD5 const&) = delete;

@@ -39,10 +39,10 @@ protected:
 
 	std::set<std::shared_ptr<ServicePart>> _parts;
 
-	Service(const Setting& setting);
+	explicit Service(const Setting& setting);
 
 public:
-	virtual ~Service() {};
+	virtual ~Service() = default;
 
 	virtual void activate() = 0;
 	virtual void deactivate() = 0;

@@ -103,7 +103,7 @@ private:                                                                        
     {};                                                                                         \
                                                                                                 \
 public:                                                                                         \
-    virtual ~ActionName() {};                                                                   \
+    ~ActionName() override = default;                                                           \
                                                                                                 \
     virtual bool validate() override;                                                           \
     virtual bool execute() override;                                                            \

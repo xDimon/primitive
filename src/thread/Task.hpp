@@ -54,7 +54,7 @@ public:
 	Task(const std::shared_ptr<Func>& function, Time time);
 	Task(Task const &&that);
 
-	virtual ~Task() {}
+	virtual ~Task() = default;
 
 	void operator=(Task const &&that);
 

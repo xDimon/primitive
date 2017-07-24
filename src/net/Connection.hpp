@@ -63,8 +63,8 @@ public:
 	Connection(const Connection&) = delete;
 	void operator= (Connection const&) = delete;
 
-	Connection(const std::shared_ptr<Transport>& transport);
 	virtual ~Connection();
+	explicit Connection(const std::shared_ptr<Transport>& transport);
 
 	std::shared_ptr<Context>& getContext()
 	{

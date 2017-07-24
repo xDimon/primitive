@@ -28,13 +28,13 @@
 #include <map>
 #include "Connection.hpp"
 
-class ConnectionManager
+class ConnectionManager final
 {
 private:
 	ConnectionManager();
 	~ConnectionManager();
 	ConnectionManager(ConnectionManager const&) = delete;
-	void operator= (ConnectionManager const&) = delete;
+	void operator=(ConnectionManager const&) = delete;
 
 	static ConnectionManager &getInstance()
 	{

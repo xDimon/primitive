@@ -30,8 +30,7 @@
 class DbManager final
 {
 private:
-	DbManager() {};
-	virtual ~DbManager() {};
+	DbManager() = default;
 
 	DbManager(DbManager const&) = delete;
 	void operator= (DbManager const&) = delete;

@@ -30,7 +30,3 @@ Connector::Connector(const std::shared_ptr<ClientTransport>& transport)
 	ss << "[__connector#" << this << "][" << _sock << "]";
 	_name = std::move(ss.str());
 }
-
-Connector::~Connector()
-{
-}

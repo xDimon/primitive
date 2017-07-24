@@ -51,7 +51,7 @@ public:
 		const std::shared_ptr<Service>& service,
 		HID hid
 	);
-	virtual ~Session();
+	~Session() override = default;
 
 	const bool isReady() const
 	{

@@ -25,11 +25,11 @@
 #include <mutex>
 #include <deque>
 
-class ShutdownManager
+class ShutdownManager final
 {
 private:
 	ShutdownManager();
-	virtual ~ShutdownManager();
+	~ShutdownManager();
 
 	ShutdownManager(ShutdownManager const&) = delete;
 	void operator= (ShutdownManager const&) = delete;

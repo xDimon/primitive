@@ -41,8 +41,7 @@ public:
 	: _established(false)
 	{};
 
-	virtual ~WsContext()
-	{};
+	virtual ~WsContext() = default;
 
 	void setEstablished()
 	{

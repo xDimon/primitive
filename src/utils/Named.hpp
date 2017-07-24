@@ -29,7 +29,7 @@ protected:
 	std::string _name;
 
 public:
-	Named() {};
+	Named() = default;
 	Named(std::string& name)
 	: _name(name)
 	{}

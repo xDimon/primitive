@@ -25,11 +25,10 @@
 #include <map>
 #include "Session.hpp"
 
-class SessionManager
+class SessionManager final
 {
 private:
-	SessionManager() {};
-	virtual ~SessionManager() {};
+	SessionManager() = default;
 
 	SessionManager(SessionManager const&) = delete;
 	void operator= (SessionManager const&) = delete;

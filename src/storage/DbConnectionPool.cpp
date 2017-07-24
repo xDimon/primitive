@@ -42,10 +42,6 @@ DbConnectionPool::DbConnectionPool(const Setting& setting)
 	_log.debug("DbConnectionPool '%s' created", _name.c_str());
 }
 
-DbConnectionPool::~DbConnectionPool()
-{
-}
-
 void DbConnectionPool::touch()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
