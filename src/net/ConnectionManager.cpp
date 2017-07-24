@@ -24,7 +24,6 @@
 
 #include <unistd.h>
 #include "../thread/ThreadPool.hpp"
-#include "TcpConnection.hpp"
 #include "../utils/ShutdownManager.hpp"
 
 ConnectionManager::ConnectionManager()
@@ -86,10 +85,6 @@ bool ConnectionManager::remove(const std::shared_ptr<Connection>& connection)
 		return false;
 	}
 
-	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
-
-	getInstance()._allConnections.erase(connection.get());
-
 	getInstance()._log.trace("Call `epoll_ctl(DEL)` for %s in ConnectionManager::add()", connection->name().c_str());
 
 	// Удаляем из очереди событий
@@ -98,6 +93,8 @@ bool ConnectionManager::remove(const std::shared_ptr<Connection>& connection)
 		getInstance()._log.debug("Fail call `epoll_ctl(DEL)` for %s (error: '%s') in ConnectionManager::add()", connection->name().c_str(), strerror(errno));
 	}
 
+	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
+	getInstance()._allConnections.erase(connection.get());
 	getInstance()._readyConnections.erase(connection);
 	getInstance()._capturedConnections.erase(connection);
 
@@ -154,16 +151,22 @@ void ConnectionManager::wait()
 
 //	_log.trace("Begin waiting in ConnectionManager::wait()");
 
-	int n;
+	int n = 0;
 
-	for (;;)
+	while ([&](){std::lock_guard<std::recursive_mutex> lockGuard(_mutex); return _readyConnections.empty();}())
 	{
+		if ([&](){std::lock_guard<std::recursive_mutex> lockGuard(_mutex); return _allConnections.empty();}())
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			break;
+		}
 		n = epoll_wait(_epfd, _epev, poolSize, 50);
 		if (n < 0)
 		{
 			if (errno != EINTR)
 			{
 				_log.warn("epoll_wait error (%s) in ConnectionManager::wait()", strerror(errno));
+				break;
 			}
 			continue;
 		}
@@ -174,36 +177,30 @@ void ConnectionManager::wait()
 		}
 		if (ShutdownManager::shutingdown())
 		{
+			// Закрываем оставшееся
+			_epool_mutex.unlock();
+
+			_mutex.lock();
+
 			if (_allConnections.empty())
 			{
 				_log.debug("Interrupt waiting");
-
-				_epool_mutex.unlock();
-
-				_mutex.lock();
 				return;
 			}
-			// Если можно закрыть все оставшееся - делаем это
-			else
+
+			std::vector<std::shared_ptr<Connection>> connections;
+			for (auto& i : _allConnections)
 			{
-				_epool_mutex.unlock();
-
-				_mutex.lock();
-
-				std::vector<std::shared_ptr<Connection>> connections;
-				for (auto& i : _allConnections)
-				{
-					connections.emplace_back(i.second);
-				}
-				for (auto& connection : connections)
-				{
-					remove(connection);
-				}
-
-				_mutex.unlock();
-
-				_epool_mutex.lock();
+				connections.emplace_back(i.second);
 			}
+			for (auto& connection : connections)
+			{
+				remove(connection);
+			}
+
+			_mutex.unlock();
+
+			_epool_mutex.lock();
 		}
 	}
 
@@ -258,8 +255,7 @@ void ConnectionManager::wait()
 		// Если не в списке захваченых...
 		if (_capturedConnections.find(connection) == _capturedConnections.end())
 		{
-			_log.trace(
-				"Insert %s into ready connection list and will be processed now in ConnectionManager::wait()", connection->name().c_str());
+			_log.trace("Insert %s into ready connection list and will be processed now in ConnectionManager::wait()", connection->name().c_str());
 
 			// ...добавляем в список готовых
 			_readyConnections.insert(connection);
@@ -301,7 +297,7 @@ void ConnectionManager::timeout(const std::shared_ptr<Connection>& connection)
 /// Захватить соединение
 std::shared_ptr<Connection> ConnectionManager::capture()
 {
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
 //	_log.trace("Try capture connection in ConnectionManager::capture()");
 
@@ -372,7 +368,6 @@ void ConnectionManager::dispatch()
 	for (;;)
 	{
 		std::shared_ptr<Connection> connection = getInstance().capture();
-
 		if (!connection)
 		{
 			break;
@@ -381,7 +376,14 @@ void ConnectionManager::dispatch()
 		getInstance()._log.debug("Enqueue %s for procession", connection->name().c_str());
 
 		auto task = std::make_shared<Task::Func>(
-			[connection](){
+			[wp = std::weak_ptr<Connection>(connection)](){
+				auto connection = std::dynamic_pointer_cast<Connection>(wp.lock());
+				if (!connection)
+				{
+					getInstance()._log.trace("Connection death");
+					return;
+				}
+
 				getInstance()._log.trace("Begin processing on %s", connection->name().c_str());
 
 				bool status = connection->processing();
