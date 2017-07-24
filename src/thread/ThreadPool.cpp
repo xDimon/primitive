@@ -20,6 +20,7 @@
 
 
 #include "ThreadPool.hpp"
+#include "../utils/ShutdownManager.hpp"
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
@@ -99,19 +100,20 @@ void ThreadPool::createThread()
 
 		auto continueCondition = [this,&waitUntil](){
 			std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
-			if (_tasks.empty())
-			{
-				return !_hold;
-			}
-			else if (!_workerNumber)
+			if (ShutdownManager::shutingdown())
 			{
 				return true;
 			}
-			else
+			if (_tasks.empty())
 			{
-				waitUntil = _tasks.top()->until();
-				return waitUntil <= std::chrono::steady_clock::now();
+				return _hold == 0;
 			}
+			if (_workerNumber == 0)
+			{
+				return true;
+			}
+			waitUntil = _tasks.top()->until();
+			return waitUntil <= std::chrono::steady_clock::now();
 		};
 
 		Log log("ThreadLoop");
