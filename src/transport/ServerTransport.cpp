@@ -67,7 +67,7 @@ bool ServerTransport::enable()
 
 		return true;
 	}
-	catch (std::runtime_error exception)
+	catch (const std::runtime_error& exception)
 	{
 		_log.debug("Transport '%s' didn't enable: Can't create Acceptor ← %s", name().c_str(), exception.what());
 

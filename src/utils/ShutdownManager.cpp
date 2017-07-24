@@ -50,7 +50,7 @@ void ShutdownManager::shutdown()
 	{
 		getInstance()._shutingdown = true;
 
-		for (auto handler : getInstance()._handlers)
+		for (const auto& handler : getInstance()._handlers)
 		{
 			handler();
 		}

@@ -38,8 +38,9 @@ HttpUri::HttpUri()
 {
 }
 
-HttpUri::HttpUri(std::string uri)
-: _port(0)
+HttpUri::HttpUri(const std::string& uri)
+: _scheme(Scheme::UNDEFINED)
+, _port(0)
 , _hasQuery(false)
 , _hasFragment(false)
 {

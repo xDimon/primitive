@@ -26,8 +26,8 @@
 class HttpHeader
 {
 public:
-	const std::string& name;
-	const std::string& value;
+	const std::string name;
+	const std::string value;
 	bool unique;
 
 	HttpHeader(const std::string& name, const std::string& value, bool unique = false)

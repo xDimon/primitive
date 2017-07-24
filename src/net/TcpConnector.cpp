@@ -198,7 +198,7 @@ bool TcpConnector::processing()
 					_sock = -1;
 					return true;
 				}
-				catch (std::exception exception)
+				catch (const std::exception& exception)
 				{
 					onError();
 					shutdown(_sock, SHUT_RDWR);

@@ -138,13 +138,13 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			if (
 				request->getHeader("Connection") != "Upgrade" ||
 				request->getHeader("Upgrade") != "websocket" ||
-				request->getHeader("Sec-WebSocket-Key") == ""
+				request->getHeader("Sec-WebSocket-Key").empty()
 			)
 			{
 				throw std::runtime_error("Bad headers");
 			}
 
-			auto& wsKey = request->getHeader("Sec-WebSocket-Key");
+			const auto& wsKey = request->getHeader("Sec-WebSocket-Key");
 
 			// (echo -n "$1"; echo -n '258EAFA5-E914-47DA-95CA-C5AB0DC85B11') | sha1sum | xxd -r -p | base64
 			auto acceptKey = Base64::encode(SHA1::encode_bin(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
@@ -241,8 +241,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				break;
 			}
 
-			auto frame = std::shared_ptr<WsFrame>(new WsFrame(connection->dataPtr(), connection->dataPtr() + connection->dataLen()));
-
+			auto frame = std::make_shared<WsFrame>(connection->dataPtr(), connection->dataPtr() + connection->dataLen());
 			_log.debug("Read %zu bytes of frame header. Size of data: %zu bytes", headerSize, frame->contentLength());
 
 			context->setFrame(frame);

@@ -177,7 +177,7 @@ bool TcpAcceptor::processing()
 		{
 			createConnection(sock, cliaddr);
 		}
-		catch (std::exception exception)
+		catch (const std::exception& exception)
 		{
 			shutdown(sock, SHUT_RDWR);
 			::close(sock);
