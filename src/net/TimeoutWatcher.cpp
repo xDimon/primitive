@@ -55,7 +55,6 @@ void TimeoutWatcher::operator()()
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(_wp.lock());
 	if (!connection)
 	{
-		Log("Timeout").info("Connection death");
 		return;
 	}
 
@@ -64,7 +63,7 @@ void TimeoutWatcher::operator()()
 
 	if (connection->expired())
 	{
-		Log("Timeout").info("Connection '%s' will be closed by timeout", connection->name().c_str());
+		Log("Timeout").debug("Connection '%s' will be closed by timeout", connection->name().c_str());
 		connection->close();
 		return;
 	}

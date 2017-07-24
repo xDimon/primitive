@@ -50,13 +50,13 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 	ss << "[" << _sock << "][" << ip << ":" << htons(_sockaddr.sin_port) << "]";
 	_name = std::move(ss.str());
 
-	_log.info("TcpConnection '%s' created", name().c_str());
+	_log.debug("TcpConnection '%s' created", name().c_str());
 }
 
 TcpConnection::~TcpConnection()
 {
 	shutdown(_sock, SHUT_RD);
-	_log.info("TcpConnection '%s' destroyed", name().c_str());
+	_log.debug("TcpConnection '%s' destroyed", name().c_str());
 }
 
 void TcpConnection::setTtl(std::chrono::milliseconds ttl)

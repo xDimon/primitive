@@ -45,7 +45,7 @@ SslConnection::~SslConnection()
 	SSL_free(_sslConnect);
 
 	shutdown(_sock, SHUT_RD);
-	_log.info("Connection '%s' closed for read", name().c_str());
+	_log.debug("Connection '%s' closed for read", name().c_str());
 }
 
 void SslConnection::watch(epoll_event &ev)

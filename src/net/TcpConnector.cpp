@@ -143,7 +143,7 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 
 	end:
 
-	_log.info("TcpConnector '%s' created", name().c_str());
+	_log.debug("TcpConnector '%s' created", name().c_str());
 }
 
 TcpConnector::~TcpConnector()

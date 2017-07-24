@@ -77,7 +77,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				connection->close();
 				connection->resetContext();
 
-				_log.info("Sent policy file");
+				_log.debug("Sent policy file");
 
 				return true;
 			}
