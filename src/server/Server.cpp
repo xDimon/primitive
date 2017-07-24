@@ -140,7 +140,7 @@ void Server::wait()
 
 void Server::start()
 {
-	_log.info("Server start");
+	_log.info("Server start (pid=%u)", getpid());
 
 	ThreadPool::hold();
 	ThreadPool::setThreadNum(3);
