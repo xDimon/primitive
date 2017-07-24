@@ -45,18 +45,18 @@ protected:
 	ucontext_t* _mainContext;
 
 	Task(Task const &) = delete;
-	void operator=(Task const &) = delete;
+	Task& operator=(Task const &) = delete;
 
 public:
 	Task();
 	Task(const std::shared_ptr<Func>& function);
 	Task(const std::shared_ptr<Func>& function, Duration delay);
 	Task(const std::shared_ptr<Func>& function, Time time);
-	Task(Task const &&that);
+	Task(Task &&that) noexcept;
 
 	virtual ~Task() = default;
 
-	void operator=(Task const &&that);
+	Task& operator=(Task &&that) noexcept;
 
 	bool operator<(const Task &that) const;
 

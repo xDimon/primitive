@@ -25,8 +25,7 @@
 #include "ThreadPool.hpp"
 
 Task::Task()
-: _function()
-, _until(Time::min())
+: _until(Time::min())
 , _immediately(true)
 , _tmpContext(nullptr)
 , _mainContext(nullptr)
@@ -62,22 +61,23 @@ Task::Task(const std::shared_ptr<Func>& function, Time time)
 {
 }
 
-Task::Task(Task const &&that)
+Task::Task(Task &&that) noexcept
 : _function(std::move(that._function))
-, _until(std::move(that._until))
+, _until(that._until)
 , _immediately(that._immediately)
 , _tmpContext(that._tmpContext)
 , _mainContext(that._mainContext)
 {
 }
 
-void Task::operator=(Task const &&that)
+Task& Task::operator=(Task &&that) noexcept
 {
 	_function = std::move(that._function);
-	_until = std::move(that._until);
+	_until = that._until;
 	_immediately = that._immediately;
 	_tmpContext = that._tmpContext;
 	_mainContext = that._mainContext;
+	return *this;
 }
 
 bool Task::operator()()
@@ -98,14 +98,11 @@ bool Task::operator<(const Task& that) const
 	{
 		return false;
 	}
-	else if (that._immediately)
+	if (that._immediately)
 	{
 		return true;
 	}
-	else
-	{
-		return this->_until > that._until;
-	}
+	return this->_until > that._until;
 }
 
 void Task::saveContext(ucontext_t* tmpContext, ucontext_t* mainContext)
