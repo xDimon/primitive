@@ -48,7 +48,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 	try
 	{
 		auto endHeader = static_cast<const char *>(memmem(s, end - s, "\r\n", 2));
-		if (!endHeader)
+		if (endHeader == nullptr)
 		{
 			throw std::runtime_error("Unexpected end");
 		}
@@ -66,8 +66,8 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		auto uri = s;
 
 		// Находим конец URI
-		while (*s && !HttpHelper::isSp(*s) && !HttpHelper::isCr(*s)) s++;
-		if (!isspace(*s))
+		while (*s != 0 && !HttpHelper::isSp(*s) && !HttpHelper::isCr(*s)) s++;
+		if (isspace(*s) == 0)
 		{
 			throw std::runtime_error("Bad uri ← Unexpected end");
 		}
@@ -110,12 +110,12 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 const char* HttpRequest::parseMethod(const char* s)
 {
 	// Чистаем метод
-	if (!strncasecmp(s, "GET", 3))
+	if (strncasecmp(s, "GET", 3) == 0)
 	{
 		_method = Method::GET;
 		s += 3;
 	}
-	else if (!strncasecmp(s, "POST ", 4))
+	else if (strncasecmp(s, "POST ", 4) == 0)
 	{
 		_method = Method::POST;
 		s += 4;
@@ -125,7 +125,7 @@ const char* HttpRequest::parseMethod(const char* s)
 		throw std::runtime_error("Unknown method");
 	}
 
-	if (!isspace(*s))
+	if (isspace(*s) == 0)
 	{
 		throw std::runtime_error("Wrong method");
 	}
@@ -137,17 +137,17 @@ const char* HttpRequest::parseMethod(const char* s)
 
 const char* HttpRequest::parseProtocol(const char* s)
 {
-	if (strncasecmp(s, "HTTP/", 5))
+	if (strncasecmp(s, "HTTP/", 5) != 0)
 	{
 		throw std::runtime_error("Wrong type");
 	}
 	s += 5;
 
-	if (!strncasecmp(s, "1.1", 3))
+	if (strncasecmp(s, "1.1", 3) == 0)
 	{
 		_version = 101;
 	}
-	else if (!strncasecmp(s, "1.0", 3))
+	else if (strncasecmp(s, "1.0", 3) == 0)
 	{
 		_version = 100;
 	}
@@ -170,7 +170,7 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 		for (;;)
 		{
 			auto endHeader = static_cast<const char *>(memmem(s, end - s, "\r\n", 2));
-			if (!endHeader)
+			if (endHeader == nullptr)
 			{
 				throw std::runtime_error("Unexpected end");
 			}
@@ -206,7 +206,7 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 
 			_headers.emplace(name, value);
 
-			if (!strcasecmp(name.c_str(), "Content-Length"))
+			if (strcasecmp(name.c_str(), "Content-Length") == 0)
 			{
 				_hasContentLength = true;
 				_contentLength = static_cast<size_t>(atoll(value.c_str()));

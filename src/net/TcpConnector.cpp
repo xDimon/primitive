@@ -40,9 +40,9 @@ TcpConnector::~TcpConnector()
 
 TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& hostname, std::uint16_t port)
 : Connector(transport)
-, _host(std::move(hostname))
+, _host(hostname)
 , _port(port)
-, _buff( reinterpret_cast<char*>(malloc(1024)))
+, _buff(reinterpret_cast<char*>(malloc(1024)))
 , _buffSize(1024)
 , _hostptr(nullptr)
 , _addrIterator(nullptr)
@@ -73,14 +73,14 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 	{
 		// realloc
 		_buffSize <<= 1;
-		char* tmp = reinterpret_cast<char*>(realloc(_buff, _buffSize));
-		if (!tmp)
+		auto tmp = reinterpret_cast<char*>(realloc(_buff, _buffSize));
+		if (tmp == nullptr)
 		{
 			// OOM?
 			_buffSize >>= 1;
 			_buffSize += 64;
 			tmp = reinterpret_cast<char*>(realloc(_buff, _buffSize));
-			if (!tmp)
+			if (tmp == nullptr)
 			{ // OOM!
 				throw std::bad_alloc();
 			}
@@ -89,7 +89,7 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 		_buff = tmp;
 	}
 
-	if (!_hostptr)
+	if (_hostptr == nullptr)
 	{
 		// error translation.
 		switch (herr)
@@ -125,10 +125,10 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 
 		// Подключаемся
 		again:
-		if (!connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)))
+		if (connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)) == 0)
 		{
 			throw std::runtime_error(std::string("Too fast connect to ") + _host);
-//
+
 //			// Подключились сразу?!
 //			createConnection(_sock, _sockaddr);
 //			_sock = -1;
@@ -184,9 +184,9 @@ bool TcpConnector::processing()
 		int result;
 		socklen_t result_len = sizeof(result);
 
-		if (!getsockopt(_sock, SOL_SOCKET, SO_ERROR, &result, &result_len))
+		if (getsockopt(_sock, SOL_SOCKET, SO_ERROR, &result, &result_len) == 0)
 		{
-			if (!result)
+			if (result == 0)
 			{
 				connected:
 
@@ -228,7 +228,7 @@ bool TcpConnector::processing()
 
 			again:
 			// Подключаемся
-			if (!connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)))
+			if (connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)) == 0)
 			{
 				// Подключились сразу?!
 				goto connected;

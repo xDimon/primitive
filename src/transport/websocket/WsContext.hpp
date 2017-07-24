@@ -37,7 +37,7 @@ private:
 	std::weak_ptr<Session> _session;
 
 public:
-	WsContext(const std::shared_ptr<TcpConnection>& connection)
+	WsContext()
 	: _established(false)
 	{};
 

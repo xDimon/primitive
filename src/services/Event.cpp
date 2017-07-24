@@ -49,7 +49,7 @@ const SObj* Event::event()
 
 	event->insert("event", getName());
 
-	if (_data)
+	if (_data != nullptr)
 	{
 		event->insert("data", _data);
 	}
@@ -59,7 +59,7 @@ const SObj* Event::event()
 
 const char* Event::getName() const
 {
-	if (!_name)
+	if (_name == nullptr)
 	{
 		int status;
 		_name = abi::__cxa_demangle(typeid(*this).name(), 0, 0, &status);

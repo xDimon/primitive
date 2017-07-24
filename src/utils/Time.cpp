@@ -49,26 +49,26 @@ Timestamp interval(Time::Interval interval, size_t number)
 	switch (interval)
 	{
 		case Interval::ZERO:
-			return (number?number:1) * 0;
+			return ((number!=0) ? number : 1) * 0;
 
 		case Interval::SECOND:
-			return (number?number:1) * 1;
+			return ((number!=0) ? number : 1) * 1;
 
 		case Interval::MINUTE:
-			return (number?number:1) * 60;
+			return ((number!=0) ? number : 1) * 60;
 
 		case Interval::HOUR:
-			return (number?number:1) * 3600;
+			return ((number!=0) ? number : 1) * 3600;
 
 		case Interval::DAY:
-			return (number?number:1) * 86400;
+			return ((number!=0) ? number : 1) * 86400;
 
 		case Interval::WEEK:
-			return (number?number:1) * 86400 * 7;
+			return ((number!=0) ? number : 1) * 86400 * 7;
 
 		case Interval::MONTH:
 		{
-			if (number)
+			if (number != 0)
 			{
 				time_t ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 				tm tm;
@@ -82,15 +82,13 @@ Timestamp interval(Time::Interval interval, size_t number)
 				ts2 -= ts;
 				return ts2;
 			}
-			else
-			{
-				return 86400 * 30;
-			}
+
+			return 86400 * 30;
 		}
 
 		case Interval::YEAR:
 		{
-			if (number)
+			if (number != 0)
 			{
 				time_t ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 				tm tm;
@@ -104,10 +102,8 @@ Timestamp interval(Time::Interval interval, size_t number)
 				ts2 -= ts;
 				return ts2;
 			}
-			else
-			{
-				return 86400 * 365;
-			}
+
+			return 86400 * 365;
 		}
 
 		case Interval::ETERNITY:

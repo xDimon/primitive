@@ -63,7 +63,7 @@ public:
 	void setScheme(Scheme scheme)
 	{
 		_scheme = scheme;
-		if (!_port)
+		if (_port == 0)
 		{
 			if (_scheme == Scheme::HTTP)
 			{

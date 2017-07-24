@@ -72,7 +72,7 @@ public:
 	}
 	void setContext(const std::shared_ptr<Context>& context)
 	{
-		_context = std::move(context);
+		_context = context;
 	}
 	void resetContext()
 	{

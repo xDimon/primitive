@@ -153,7 +153,7 @@ const char* HttpResponse::parseResponseLine(const char *string, const char *end)
 		}
 
 		auto endHeader = static_cast<const char *>(memmem(s, end - s, "\r\n", 2));
-		if (!endHeader)
+		if (endHeader == nullptr)
 		{
 			throw std::runtime_error("Unexpected end");
 		}
@@ -173,8 +173,8 @@ const char* HttpResponse::parseResponseLine(const char *string, const char *end)
 		auto code = s;
 
 		// Находим конец URI
-		while (*s && HttpHelper::isDigit(*s)) s++;
-		if (!isspace(*s))
+		while (*s != 0 && HttpHelper::isDigit(*s)) s++;
+		if (isspace(*s) == 0)
 		{
 			throw std::runtime_error("Bad status code ← Unexpected end");
 		}
@@ -213,13 +213,13 @@ const char* HttpResponse::parseResponseLine(const char *string, const char *end)
 
 const char* HttpResponse::parseProtocol(const char* s)
 {
-	if (strncasecmp(s, "HTTP/", 5))
+	if (strncasecmp(s, "HTTP/", 5) != 0)
 	{
 		throw std::runtime_error("Wrong type");
 	}
 	s += 5;
 
-	if (strncasecmp(s, "1.1", 3) && strncasecmp(s, "1.0", 3))
+	if (strncasecmp(s, "1.1", 3) != 0 && strncasecmp(s, "1.0", 3) != 0)
 	{
 		throw std::runtime_error("Wrong version");
 	}
@@ -238,7 +238,7 @@ const char* HttpResponse::parseHeaders(const char *begin, const char *end)
 		for (;;)
 		{
 			auto endHeader = static_cast<const char *>(memmem(s, end - s, "\r\n", 2));
-			if (!endHeader)
+			if (endHeader == nullptr)
 			{
 				throw std::runtime_error("Unexpected end");
 			}
@@ -274,7 +274,7 @@ const char* HttpResponse::parseHeaders(const char *begin, const char *end)
 
 			_headers.emplace(name, value);
 
-			if (!strcasecmp(name.c_str(), "Content-Length"))
+			if (strcasecmp(name.c_str(), "Content-Length") == 0)
 			{
 				_hasContentLength = true;
 				_contentLength = static_cast<size_t>(atoll(value.c_str()));
@@ -350,7 +350,7 @@ HttpResponse& HttpResponse::operator<<(const HttpHeader& header)
 	if (header.name == "Connection")
 	{
 		replace = true;
-		if (!strcasecmp(header.value.c_str(), "Close"))
+		if (strcasecmp(header.value.c_str(), "Close") == 0)
 		{
 			_close = true;
 		}

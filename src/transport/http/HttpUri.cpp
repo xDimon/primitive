@@ -63,7 +63,7 @@ void HttpUri::parse(const char *string, size_t length)
 	auto end = string + length;
 
 	// Читаем схему
-	if (length >= 2 && !strncmp(s, "//", 2))
+	if (length >= 2 && strncmp(s, "//", 2) == 0)
 	{
 		_scheme = Scheme::UNDEFINED;
 		s += 2;
@@ -73,13 +73,13 @@ void HttpUri::parse(const char *string, size_t length)
 		_scheme = Scheme::UNDEFINED;
 		goto path;
 	}
-	else if (length >= 7 && !strncasecmp(s, "http://", 7))
+	else if (length >= 7 && strncasecmp(s, "http://", 7) == 0)
 	{
 		_scheme = Scheme::HTTP;
 		_port = 80;
 		s += 7;
 	}
-	else if (length >= 8 && !strncasecmp(s, "https://", 8))
+	else if (length >= 8 && strncasecmp(s, "https://", 8) == 0)
 	{
 		_scheme = Scheme::HTTPS;
 		_port = 443;
@@ -92,9 +92,9 @@ void HttpUri::parse(const char *string, size_t length)
 
 	// Читаем хост
 	//host:
-	while (*s && *s != ':' && *s != '/' && *s != '?' && *s != '#' && !isspace(*s))
+	while (*s != 0 && *s != ':' && *s != '/' && *s != '?' && *s != '#' && isspace(*s) == 0)
 	{
-		if (!isalnum(*s) && *s != '.' && *s != '-')
+		if (isalnum(*s) == 0 && *s != '.' && *s != '-')
 		{
 			throw std::runtime_error("Wrong hostname");
 		}
@@ -114,9 +114,9 @@ void HttpUri::parse(const char *string, size_t length)
 			throw std::runtime_error("Out of data");
 		}
 		_port = 0;
-		while (*s && *s != '/' && *s != '?' && *s != '#' && !isspace(*s))
+		while (*s != 0 && *s != '/' && *s != '?' && *s != '#' && isspace(*s) == 0)
 		{
-			if (!isdigit(*s))
+			if (isdigit(*s) == 0)
 			{
 				throw std::runtime_error("Wrong port");
 			}
@@ -132,7 +132,7 @@ void HttpUri::parse(const char *string, size_t length)
 	path:
 	if (*s == '/')
 	{
-		while (*s && *s != '?' && *s != '#' && !isspace(*s))
+		while (*s != 0 && *s != '?' && *s != '#' && isspace(*s) == 0)
 		{
 			_path.push_back(*s);
 			if (++s > end)
@@ -151,7 +151,7 @@ void HttpUri::parse(const char *string, size_t length)
 			throw std::runtime_error("Out of data");
 		}
 		_hasQuery = true;
-		while (*s && *s != '#' && !isspace(*s))
+		while (*s != 0 && *s != '#' && isspace(*s) == 0)
 		{
 			_query.push_back(*s);
 			if (++s > end)
@@ -170,7 +170,7 @@ void HttpUri::parse(const char *string, size_t length)
 			throw std::runtime_error("Out of data");
 		}
 		_hasFragment = true;
-		while (*s && !isspace(*s))
+		while (*s != 0 && isspace(*s) == 0)
 		{
 			_fragment.push_back(*s);
 			if (++s > end)

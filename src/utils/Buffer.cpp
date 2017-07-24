@@ -127,9 +127,9 @@ bool Buffer::read(void *data_, size_t length)
 		return false;
 	}
 
-	char *data = static_cast<char *>(data_);
+	auto data = static_cast<char *>(data_);
 
-	while (length--)
+	while (length-- > 0)
 	{
 		*data++ = _data[_getPosition++];
 	}
@@ -193,9 +193,9 @@ bool Buffer::write(const void *data_, size_t length)
 	prepare(length);
 
 
-	const char *data = static_cast<const char *>(data_);
+	auto data = static_cast<const char *>(data_);
 
-	while (length--)
+	while (length-- > 0)
 	{
 		_data[_putPosition++] = *data++;
 	}

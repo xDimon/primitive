@@ -43,7 +43,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 	if (!connection->getContext())
 	{
-		connection->setContext(std::make_shared<WsContext>(connection)->ptr());
+		connection->setContext(std::make_shared<WsContext>());
 	}
 	auto context = std::dynamic_pointer_cast<WsContext>(connection->getContext());
 	if (!context)
@@ -81,7 +81,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 		// Проверка готовности заголовков
 		auto endHeaders = static_cast<const char *>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
 
-		if (!endHeaders && connection->dataLen() < (1 << 12))
+		if (endHeaders == nullptr && connection->dataLen() < (1 << 12))
 		{
 			connection->setTtl(std::chrono::seconds(5));
 
@@ -89,7 +89,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			return true;
 		}
 
-		if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
+		if (endHeaders == nullptr || (endHeaders - connection->dataPtr()) > (1 << 12))
 		{
 			connection->skip(endHeaders - connection->dataPtr());
 
@@ -217,7 +217,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			// Недостаточно данных для получения размера заголовка фрейма
 			if (connection->dataLen() < 2)
 			{
-				if (connection->dataLen())
+				if (connection->dataLen() > 0)
 				{
 					_log.debug("Not anough data for calc frame header size (%zu < 2)", connection->dataLen());
 				}

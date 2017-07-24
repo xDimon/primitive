@@ -108,7 +108,10 @@ void WsFrame::applyMask()
 	for (auto &b : _data)
 	{
 		b ^= _mask[i++];
-		if (!--remain) break;
+		if (--remain == 0)
+		{
+			break;
+		}
 		if (i == 4)
 		{
 			i = 0;
@@ -145,7 +148,7 @@ void WsFrame::send(const std::shared_ptr<Writer>& writer, Opcode code, const cha
 //	if (!masked)
 //	{
 		writer->write(data, size);
-		return;
+//		return;
 //	}
 //
 //	union {

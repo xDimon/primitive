@@ -53,9 +53,9 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 			// Проверка готовности заголовков
 			auto endHeaders = static_cast<const char*>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
 
-			if (!endHeaders && connection->dataLen() < (1 << 12))
+			if (endHeaders == nullptr && connection->dataLen() < (1 << 12))
 			{
-				if (connection->dataLen())
+				if (connection->dataLen() > 0)
 				{
 					_log.debug("Not anough data for read headers (%zu bytes)", connection->dataLen());
 				}
@@ -66,7 +66,7 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 				break;
 			}
 
-			if (!endHeaders || (endHeaders - connection->dataPtr()) > (1 << 12))
+			if (endHeaders == nullptr  || (endHeaders - connection->dataPtr()) > (1 << 12))
 			{
 				_log.debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
 

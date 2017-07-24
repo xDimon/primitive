@@ -46,11 +46,6 @@ public:
 
 	virtual void activate() = 0;
 	virtual void deactivate() = 0;
-
-	const Setting& getSetting() const
-	{
-		return _setting;
-	}
 };
 
 #include "ServiceFactory.hpp"

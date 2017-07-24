@@ -66,7 +66,7 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 	// Задаем хост
 	if (_host.length())
 	{
-		if (!inet_aton(_host.c_str(), &servaddr.sin_addr))
+		if (inet_aton(_host.c_str(), &servaddr.sin_addr) == 0)
 		{
 			_log.debug("Can't convert host to binary IPv4 address (error '%s'). I'll use universal address.", strerror(errno));
 

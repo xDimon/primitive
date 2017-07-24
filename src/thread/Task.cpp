@@ -115,13 +115,13 @@ void Task::saveContext(ucontext_t* tmpContext, ucontext_t* mainContext)
 
 void Task::restoreContext() const
 {
-	if (!_tmpContext || !_mainContext)
+	if (_tmpContext == nullptr || _mainContext == nullptr)
 	{
 		return;
 	}
 
 	// при завершении таска вернуться в связанный контекст, и удалить предыдущий
-	if (swapcontext(_tmpContext, _mainContext))
+	if (swapcontext(_tmpContext, _mainContext) != 0)
 	{
 		throw std::runtime_error("Can't change context");
 	}

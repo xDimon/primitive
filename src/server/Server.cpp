@@ -33,7 +33,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 : _log("Server")
 , _configs(configs)
 {
-	if (_instance)
+	if (_instance != nullptr)
 	{
 		throw std::runtime_error("Server already instantiated");
 	}

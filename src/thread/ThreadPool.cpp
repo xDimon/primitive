@@ -67,7 +67,7 @@ void ThreadPool::unhold()
 bool ThreadPool::stops()
 {
 	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
-	return !getInstance()._workerNumber;
+	return getInstance()._workerNumber == 0;
 }
 
 void ThreadPool::setThreadNum(size_t num)
@@ -76,7 +76,7 @@ void ThreadPool::setThreadNum(size_t num)
 	getInstance()._workerNumber = num;
 
 	size_t remain = (num < getInstance()._workers.size()) ? 0 : (num - getInstance()._workers.size());
-	while (remain--)
+	while (remain-- > 0)
 	{
 		getInstance().createThread();
 	}
@@ -153,7 +153,7 @@ void ThreadPool::createThread()
 				log.trace("Get task from queue");
 
 				// Get task from queue
-				task = std::move(_tasks.top());
+				task = _tasks.top();
 				_tasks.pop();
 
 				// Condition for end thread
@@ -172,11 +172,11 @@ void ThreadPool::createThread()
 				waitUntil = task->until();
 				_tasks.emplace(std::move(task));
 			}
-			else
-			{
+//			else
+//			{
 //				waitUntil = std::chrono::steady_clock::now();
 //				std::chrono::time_point<std::chrono::steady_clock>::min();
-			}
+//			}
 			log.debug("End execution task on thread");
 		}
 
@@ -223,13 +223,13 @@ void ThreadPool::wait()
 				}
 			}
 			std::unique_lock<std::mutex> cLock(getInstance()._counterMutex);
-			if (!pool._hold)
+			if (pool._hold == 0)
 			{
 				if (pool._workers.empty())
 				{
 					break;
 				}
-				if (!pool._workerNumber)
+				if (pool._workerNumber == 0)
 				{
 					pool._workersWakeupCondition.notify_all();
 				}

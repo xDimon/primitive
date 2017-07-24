@@ -93,12 +93,12 @@ void Thread::reenter()
 	context.uc_stack.ss_flags = 0;
 	context.uc_stack.ss_size = PTHREAD_STACK_MIN;
 	context.uc_stack.ss_sp = mmap(
-		0, context.uc_stack.ss_size,
+		nullptr, context.uc_stack.ss_size,
 		PROT_READ | PROT_WRITE | PROT_EXEC,
 		MAP_PRIVATE | MAP_ANON, -1, 0
 	);
 
-	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 1, this);
+	makecontext(&context, reinterpret_cast<void (*)()>(fake), 1, this);
 //	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 0);
 
 

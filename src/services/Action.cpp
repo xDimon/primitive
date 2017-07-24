@@ -39,13 +39,13 @@ Action::Action(
 {
 	auto input = dynamic_cast<const SObj *>(input_);
 
-	if (!input)
+	if (input == nullptr)
 	{
 		throw std::runtime_error("Input data isn't object");
 	}
 
 	auto reqName = dynamic_cast<const SStr*>(input->get("request"));
-	if (reqName)
+	if (reqName != nullptr)
 	{
 		_actionName = reqName->value();
 	}
@@ -56,7 +56,7 @@ Action::Action(
 	}
 
 	auto aux = dynamic_cast<const SObj*>(input->get("_"));
-	if (aux)
+	if (aux != nullptr)
 	{
 		_requestId = aux->getAsInt("ri");
 		_lastConfirmedResponse = aux->getAsInt("cr");
@@ -75,7 +75,7 @@ const SObj* Action::response(const SVal* data) const
 {
 	auto response = std::make_unique<SObj>();
 
-	if (_requestId)
+	if (_requestId != 0)
 	{
 		auto aux = std::make_unique<SObj>();
 		aux->insert("ri", _requestId);
@@ -84,7 +84,7 @@ const SObj* Action::response(const SVal* data) const
 
 	response->insert("response", _actionName);
 
-	if (data)
+	if (data != nullptr)
 	{
 		response->insert("data", data);
 	}
@@ -103,7 +103,7 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 {
 	auto error = std::make_unique<SObj>();
 
-	if (_requestId)
+	if (_requestId != 0)
 	{
 		auto aux = std::make_unique<SObj>();
 		aux->insert("ri", _requestId);
@@ -114,7 +114,7 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 
 	error->insert("message", message);
 
-	if (data)
+	if (data != nullptr)
 	{
 		error->insert("data", data);
 	}

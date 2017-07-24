@@ -34,8 +34,6 @@ const int TcpConnection::timeout;
 
 TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr, bool outgoing)
 : Connection(transport)
-, ReaderConnection()
-, WriterConnection()
 , _outgoing(outgoing)
 , _noRead(false)
 , _noWrite(false)
@@ -133,7 +131,7 @@ bool TcpConnection::processing()
 
 	if (_noRead)
 	{
-		if (!_outBuff.dataLen())
+		if (_outBuff.dataLen() == 0)
 		{
 			shutdown(_sock, SHUT_WR);
 			_noWrite = true;
@@ -216,7 +214,7 @@ bool TcpConnection::readFromSocket()
 		ioctl(_sock, FIONREAD, &bytes_available);
 
 		// Нет данных на сокете
-		if (!bytes_available)
+		if (bytes_available == 0)
 		{
 			// И больше не будет
 			if (isHalfHup() || isHup())
@@ -266,7 +264,7 @@ bool TcpConnection::readFromSocket()
 		_log.debug("Read %d bytes (summary %d) on %s", n, _inBuff.dataLen(), name().c_str());
 	}
 
-	if (_inBuff.dataLen())
+	if (_inBuff.dataLen() > 0)
 	{
 		auto transport = _transport.lock();
 		if (transport)

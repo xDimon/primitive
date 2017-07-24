@@ -55,7 +55,7 @@ public:
 
 	virtual ~DbConnection()
 	{
-		if (_captured)
+		if (_captured > 0)
 		{
 			throw std::runtime_error("Destroy of captured connection ");
 		}
@@ -74,7 +74,7 @@ public:
 	size_t release()
 	{
 		_captured--;
-		if (!_captured)
+		if (_captured == 0)
 		{
 			auto pool = _pool.lock();
 			if (pool)
