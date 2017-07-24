@@ -32,9 +32,6 @@ struct sockaddr_in;
 
 class TcpConnector : public Connector
 {
-public:
-	static const int timeout = 60;
-
 protected:
 	std::string _host;
 	std::uint16_t _port;

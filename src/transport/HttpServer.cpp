@@ -82,6 +82,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					<< "Headers data too large\r\n"
 					>> *connection;
 
+				connection->setTtl(std::chrono::milliseconds(50));
 				break;
 			}
 
@@ -103,6 +104,9 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					<< exception.what() << "\r\n"
 					>> *connection;
 
+				connection->setTtl(std::chrono::milliseconds(50));
+
+				_log.debug("Bad request");
 				break;
 			}
 
@@ -164,13 +168,14 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 			if (!handler)
 			{
 				HttpResponse(404)
+					<< HttpHeader("Connection", "Close")
 					<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
 					>> *connection;
 
 				_log.debug("RESPONSE: 404 Not found service-handler for uri %s", context->getRequest()->uri().path().c_str());
 
 				connection->resetContext();
-				connection->setTtl(std::chrono::seconds(0));
+				connection->setTtl(std::chrono::milliseconds(50));
 				return true;
 			}
 
@@ -187,6 +192,12 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 						if (close)
 						{
 							response << HttpHeader("Connection", "Close");
+							connection->setTtl(std::chrono::milliseconds(50));
+						}
+						else
+						{
+							response << HttpHeader("Keep-Alive", "timeout=15, max=100");
+							connection->setTtl(std::chrono::seconds(20));
 						}
 						if (!contentType.empty())
 						{
@@ -197,7 +208,6 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 							>> *connection;
 
 						_log.debug("RESPONSE: 200");
-						connection->setTtl(std::chrono::seconds(15));
 					}
 				)
 			);
@@ -219,8 +229,9 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 //				<< serializer()->encode(&output) << "\r\n"
 				>> *connection;
 
+			connection->setTtl(std::chrono::milliseconds(50));
+
 			_log.debug("RESPONSE: 200");
-			connection->setTtl(std::chrono::seconds(5));
 		}
 
 		connection->resetContext();

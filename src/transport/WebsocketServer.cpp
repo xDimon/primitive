@@ -100,7 +100,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				<< "Headers data too large\r\n"
 				>> *connection;
 
-			connection->setTtl(std::chrono::seconds(1));
+			connection->setTtl(std::chrono::milliseconds(50));
 			return true;
 		}
 
@@ -158,8 +158,9 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 					<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
 					>> *connection;
 
-				connection->close();
 				connection->resetContext();
+				connection->setTtl(std::chrono::milliseconds(50));
+
 				return true;
 			}
 
@@ -177,8 +178,9 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				uint16_t code = htobe16(1008); // Policy Violation
 				memcpy(const_cast<char *>(msg.data()), &code, sizeof(code));
 				WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
-				connection->close();
 				connection->resetContext();
+				connection->setTtl(std::chrono::milliseconds(50));
+
 				return true;
 			}
 
@@ -198,8 +200,9 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				<< exception.what() << "\r\n"
 				>> *connection;
 
-			connection->close();
 			connection->resetContext();
+			connection->setTtl(std::chrono::milliseconds(50));
+
 			return true;
 		}
 	}

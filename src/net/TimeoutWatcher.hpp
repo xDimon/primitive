@@ -14,18 +14,28 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.09
+// File created on: 2017.07.20
 
-// ConnectionEvent.hpp
+// TimeoutWatcher.hpp
 
 
 #pragma once
 
-enum class ConnectionEvent {
-	READ	= 1<<0,
-	WRITE	= 1<<1,
-	HUP		= 1<<2,
-	HALFHUP	= 1<<3,
-	TIMEOUT	= 1<<6,
-	ERROR	= 1<<7
+
+#include "../utils/Shareable.hpp"
+#include "Connection.hpp"
+#include <mutex>
+
+class TimeoutWatcher: public Shareable<TimeoutWatcher>
+{
+private:
+	std::weak_ptr<Connection> _wp;
+	size_t _refCounter;
+
+public:
+	explicit TimeoutWatcher(const std::shared_ptr<Connection>& connection);
+
+	void restart(std::chrono::steady_clock::time_point time);
+
+	void operator()();
 };

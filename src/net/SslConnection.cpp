@@ -21,8 +21,8 @@
 
 #include "SslConnection.hpp"
 
-#include <sstream>
 #include <openssl/err.h>
+#include <sstream>
 #include <unistd.h>
 
 #include "ConnectionManager.hpp"
@@ -45,6 +45,7 @@ SslConnection::~SslConnection()
 	SSL_free(_sslConnect);
 
 	shutdown(_sock, SHUT_RD);
+	_log.info("Connection '%s' closed for read", name().c_str());
 }
 
 void SslConnection::watch(epoll_event &ev)
@@ -111,6 +112,12 @@ bool SslConnection::processing()
 
 	do
 	{
+		if (timeIsOut())
+		{
+			_timeout = true;
+			break;
+		}
+
 		if (wasFailure())
 		{
 			_error = true;
@@ -135,6 +142,7 @@ bool SslConnection::processing()
 					{
 						_log.trace("Can't complete SSH handshake: already closed %s", name().c_str());
 						shutdown(_sock, SHUT_RD);
+						setTtl(std::chrono::milliseconds(50));
 						_noRead = true;
 //						_noWrite = true;
 						break;
@@ -172,6 +180,7 @@ bool SslConnection::processing()
 				::write(_sock, msg, sizeof(msg));
 
 				shutdown(_sock, SHUT_RD);
+				setTtl(std::chrono::milliseconds(50));
 				_noRead = true;
 				_noWrite = true;
 				break;
@@ -199,7 +208,13 @@ bool SslConnection::processing()
 
 		ConnectionManager::rotateEvents(this->ptr());
 	}
-	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()));
+	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()) || wasFailure() || timeIsOut());
+
+	if (_timeout)
+	{
+		_closed = true;
+		onError();
+	}
 
 	if (_error)
 	{
@@ -212,6 +227,7 @@ bool SslConnection::processing()
 		if (!_outBuff.dataLen())
 		{
 			shutdown(_sock, SHUT_WR);
+			setTtl(std::chrono::milliseconds(50));
 			_noWrite = true;
 		}
 		onComplete();

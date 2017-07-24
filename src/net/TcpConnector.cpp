@@ -25,18 +25,8 @@
 #include <fcntl.h>
 #include <sstream>
 #include <cstring>
-#include <unistd.h>
 
 #include "ConnectionManager.hpp"
-#include "../utils/ShutdownManager.hpp"
-#include "../thread/ThreadPool.hpp"
-
-const int TcpConnector::timeout;
-
-TcpConnector::~TcpConnector()
-{
-	_log.debug("TcpConnector '%s' destroyed", name().c_str());
-}
 
 TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& hostname, std::uint16_t port)
 : Connector(transport)
@@ -153,7 +143,13 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 
 	end:
 
-	_log.debug("TcpConnector '%s' created", name().c_str());
+	_log.info("TcpConnector '%s' created", name().c_str());
+}
+
+TcpConnector::~TcpConnector()
+{
+	free(_buff);
+	_log.debug("TcpConnector '%s' destroyed", name().c_str());
 }
 
 void TcpConnector::watch(epoll_event& ev)
@@ -206,7 +202,6 @@ bool TcpConnector::processing()
 				{
 					onError();
 					shutdown(_sock, SHUT_RDWR);
-					::close(_sock);
 					return false;
 				}
 			}
@@ -253,7 +248,6 @@ bool TcpConnector::processing()
 
 		onError();
 		shutdown(_sock, SHUT_RDWR);
-		::close(_sock);
 		return false;
 //	}
 }
@@ -268,54 +262,9 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 
 	auto newConnection = std::make_shared<TcpConnection>(transport, sock, cliaddr, true);
 
-	onConnect(newConnection);
-
 	newConnection->setTtl(std::chrono::seconds(15));
 
-	class TimeoutWatcher: public Shareable<TimeoutWatcher>
-	{
-	private:
-		std::weak_ptr<Connection> _wp;
-
-	public:
-		TimeoutWatcher(const std::shared_ptr<Connection>& connection): _wp(connection) {};
-
-		void operator()()
-		{
-			auto connection = std::dynamic_pointer_cast<TcpConnection>(_wp.lock());
-			if (!connection)
-			{
-				return;
-			}
-			if (connection->expired())
-			{
-				Log("Timeout").debug("Connection '%s' closed by timeout", connection->name().c_str());
-				connection->close();
-			}
-			else
-			{
-				ThreadPool::enqueue(
-					std::make_shared<std::function<void()>>(
-						[p = ptr()](){
-							(*p)();
-						}
-					),
-					connection->expireTime()
-				);
-			}
-		}
-	};
-
-	auto tow = std::make_shared<TimeoutWatcher>(newConnection);
-
-	ThreadPool::enqueue(
-		std::make_shared<std::function<void()>>(
-			[p = tow](){
-				(*p)();
-			}
-		),
-		newConnection->expireTime()
-	);
+	onConnect(newConnection);
 
 	ConnectionManager::remove(ptr());
 	ConnectionManager::add(newConnection);

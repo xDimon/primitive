@@ -25,13 +25,12 @@
 #include "../utils/Buffer.hpp"
 #include "ReaderConnection.hpp"
 #include "WriterConnection.hpp"
+#include "TimeoutWatcher.hpp"
+
 #include <netinet/in.h>
 
 class TcpConnection: public Connection, public ReaderConnection, public WriterConnection
 {
-public:
-	static const int timeout = 900;
-
 protected:
 	bool _outgoing;
 
@@ -53,7 +52,10 @@ protected:
 
 	virtual bool writeToSocket();
 
-	std::chrono::steady_clock::time_point _expireTime;
+	mutable std::recursive_mutex _mutex;
+	std::chrono::steady_clock::time_point _realExpireTime;
+	std::chrono::steady_clock::time_point _nextExpireTime;
+	std::shared_ptr<TimeoutWatcher> _timeoutWatcher;
 
 	std::function<void(const std::shared_ptr<Context>&)> _completeHandler;
 	std::function<void()> _errorHandler;
@@ -66,17 +68,20 @@ public:
 	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
 	~TcpConnection() override;
 
-	void setTtl(std::chrono::milliseconds ttl)
+	std::recursive_mutex& mutex() const
 	{
-		_expireTime = std::chrono::steady_clock::now() + ttl;
+		return _mutex;
 	}
+	void setTtl(std::chrono::milliseconds ttl);
 	const bool expired() const
 	{
-		return _expireTime <= std::chrono::steady_clock::now();
+		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+		return _realExpireTime <= std::chrono::steady_clock::now();
 	}
 	const auto& expireTime() const
 	{
-		return _expireTime;
+		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+		return _realExpireTime;
 	}
 
 	bool noRead() const

@@ -82,6 +82,9 @@ public:
 	/// Удалить регистрацию соединения
 	static bool remove(const std::shared_ptr<Connection>& connection);
 
+	/// Зарегистрировать таймаут
+	static void timeout(const std::shared_ptr<Connection>& connection);
+
 	/// Проверить и вернуть отложенные события
 	static uint32_t rotateEvents(const std::shared_ptr<Connection>& connection);
 

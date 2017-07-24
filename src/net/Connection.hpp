@@ -53,6 +53,9 @@ protected:
 	/// Соединение готово
 	bool _ready;
 
+	/// Таймаут соединения
+	bool _timeout;
+
 	/// Соединение закрыто
 	bool _closed;
 
@@ -145,6 +148,11 @@ public:
 	inline bool wasFailure() const
 	{
 		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::ERROR));
+	}
+
+	inline bool timeIsOut() const
+	{
+		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::TIMEOUT));
 	}
 
 	virtual void watch(epoll_event &ev) = 0;

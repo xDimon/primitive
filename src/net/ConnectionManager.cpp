@@ -271,6 +271,33 @@ void ConnectionManager::wait()
 	_epool_mutex.unlock();
 }
 
+/// Зарегистрировать таймаут
+void ConnectionManager::timeout(const std::shared_ptr<Connection>& connection)
+{
+	auto& instance = getInstance();
+
+	std::lock_guard<std::recursive_mutex> lockGuard(instance._mutex);
+
+	// Игнорируем незарегистрированные соединения
+	auto it = instance._allConnections.find(connection.get());
+	if (it == instance._allConnections.end())
+	{
+		instance._log.trace("Skip Connection#%p in ConnectionManager::timeout() because unregistered", connection.get());
+		return;
+	}
+
+	connection->appendEvents(static_cast<uint32_t>(ConnectionEvent::TIMEOUT));
+
+	// Если не в списке захваченых...
+	if (instance._capturedConnections.find(connection) == instance._capturedConnections.end())
+	{
+		instance._log.trace("Insert %s into ready connection list and will be processed now in ConnectionManager::timeout()", connection->name().c_str());
+
+		// ...добавляем в список готовых
+		instance._readyConnections.insert(connection);
+	}
+}
+
 /// Захватить соединение
 std::shared_ptr<Connection> ConnectionManager::capture()
 {

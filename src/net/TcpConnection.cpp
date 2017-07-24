@@ -22,15 +22,12 @@
 #include "TcpConnection.hpp"
 #include "ConnectionManager.hpp"
 #include <arpa/inet.h>
+#include <cstring>
 #include <sys/ioctl.h>
 #include <sstream>
-#include <cerrno>
-#include <cstring>
 #include <unistd.h>
-#include "../transport/Transport.hpp"
 #include "../transport/ServerTransport.hpp"
-
-const int TcpConnection::timeout;
+#include "../thread/ThreadPool.hpp"
 
 TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr, bool outgoing)
 : Connection(transport)
@@ -39,7 +36,8 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 , _noWrite(false)
 , _error(false)
 , _closed(false)
-, _expireTime(std::chrono::steady_clock::now())
+, _realExpireTime(std::chrono::steady_clock::now())
+, _nextExpireTime(std::chrono::time_point<std::chrono::steady_clock>::max())
 {
 	_sock = sock;
 
@@ -52,14 +50,36 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 	ss << "[" << _sock << "][" << ip << ":" << htons(_sockaddr.sin_port) << "]";
 	_name = std::move(ss.str());
 
-	_log.debug("TcpConnection '%s' created", name().c_str());
+	_log.info("TcpConnection '%s' created", name().c_str());
 }
 
 TcpConnection::~TcpConnection()
 {
 	shutdown(_sock, SHUT_RD);
+	_log.info("TcpConnection '%s' destroyed", name().c_str());
+}
 
-	_log.debug("TcpConnection '%s' destroyed", name().c_str());
+void TcpConnection::setTtl(std::chrono::milliseconds ttl)
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
+	auto now = std::chrono::steady_clock::now();
+	_realExpireTime = now + ttl;
+
+	auto prev = _nextExpireTime;
+	_nextExpireTime = std::min(_realExpireTime, std::max(now, _nextExpireTime));
+
+	if (prev <= _nextExpireTime)
+	{
+		return;
+	}
+
+	if (!_timeoutWatcher)
+	{
+		_timeoutWatcher = std::make_shared<TimeoutWatcher>(ptr());
+	}
+
+	_timeoutWatcher->restart(_nextExpireTime);
 }
 
 void TcpConnection::watch(epoll_event &ev)
@@ -99,6 +119,12 @@ bool TcpConnection::processing()
 
 	do
 	{
+		if (timeIsOut())
+		{
+			_timeout = true;
+			break;
+		}
+
 		if (wasFailure())
 		{
 			_error = true;
@@ -122,7 +148,12 @@ bool TcpConnection::processing()
 
 		ConnectionManager::rotateEvents(this->ptr());
 	}
-	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()));
+	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()) || wasFailure() || timeIsOut());
+
+	if (_timeout)
+	{
+		_closed = true;
+	}
 
 	if (_error)
 	{
@@ -133,8 +164,10 @@ bool TcpConnection::processing()
 	{
 		if (_outBuff.dataLen() == 0)
 		{
-			shutdown(_sock, SHUT_WR);
 			_noWrite = true;
+
+			shutdown(_sock, SHUT_RDWR);
+			setTtl(std::chrono::milliseconds(50));
 		}
 	}
 
@@ -278,8 +311,10 @@ bool TcpConnection::readFromSocket()
 
 void TcpConnection::close()
 {
-	shutdown(_sock, SHUT_RD);
 	_noRead = true;
+	_inBuff.skip(_inBuff.dataLen());
+
+	shutdown(_sock, SHUT_RD);
 }
 
 void TcpConnection::addCompleteHandler(std::function<void(const std::shared_ptr<Context>&)> handler)
