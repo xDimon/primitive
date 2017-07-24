@@ -67,9 +67,9 @@ private:                                                                    \
     Service(const Setting& setting);                                        \
                                                                             \
 public:                                                                     \
-    virtual ~Service();                                                     \
-    virtual void activate();                                                \
-    virtual void deactivate();                                              \
+    ~Service() override;                                                    \
+    void activate() override;                                               \
+    void deactivate() override;                                             \
                                                                             \
 private:                                                                    \
     static const bool __dummy;

@@ -60,11 +60,11 @@ public:
 		const std::string& host,
 		std::uint16_t port
 	);
-	virtual ~TcpConnector();
+	~TcpConnector() override;
 
-	virtual void watch(epoll_event& ev) override;
+	void watch(epoll_event& ev) override;
 
-	virtual bool processing() override;
+	bool processing() override;
 
 	void addConnectedHandler(std::function<void(const std::shared_ptr<TcpConnection>&)>);
 	void addErrorHandler(std::function<void()>);

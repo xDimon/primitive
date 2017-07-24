@@ -83,9 +83,9 @@ public:                                                                         
         _log.debug("Transport '%s' destroyed", name().c_str());                                 \
     }                                                                                           \
                                                                                                 \
-    virtual bool processing(const std::shared_ptr<Connection>& connection) override;            \
-    virtual void bindHandler(const std::string& selector, const std::shared_ptr<Handler>&) override; \
-    virtual std::shared_ptr<Handler> getHandler(const std::string& subject) override;           \
+    bool processing(const std::shared_ptr<Connection>& connection) override;                    \
+    void bindHandler(const std::string& selector, const std::shared_ptr<Handler>&) override;    \
+    std::shared_ptr<Handler> getHandler(const std::string& subject) override;                   \
                                                                                                 \
 private:                                                                                        \
     static const bool __dummy;

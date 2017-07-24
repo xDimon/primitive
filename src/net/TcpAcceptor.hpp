@@ -35,13 +35,13 @@ protected:
 
 public:
 	TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port);
-	virtual ~TcpAcceptor();
+	~TcpAcceptor() override;
 
-	virtual void watch(epoll_event &ev);
+	void watch(epoll_event &ev) override;
 
 	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
 
-	virtual bool processing();
+	bool processing() override;
 
 	static std::shared_ptr<TcpAcceptor> create(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port)
 	{

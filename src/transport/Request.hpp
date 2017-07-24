@@ -67,7 +67,7 @@ public:
 
 	~Request() override = default;
 
-	bool operator()()
+	bool operator()() override
 	{
 		_error.clear();
 		return execute();

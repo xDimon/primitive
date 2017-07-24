@@ -54,18 +54,18 @@ public:
 	size_t size() const;
 
 	virtual const std::vector<char>& data();
-	virtual const char* dataPtr() const;
-	virtual size_t dataLen() const;
+	const char* dataPtr() const override;
+	size_t dataLen() const override;
 
-	virtual bool show(void* data, size_t length) const;
-	virtual bool skip(size_t length);
-	virtual bool read(void* data, size_t length);
+	bool show(void* data, size_t length) const override;
+	bool skip(size_t length) override;
+	bool read(void* data, size_t length) override;
 
 //	virtual std::vector<char>& space() const;
-	virtual char* spacePtr() const;
-	virtual size_t spaceLen() const;
+	char* spacePtr() const override;
+	size_t spaceLen() const override;
 
-	virtual bool prepare(size_t length);
-	virtual bool forward(size_t length);
-	virtual bool write(const void* data, size_t length);
+	bool prepare(size_t length) override;
+	bool forward(size_t length) override;
+	bool write(const void* data, size_t length) override;
 };

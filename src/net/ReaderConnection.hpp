@@ -31,24 +31,24 @@ protected:
 	Buffer _inBuff;
 
 public:
-	virtual inline const char * dataPtr() const
+	inline const char * dataPtr() const override
 	{
 		return _inBuff.dataPtr();
 	}
-	virtual inline size_t dataLen() const
+	inline size_t dataLen() const override
 	{
 		return _inBuff.dataLen();
 	}
 
-	virtual inline bool show(void *data, size_t length) const
+	inline bool show(void *data, size_t length) const override
 	{
 		return _inBuff.show(data, length);
 	}
-	virtual inline bool skip(size_t length)
+	inline bool skip(size_t length) override
 	{
 		return _inBuff.skip(length);
 	}
-	virtual inline bool read(void *data, size_t length)
+	inline bool read(void *data, size_t length) override
 	{
 		return _inBuff.read(data, length);
 	}

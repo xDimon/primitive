@@ -64,7 +64,7 @@ public:
 	void operator= (TcpConnection const&) = delete;
 
 	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
-	virtual ~TcpConnection();
+	~TcpConnection() override;
 
 	void setTtl(std::chrono::milliseconds ttl)
 	{
@@ -84,9 +84,9 @@ public:
 		return _noRead;
 	}
 
-	virtual void watch(epoll_event &ev);
+	void watch(epoll_event &ev) override;
 
-	virtual bool processing();
+	bool processing() override;
 
 	void addCompleteHandler(std::function<void(const std::shared_ptr<Context>&)>);
 	void addErrorHandler(std::function<void()>);

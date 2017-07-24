@@ -24,31 +24,30 @@
 #include "../utils/Buffer.hpp"
 #include "../utils/Writer.hpp"
 
-class WriterConnection: public Writer
+class WriterConnection : public Writer
 {
 protected:
-	/// Буфер вывода
 	Buffer _outBuff;
 
 public:
-	virtual inline char * spacePtr() const
+	inline char* spacePtr() const override
 	{
 		return _outBuff.spacePtr();
 	}
-	virtual inline size_t spaceLen() const
+	inline size_t spaceLen() const override
 	{
 		return _outBuff.spaceLen();
 	}
 
-	virtual inline bool prepare(size_t length)
+	inline bool prepare(size_t length) override
 	{
 		return _outBuff.prepare(length);
 	}
-	virtual inline bool forward(size_t length)
+	inline bool forward(size_t length) override
 	{
 		return _outBuff.forward(length);
 	}
-	virtual inline bool write(const void *data, size_t length)
+	inline bool write(const void* data, size_t length) override
 	{
 		return _outBuff.write(data, length);
 	}

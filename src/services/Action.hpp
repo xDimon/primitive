@@ -105,8 +105,8 @@ private:                                                                        
 public:                                                                                         \
     ~ActionName() override = default;                                                           \
                                                                                                 \
-    virtual bool validate() override;                                                           \
-    virtual bool execute() override;                                                            \
+    bool validate() override;                                                                   \
+    bool execute() override;                                                                    \
                                                                                                 \
 private:                                                                                        \
     static auto create(                                                                         \
