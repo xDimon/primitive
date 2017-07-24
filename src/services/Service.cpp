@@ -30,7 +30,7 @@ Service::Service(const Setting& setting)
 	{
 		setting.lookupValue("name", _name);
 	}
-	if (!_name.length() && setting.exists("type"))
+	if (_name.empty() && setting.exists("type"))
 	{
 		std::string type;
 		setting.lookupValue("type", type);
@@ -39,7 +39,7 @@ Service::Service(const Setting& setting)
 		ss << "_service[" << type << "]";
 		_name = std::move(ss.str());
 	}
-	if (!_name.length())
+	if (_name.empty())
 	{
 		std::ostringstream ss;
 		ss << "_service[" << std::hex << this << "]";

@@ -64,7 +64,7 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 	servaddr.sin_family = AF_INET;
 
 	// Задаем хост
-	if (_host.length())
+	if (!_host.empty())
 	{
 		if (inet_aton(_host.c_str(), &servaddr.sin_addr) == 0)
 		{

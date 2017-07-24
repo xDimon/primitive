@@ -32,7 +32,7 @@ ServerTransport::ServerTransport(const Setting& setting)
 		setting.lookupValue("name", name);
 	}
 
-	if (!name.length())
+	if (name.empty())
 	{
 		std::ostringstream ss;
 		ss << "_server#" << this;
