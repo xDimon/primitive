@@ -35,8 +35,10 @@ Task::Task()
 
 Task::Task(const std::shared_ptr<Func>& function)
 : _function(function)
-, _until(Time::min())
-, _immediately(true)
+//, _until(Time::min())
+//, _immediately(true)
+, _until(Clock::now())
+, _immediately(false)
 , _tmpContext(nullptr)
 , _mainContext(nullptr)
 {

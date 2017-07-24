@@ -57,6 +57,25 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 		// Незавершенного запроса нет
 		if (!context->getRequest())
 		{
+			if (connection->dataLen() >= 4)
+			{
+				if (
+					strncasecmp(connection->dataPtr(), "GET", 3) &&
+					strncasecmp(connection->dataPtr(), "POST", 4)
+				)
+				{
+					_log.debug("Bad request");
+
+					HttpResponse(400)
+						<< HttpHeader("Connection", "Close")
+						<< "Bad request ← Bad request line ← Bad method ← Unknown method" << "\r\n"
+						>> *connection;
+
+					connection->setTtl(std::chrono::milliseconds(50));
+					break;
+				}
+			}
+
 			// Проверка готовности заголовков
 			auto endHeaders = static_cast<const char*>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
 
