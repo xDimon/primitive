@@ -24,21 +24,24 @@
 #include <P7_Client.h>
 #include <P7_Trace.h>
 #include <mutex>
+#include "Log.hpp"
 
-class LoggerManager
+class LoggerManager final
 {
 private:
 	LoggerManager();
 	virtual ~LoggerManager();
 
 	LoggerManager(LoggerManager const&) = delete;
-	void operator= (LoggerManager const&) = delete;
+	void operator=(LoggerManager const&) = delete;
 
 	static LoggerManager &getInstance()
 	{
 		static LoggerManager instance;
 		return instance;
 	}
+
+	Log::Detail _defaultLogLevel;
 
 	std::recursive_mutex _mutex;
 
@@ -50,6 +53,16 @@ public:
 
 	static bool regThread(std::string threadName);
 	static bool unregThread();
+
+	static void setDefaultLogLevel(Log::Detail level)
+	{
+		getInstance()._defaultLogLevel = level;
+	};
+
+	static Log::Detail defaultLogLevel()
+	{
+		return getInstance()._defaultLogLevel;
+	}
 
 	static IP7_Trace *getLogTrace();
 };

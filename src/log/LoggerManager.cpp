@@ -27,14 +27,15 @@ bool LoggerManager::enabled = true;
 
 LoggerManager::LoggerManager()
 {
-	_logClient = P7_Create_Client("/P7.Sink=Console /P7.Pool=32768 /P7.Format=%tm\t%tn\t%mn\t%lv\t%ms");
-	if (!_logClient)
+	_logClient = P7_Create_Client("/P7.Pool=4096 /P7.Format=%tm\t%tn\t%mn\t%lv\t%ms /P7.Sink=Console");
+//	_logClient = P7_Create_Client("/P7.Pool=32768 /P7.Format=%tm\t%tn\t%mn\t%lv\t%ms /P7.Sink=FileTxt /P7.Dir=/home/di/Projects/Primitive/ /P7.Roll=1mb /P7.Files=3");
+	if (_logClient == nullptr)
 	{
 		throw std::runtime_error("Can't create p7-client");
 	}
 
 	_logTrace = P7_Create_Trace(_logClient, "TraceChannel");
-	if (!_logTrace)
+	if (_logTrace == nullptr)
 	{
 		throw std::runtime_error("Can't create p7-channel");
 	}
@@ -45,6 +46,8 @@ LoggerManager::LoggerManager()
 
 	P7_Set_Crash_Handler();
 
+	_defaultLogLevel = Log::Detail::OFF;
+
 	enabled = true;
 }
 
@@ -52,13 +55,13 @@ LoggerManager::~LoggerManager()
 {
 	enabled = false;
 
-    if (_logTrace)
+    if (_logTrace != nullptr)
     {
         _logTrace->Release();
         _logTrace = nullptr;
     }
 
-    if (_logClient)
+    if (_logClient != nullptr)
     {
         _logClient->Release();
         _logClient = nullptr;

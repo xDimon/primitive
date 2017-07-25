@@ -37,7 +37,7 @@ protected:
 	Log _log;
 	const Setting& _setting;
 
-	std::set<std::shared_ptr<ServicePart>> _parts;
+	std::set<std::shared_ptr<ServicePart>, ServicePart::Comparator> _parts;
 
 	explicit Service(const Setting& setting);
 

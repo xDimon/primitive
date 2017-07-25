@@ -21,7 +21,7 @@
 
 #pragma once
 
-//#define LOG_TRACE_ON
+#define LOG_TRACE_ON
 #define LOG_DEBUG_ON
 
 #include <string>
@@ -47,7 +47,9 @@ public:
 		INFO,
 		WARN,
 		ERROR,
-		CRITICAL
+		CRITICAL,
+		OFF,
+		UNDEFINED
 	};
 
 private:
@@ -57,10 +59,10 @@ private:
 	Detail _detail;
 
 public:
-	explicit Log(const std::string& name, Detail detail = Detail::INFO);
+	explicit Log(const std::string& name, Detail detail = Detail::UNDEFINED);
 	Log() : Log("") {};
 
-	virtual ~Log();
+	~Log() = default;
 
 	void setName(const std::string& name);
 	void setDetail(Detail detail);

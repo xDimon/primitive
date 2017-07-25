@@ -26,9 +26,12 @@
 #include "../src/server/Server.hpp"
 #include "../src/utils/Daemon.hpp"
 #include "../src/utils/ShutdownManager.hpp"
+#include "../src/log/LoggerManager.hpp"
 
 int main(int argc, char *argv[])
 {
+	LoggerManager::setDefaultLogLevel(Log::Detail::TRACE);
+
 	Log log("Main");
 	log.info("Start daemon");
 

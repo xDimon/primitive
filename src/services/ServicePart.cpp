@@ -14,39 +14,23 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.07.02
+// File created on: 2017.07.25
 
-// ServicePart.hpp
-
-
-#pragma once
+// ServicePart.cpp
 
 
-#include "../utils/Shareable.hpp"
-#include "../utils/Named.hpp"
-#include "../log/Log.hpp"
-#include "../configs/Setting.hpp"
+#include <sstream>
+#include "ServicePart.hpp"
+#include "Service.hpp"
 
-class Service;
-
-class ServicePart : public Shareable<ServicePart>, public Named
+ServicePart::ServicePart(const std::shared_ptr<Service>& service)
+: _service(service)
 {
-protected:
-	std::weak_ptr<Service> _service;
-	Log _log;
-
-public:
-	explicit ServicePart(const std::shared_ptr<Service>& service);
-	~ServicePart() override = default;
-
-	virtual void init(const Setting& setting) {};
-
-	class Comparator
+	if (_service.expired())
 	{
-	public:
-		bool operator()(const std::shared_ptr<ServicePart>& left, const std::shared_ptr<ServicePart>& right) const
-		{
-			return left->name() < right->name();
-		}
-	};
-};
+		throw std::runtime_error("Bad service");
+	}
+	std::ostringstream ss;
+	ss << service->name() << ":[__part#" << this << "]";
+	_name = std::move(ss.str());
+}

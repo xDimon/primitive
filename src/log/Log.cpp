@@ -37,10 +37,11 @@ Log::Log(const std::string& name, Detail detail)
 	module = nullptr;
 
 	setName(name);
-}
 
-Log::~Log()
-{
+	if (_detail == Detail::UNDEFINED)
+	{
+		_detail = LoggerManager::defaultLogLevel();
+	}
 }
 
 void Log::setDetail(Detail detail)
