@@ -38,17 +38,19 @@ private:
 
 	std::recursive_mutex _mutex;
 
+	size_t _workerCount;
+
 	std::shared_ptr<Config> _configs;
 
 	std::map<const std::string, const std::shared_ptr<Service>> _services;
 
 public:
-	Server(const std::shared_ptr<Config> &configs);
+	explicit Server(const std::shared_ptr<Config> &configs);
 	virtual ~Server();
 
 	static Server& getInstance()
 	{
-		if (!_instance)
+		if (_instance == 0)
 		{
 			throw std::runtime_error("Server isn't instantiate yet");
 		}

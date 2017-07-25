@@ -31,7 +31,7 @@ Config::Config(const std::shared_ptr<Options>& options)
 		throw std::runtime_error("Bad options");
 	}
 
-	auto& configPath = _options->getConfig();
+	auto& configPath = _options->configFile();
 
 	try
 	{

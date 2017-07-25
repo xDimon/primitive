@@ -33,6 +33,7 @@ Server* Server::_instance = nullptr;
 
 Server::Server(const std::shared_ptr<Config>& configs)
 : _log("Server")
+, _workerCount(0)
 , _configs(configs)
 {
 	if (_instance != nullptr)
@@ -122,6 +123,26 @@ Server::Server(const std::shared_ptr<Config>& configs)
 		_log.error("Can't init one of service ← %s", exception.what());
 	}
 
+	try
+	{
+		const auto& settings = _configs->getRoot()["core"];
+
+		uint count = 0;
+		if (settings.lookupValue("workers", count))
+		{
+			_workerCount = count;
+		}
+	}
+	catch (const libconfig::SettingNotFoundException& exception)
+	{
+		_log.error("Core config not found");
+		throw std::runtime_error("Services' config not found");
+	}
+	catch (const std::runtime_error& exception)
+	{
+		_log.error("Can't init one of service ← %s", exception.what());
+	}
+
 	ThreadPool::enqueue(
 		std::make_shared<Task::Func>(
 			ConnectionManager::dispatch
@@ -145,7 +166,8 @@ void Server::start()
 	_log.info("Server start (pid=%u)", getpid());
 
 	ThreadPool::hold();
-	ThreadPool::setThreadNum(3);
+
+	ThreadPool::setThreadNum(std::max(_workerCount, 3ul));
 
 	Transports::enableAll();
 }

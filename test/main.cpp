@@ -30,7 +30,7 @@
 
 int main(int argc, char *argv[])
 {
-	LoggerManager::setDefaultLogLevel(Log::Detail::TRACE);
+	LoggerManager::setDefaultLogLevel(Log::Detail::INFO);
 
 	Log log("Main");
 	log.info("Start daemon");

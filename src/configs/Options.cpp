@@ -33,13 +33,14 @@ Options::Options(int argc, char **argv)
 #undef PRIMITIVE_DEF_NAME
 {
 	add_options()
-	("c,config", "Path to config file", cxxopts::value<std::string>(_configFile), "[config] helper (?)")
+		("c,config", "Path to config file", cxxopts::value<std::string>(_configFile), "[config] helper (?)")
 	;
 
-	parse(argc, argv);
-}
-
-const std::string& Options::getConfig() const
-{
-	return _configFile;
+	try
+	{
+		parse(argc, argv);
+	}
+	catch (...)
+	{
+	}
 }

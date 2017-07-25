@@ -32,7 +32,10 @@ private:
 
 public:
 	Options(int argc, char *argv[]);
-
-	const std::string& getConfig() const;
 	~Options() = default;
+
+	const std::string& configFile() const
+	{
+		return _configFile;
+	}
 };
