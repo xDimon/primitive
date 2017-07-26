@@ -153,11 +153,11 @@ SVal* UrlSerializer::decodeValue(const std::string& strval)
 		return new SStr();
 	}
 
-	// Definitely not number
-	if (!isdigit(strval[0]) && strval[0] != '-' && strval[0] != '+')
-	{
+//	// Definitely not number
+//	if (!isdigit(strval[0]) && strval[0] != '-' && strval[0] != '+')
+//	{
 		return new SStr(strval);
-	}
+//	}
 
 	// Deeper recognizing
 	std::istringstream iss(strval);
