@@ -55,7 +55,7 @@ public:
 
 	static Server& getInstance()
 	{
-		if (_instance == 0)
+		if (_instance == nullptr)
 		{
 			throw std::runtime_error("Server isn't instantiate yet");
 		}

@@ -101,6 +101,19 @@ public:
 	virtual bool commit() = 0;
 	virtual bool rollback() = 0;
 
-	virtual bool query(const std::string& query, DbResult* res = nullptr, size_t* affected = nullptr, size_t* insertId = nullptr) __attribute_warn_unused_result__ = 0;
+	inline bool query(const std::string& sql) __attribute_warn_unused_result__
+	{
+		return query(sql, nullptr, nullptr, nullptr);
+	}
+	inline bool query(const std::string& sql, DbResult* res) __attribute_warn_unused_result__
+	{
+		return query(sql, res, nullptr, nullptr);
+	}
+	inline bool query(const std::string& sql, DbResult* res, size_t* affected) __attribute_warn_unused_result__
+	{
+		return query(sql, res, affected, nullptr);
+	}
+	virtual bool query(const std::string& sql, DbResult* res, size_t* affected, size_t* insertId) __attribute_warn_unused_result__ = 0;
+
 	virtual bool multiQuery(const std::string& sql) __attribute_warn_unused_result__ = 0;
 };

@@ -22,6 +22,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 
 class Writer
 {
@@ -32,4 +33,9 @@ public:
 	virtual bool prepare(size_t length) = 0;
 	virtual bool forward(size_t length) = 0;
 	virtual bool write(const void *data, size_t length) = 0;
+
+	inline bool write(const std::string& str)
+	{
+		return write(str.c_str(), str.length());
+	}
 };

@@ -57,7 +57,7 @@ std::string escape(const std::string& string)
 			case '\'': ret += "&apos;";
 				break;
 
-			default: ret.push_back(c);
+			default: ret.push_back(static_cast<uint8_t>(c));
 		}
 	}
 

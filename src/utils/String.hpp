@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <stddef.h>
 #include <algorithm>
 #include <cctype>
 #include <functional>

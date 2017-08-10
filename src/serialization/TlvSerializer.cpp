@@ -89,7 +89,7 @@ SVal* TlvSerializer::decode(const std::string& data)
 	}
 
 	// Проверяем лишние данные в конце
-	if (!_iss.eof() && (_flags & Serializer::STRICT))
+	if (!_iss.eof() && (_flags & Serializer::STRICT) != 0)
 	{
 		throw std::runtime_error("Redundant bytes after parsed data");
 	}
@@ -118,7 +118,7 @@ SVal* TlvSerializer::decodeValue()
 		throw std::runtime_error("Unexpect out of data during parse value");
 	}
 
-	Token token = static_cast<Token>(_iss.peek());
+	auto token = static_cast<Token>(_iss.peek());
 	switch (token)
 	{
 		case Token::FALSE:
@@ -266,18 +266,21 @@ SStr* TlvSerializer::decodeString()
 			_iss.ignore();
 			return str.release();
 		}
+
 		// Управляющий символ
-		else if (c < ' ' && c != '\t' && c != '\r' && c != '\n')
+		if (c < ' ' && c != '\t' && c != '\r' && c != '\n')
 		{
 			throw std::runtime_error("Bad symbol in string value");
 		}
+
 		// Некорректный символ
-		else if (c > 0b1111'1101)
+		if (c > 0b1111'1101)
 		{
 			throw std::runtime_error("Bad symbol in string value");
 		}
+
 		// Однобайтовый символ
-		else if (c < 0b1000'0000)
+		if (c < 0b1000'0000)
 		{
 			_iss.ignore();
 			str->insert(static_cast<uint8_t>(c));
@@ -316,7 +319,7 @@ SStr* TlvSerializer::decodeString()
 			{
 				throw std::runtime_error("Bad symbol in string value");
 			}
-			while (--bytes)
+			while (--bytes > 0)
 			{
 				if (_iss.eof())
 				{
@@ -365,7 +368,7 @@ SBinary* TlvSerializer::decodeBinary()
 
 	std::string bin;
 
-	while (size--)
+	while (size-- > 0)
 	{
 		if (!_iss.eof() && _iss.peek() == -1)
 		{
@@ -457,14 +460,14 @@ SNum* TlvSerializer::decodeFloat()
 				char c[4];
 			} data = {0};
 
-			for (int i = 0; i < 4; i++)
+			for (char& i : data.c)
 			{
 				auto c = _iss.get();
 				if (c == -1)
 				{
 					throw std::runtime_error("Unexpect out of data during parse number value");
 				}
-				data.c[i] = static_cast<char>(c);
+				i = static_cast<char>(c);
 			}
 
 			return new SFloat(le32toh(data.f));
@@ -493,7 +496,7 @@ SNum* TlvSerializer::decodeFloat()
 	}
 }
 
-void TlvSerializer::encodeNull(const SNull*)
+void TlvSerializer::encodeNull(const SNull* value)
 {
 	_oss.put(static_cast<char>(Token::NULL));
 }
@@ -562,7 +565,7 @@ void TlvSerializer::encodeInteger(const SInt* value)
 
 	bool negative = value->value() < 0;
 
-	uint64_t absValue = static_cast<uint64_t>(llabs(value->value()));
+	auto absValue = static_cast<uint64_t>(llabs(value->value()));
 
 	if (absValue == 0)
 	{
@@ -608,7 +611,7 @@ void TlvSerializer::encodeInteger(const SInt* value)
 
 void TlvSerializer::encodeFloat(const SFloat* value)
 {
-	int64_t i64 = static_cast<int64_t>(value->value());
+	auto i64 = static_cast<int64_t>(value->value());
 	if (static_cast<decltype(value->value())>(i64) == value->value())
 	{
 		SInt intVal(i64);
@@ -616,7 +619,7 @@ void TlvSerializer::encodeFloat(const SFloat* value)
 		return;
 	}
 
-	float_t f32 = static_cast<float_t>(value->value());
+	auto f32 = static_cast<float_t>(value->value());
 	if (static_cast<decltype(value->value())>(f32) == value->value())
 	{
 		char data[4];
@@ -624,29 +627,24 @@ void TlvSerializer::encodeFloat(const SFloat* value)
 		memcpy(data, &htole32(f32), sizeof(data));
 
 		_oss.put(static_cast<char>(Token::FLOAT_32));
-		for (auto i = 0; i < 4; i++)
+		for (char i : data)
 		{
-			_oss.put(data[i]);
+			_oss.put(i);
 		}
 		return;
 	}
 
-	double_t f64 = static_cast<double_t>(value->value());
-//	if (static_cast<decltype(value->value())>(f64) == value->value())
-//	{
-		char data[8];
+	auto f64 = static_cast<double_t>(value->value());
 
-		memcpy(data, &htole64(f64), sizeof(data));
+	char data[8];
 
-		_oss.put(static_cast<char>(Token::FLOAT_64));
-		for (auto i = 0; i < 8; i++)
-		{
-			_oss.put(data[i]);
-		}
-		return;
-//	}
-//
-//	throw std::runtime_error("Loose precission");
+	memcpy(data, &htole64(f64), sizeof(data));
+
+	_oss.put(static_cast<char>(Token::FLOAT_64));
+	for (char i : data)
+	{
+		_oss.put(i);
+	}
 }
 
 void TlvSerializer::encodeArray(const SArr* value)

@@ -52,7 +52,7 @@ Action::Action(
 	else
 	{
 		int status;
-		_actionName = abi::__cxa_demangle(typeid(*this).name(), 0, 0, &status);
+		_actionName = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
 	}
 
 	auto aux = dynamic_cast<const SObj*>(input->get("_"));

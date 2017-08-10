@@ -68,8 +68,17 @@ public:
 
 	virtual bool execute() = 0;
 
-	virtual const SObj* response(const SVal* data = nullptr) const;
-	virtual const SObj* error(const std::string& message, const SVal* data = nullptr) const;
+	virtual const SObj* response(const SVal* data) const;
+	inline const SObj* response() const
+	{
+		return response(nullptr);
+	}
+
+	virtual const SObj* error(const std::string& message, const SVal* data) const;
+	virtual const SObj* error(const std::string& message) const
+	{
+		return error(message, nullptr);
+	}
 
 	inline auto requestId() const
 	{

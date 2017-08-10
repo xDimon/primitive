@@ -165,7 +165,7 @@ static uint32_t decodePercentEscaped(std::istringstream& iss, bool& isUtf8)
 	auto fc = c;
 	auto p = iss.tellg();
 
-	while (--bytes)
+	while (--bytes > 0)
 	{
 		if (iss.eof())
 		{
@@ -209,42 +209,42 @@ std::string PercentEncoding::decode(const std::string& input)
 
 			if (symbol <= 0b0111'1111) // 7bit -> 1byte
 			{
-				oss.put(symbol);
+				oss.put(static_cast<uint8_t>(symbol));
 			}
 			else if (symbol <= 0b0111'1111'1111) // 11bit -> 2byte
 			{
-				oss.put(0b1100'0000 | (0b0001'1111 & (symbol >> 6)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
+				oss.put(static_cast<uint8_t>(0b1100'0000 | (0b0001'1111 & (symbol >> 6))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 0))));
 			}
 			else if (symbol <= 0b1111'1111'1111'1111) // 16bit -> 3byte
 			{
-				oss.put(0b1110'0000 | (0b0000'1111 & (symbol >> 12)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
+				oss.put(static_cast<uint8_t>(0b1110'0000 | (0b0000'1111 & (symbol >> 12))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 6))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 0))));
 			}
 			else if (symbol <= 0b0001'1111'1111'1111'1111'1111) // 21bit -> 4byte
 			{
-				oss.put(0b1111'0000 | (0b0000'0111 & (symbol >> 18)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 12)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
+				oss.put(static_cast<uint8_t>(0b1111'0000 | (0b0000'0111 & (symbol >> 18))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 12))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 6))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 0))));
 			}
 			else if (symbol <= 0b0011'1111'1111'1111'1111'1111'1111) // 26bit -> 5byte
 			{
-				oss.put(0b1111'1000 | (0b0000'0011 & (symbol >> 24)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 18)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 12)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
+				oss.put(static_cast<uint8_t>(0b1111'1000 | (0b0000'0011 & (symbol >> 24))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 18))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 12))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 6))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 0))));
 			}
 			else if (symbol <= 0b0111'1111'1111'1111'1111'1111'1111'1111) // 31bit -> 6byte
 			{
-				oss.put(0b1111'1100 | (0b0000'0001 & (symbol >> 30)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 24)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 18)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 12)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
-				oss.put(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
+				oss.put(static_cast<uint8_t>(0b1111'1100 | (0b0000'0001 & (symbol >> 30))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 24))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 18))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 12))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 6))));
+				oss.put(static_cast<uint8_t>(0b1000'0000 | (0b0011'1111 & (symbol >> 0))));
 			}
 		}
 		else if (c == -1)
@@ -254,7 +254,7 @@ std::string PercentEncoding::decode(const std::string& input)
 		else
 		{
 			iss.ignore();
-			oss.put(c);
+			oss.put(static_cast<uint8_t>(c));
 		}
 	}
 
@@ -273,7 +273,7 @@ std::string PercentEncoding::encode(const std::string& input)
 		{
 			break;
 		}
-		if (need_encode(c))
+		if (need_encode(static_cast<uint8_t>(c)))
 		{
 			oss << "%"
 				<< std::uppercase
@@ -284,7 +284,7 @@ std::string PercentEncoding::encode(const std::string& input)
 		}
 		else
 		{
-			oss.put(c);
+			oss.put(static_cast<uint8_t>(c));
 		}
 	}
 

@@ -71,7 +71,7 @@ void SessionManager::closeSession(Session::HID uid)
 	}
 
 	auto sid = i->second->sid();
-	if (sid)
+	if (sid != 0)
 	{
 		std::lock_guard<std::mutex> lockGuard2(getInstance()._mutexSid2hid);
 		getInstance()._sid2hid.erase(sid);

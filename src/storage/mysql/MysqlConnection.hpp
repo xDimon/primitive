@@ -65,9 +65,8 @@ public:
 	{
 		std::string res;
 		res.reserve(str.length() * 2);
-		for (size_t i = 0; i < str.length(); ++i)
+		for (char c : str)
 		{
-			auto& c = str[i];
 			if (c == '\x00' || c == '\n' || c == '\r' || c == '\\' || c == '\'' || c == '"' || c == '\x1A')
 			{
 				res.push_back('\\');
@@ -79,7 +78,7 @@ public:
 
 	bool alive() override
 	{
-		return !mysql_ping(_mysql);
+		return mysql_ping(_mysql) == 0;
 	}
 
 	bool startTransaction() override;

@@ -24,7 +24,6 @@
 #include "../thread/ThreadPool.hpp"
 #include "ShutdownManager.hpp"
 
-#include <unistd.h>
 #include <climits>
 #include <sstream>
 #include <csignal>
@@ -33,6 +32,7 @@
 #include <execinfo.h>
 #include <sys/prctl.h>
 #include <dlfcn.h>
+#include <unistd.h>
 #include <cxxabi.h>
 
 static void SignalsHandler(int sig, siginfo_t* info, void* context);
@@ -40,7 +40,7 @@ static void SignalsHandler(int sig, siginfo_t* info, void* context);
 const std::string& ExePath()
 {
 	static std::string result;
-	if (!result.length())
+	if (result.empty())
 	{
 		std::vector<char> path;
 		path.resize(PATH_MAX);
@@ -95,7 +95,7 @@ void StartManageSignals()
 		sigset_t mask;
 		sigemptyset(&mask);
 		sigaddset(&mask, n);
-		if (ignoredSignals.count(n))
+		if (ignoredSignals.find(n) != ignoredSignals.end())
 		{
 			sigprocmask(SIG_BLOCK, &mask, nullptr);
 		}
@@ -110,7 +110,7 @@ void StartManageSignals()
 void SignalsHandler(int sig, siginfo_t* info, void* context)
 {
 	static volatile bool fatalError = false;
-	bool needBacktrace = false;
+	bool needBacktrace;
 	bool needReraise = false;
 	bool needAbort = false;
 

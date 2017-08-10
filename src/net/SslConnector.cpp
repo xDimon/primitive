@@ -50,5 +50,5 @@ void SslConnector::createConnection(int sock, const sockaddr_in &cliaddr)
 	onConnect(newConnection);
 
 	ConnectionManager::remove(ptr());
-	ConnectionManager::add(newConnection->ptr());
+	ConnectionManager::add(newConnection);
 }

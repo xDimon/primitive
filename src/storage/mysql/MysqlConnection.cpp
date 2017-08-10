@@ -36,11 +36,11 @@ MysqlConnection::MysqlConnection(
 , _mysql(nullptr)
 , _transaction(0)
 {
-	my_bool on = (my_bool)0;
+	my_bool on = 0;
 	unsigned int timeout = 5;
 
 	_mysql = mysql_init(_mysql);
-	if (!_mysql)
+	if (_mysql == nullptr)
 	{
 		throw std::runtime_error("Can't init mysql connection");
 	}
@@ -50,7 +50,7 @@ MysqlConnection::MysqlConnection(
 	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
 	mysql_options(_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+00:00';\n");
 
-	if (!mysql_real_connect(
+	if (mysql_real_connect(
 		_mysql,
 		dbserver.c_str(),
 		dbuser.c_str(),
@@ -59,7 +59,7 @@ MysqlConnection::MysqlConnection(
 		dbport,
 		nullptr,
 		CLIENT_REMEMBER_OPTIONS
-	))
+	) == 0)
 	{
 		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
 	}
@@ -79,11 +79,11 @@ MysqlConnection::MysqlConnection(
 , _mysql(nullptr)
 , _transaction(0)
 {
-	my_bool on = (my_bool)0;
+	my_bool on = 0;
 	unsigned int timeout = 5;
 
 	_mysql = mysql_init(_mysql);
-	if (!_mysql)
+	if (_mysql == nullptr)
 	{
 		throw std::runtime_error("Can't init mysql connection");
 	}
@@ -93,7 +93,7 @@ MysqlConnection::MysqlConnection(
 	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
 	mysql_options(_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+00:00';\n");
 
-	if (!mysql_real_connect(
+	if (mysql_real_connect(
 		_mysql,
 		nullptr,
 		dbuser.c_str(),
@@ -102,7 +102,7 @@ MysqlConnection::MysqlConnection(
 		0,
 		dbsocket.c_str(),
 		CLIENT_REMEMBER_OPTIONS
-	))
+	) == 0)
 	{
 		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
 	}
@@ -118,13 +118,13 @@ MysqlConnection::~MysqlConnection()
 
 bool MysqlConnection::startTransaction()
 {
-	if (_transaction)
+	if (_transaction > 0)
 	{
 		_transaction++;
 		return true;
 	}
 
-	if (query("START TRANSACTION;"))
+	if (DbConnection::query("START TRANSACTION;"))
 	{
 		_transaction = 1;
 		return true;
@@ -150,7 +150,7 @@ bool MysqlConnection::commit()
 		Log("mysql").warn("Internal error: commit when counter of transaction is zero");
 		return false;
 	}
-	if (query("COMMIT;"))
+	if (DbConnection::query("COMMIT;"))
 	{
 		_transaction = 0;
 		return true;
@@ -166,12 +166,12 @@ bool MysqlConnection::rollback()
 		_transaction--;
 		return true;
 	}
-	if (!_transaction)
+	if (_transaction == 0)
 	{
 		Log("mysql").warn("Internal error: rollback when counter of transaction is zero");
 		return false;
 	}
-	if (query("ROLLBACK;"))
+	if (DbConnection::query("ROLLBACK;"))
 	{
 		_transaction = 0;
 		return true;
@@ -191,12 +191,12 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 		return false;
 	}
 
-	if (affected)
+	if (affected != nullptr)
 	{
 		*affected = mysql_affected_rows(_mysql);
 	}
 
-	if (insertId)
+	if (insertId != nullptr)
 	{
 		*insertId = mysql_insert_id(_mysql);
 	}
@@ -204,7 +204,7 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 	if (res != nullptr)
 	{
 		result->set(mysql_store_result(_mysql));
-		if (!result->get() && mysql_errno(_mysql))
+		if (result->get() == nullptr && mysql_errno(_mysql) != 0)
 		{
 			Log("mysql").error("MySQL store result error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 			return false;
@@ -230,7 +230,7 @@ bool MysqlConnection::multiQuery(const std::string& sql)
 	do
 	{
 		MYSQL_RES* result = mysql_store_result(_mysql);
-		if (result)
+		if (result != nullptr)
 		{
 			mysql_free_result(result);
 		}

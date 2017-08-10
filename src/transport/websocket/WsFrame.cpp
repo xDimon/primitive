@@ -31,7 +31,7 @@ size_t WsFrame::calcHeaderSize(const char data[2])
 
 	return 2												// Стартовые байты
 		+ ((prelen <= 125) ? 0 : (prelen == 126) ? 2 : 8)	// Байты расширенной длины
-		+ ((!masked) ? 0 : 4);								// Байты маски
+		+ ((masked == 0) ? 0 : 4);								// Байты маски
 }
 
 

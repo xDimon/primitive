@@ -51,7 +51,7 @@ SVal* JsonSerializer::decode(const std::string& data)
 
 	// Проверяем лишние символы в конце
 	skipSpaces();
-	if (!_iss.eof() && (_flags & Serializer::STRICT))
+	if (!_iss.eof() && (_flags & Serializer::STRICT) != 0)
 	{
 		throw std::runtime_error("Redundant bytes after parsed data");
 	}
@@ -214,7 +214,8 @@ SObj* JsonSerializer::decodeObject()
 			skipSpaces();
 			continue;
 		}
-		else if (c == '}')
+
+		if (c == '}')
 		{
 			return obj.release();
 		}
@@ -262,7 +263,8 @@ SArr* JsonSerializer::decodeArray()
 			skipSpaces();
 			continue;
 		}
-		else if (c == ']')
+
+		if (c == ']')
 		{
 			return arr.release();
 		}
@@ -292,8 +294,9 @@ SStr* JsonSerializer::decodeString()
 			_iss.ignore();
 			return str.release();
 		}
+
 		// Экранированный сивол
-		else if (c == '\\')
+		if (c == '\\')
 		{
 			uint32_t symbol = decodeEscaped();
 
@@ -364,7 +367,7 @@ SStr* JsonSerializer::decodeString()
 			{
 				throw std::runtime_error("Bad symbol in string value");
 			}
-			while (--bytes)
+			while (--bytes > 0)
 			{
 				if (_iss.eof())
 				{
@@ -420,11 +423,12 @@ SBinary* JsonSerializer::decodeBinary()
 			std::string decoded = Base64::decode(b64);
 			return new SBinary(decoded);
 		}
-		else if (c == -1)
+
+		if (c == -1)
 		{
 			break;
 		}
-		b64.push_back(c);
+		b64.push_back(static_cast<uint8_t>(c));
 	}
 
 	throw std::runtime_error("Unexpect out of data during parse base64-encoded binary string");
@@ -574,7 +578,8 @@ SNum* JsonSerializer::decodeNumber()
 
 			return new SFloat(value);
 		}
-		else if (!isdigit(c) && c != '-')
+
+		if (!isdigit(c) && c != '-')
 		{
 			break;
 		}

@@ -70,7 +70,7 @@ LoggerManager::~LoggerManager()
 
 bool LoggerManager::regThread(std::string threadName)
 {
-	if (getInstance()._logTrace)
+	if (getInstance()._logTrace != nullptr)
 	{
 		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
 		return getInstance()._logTrace->Register_Thread(threadName.c_str(), tid) != 0;
@@ -88,7 +88,7 @@ bool LoggerManager::unregThread()
 IP7_Trace *LoggerManager::getLogTrace()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
-	if (getInstance()._logTrace)
+	if (getInstance()._logTrace != nullptr)
 	{
 		return P7_Get_Shared_Trace("TraceChannel");
 	}
