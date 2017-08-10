@@ -64,18 +64,15 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 <cross-domain-policy>
   <allow-access-from domain="*" secure="false" to-ports="*"/>
   <allow-access-from domain="*" secure="true" to-ports="*"/>
-  <site-control permitted-cross-domain-policies="master-only"/>
+  <site-control permitted-cross-domain-policies="all"/>
 </cross-domain-policy>
 )";
 
 				connection->write(policyFile.c_str(), policyFile.length());
 
-				char zero = 0;
-				connection->write(&zero, 1);
-
-				connection->setTtl(std::chrono::milliseconds(50));
 				connection->close();
 				connection->resetContext();
+				connection->setTtl(std::chrono::milliseconds(50));
 
 				_log.debug("Sent policy file");
 
@@ -162,8 +159,8 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 			// Проверка заголовков
 			if (
-				request->getHeader("Connection") != "Upgrade" ||
-				request->getHeader("Upgrade") != "websocket" ||
+				strcasecmp(request->getHeader("Connection").c_str(), "Upgrade") ||
+				strcasecmp(request->getHeader("Upgrade").c_str(), "websocket") ||
 				request->getHeader("Sec-WebSocket-Key").empty()
 			)
 			{
