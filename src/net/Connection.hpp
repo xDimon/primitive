@@ -63,8 +63,11 @@ protected:
 	bool _error;
 
 public:
+	Connection() = delete;
 	Connection(const Connection&) = delete;
-	void operator= (Connection const&) = delete;
+	void operator=(Connection const&) = delete;
+	Connection(Connection&& tmp) = delete;
+	Connection& operator=(Connection&& tmp) = delete;
 
 	explicit Connection(const std::shared_ptr<Transport>& transport);
 	~Connection() override;

@@ -36,6 +36,12 @@ protected:
 	Log _log;
 
 public:
+	ServicePart() = delete;
+	ServicePart(const ServicePart&) = delete;
+	void operator=(ServicePart const&) = delete;
+	ServicePart(ServicePart&&) = delete;
+	ServicePart& operator=(ServicePart&&) = delete;
+
 	explicit ServicePart(const std::shared_ptr<Service>& service);
 	~ServicePart() override = default;
 

@@ -29,11 +29,15 @@
 
 class DbManager final
 {
+public:
+	DbManager(const DbManager&) = delete;
+	void operator=(DbManager const&) = delete;
+	DbManager(DbManager&&) = delete;
+	DbManager& operator=(DbManager&&) = delete;
+
 private:
 	DbManager() = default;
-
-	DbManager(DbManager const&) = delete;
-	void operator= (DbManager const&) = delete;
+	~DbManager() = default;
 
 	static DbManager &getInstance()
 	{

@@ -47,6 +47,12 @@ protected:
 	bool _ready;
 
 public:
+	Session() = delete;
+	Session(const Session&) = delete;
+	void operator=(Session const&) = delete;
+	Session(Session&&) = delete;
+	Session& operator=(Session&&) = delete;
+
 	Session(
 		const std::shared_ptr<Service>& service,
 		HID hid

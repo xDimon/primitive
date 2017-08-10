@@ -50,6 +50,12 @@ private:
 	const char* parseHeaders(const char *string, const char *end);
 
 public:
+	HttpRequest() = delete;
+	HttpRequest(const HttpRequest&) = delete;
+	void operator=(HttpRequest const&) = delete;
+	HttpRequest(HttpRequest&&) = delete;
+	HttpRequest& operator=(HttpRequest&&) = delete;
+
 	HttpRequest(const char *begin, const char *end);
 	~HttpRequest() override = default;
 

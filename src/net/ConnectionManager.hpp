@@ -30,11 +30,15 @@
 
 class ConnectionManager final
 {
+public:
+	ConnectionManager(const ConnectionManager&) = delete;
+	void operator=(ConnectionManager const&) = delete;
+	ConnectionManager(ConnectionManager&& tmp) = delete;
+	ConnectionManager& operator=(ConnectionManager&& tmp) = delete;
+
 private:
 	ConnectionManager();
 	~ConnectionManager();
-	ConnectionManager(ConnectionManager const&) = delete;
-	void operator=(ConnectionManager const&) = delete;
 
 	static ConnectionManager &getInstance()
 	{

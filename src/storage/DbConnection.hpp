@@ -42,7 +42,12 @@ protected:
 	std::weak_ptr<DbConnectionPool> _pool;
 
 public:
-	DbConnection(const std::shared_ptr<DbConnectionPool>& pool)
+	DbConnection(const DbConnection&) = delete;
+	void operator=(DbConnection const&) = delete;
+	DbConnection(DbConnection&&) = delete;
+	DbConnection& operator=(DbConnection&&) = delete;
+
+	explicit DbConnection(const std::shared_ptr<DbConnectionPool>& pool)
 	: id(++_lastId)
 	, _captured(0)
 	, _pool(pool)

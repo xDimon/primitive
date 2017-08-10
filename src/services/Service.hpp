@@ -42,6 +42,11 @@ protected:
 	explicit Service(const Setting& setting);
 
 public:
+	Service(const Service&) = delete;
+	void operator=(Service const&) = delete;
+	Service(Service&&) = delete;
+	Service& operator=(Service&&) = delete;
+
 	virtual ~Service() = default;
 
 	virtual void activate() = 0;
@@ -59,15 +64,19 @@ public:
     );
 
 #define DECLARE_SERVICE() \
-private:                                                                    \
-    Service() = delete;                                                     \
-    Service(const Service&) = delete;                                       \
+public:                                                                     \
+	Service() = delete;                                                     \
+	Service(const Service&) = delete;                                       \
     void operator=(Service const&) = delete;                                \
+	Service(Service&&) = delete;                                            \
+	Service& operator=(Service&&) = delete;                                 \
                                                                             \
-    Service(const Setting& setting);                                        \
+private:                                                                    \
+    explicit Service(const Setting& setting);                               \
                                                                             \
 public:                                                                     \
     ~Service() override;                                                    \
+                                                                            \
     void activate() override;                                               \
     void deactivate() override;                                             \
                                                                             \

@@ -29,6 +29,12 @@
 class Connector : public Connection
 {
 public:
+	Connector() = delete;
+	Connector(const Connector&) = delete;
+	void operator=(Connector const&) = delete;
+	Connector(Connector&& tmp) = delete;
+	Connector& operator=(Connector&& tmp) = delete;
+
 	explicit Connector(const std::shared_ptr<ClientTransport>& transport);
 	~Connector() override = default;
 };

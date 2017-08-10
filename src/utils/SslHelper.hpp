@@ -24,14 +24,17 @@
 #include <openssl/ossl_typ.h>
 #include <memory>
 
-class SslHelper
+class SslHelper final
 {
+public:
+	SslHelper(const SslHelper&) = delete;
+	void operator=(SslHelper const&) = delete;
+	SslHelper(SslHelper&&) = delete;
+	SslHelper& operator=(SslHelper&&) = delete;
+
 private:
 	SslHelper();
-	virtual ~SslHelper();
-
-	SslHelper(SslHelper const&) = delete;
-	void operator=(SslHelper const&) = delete;
+	~SslHelper();
 
 	static SslHelper &getInstance()
 	{

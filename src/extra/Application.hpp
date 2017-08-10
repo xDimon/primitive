@@ -33,8 +33,14 @@ protected:
 	std::string _appId;
 
 public:
-	Application(const Setting& setting);
-	virtual ~Application() {};
+	Application() = delete;
+	Application(const Application&) = delete;
+    void operator=(Application const&) = delete;
+	Application(Application&&) = delete;
+	Application& operator=(Application&&) = delete;
+
+	explicit Application(const Setting& setting);
+	~Application() override = default;
 
 	const std::string& type() const
 	{
@@ -58,10 +64,16 @@ public:
     );
 
 #define DECLARE_APPLICATION(Class) \
+public:                                                                                         \
+	Class() = delete;                                                                           \
+	Class(const Class&) = delete;                                                               \
+    void operator=(Class const&) = delete;                                                      \
+	Class(Class&&) = delete;                                                                    \
+	Class& operator=(Class&&) = delete;                                                         \
+    ~Class() override = default;                                                                \
+                                                                                                \
 private:                                                                                        \
     Class(const Setting& setting);                                                              \
-    Class(const Class&) = delete;                                                               \
-    void operator=(Class const&) = delete;                                                      \
                                                                                                 \
 private:                                                                                        \
     static const bool __dummy;

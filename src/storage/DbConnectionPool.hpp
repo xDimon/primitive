@@ -45,8 +45,14 @@ private:
 	virtual std::shared_ptr<DbConnection> create() = 0;
 
 public:
-	DbConnectionPool(const Setting& setting);
-	virtual ~DbConnectionPool() = default;
+	DbConnectionPool() = delete;
+	DbConnectionPool(const DbConnectionPool&) = delete;
+	void operator=(DbConnectionPool const&) = delete;
+	DbConnectionPool(DbConnectionPool&&) = delete;
+	DbConnectionPool& operator=(DbConnectionPool&&) = delete;
+
+	explicit DbConnectionPool(const Setting& setting);
+	~DbConnectionPool() override = default;
 
 	void touch();
 
@@ -68,14 +74,18 @@ public:
     );
 
 #define DECLARE_DBCONNECTIONPOOL(Class) \
-private:                                                                                        \
-    Class(const Setting& setting);                                                              \
-    Class(const Class&) = delete;                                                               \
+public:                                                                                         \
+	Class() = delete;                                                                           \
+	Class(const Class&) = delete;                                                               \
     void operator=(Class const&) = delete;                                                      \
+	Class(Class&&) = delete;                                                                    \
+	Class& operator=(Class&&) = delete;                                                         \
+    ~Class() override = default;                                                                \
+                                                                                                \
+private:                                                                                        \
+    explicit Class(const Setting& setting);                                                     \
 																								\
 public:                                                                                         \
-  	~Class() override = default;                                                                \
-                                                                                                \
 	void close() override;                                                                      \
                                                                                                 \
 private:                                                                                        \

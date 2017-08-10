@@ -24,5 +24,11 @@
 class DbResult
 {
 public:
+	DbResult(const DbResult&) = delete;
+	void operator=(DbResult const&) = delete;
+	DbResult(DbResult&&) = delete;
+	DbResult& operator=(DbResult&&) = delete;
+
+	DbResult() = default;
 	virtual ~DbResult() = default;
 };

@@ -32,11 +32,14 @@ private:
 	MYSQL_RES* _data;
 
 public:
-	MysqlResult()
-	: _data(nullptr)
-	{}
+	MysqlResult(const MysqlResult&) = delete;
+	void operator=(MysqlResult const&) = delete;
+	MysqlResult(MysqlResult&&) = delete;
+	MysqlResult& operator=(MysqlResult&&) = delete;
 
-	virtual ~MysqlResult()
+	MysqlResult() = default;
+
+	~MysqlResult() override
 	{
 		mysql_free_result(_data);
 	}

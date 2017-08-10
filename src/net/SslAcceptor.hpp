@@ -31,10 +31,16 @@ private:
 	std::shared_ptr<SSL_CTX> _sslContext;
 
 public:
-	SslAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext);
-	virtual ~SslAcceptor() {};
+	SslAcceptor() = delete;
+	SslAcceptor(const SslAcceptor&) = delete;
+	void operator=(SslAcceptor const&) = delete;
+	SslAcceptor(SslAcceptor&& tmp) = delete;
+	SslAcceptor& operator=(SslAcceptor&& tmp) = delete;
 
-	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
+	SslAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext);
+	~SslAcceptor() override = default;
+
+	void createConnection(int sock, const sockaddr_in& cliaddr) override;
 
 	static std::shared_ptr<Connection> create(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext)
 	{

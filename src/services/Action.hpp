@@ -49,6 +49,8 @@ public:
 	Action() = delete;
 	Action(const Action&) = delete;
 	void operator=(Action const&) = delete;
+	Action(Action&&) = delete;
+	Action& operator=(Action&&) = delete;
 
 	Action(
 		const std::shared_ptr<Service>& service,

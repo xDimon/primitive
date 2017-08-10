@@ -44,8 +44,12 @@ protected:
 	size_t _putPosition;
 
 public:
-	Buffer();
+	Buffer(const Buffer&) = delete;
+	void operator=(Buffer const&) = delete;
+	Buffer(Buffer&&) = delete;
+	Buffer& operator=(Buffer&&) = delete;
 
+	Buffer();
 	virtual ~Buffer() = default;
 
 	inline auto& mutex()

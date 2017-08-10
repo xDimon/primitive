@@ -26,14 +26,17 @@
 #include <mutex>
 #include "Application.hpp"
 
-class Applications
+class Applications final
 {
-private:
-	Applications() {};
-	virtual ~Applications() {};
+public:
+	Applications(const Applications&) = delete;
+    void operator=(Applications const&) = delete;
+	Applications(Applications&&) = delete;
+	Applications& operator=(Applications&&) = delete;
 
-	Applications(Applications const&) = delete;
-	void operator= (Applications const&) = delete;
+private:
+	Applications() = default;
+	~Applications() = default;
 
 	static Applications &getInstance()
 	{

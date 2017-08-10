@@ -31,12 +31,15 @@
 
 class ThreadPool final
 {
+public:
+	ThreadPool(const ThreadPool&) = delete;
+	void operator=(ThreadPool const&) = delete;
+	ThreadPool(ThreadPool&&) = delete;
+	ThreadPool& operator=(ThreadPool&&) = delete;
+
 private:
 	ThreadPool();
 	virtual ~ThreadPool();
-
-	ThreadPool(ThreadPool const&) = delete;
-	void operator=(ThreadPool const&) = delete;
 
 public:
 	static ThreadPool& getInstance()

@@ -28,6 +28,11 @@
 class ClientTransport : public Shareable<ClientTransport>, public Transport
 {
 public:
+	ClientTransport(const ClientTransport&) = delete;
+	void operator=(ClientTransport const&) = delete;
+	ClientTransport(ClientTransport&&) = delete;
+	ClientTransport& operator=(ClientTransport&&) = delete;
+
 	ClientTransport();
 	~ClientTransport() override = default;
 };

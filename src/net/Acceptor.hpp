@@ -30,6 +30,12 @@
 class Acceptor : public Connection
 {
 public:
+	Acceptor() = delete;
+	Acceptor(const Acceptor&) = delete;
+	void operator=(Acceptor const&) = delete;
+	Acceptor(Acceptor&& tmp) = delete;
+	Acceptor& operator=(Acceptor&& tmp) = delete;
+
 	explicit Acceptor(const std::shared_ptr<ServerTransport>& transport);
 	~Acceptor() override = default;
 };

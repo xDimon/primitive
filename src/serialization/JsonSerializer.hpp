@@ -40,8 +40,6 @@ class JsonSerializer : public Serializer
 public:
 	static const uint32_t ESCAPED_UNICODE = 1u<<31;
 
-	DECLARE_SERIALIZER(JsonSerializer);
-
 	std::istringstream _iss;
 	std::ostringstream _oss;
 
@@ -77,4 +75,6 @@ public:
 	void encodeValue(const SVal* value);
 
 	void encodeObject(const SObj* value);
+
+DECLARE_SERIALIZER(JsonSerializer);
 };

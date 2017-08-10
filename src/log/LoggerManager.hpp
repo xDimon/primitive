@@ -28,12 +28,15 @@
 
 class LoggerManager final
 {
+public:
+	LoggerManager(const LoggerManager&) = delete;
+	void operator=(LoggerManager const&) = delete;
+	LoggerManager(LoggerManager&& tmp) = delete;
+	LoggerManager& operator=(LoggerManager&& tmp) = delete;
+
 private:
 	LoggerManager();
-	virtual ~LoggerManager();
-
-	LoggerManager(LoggerManager const&) = delete;
-	void operator=(LoggerManager const&) = delete;
+	~LoggerManager();
 
 	static LoggerManager &getInstance()
 	{

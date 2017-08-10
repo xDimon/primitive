@@ -34,6 +34,11 @@ protected:
 	Log _log;
 
 public:
+	Transport(const Transport&) = delete;
+	void operator=(Transport const&) = delete;
+	Transport(Transport&& tmp) = delete;
+	Transport& operator=(Transport&& tmp) = delete;
+
 	Transport();
 	virtual ~Transport() = default;
 

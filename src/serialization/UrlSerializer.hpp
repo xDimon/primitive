@@ -38,8 +38,6 @@
 
 class UrlSerializer : public Serializer
 {
-	DECLARE_SERIALIZER(UrlSerializer);
-
 	std::istringstream _iss;
 	std::ostringstream _oss;
 
@@ -59,4 +57,6 @@ class UrlSerializer : public Serializer
 	void encodeObject(const std::string& keyline, const SObj* value);
 
 	void encodeValue(const std::string& keyline, const SVal* value);
+
+DECLARE_SERIALIZER(UrlSerializer);
 };

@@ -74,8 +74,5 @@ private:
 
 	void encodeValue(const SVal* value);
 
-public:
-	virtual SVal* decode(const std::string &data) override;
-
-	virtual std::string encode(const SVal* value) override;
+DECLARE_SERIALIZER(TlvSerializer);
 };

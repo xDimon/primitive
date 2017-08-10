@@ -27,12 +27,15 @@
 
 class ShutdownManager final
 {
+public:
+	ShutdownManager(const ShutdownManager&) = delete;
+	void operator=(ShutdownManager const&) = delete;
+	ShutdownManager(ShutdownManager&&) = delete;
+	ShutdownManager& operator=(ShutdownManager&&) = delete;
+
 private:
 	ShutdownManager();
 	~ShutdownManager();
-
-	ShutdownManager(ShutdownManager const&) = delete;
-	void operator= (ShutdownManager const&) = delete;
 
 	static ShutdownManager &getInstance()
 	{

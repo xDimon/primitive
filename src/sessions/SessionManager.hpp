@@ -27,11 +27,15 @@
 
 class SessionManager final
 {
-private:
-	SessionManager() = default;
-
+public:
 	SessionManager(SessionManager const&) = delete;
 	void operator= (SessionManager const&) = delete;
+	SessionManager(SessionManager&&) = delete;
+	SessionManager& operator=(SessionManager&&) = delete;
+
+private:
+	SessionManager() = default;
+	~SessionManager() = default;
 
 	static SessionManager &getInstance()
 	{

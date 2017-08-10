@@ -58,7 +58,7 @@ protected:
 
 public:
 	WsFrame(const char *begin, const char *end);
-	virtual ~WsFrame() {};
+	~WsFrame() override = default;
 
 
 	bool finaly() const

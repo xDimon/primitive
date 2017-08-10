@@ -30,7 +30,7 @@ private:
 	std::shared_ptr<DbConnection> _conn;
 
 public:
-	Db(const std::shared_ptr<DbConnectionPool>& dbPool)
+	explicit Db(const std::shared_ptr<DbConnectionPool>& dbPool)
 	: _conn(dbPool ? dbPool->captureDbConnection() : nullptr)
 	{
 		if (!_conn)
@@ -49,7 +49,7 @@ public:
 		_conn->capture();
 	}
 	// Move
-	Db(Db&& that)
+	Db(Db&& that) noexcept
 	: _conn(std::move(that._conn))
 	{
 		if (!_conn)

@@ -45,8 +45,13 @@ private:
 	std::map<const std::string, const std::shared_ptr<Service>> _services;
 
 public:
+	Server(const Server&) = delete;
+	void operator=(Server const&) = delete;
+	Server(Server&&) = delete;
+	Server& operator=(Server&&) = delete;
+
 	explicit Server(const std::shared_ptr<Config> &configs);
-	virtual ~Server();
+	~Server();
 
 	static Server& getInstance()
 	{

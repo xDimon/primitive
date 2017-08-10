@@ -44,12 +44,12 @@ protected:
 	ucontext_t* _tmpContext;
 	ucontext_t* _mainContext;
 
-	Task(Task const &) = delete;
-	Task& operator=(Task const &) = delete;
-
 public:
-	Task();
-	Task(const std::shared_ptr<Func>& function);
+	Task() = delete;
+	Task(const Task&) = delete;
+	void operator=(Task const&) = delete;
+
+	explicit Task(const std::shared_ptr<Func>& function);
 	Task(const std::shared_ptr<Func>& function, Duration delay);
 	Task(const std::shared_ptr<Func>& function, Time time);
 	Task(Task &&that) noexcept;

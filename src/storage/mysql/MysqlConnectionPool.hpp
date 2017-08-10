@@ -39,7 +39,7 @@ private:
 	std::string _dbpass;
 	unsigned int _dbport;
 
-	std::shared_ptr<DbConnection> create();
+	std::shared_ptr<DbConnection> create() override;
 
 	DECLARE_DBCONNECTIONPOOL(MysqlConnectionPool)
 };

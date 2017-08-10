@@ -63,7 +63,9 @@ protected:
 public:
 	TcpConnection() = delete;
 	TcpConnection(const TcpConnection&) = delete;
-	void operator= (TcpConnection const&) = delete;
+	void operator=(TcpConnection const&) = delete;
+	TcpConnection(TcpConnection&& tmp) = delete;
+	TcpConnection& operator=(TcpConnection&& tmp) = delete;
 
 	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
 	~TcpConnection() override;

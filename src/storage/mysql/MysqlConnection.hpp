@@ -36,6 +36,12 @@ private:
 	size_t _transaction;
 
 public:
+	MysqlConnection() = delete;
+	MysqlConnection(const MysqlConnection&) = delete;
+	void operator=(MysqlConnection const&) = delete;
+	MysqlConnection(MysqlConnection&&) = delete;
+	MysqlConnection& operator=(MysqlConnection&&) = delete;
+
 	MysqlConnection(
 		const std::shared_ptr<DbConnectionPool>& pool,
 		const std::string& dbname,
@@ -53,13 +59,9 @@ public:
 		const std::string& dbsocket
 	);
 
-	virtual ~MysqlConnection();
+	~MysqlConnection() override;
 
-	MysqlConnection() = delete;
-
-	void operator=(MysqlConnection const&) = delete;
-
-	virtual std::string escape(const std::string& str) override
+	std::string escape(const std::string& str) override
 	{
 		std::string res;
 		res.reserve(str.length() * 2);
@@ -75,24 +77,24 @@ public:
 		return std::move(res);
 	}
 
-	virtual bool alive() override
+	bool alive() override
 	{
 		return !mysql_ping(_mysql);
 	}
 
-	virtual bool startTransaction() override;
+	bool startTransaction() override;
 
-	virtual bool deadlockDetected() override;
+	bool deadlockDetected() override;
 
-	virtual bool inTransaction() override
+	bool inTransaction() override
 	{
 		return _transaction > 0;
 	}
 
-	virtual bool commit() override;
+	bool commit() override;
 
-	virtual bool rollback() override;
+	bool rollback() override;
 
-	virtual bool query(const std::string& query, DbResult* res = nullptr, size_t* affected = nullptr, size_t* insertId = nullptr) override;
-	virtual bool multiQuery(const std::string& sql) override;
+	bool query(const std::string& query, DbResult* res, size_t* affected, size_t* insertId) override;
+	bool multiQuery(const std::string& sql) override;
 };

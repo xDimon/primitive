@@ -28,14 +28,17 @@
 #include <map>
 #include <mutex>
 
-class Transports
+class Transports final
 {
-private:
-	Transports() = default;
-	virtual ~Transports() = default;
-
+public:
 	Transports(Transports const&) = delete;
 	void operator=(Transports const&) = delete;
+	Transports(Transports&&) = delete;
+	Transports& operator=(Transports&&) = delete;
+
+private:
+	Transports() = default;
+	~Transports() = default;
 
 	static Transports &getInstance()
 	{

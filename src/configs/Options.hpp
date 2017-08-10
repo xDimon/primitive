@@ -31,6 +31,12 @@ private:
 	std::string _configFile;
 
 public:
+	Options() = delete;
+	Options(const Options&) = delete;
+	void operator=(Options const&) = delete;
+	Options(Options&&) = delete;
+	Options& operator=(Options&&) = delete;
+
 	Options(int argc, char *argv[]);
 	~Options() = default;
 

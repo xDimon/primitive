@@ -41,6 +41,12 @@ private:
 	std::weak_ptr<Connection> _acceptor;
 
 public:
+	ServerTransport() = delete;
+	ServerTransport(const ServerTransport&) = delete;
+    void operator=(ServerTransport const&) = delete;
+	ServerTransport(ServerTransport&&) = delete;
+	ServerTransport& operator=(ServerTransport&&) = delete;
+
 	explicit ServerTransport(const Setting& setting);
 	~ServerTransport() override = default ;
 
@@ -65,12 +71,15 @@ public:
     );
 
 #define DECLARE_TRANSPORT(Class) \
-private:                                                                                        \
-    Class() = delete;                                                                           \
-    Class(const Class&) = delete;                                                               \
+public:                                                                                         \
+	Class() = delete;                                                                           \
+	Class(const Class&) = delete;                                                               \
     void operator=(Class const&) = delete;                                                      \
+	Class(Class&&) = delete;                                                                    \
+	Class& operator=(Class&&) = delete;                                                         \
                                                                                                 \
-    Class(const Setting& setting)                                                               \
+private:                                                                                        \
+    explicit Class(const Setting& setting)                                                      \
     : ServerTransport(setting)                                                                  \
     {                                                                                           \
         _log.setName(#Class);                                                                   \
@@ -78,7 +87,7 @@ private:                                                                        
     }                                                                                           \
                                                                                                 \
 public:                                                                                         \
-    virtual ~Class()                                                                            \
+    ~Class() override                                                                           \
     {                                                                                           \
         _log.debug("Transport '%s' destroyed", name().c_str());                                 \
     }                                                                                           \

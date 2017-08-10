@@ -34,6 +34,12 @@ protected:
 	std::mutex _mutex;
 
 public:
+	TcpAcceptor() = delete;
+	TcpAcceptor(const TcpAcceptor&) = delete;
+	void operator=(TcpAcceptor const&) = delete;
+	TcpAcceptor(TcpAcceptor&& tmp) = delete;
+	TcpAcceptor& operator=(TcpAcceptor&& tmp) = delete;
+
 	TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port);
 	~TcpAcceptor() override;
 

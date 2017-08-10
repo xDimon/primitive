@@ -55,7 +55,17 @@ private:
 	const char* parseHeaders(const char* begin, const char* end);
 
 public:
-	HttpResponse(int status, std::string message = std::string());
+	HttpResponse() = delete;
+	HttpResponse(const HttpResponse&) = delete;
+	void operator=(HttpResponse const&) = delete;
+	HttpResponse(HttpResponse&&) = delete;
+	HttpResponse& operator=(HttpResponse&&) = delete;
+
+	HttpResponse(int status, const std::string& message);
+	explicit HttpResponse(int status)
+	: HttpResponse(status, "")
+	{
+	}
 	HttpResponse(const char *begin, const char *end);
 	~HttpResponse() override = default;
 

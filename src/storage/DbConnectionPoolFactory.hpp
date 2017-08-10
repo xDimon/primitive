@@ -26,14 +26,15 @@
 
 class DbConnectionPoolFactory
 {
-private:
-	DbConnectionPoolFactory() {};
-
-	virtual ~DbConnectionPoolFactory() {};
-
-	DbConnectionPoolFactory(DbConnectionPoolFactory const&) = delete;
-
+public:
+	DbConnectionPoolFactory(const DbConnectionPoolFactory&) = delete;
 	void operator=(DbConnectionPoolFactory const&) = delete;
+	DbConnectionPoolFactory(DbConnectionPoolFactory&&) = delete;
+	DbConnectionPoolFactory& operator=(DbConnectionPoolFactory&&) = delete;
+
+private:
+	DbConnectionPoolFactory() = default;
+	virtual ~DbConnectionPoolFactory()  = default;
 
 	static DbConnectionPoolFactory& getInstance()
 	{

@@ -29,12 +29,15 @@
 
 class TransportFactory final
 {
+public:
+	TransportFactory(const TransportFactory&) = delete;
+	void operator=(TransportFactory const&) = delete;
+	TransportFactory(TransportFactory&&) = delete;
+	TransportFactory& operator=(TransportFactory&&) = delete;
+
 private:
 	TransportFactory() = default;
-
-	TransportFactory(TransportFactory const&) = delete;
-
-	void operator=(TransportFactory const&) = delete;
+	~TransportFactory() = default;
 
 	static TransportFactory& getInstance()
 	{

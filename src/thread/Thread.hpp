@@ -38,6 +38,12 @@ private:
 	static void run(Thread *);
 
 public:
+	Thread() = delete;
+	Thread(const Thread&) = delete;
+	void operator=(Thread const&) = delete;
+	Thread(Thread&&) = delete;
+	Thread& operator=(Thread&&) = delete;
+
 	explicit Thread(std::function<void()>& threadLoop);
 	virtual ~Thread();
 

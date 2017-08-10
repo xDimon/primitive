@@ -26,10 +26,10 @@
 #include "../../utils/Time.hpp"
 #include "HttpHelper.hpp"
 
-HttpResponse::HttpResponse(int status, std::string message)
+HttpResponse::HttpResponse(int status, const std::string& message)
 : _type(Type::FOR_SENDING)
 , _statusCode(status)
-, _statusMessage(std::move(message))
+, _statusMessage(message)
 , _close(false)
 {
 	if (_statusCode < 100 || _statusCode > 599)

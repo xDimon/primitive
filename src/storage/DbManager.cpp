@@ -101,5 +101,5 @@ Db DbManager::getConnection(const std::string& name)
 {
 	auto pool = getPool(name);
 
-	return pool;
+	return Db(pool);
 }

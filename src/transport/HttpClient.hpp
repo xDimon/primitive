@@ -27,22 +27,22 @@
 
 class HttpClient : public ClientTransport
 {
-private:
-	HttpClient(const HttpClient&) = delete;
-	void operator=(HttpClient const&)= delete;
-
 public:
+	HttpClient(const HttpClient&) = delete;
+	void operator=(HttpClient const&) = delete;
+	HttpClient(HttpClient&&) = delete;
+	HttpClient& operator=(HttpClient&&) = delete;
+
 	HttpClient()
-	: ClientTransport()
 	{
 		_log.setName("HttpClient");
 		_log.debug("Transport '%s' created", name().c_str());
 	}
 
-	virtual ~HttpClient()
+	~HttpClient() override
 	{
 		_log.debug("Transport '%s' destroyed", name().c_str());
 	}
 
-	virtual bool processing(const std::shared_ptr<Connection>& connection) override;
+	bool processing(const std::shared_ptr<Connection>& connection) override;
 };

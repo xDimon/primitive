@@ -52,6 +52,12 @@ private:
 	std::function<void()> _errorHandler;
 
 public:
+	TcpConnector() = delete;
+	TcpConnector(const TcpConnector&) = delete;
+	void operator=(TcpConnector const&) = delete;
+	TcpConnector(TcpConnector&& tmp) = delete;
+	TcpConnector& operator=(TcpConnector&& tmp) = delete;
+
 	TcpConnector(
 		const std::shared_ptr<ClientTransport>& transport,
 		const std::string& host,

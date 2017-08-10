@@ -21,8 +21,6 @@
 
 #include "Config.hpp"
 
-#include <sstream>
-
 Config::Config(const std::shared_ptr<Options>& options)
 : _options(options)
 {

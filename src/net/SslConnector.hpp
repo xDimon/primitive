@@ -31,11 +31,17 @@ class SslConnector : public TcpConnector
 private:
 	std::shared_ptr<SSL_CTX> _sslContext;
 
-	virtual void createConnection(int sock, const sockaddr_in& cliaddr);
+	void createConnection(int sock, const sockaddr_in& cliaddr) override;
 
 public:
+	SslConnector() = delete;
+	SslConnector(const SslConnector&) = delete;
+	void operator=(SslConnector const&) = delete;
+	SslConnector(SslConnector&& tmp) = delete;
+	SslConnector& operator=(SslConnector&& tmp) = delete;
+
 	SslConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext);
-	virtual ~SslConnector() {};
+	~SslConnector() override = default;
 
 	static std::shared_ptr<Connection> create(const std::shared_ptr<ClientTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext)
 	{

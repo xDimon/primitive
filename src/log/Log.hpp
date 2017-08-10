@@ -59,6 +59,11 @@ private:
 	Detail _detail;
 
 public:
+	Log(const Log&) = delete;
+	void operator=(Log const&) = delete;
+	Log(Log&& tmp) = delete;
+	Log& operator=(Log&& tmp) = delete;
+
 	explicit Log(const std::string& name, Detail detail = Detail::UNDEFINED);
 	Log() : Log("") {};
 

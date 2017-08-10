@@ -48,13 +48,19 @@ public:
 	SslConnection() = delete;
 	SslConnection(const SslConnection&) = delete;
 	void operator=(SslConnection const&) = delete;
+	SslConnection(SslConnection&& tmp) = delete;
+	SslConnection& operator=(SslConnection&& tmp) = delete;
 
 	SslConnection(
-		const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, const std::shared_ptr<SSL_CTX>& sslContext, bool isOutgoing
+		const std::shared_ptr<Transport>& transport,
+		int fd,
+		const sockaddr_in& cliaddr,
+		const std::shared_ptr<SSL_CTX>& sslContext,
+		bool isOutgoing
 	);
-	virtual ~SslConnection();
+	~SslConnection() override;
 
-	virtual void watch(epoll_event& ev) override;
+	void watch(epoll_event& ev) override;
 
-	virtual bool processing() override;
+	bool processing() override;
 };

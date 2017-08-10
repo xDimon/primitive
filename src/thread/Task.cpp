@@ -24,13 +24,13 @@
 #include "../log/Log.hpp"
 #include "ThreadPool.hpp"
 
-Task::Task()
-: _until(Time::min())
-, _immediately(true)
-, _tmpContext(nullptr)
-, _mainContext(nullptr)
-{
-}
+//Task::Task()
+//: _until(Time::min())
+//, _immediately(true)
+//, _tmpContext(nullptr)
+//, _mainContext(nullptr)
+//{
+//}
 
 Task::Task(const std::shared_ptr<Func>& function)
 : _function(function)

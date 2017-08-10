@@ -45,6 +45,8 @@ public:
 	Event() = delete;
 	Event(const Event&) = delete;
 	void operator=(Event const&) = delete;
+	Event(Event&&) = delete;
+	Event& operator=(Event&&) = delete;
 
 	Event(
 		const std::shared_ptr<Context>& context,
