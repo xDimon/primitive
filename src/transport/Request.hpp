@@ -37,6 +37,7 @@
 class Request: public Task
 {
 private:
+	Log _log;
 	std::shared_ptr<ClientTransport> _clientTransport;
 	HttpRequest::Method _method;
 	HttpUri _uri;
@@ -73,6 +74,10 @@ public:
 		return execute();
 	}
 
+	const std::string& uri() const
+	{
+		return _uri.str();
+	}
 	const std::string& answer() const
 	{
 		return _answer;

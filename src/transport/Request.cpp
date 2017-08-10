@@ -25,7 +25,7 @@ Request::Request(const HttpUri& uri, HttpRequest::Method method, const std::stri
 : Task(std::make_shared<Task::Func>([this](){return operator()();}))
 , _clientTransport(new HttpClient())
 , _method(method)
-, _uri(std::move(uri))
+, _uri(uri)
 , _body(body)
 , _error("Not executed")
 , _state(State::INIT)
@@ -37,30 +37,42 @@ bool Request::execute()
 	switch (_state)
 	{
 		case State::INIT:
+			_log.trace("Request::execute INIT");
 			return this->connect();
 
 		case State::CONNECT_IN_PROGRESS:
+			_log.trace("Request::execute CONNECT_IN_PROGRESS");
 			break;
 
 		case State::CONNECTED:
+			_log.trace("Request::execute CONNECTED");
 			break;
 
 		case State::WRITE:
+			_log.trace("Request::execute WRITE");
 			break;
 
 		case State::READ:
+			_log.trace("Request::execute READ");
 			break;
 
 		case State::DONE:
 		case State::ERROR:
-
+		{
 			Log log("Request");
 			log.debug("REQUEST: %s", _uri.str().c_str());
-			log.debug("RESPONSE: %s", _answer.c_str());
-			log.debug("ERROR: %s", _error.c_str());
+			if (!_answer.empty())
+			{
+				log.debug("RESPONSE: %s", _answer.c_str());
+			}
+			if (!_error.empty())
+			{
+				log.debug("ERROR: %s", _error.c_str());
+			}
 
 			restoreContext();
 			return true;
+		}
 	}
 
 	return false;
@@ -68,9 +80,11 @@ bool Request::execute()
 
 bool Request::connect()
 {
+	_log.trace("Request::execute connect");
+
 	try
 	{
-		Log("_").debug("connector in progress");
+		_log.debug("connector in progress");
 		_state = State::CONNECT_IN_PROGRESS;
 		std::shared_ptr<TcpConnector> connector;
 		if (_uri.scheme() == HttpUri::Scheme::HTTPS)
@@ -83,16 +97,18 @@ bool Request::connect()
 			connector.reset(new TcpConnector(_clientTransport, _uri.host(), _uri.port()));
 		}
 		connector->addConnectedHandler([this](const std::shared_ptr<TcpConnection>& connection){
-			Log("_").debug("connected");
+			_log.debug("connected");
 			_state = State::CONNECTED;
-			connection->addCompleteHandler([this](const std::shared_ptr<Context>&context_){
-				Log("_").debug("done");
+			connection->addCompleteHandler([this,connection](const std::shared_ptr<Context>&context_){
+				_log.debug("done");
 
 				auto context = std::dynamic_pointer_cast<HttpContext>(context_);
 				if (!context)
 				{
 					_error = "Internal error: Bad context";
 					_state = State::ERROR;
+					connection->setTtl(std::chrono::milliseconds(50));
+					connection->close();
 					operator()();
 					return;
 				}
@@ -101,6 +117,8 @@ bool Request::connect()
 				{
 					_error = "Internal error: No response";
 					_state = State::ERROR;
+					connection->setTtl(std::chrono::milliseconds(50));
+					connection->close();
 					operator()();
 					return;
 				}
@@ -111,17 +129,23 @@ bool Request::connect()
 				{
 					_error = std::string("No OK response: ") + std::to_string(context->getResponse()->statusCode()) + " " + context->getResponse()->statusMessage();
 					_state = State::ERROR;
+					connection->setTtl(std::chrono::milliseconds(50));
+					connection->close();
 					operator()();
 					return;
 				}
 
 				_state = State::DONE;
+				connection->setTtl(std::chrono::milliseconds(50));
+				connection->close();
 				operator()();
 			});
 
-			connection->addErrorHandler([this](){
-				Log("_").debug("connection error");
+			connection->addErrorHandler([this,connection](){
+				_log.debug("connection error");
 				_state = State::ERROR;
+				connection->setTtl(std::chrono::milliseconds(50));
+				connection->close();
 				operator()();
 			});
 
@@ -143,24 +167,24 @@ bool Request::connect()
 				oss << _body;
 			}
 
-			Log log("Request");
-			log.debug("REQUEST: %s", oss.str().c_str());
+//			Log("Request", detail).debug("REQUEST: %s", oss.str().c_str());
 
 			connection->write(oss.str().c_str(), oss.str().length());
+			connection->setTtl(std::chrono::milliseconds(5000));
 			ConnectionManager::watch(connection);
 			operator()();
 		});
-		connector->addErrorHandler([this](){
-			Log("_").debug("connector error");
+		connector->addErrorHandler([this,connector](){
+			_log.debug("connector error");
 			_state = State::ERROR;
 			operator()();
 		});
-		Log("_").debug("add connector");
+		_log.debug("add connector");
 		ConnectionManager::add(connector);
 	}
 	catch (const std::exception& exception)
 	{
-		Log("_").debug("connector exception");
+		_log.debug("connector exception");
 		_error = "Internal error: Uncatched exception ← ";
 		_error += exception.what();
 		_state = State::ERROR;
