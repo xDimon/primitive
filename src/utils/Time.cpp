@@ -23,6 +23,7 @@
 
 namespace Time
 {
+std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 
 std::string httpDate(std::time_t* ts_)
 {

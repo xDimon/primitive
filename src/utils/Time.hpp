@@ -27,6 +27,17 @@
 
 namespace Time
 {
+extern std::chrono::steady_clock::time_point startTime;
+
+inline int64_t msFromStart()
+{
+	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
+}
+
+inline int64_t msFromStart(std::chrono::steady_clock::time_point tp)
+{
+	return std::chrono::duration_cast<std::chrono::milliseconds>(tp - startTime).count();
+}
 
 typedef std::time_t Timestamp;
 
