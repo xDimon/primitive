@@ -55,7 +55,15 @@ void Coroutine(Task& task)
 				{
 					std::lock_guard<std::mutex> lockGuardTask(orderMutex);
 
-					task();
+					try
+					{
+						task();
+					}
+					catch (const std::exception& exception)
+					{
+						Log log("Coroutine");
+						log.warn("Exception at execute task of coroutine: %s", exception.what());
+					}
 				}
 			);
 

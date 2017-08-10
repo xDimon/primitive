@@ -21,6 +21,7 @@
 
 #include "ThreadPool.hpp"
 #include "../utils/ShutdownManager.hpp"
+#include "../utils/Time.hpp"
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
@@ -54,41 +55,51 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::hold()
 {
-	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
-	++getInstance()._hold;
-	getInstance()._workersWakeupCondition.notify_one();
+	auto& pool = getInstance();
+
+	std::unique_lock<std::mutex> lock(pool._counterMutex);
+	++pool._hold;
+	pool._workersWakeupCondition.notify_one();
 }
 
 void ThreadPool::unhold()
 {
-	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
-	--getInstance()._hold;
+	auto& pool = getInstance();
+
+	std::unique_lock<std::mutex> lock(pool._counterMutex);
+	--pool._hold;
 }
 
 bool ThreadPool::stops()
 {
-	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
-	return getInstance()._workerNumber == 0;
+	auto& pool = getInstance();
+
+	std::unique_lock<std::mutex> lock(pool._counterMutex);
+	return pool._workerNumber == 0;
 }
 
 void ThreadPool::setThreadNum(size_t num)
 {
-	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
-	getInstance()._workerNumber = num;
+	auto& pool = getInstance();
 
-	size_t remain = (num < getInstance()._workers.size()) ? 0 : (num - getInstance()._workers.size());
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	pool._workerNumber = num;
+
+	size_t remain = (num < pool._workers.size()) ? 0 : (num - pool._workers.size());
 	while (remain-- > 0)
 	{
-		getInstance().createThread();
+		pool.createThread();
 	}
 
-	getInstance()._workersWakeupCondition.notify_one();
+	pool._workersWakeupCondition.notify_one();
 }
 
 size_t ThreadPool::genThreadId()
 {
-	std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
-	return ++getInstance()._workerCounter;
+	auto& pool = getInstance();
+
+	std::unique_lock<std::mutex> lock(pool._counterMutex);
+	return ++pool._workerCounter;
 }
 
 void ThreadPool::createThread()
@@ -99,35 +110,37 @@ void ThreadPool::createThread()
 //								std::chrono::time_point<std::chrono::steady_clock>::max();
 
 		auto continueCondition = [this,&waitUntil](){
-			std::unique_lock<std::mutex> lock(getInstance()._counterMutex);
+			std::unique_lock<std::mutex> lock(_counterMutex);
 			if (ShutdownManager::shutingdown())
 			{
 				return true;
 			}
 			if (_tasks.empty())
 			{
+				_log.trace("continueCondition: no task");
 				return _hold == 0;
 			}
 			if (_workerNumber == 0)
 			{
+				_log.trace("continueCondition: no workers");
 				return true;
 			}
 			waitUntil = _tasks.top()->until();
 			return waitUntil <= std::chrono::steady_clock::now();
 		};
 
-		Log log("ThreadLoop");
-
-		log.debug("Begin thread's loop");
+		_log.debug("Begin thread's loop");
 
 		for (;;)
 		{
 			std::shared_ptr<Task> task;
 
-			log.trace("Wait task on thread");
+			_log.trace("Waiting for task on thread");
 
 			{
+				_log.trace("lock");
 				std::unique_lock<std::mutex> lock(_queueMutex);
+				_log.trace("locked");
 
 //				auto now = std::chrono::steady_clock::now();
 //				if (!_tasks.empty()) log.trace("Wait: task =%20lld", _tasks.top().until());
@@ -148,11 +161,11 @@ void ThreadPool::createThread()
 				// Condition for end thread
 				if (_tasks.empty())
 				{
-					log.debug("End thread's loop");
+					_log.debug("End thread's loop");
 					break;
 				}
 
-				log.trace("Get task from queue");
+				_log.trace("Get task from queue");
 
 				// Get task from queue
 				task = _tasks.top();
@@ -163,27 +176,40 @@ void ThreadPool::createThread()
 				{
 					_workersWakeupCondition.notify_one();
 				}
+
+				_log.trace("unlocked");
 			}
 
 			// Execute task
-			log.debug("Begin execution task on thread");
-			bool done = (*task)();
+			_log.trace("Begin execution task on thread");
+
+			bool done = true;
+			try
+			{
+				done = (*task)();
+			}
+			catch (const std::exception& exception)
+			{
+				_log.warn("Exception at execute task of pool: %s", exception.what());
+			}
 			if (!done)
 			{
+				_log.trace("Reenqueue task");
+
 				std::unique_lock<std::mutex> lock(_queueMutex);
 				waitUntil = task->until();
 				_tasks.emplace(std::move(task));
 			}
-//			else
-//			{
+			else
+			{
+				_log.trace("End execution task on thread");
 //				waitUntil = std::chrono::steady_clock::now();
 //				std::chrono::time_point<std::chrono::steady_clock>::min();
-//			}
-			log.debug("End execution task on thread");
+			}
 		}
 
 //		{
-//			std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
+//			std::unique_lock<std::mutex> lock(pool._queueMutex);
 //			auto i = _workers.find(std::this_thread::get_id());
 //			_workers.erase(i);
 //			delete i->second;
@@ -203,9 +229,9 @@ void ThreadPool::createThread()
 
 void ThreadPool::wait()
 {
-	getInstance()._log.debug("Wait threadpool close");
-
 	auto& pool = getInstance();
+
+	pool._log.debug("Waiting for threadpool close");
 
 	// Condition for close pool
 	for(;;)
@@ -224,7 +250,7 @@ void ThreadPool::wait()
 					delete thread;
 				}
 			}
-			std::unique_lock<std::mutex> cLock(getInstance()._counterMutex);
+			std::unique_lock<std::mutex> cLock(pool._counterMutex);
 			if (pool._hold == 0)
 			{
 				if (pool._workers.empty())
@@ -243,8 +269,10 @@ void ThreadPool::wait()
 
 Thread *ThreadPool::getCurrent()
 {
-	auto i = getInstance()._workers.find(std::this_thread::get_id());
-	if (i == getInstance()._workers.end())
+	auto& pool = getInstance();
+
+	auto i = pool._workers.find(std::this_thread::get_id());
+	if (i == pool._workers.end())
 	{
 		throw std::runtime_error("Unrecognized thread");
 	}
@@ -253,36 +281,44 @@ Thread *ThreadPool::getCurrent()
 
 void ThreadPool::enqueue(const std::shared_ptr<Task>& task)
 {
-	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
+	auto& pool = getInstance();
 
-	getInstance()._tasks.emplace(task);
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
 
-	getInstance()._workersWakeupCondition.notify_one();
+	pool._tasks.emplace(task);
+
+	pool._workersWakeupCondition.notify_one();
 }
 
 void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function)
 {
-	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
+	auto& pool = getInstance();
 
-	getInstance()._tasks.emplace(std::make_shared<Task>(function));
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
 
-	getInstance()._workersWakeupCondition.notify_one();
+	pool._tasks.emplace(std::make_shared<Task>(function));
+
+	pool._workersWakeupCondition.notify_one();
 }
 
 void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function, Task::Duration delay)
 {
-	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
+	auto& pool = getInstance();
 
-	getInstance()._tasks.emplace(std::make_shared<Task>(function, delay));
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
 
-	getInstance()._workersWakeupCondition.notify_one();
+	pool._tasks.emplace(std::make_shared<Task>(function, delay));
+
+	pool._workersWakeupCondition.notify_one();
 }
 
 void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function, Task::Time time)
 {
-	std::unique_lock<std::mutex> lock(getInstance()._queueMutex);
+	auto& pool = getInstance();
 
-	getInstance()._tasks.emplace(std::make_shared<Task>(function, time));
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
 
-	getInstance()._workersWakeupCondition.notify_one();
+	pool._tasks.emplace(std::make_shared<Task>(function, time));
+
+	pool._workersWakeupCondition.notify_one();
 }

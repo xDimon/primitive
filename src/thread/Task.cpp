@@ -24,20 +24,9 @@
 #include "../log/Log.hpp"
 #include "ThreadPool.hpp"
 
-//Task::Task()
-//: _until(Time::min())
-//, _immediately(true)
-//, _tmpContext(nullptr)
-//, _mainContext(nullptr)
-//{
-//}
-
 Task::Task(const std::shared_ptr<Func>& function)
 : _function(function)
-//, _until(Time::min())
-//, _immediately(true)
-, _until(Clock::now())
-, _immediately(false)
+, _until(Time::min())
 , _tmpContext(nullptr)
 , _mainContext(nullptr)
 {
@@ -46,7 +35,6 @@ Task::Task(const std::shared_ptr<Func>& function)
 Task::Task(const std::shared_ptr<Func>& function, Duration delay)
 : _function(function)
 , _until(Clock::now() + delay)
-, _immediately(false)
 , _tmpContext(nullptr)
 , _mainContext(nullptr)
 {
@@ -55,7 +43,6 @@ Task::Task(const std::shared_ptr<Func>& function, Duration delay)
 Task::Task(const std::shared_ptr<Func>& function, Time time)
 : _function(function)
 , _until(time)
-, _immediately(false)
 , _tmpContext(nullptr)
 , _mainContext(nullptr)
 {
@@ -64,7 +51,6 @@ Task::Task(const std::shared_ptr<Func>& function, Time time)
 Task::Task(Task &&that) noexcept
 : _function(std::move(that._function))
 , _until(that._until)
-, _immediately(that._immediately)
 , _tmpContext(that._tmpContext)
 , _mainContext(that._mainContext)
 {
@@ -74,7 +60,6 @@ Task& Task::operator=(Task &&that) noexcept
 {
 	_function = std::move(that._function);
 	_until = that._until;
-	_immediately = that._immediately;
 	_tmpContext = that._tmpContext;
 	_mainContext = that._mainContext;
 	return *this;
@@ -82,7 +67,7 @@ Task& Task::operator=(Task &&that) noexcept
 
 bool Task::operator()()
 {
-	if (!_immediately && Clock::now() < _until && !ThreadPool::stops())
+	if (_until != Time::min() && Clock::now() < _until && !ThreadPool::stops())
 	{
 		return false;
 	}
@@ -94,14 +79,6 @@ bool Task::operator()()
 
 bool Task::operator<(const Task& that) const
 {
-	if (this->_immediately)
-	{
-		return false;
-	}
-	if (that._immediately)
-	{
-		return true;
-	}
 	return this->_until > that._until;
 }
 

@@ -78,8 +78,16 @@ private:
 	// need to keep track of threads so we can join them
 	std::map<const std::thread::id, Thread*> _workers;
 
+	struct TaskComparator
+	{
+		bool operator()(const std::shared_ptr<Task>& left, const std::shared_ptr<Task>& right) const
+		{
+			return *left < *right;
+		}
+	};
+
 	// the task queue
-	std::priority_queue<Task, std::deque<std::shared_ptr<Task>>> _tasks;
+	std::priority_queue<Task, std::deque<std::shared_ptr<Task>>, TaskComparator> _tasks;
 
 	// synchronization
 	std::mutex _queueMutex;

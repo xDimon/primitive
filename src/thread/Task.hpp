@@ -38,7 +38,6 @@ public:
 private:
 	std::shared_ptr<Func> _function;
 	Time _until;
-	bool _immediately;
 
 protected:
 	ucontext_t* _tmpContext;
