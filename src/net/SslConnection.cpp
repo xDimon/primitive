@@ -98,7 +98,7 @@ void SslConnection::watch(epoll_event &ev)
 				_log.trace("WATCH: No established and no want write");
 			}
 		}
-		else if (_outBuff.dataLen() > 0)
+		else if (_outgoing || _outBuff.dataLen() > 0)
 		{
 			_log.trace("WATCH: has data for write");
 			ev.events |= EPOLLOUT | EPOLLWRNORM;

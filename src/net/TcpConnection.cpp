@@ -106,7 +106,7 @@ void TcpConnection::watch(epoll_event &ev)
 
 	if (!_error)
 	{
-		if (_outBuff.dataLen() > 0)
+		if (_outgoing || _outBuff.dataLen() > 0)
 		{
 			ev.events |= EPOLLOUT | EPOLLWRNORM;
 		}
