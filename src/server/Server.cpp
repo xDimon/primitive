@@ -74,7 +74,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 			DbManager::openPool(setting);
 		}
 	}
-	catch (const std::runtime_error& exception)
+	catch (const std::exception& exception)
 	{
 		_log.error("Can't init one of database connection pool ← %s", exception.what());
 	}
@@ -91,7 +91,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 			Transports::add(setting);
 		}
 	}
-	catch (const std::runtime_error& exception)
+	catch (const std::exception& exception)
 	{
 		_log.error("Can't init one of transport ← %s", exception.what());
 	}
@@ -118,7 +118,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 		_log.error("Services' config not found");
 		throw std::runtime_error("Services' config not found");
 	}
-	catch (const std::runtime_error& exception)
+	catch (const std::exception& exception)
 	{
 		_log.error("Can't init one of service ← %s", exception.what());
 	}
@@ -138,7 +138,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 		_log.error("Core config not found");
 		throw std::runtime_error("Services' config not found");
 	}
-	catch (const std::runtime_error& exception)
+	catch (const std::exception& exception)
 	{
 		_log.error("Can't init one of service ← %s", exception.what());
 	}

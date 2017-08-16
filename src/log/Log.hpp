@@ -28,6 +28,7 @@
 #include <thread>
 #include <P7_Client.h>
 #include <P7_Trace.h>
+#include "Sink.hpp"
 
 struct IP7_Trace_Deleter
 {
@@ -53,19 +54,19 @@ public:
 	};
 
 private:
-	std::unique_ptr<IP7_Trace, IP7_Trace_Deleter> _tracer;
 	IP7_Trace::hModule module;
 
+	std::shared_ptr<Sink> _sink;
 	Detail _detail;
 
 public:
+	Log() = delete;
 	Log(const Log&) = delete;
 	void operator=(Log const&) = delete;
 	Log(Log&& tmp) = delete;
 	Log& operator=(Log&& tmp) = delete;
 
-	explicit Log(const std::string& name, Detail detail = Detail::UNDEFINED);
-	Log() : Log("") {};
+	explicit Log(const std::string& name, Detail detail = Detail::UNDEFINED, const std::string& sink = "");
 
 	~Log() = default;
 
@@ -76,9 +77,9 @@ public:
 	void trace(const char* fmt, const Args& ... args)
 	{
 #if defined(LOG_TRACE_ON)
-		if (_tracer)
+		if (_detail == Detail::TRACE)
 		{
-			_tracer->P7_TRACE(module, fmt, args...);
+			_sink->trace().P7_TRACE(module, fmt, args...);
 		}
 #endif // defined(LOG_TRACE_ON)
 	}
@@ -87,9 +88,9 @@ public:
 	void debug(const char* fmt, const Args& ... args)
 	{
 #if defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
-		if (_tracer)
+		if (_detail <= Detail::DEBUG)
 		{
-			_tracer->P7_DEBUG(module, fmt, args...);
+			_sink->trace().P7_DEBUG(module, fmt, args...);
 		}
 #endif // defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
 	}
@@ -97,36 +98,36 @@ public:
 	template<typename... Args>
 	void info(const char* fmt, const Args& ... args)
 	{
-		if (_tracer)
+		if (_detail <= Detail::INFO)
 		{
-			_tracer->P7_INFO(module, fmt, args...);
+			_sink->trace().P7_INFO(module, fmt, args...);
 		}
 	}
 
 	template<typename... Args>
 	void warn(const char* fmt, const Args& ... args)
 	{
-		if (_tracer)
+		if (_detail <= Detail::WARN)
 		{
-			_tracer->P7_WARNING(module, fmt, args...);
+			_sink->trace().P7_WARNING(module, fmt, args...);
 		}
 	}
 
 	template<typename... Args>
 	void error(const char* fmt, const Args& ... args)
 	{
-		if (_tracer)
+		if (_detail <= Detail::ERROR)
 		{
-			_tracer->P7_ERROR(module, fmt, args...);
+			_sink->trace().P7_ERROR(module, fmt, args...);
 		}
 	}
 
 	template<typename... Args>
 	void critical(const char* fmt, const Args& ... args)
 	{
-		if (_tracer)
+		if (_detail <= Detail::CRITICAL)
 		{
-			_tracer->P7_CRITICAL(module, fmt, args...);
+			_sink->trace().P7_CRITICAL(module, fmt, args...);
 		}
 	}
 

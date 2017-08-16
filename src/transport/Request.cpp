@@ -23,6 +23,7 @@
 
 Request::Request(const HttpUri& uri, HttpRequest::Method method, const std::string& body)
 : Task(std::make_shared<Task::Func>([this](){return operator()();}))
+, _log("Request")
 , _clientTransport(new HttpClient())
 , _method(method)
 , _uri(uri)

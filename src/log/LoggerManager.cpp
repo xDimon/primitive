@@ -23,74 +23,217 @@
 #include <thread>
 #include "LoggerManager.hpp"
 
-bool LoggerManager::enabled = true;
-
-LoggerManager::LoggerManager()
+void LoggerManager::init(const std::shared_ptr<Config> &configs)
 {
-	_logClient = P7_Create_Client("/P7.Pool=4096 /P7.Format=%tm\t%tn\t%mn\t%lv\t%ms /P7.Sink=Console");
-//	_logClient = P7_Create_Client("/P7.Pool=32768 /P7.Format=%tm\t%tn\t%mn\t%lv\t%ms /P7.Sink=FileTxt /P7.Dir=/home/di/Projects/Primitive/ /P7.Roll=1mb /P7.Files=3");
-	if (_logClient == nullptr)
+	auto& lm = getInstance();
+
+	const Setting* loggingSetting;
+	try
 	{
-		throw std::runtime_error("Can't create p7-client");
+		loggingSetting = &configs->getRoot()["logs"];
+	}
+	catch (const libconfig::SettingNotFoundException& exception)
+	{
+		loggingSetting = nullptr;
+	}
+	catch (const std::exception& exception)
+	{
+		throw std::runtime_error(std::string() + "Can't get configuration ← " + exception.what());
 	}
 
-	_logTrace = P7_Create_Trace(_logClient, "TraceChannel");
-	if (_logTrace == nullptr)
+	if (loggingSetting != nullptr)
 	{
-		throw std::runtime_error("Can't create p7-channel");
+		std::lock_guard<std::mutex> lockGuard(lm._mutex);
+
+		try
+		{
+			const auto& settings = (*loggingSetting)["sinks"];
+
+			for (auto i = 0; i < settings.getLength(); i++)
+			{
+				const auto& setting = settings[i];
+//			for (const auto& setting : settings)
+//			{
+				auto sink = std::make_shared<Sink>(setting);
+
+				if (lm._sinks.find(sink->name()) != lm._sinks.end())
+				{
+					throw std::runtime_error("Duplicate sink with name '" + sink->name() + "'");
+				}
+
+				lm._sinks.emplace(sink->name(), sink);
+			}
+		}
+		catch (const libconfig::SettingNotFoundException& exception)
+		{
+		}
+		catch (const std::exception& exception)
+		{
+			throw std::runtime_error(std::string() + "Can't make sink ← " + exception.what());
+		}
+
+		try
+		{
+			const auto& settings = (*loggingSetting)["loggers"];
+
+			for (auto i = 0; i < settings.getLength(); i++)
+			{
+				const auto& setting = settings[i];
+//			for (const auto& setting : settings)
+//			{
+				std::string name;
+				if (!setting.lookupValue("name", name))
+				{
+					throw std::runtime_error("Not found name for one of loggers");
+				}
+				if (lm._loggers.find(name) != lm._loggers.end())
+				{
+					throw std::runtime_error("Duplicate logger with name '" + name + "'");
+				}
+
+				std::string sinkname;
+				if (!setting.lookupValue("sink", sinkname))
+				{
+					throw std::runtime_error("Undefined sink for logger '" + name + "'");
+				}
+				if (lm._sinks.find(sinkname) == lm._sinks.end())
+				{
+					throw std::runtime_error("Not found sink '" + sinkname + "' for logger '" + name + "'");
+				}
+				auto& sink = lm._sinks[sinkname];
+
+				std::string level;
+				if (!setting.lookupValue("level", level))
+				{
+					throw std::runtime_error("Undefined level for logger '" + level + "'");
+				}
+				Log::Detail detail = Log::Detail::UNDEFINED;
+				if (level == "trace")
+				{
+					detail = Log::Detail::TRACE;
+				}
+				else if (level == "debug")
+				{
+					detail = Log::Detail::DEBUG;
+				}
+				else if (level == "info")
+				{
+					detail = Log::Detail::INFO;
+				}
+				else if (level == "warn")
+				{
+					detail = Log::Detail::WARN;
+				}
+				else if (level == "error")
+				{
+					detail = Log::Detail::ERROR;
+				}
+				else if (level == "crit")
+				{
+					detail = Log::Detail::CRITICAL;
+				}
+				else if (level == "off")
+				{
+					detail = Log::Detail::OFF;
+				}
+				else
+				{
+					throw std::runtime_error("Unknown level ('" + level + "') for logger '" + name + "'");
+				}
+
+				lm._loggers.emplace(name, std::make_tuple(sink, detail));
+			}
+		}
+		catch (const libconfig::SettingNotFoundException& exception)
+		{
+		}
+		catch (const std::exception& exception)
+		{
+			throw std::runtime_error(std::string() + "Invalid configuration ← " + exception.what());
+		}
 	}
-	_logTrace->Share("TraceChannel");
 
-	uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
-	_logTrace->Register_Thread("MainThread", tid);
-
-	P7_Set_Crash_Handler();
-
-	_defaultLogLevel = Log::Detail::OFF;
-
-	enabled = true;
-}
-
-LoggerManager::~LoggerManager()
-{
-	enabled = false;
-
-    if (_logTrace != nullptr)
-    {
-        _logTrace->Release();
-        _logTrace = nullptr;
-    }
-
-    if (_logClient != nullptr)
-    {
-        _logClient->Release();
-        _logClient = nullptr;
-    }
-}
-
-bool LoggerManager::regThread(std::string threadName)
-{
-	if (getInstance()._logTrace != nullptr)
 	{
+		std::lock_guard<std::mutex> lockGuard(lm._mutex);
+		if (lm._sinks.empty())
+		{
+			lm._sinks.emplace("", std::make_shared<Sink>());
+		}
+		if (lm._loggers.empty())
+		{
+			lm._loggers.emplace("*", std::make_tuple(lm._sinks[""], Log::Detail::INFO));
+		}
+	}
+
+	regThread("MainThread");
+}
+
+void LoggerManager::regThread(std::string threadName)
+{
+	auto& lm = getInstance();
+
+	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+
+	for (auto& i : lm._sinks)
+	{
+		auto& sink = i.second;
+
 		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
-		return getInstance()._logTrace->Register_Thread(threadName.c_str(), tid) != 0;
+		sink->trace().Register_Thread(threadName.c_str(), tid);
 	}
-	return false;
 }
 
-bool LoggerManager::unregThread()
+void LoggerManager::unregThread()
 {
-	uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
-	return getInstance()._logTrace->Unregister_Thread(tid) != 0;
-}
+	auto& lm = getInstance();
 
+	std::lock_guard<std::mutex> lockGuard(lm._mutex);
 
-IP7_Trace *LoggerManager::getLogTrace()
-{
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
-	if (getInstance()._logTrace != nullptr)
+	for (auto& i : lm._sinks)
 	{
-		return P7_Get_Shared_Trace("TraceChannel");
+		auto& sink = i.second;
+
+		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
+		sink->trace().Unregister_Thread(tid);
 	}
-	return nullptr;
+}
+
+const std::tuple<std::shared_ptr<Sink>, Log::Detail>& LoggerManager::getSinkAndLevel(const std::string& name)
+{
+	auto& lm = getInstance();
+
+	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+
+	auto i = lm._loggers.find(name);
+
+	if (i == lm._loggers.end())
+	{
+		i = lm._loggers.find("*");
+		if (i == lm._loggers.end())
+		{
+			throw std::runtime_error("Can't get settings for logger");
+		}
+	}
+
+	return i->second;
+}
+
+const std::shared_ptr<Sink>& LoggerManager::getSink(const std::string& name)
+{
+	auto& lm = getInstance();
+
+	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+
+	auto i = lm._sinks.find(name);
+
+	if (i == lm._sinks.end())
+	{
+		i = lm._sinks.find("");
+		if (i == lm._sinks.end())
+		{
+			throw std::runtime_error("Can't get sink for logger");
+		}
+	}
+
+	return i->second;
 }

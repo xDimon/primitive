@@ -30,13 +30,6 @@
 
 int main(int argc, char *argv[])
 {
-	LoggerManager::setDefaultLogLevel(Log::Detail::INFO);
-
-	Log log("Main");
-	log.info("Start daemon");
-
-//	atexit(Log::finalFlush);
-
 	SetProcessName();
 	StartManageSignals();
 
@@ -47,7 +40,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception& exception)
 	{
-		log.critical("Fail get opptions ← %s", exception.what());
+		printf("Fail get opptions ← %s", exception.what());
 		return EXIT_FAILURE;
 	}
 
@@ -58,9 +51,22 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception& exception)
 	{
-		log.critical("Fail get configuration ← %s", exception.what());
+		printf("Fail get configuration ← %s", exception.what());
 		return EXIT_FAILURE;
 	}
+
+	try
+	{
+		LoggerManager::init(configs);
+	}
+	catch (const std::exception& exception)
+	{
+		printf("Fail logging initialize ← %s", exception.what());
+		return EXIT_FAILURE;
+	}
+
+	Log log("Main");
+	log.info("Start daemon");
 
 	std::shared_ptr<Server> server;
 	try
@@ -84,6 +90,8 @@ int main(int argc, char *argv[])
 	server->wait();
 
 	log.info("Stop daemon");
+
+	Log::finalFlush();
 
 	return EXIT_SUCCESS;
 }

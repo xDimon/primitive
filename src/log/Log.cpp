@@ -22,26 +22,29 @@
 #include "Log.hpp"
 #include "LoggerManager.hpp"
 
-Log::Log(const std::string& name, Detail detail)
+Log::Log(const std::string& name, Detail detail, const std::string& sink)
 : _detail(detail)
 {
-	if (LoggerManager::enabled)
+	if (sink.empty())
 	{
-		_tracer.reset(LoggerManager::getLogTrace());
-		if (!_tracer)
-		{
-			throw std::runtime_error("Can't get shared p7-channel");
-		}
+		auto s = LoggerManager::getSinkAndLevel(name);
+		_sink = std::get<0>(s);
+		_detail = std::get<1>(s);
+	}
+	else
+	{
+		_sink = LoggerManager::getSink("");
+		_detail = Detail::INFO;
+	}
+
+	if (detail != Detail::UNDEFINED)
+	{
+		_detail = detail;
 	}
 
 	module = nullptr;
 
 	setName(name);
-
-	if (_detail == Detail::UNDEFINED)
-	{
-		_detail = LoggerManager::defaultLogLevel();
-	}
 }
 
 void Log::setDetail(Detail detail)
@@ -54,8 +57,5 @@ void Log::setName(const std::string& name_)
 	auto name = name_;
 	name.resize(18, ' ');
 
-	if (_tracer)
-	{
-		_tracer->Register_Module(name.c_str(), &module);
-	}
+	_sink->trace().Register_Module(name.c_str(), &module);
 }

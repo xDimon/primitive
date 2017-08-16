@@ -14,24 +14,42 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.07.25
+// File created on: 2017.08.16
 
-// ServicePart.cpp
+// Sink.hpp
 
 
-#include <sstream>
-#include "ServicePart.hpp"
-#include "Service.hpp"
+#pragma once
 
-ServicePart::ServicePart(const std::shared_ptr<Service>& service)
-: _service(service)
-, _log("")
+
+#include <P7_Client.h>
+#include <P7_Trace.h>
+#include "../configs/Setting.hpp"
+
+class Sink final
 {
-	if (_service.expired())
+private:
+	std::string _name;
+	IP7_Client *_p7client;
+	IP7_Trace *_p7trace;
+
+public:
+	Sink(const Sink&) = delete; // Copy-constructor
+	void operator=(Sink const&) = delete; // Copy-assignment
+	Sink(Sink&&) = delete; // Move-constructor
+	Sink& operator=(Sink&&) = delete; // Move-assignment
+
+	Sink();
+	explicit Sink(const Setting& setting);
+	~Sink();
+
+	const std::string& name() const
 	{
-		throw std::runtime_error("Bad service");
+		return _name;
 	}
-	std::ostringstream ss;
-	ss << service->name() << ":[__part#" << this << "]";
-	_name = std::move(ss.str());
-}
+
+	IP7_Trace& trace()
+	{
+		return *_p7trace;
+	}
+};

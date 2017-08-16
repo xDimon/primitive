@@ -24,6 +24,7 @@
 #include "../thread/ThreadPool.hpp"
 #include "ShutdownManager.hpp"
 
+#include <cxxabi.h>
 #include <climits>
 #include <sstream>
 #include <csignal>
@@ -32,8 +33,8 @@
 #include <execinfo.h>
 #include <sys/prctl.h>
 #include <dlfcn.h>
+#include <elf.h>
 #include <unistd.h>
-#include <cxxabi.h>
 
 static void SignalsHandler(int sig, siginfo_t* info, void* context);
 
@@ -225,31 +226,37 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 		void *bt[128];
 		int n = backtrace(bt, 128);
 
-
 		Log log("Backtrace");
 
-		log.debug("--- begin backtrace ---");
-
 		char **strings = backtrace_symbols(bt, n);
-//		for (int i = 0; i < n; i++)
-//		{
-//			log.debug(strings[i]);
-//		}
 
+		log.info("--- begin backtrace ---");
 		for (int i = 0; i < n; i++)
 		{
-			Dl_info dli;
+			Dl_info dli{};
 
-			dladdr(bt[0], &dli);
+			Elf64_Sym *info;
+
+			dladdr1(bt[i], &dli, reinterpret_cast<void **>(&info), RTLD_DL_SYMENT);
 
 			int status;
 			auto symbol = abi::__cxa_demangle(dli.dli_sname, 0, 0, &status);
 
-			log.info("%s(%s)", dli.dli_fname, symbol);
-			log.debug(strings[i]);
+			if (status == 0)
+				log.info("%s(%s)", dli.dli_fname, symbol);
+			else if (status == -2)
+				log.info("%s(%s)", dli.dli_fname, dli.dli_sname);
+			else if (status == -3)
+				log.info("%s()", dli.dli_fname);
+			else
+				log.info("%s(%s)", dli.dli_fname, dli.dli_sname);
+
+//			log.info("[%p+%p]", dli.dli_fbase, dli.dli_saddr);
+//
+//			log.info("%s\n", strings[i]);
 		}
 
-		log.debug("---- end backtrace ----");
+		log.info("---- end backtrace ----");
 
 		free(strings);
 	}

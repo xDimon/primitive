@@ -25,6 +25,8 @@
 #include <P7_Trace.h>
 #include <mutex>
 #include "Log.hpp"
+#include "../configs/Config.hpp"
+#include "Sink.hpp"
 
 class LoggerManager final
 {
@@ -35,8 +37,8 @@ public:
 	LoggerManager& operator=(LoggerManager&& tmp) = delete;
 
 private:
-	LoggerManager();
-	~LoggerManager();
+	LoggerManager() = default;
+	~LoggerManager() = default;
 
 	static LoggerManager &getInstance()
 	{
@@ -44,28 +46,17 @@ private:
 		return instance;
 	}
 
-	Log::Detail _defaultLogLevel;
+	std::mutex _mutex;
 
-	std::recursive_mutex _mutex;
-
-	IP7_Client *_logClient;
-	IP7_Trace *_logTrace;
+	std::map<std::string, std::shared_ptr<Sink>> _sinks;
+	std::map<std::string, std::tuple<std::shared_ptr<Sink>, Log::Detail>> _loggers;
 
 public:
-	static bool enabled;
+	static void init(const std::shared_ptr<Config> &configs);
 
-	static bool regThread(std::string threadName);
-	static bool unregThread();
+	static void regThread(std::string threadName);
+	static void unregThread();
 
-	static void setDefaultLogLevel(Log::Detail level)
-	{
-		getInstance()._defaultLogLevel = level;
-	};
-
-	static Log::Detail defaultLogLevel()
-	{
-		return getInstance()._defaultLogLevel;
-	}
-
-	static IP7_Trace *getLogTrace();
+	static const std::tuple<std::shared_ptr<Sink>, Log::Detail>& getSinkAndLevel(const std::string& loggerName);
+	static const std::shared_ptr<Sink>& getSink(const std::string& sinkName);
 };
