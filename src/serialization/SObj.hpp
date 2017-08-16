@@ -61,7 +61,7 @@ public:
 		return *this;
 	}
 
-	void insert(const std::string key, const SVal* value)
+	void insert(const std::string& key, const SVal* value)
 	{
 		auto i = _elements.find(key);
 		if (i != _elements.end())
@@ -75,64 +75,64 @@ public:
 		}
 	}
 
-	void insert(const std::string key, SVal& value)
+	void insert(const std::string& key, SVal& value)
 	{
 		insert(key, &value);
 	}
 
-	void insert(const std::string key, uint64_t value)
+	void insert(const std::string& key, uint64_t value)
 	{
 		insert(key, new SInt(value));
 	}
-	void insert(const std::string key, int64_t value)
+	void insert(const std::string& key, int64_t value)
 	{
 		insert(key, new SInt(value));
 	}
-	void insert(const std::string key, uint32_t value)
+	void insert(const std::string& key, uint32_t value)
 	{
 		insert(key, new SInt(value));
 	}
-	void insert(const std::string key, int32_t value)
+	void insert(const std::string& key, int32_t value)
 	{
 		insert(key, new SInt(value));
 	}
-	void insert(const std::string key, uint16_t value)
+	void insert(const std::string& key, uint16_t value)
 	{
 		insert(key, new SInt(value));
 	}
-	void insert(const std::string key, int16_t value)
+	void insert(const std::string& key, int16_t value)
 	{
 		insert(key, new SInt(value));
 	}
-	void insert(const std::string key, uint8_t value)
+	void insert(const std::string& key, uint8_t value)
 	{
 		insert(key, new SInt(value));
 	}
-	void insert(const std::string key, int8_t value)
+	void insert(const std::string& key, int8_t value)
 	{
 		insert(key, new SInt(value));
 	}
 
-	void insert(const std::string key, SFloat::type value)
+	void insert(const std::string& key, SFloat::type value)
 	{
 		insert(key, new SFloat(value));
 	}
 
-	void insert(const std::string key, const std::string value)
+	void insert(const std::string& key, const std::string value)
 	{
 		insert(key, new SStr(value));
 	}
-	void insert(const std::string key, const char* value)
+	void insert(const std::string& key, const char* value)
 	{
 		insert(key, new SStr(value));
 	}
 
-	void insert(const std::string key, bool value)
+	void insert(const std::string& key, bool value)
 	{
 		insert(key, new SBool(value));
 	}
 
-	void insert(const std::string key, nullptr_t)
+	void insert(const std::string& key, nullptr_t)
 	{
 		insert(key, new SNull());
 	}
