@@ -211,6 +211,11 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 				_hasContentLength = true;
 				_contentLength = static_cast<size_t>(atoll(value.c_str()));
 			}
+
+			if (strcasecmp(name.c_str(), "Host") == 0)
+			{
+				_uri.setHost(value);
+			}
 		}
 	}
 	catch (std::runtime_error &exception)
