@@ -21,18 +21,15 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <memory>
-#include <type_traits>
+#include <mutex>
 #include <sys/epoll.h>
 #include "../utils/Shareable.hpp"
 #include "../utils/Named.hpp"
 #include "../log/Log.hpp"
 #include "../transport/Transport.hpp"
 #include "../utils/Context.hpp"
+#include "TimeoutWatcher.hpp"
 #include "ConnectionEvent.hpp"
-#include <sys/epoll.h>
 #include <unistd.h>
 
 class Connection: public Shareable<Connection>, public Named
@@ -62,6 +59,12 @@ protected:
 	/// Ошибка соединения
 	bool _error;
 
+	// для обработки таймаутов
+	mutable std::recursive_mutex _mutex;
+	std::chrono::steady_clock::time_point _realExpireTime;
+	std::chrono::steady_clock::time_point _nextExpireTime;
+	std::shared_ptr<TimeoutWatcher> _timeoutWatcher;
+
 public:
 	Connection() = delete;
 	Connection(const Connection&) = delete;
@@ -71,6 +74,27 @@ public:
 
 	explicit Connection(const std::shared_ptr<Transport>& transport);
 	~Connection() override;
+
+	inline int fd() const
+	{
+		return _sock;
+	}
+
+	std::recursive_mutex& mutex() const
+	{
+		return _mutex;
+	}
+	void setTtl(std::chrono::milliseconds ttl);
+	const bool expired() const
+	{
+		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+		return _realExpireTime <= std::chrono::steady_clock::now();
+	}
+	const auto& expireTime() const
+	{
+		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+		return _realExpireTime;
+	}
 
 	std::shared_ptr<Context>& getContext()
 	{
@@ -83,11 +107,6 @@ public:
 	void resetContext()
 	{
 		_context.reset();
-	}
-
-	inline int fd() const
-	{
-		return _sock;
 	}
 
 	virtual bool isClosed() const

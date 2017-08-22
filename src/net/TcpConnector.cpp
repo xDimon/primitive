@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <sstream>
 #include <cstring>
+#include <unistd.h>
 
 #include "ConnectionManager.hpp"
 
@@ -186,6 +187,8 @@ bool TcpConnector::processing()
 			{
 				connected:
 
+				int sock = -1;
+				std::swap(_sock, sock);
 				_closed = true;
 
 				_log.debug("End processing on %s (was connected)", name().c_str());
@@ -194,20 +197,20 @@ bool TcpConnector::processing()
 
 				try
 				{
-					createConnection(_sock, _sockaddr);
-					_sock = -1;
+					createConnection(sock, _sockaddr);
 					return true;
 				}
 				catch (const std::exception& exception)
 				{
 					onError();
-					shutdown(_sock, SHUT_RDWR);
+					shutdown(sock, SHUT_RDWR);
+					::close(sock);
 					return false;
 				}
 			}
 		}
 
-		for ( ; *_addrIterator; ++_addrIterator)
+		for ( ; *_addrIterator != nullptr; ++_addrIterator)
 		{
 			// Инициализируем структуру нулями
 			memset(&_sockaddr, 0, sizeof(_sockaddr));
@@ -257,7 +260,7 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 	std::shared_ptr<Transport> transport = _transport.lock();
 	if (!transport)
 	{
-		return;
+		throw std::runtime_error("Lost transport");
 	}
 
 	auto newConnection = std::make_shared<TcpConnection>(transport, sock, cliaddr, true);

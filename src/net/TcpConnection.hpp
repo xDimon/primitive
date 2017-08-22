@@ -52,11 +52,6 @@ protected:
 
 	virtual bool writeToSocket();
 
-	mutable std::recursive_mutex _mutex;
-	std::chrono::steady_clock::time_point _realExpireTime;
-	std::chrono::steady_clock::time_point _nextExpireTime;
-	std::shared_ptr<TimeoutWatcher> _timeoutWatcher;
-
 	std::function<void(const std::shared_ptr<Context>&)> _completeHandler;
 	std::function<void()> _errorHandler;
 
@@ -69,22 +64,6 @@ public:
 
 	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
 	~TcpConnection() override;
-
-	std::recursive_mutex& mutex() const
-	{
-		return _mutex;
-	}
-	void setTtl(std::chrono::milliseconds ttl);
-	const bool expired() const
-	{
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-		return _realExpireTime <= std::chrono::steady_clock::now();
-	}
-	const auto& expireTime() const
-	{
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-		return _realExpireTime;
-	}
 
 	bool noRead() const
 	{

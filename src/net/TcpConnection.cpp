@@ -36,8 +36,6 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 , _noWrite(false)
 , _error(false)
 , _closed(false)
-, _realExpireTime(std::chrono::steady_clock::now())
-, _nextExpireTime(std::chrono::time_point<std::chrono::steady_clock>::max())
 {
 	_sock = sock;
 
@@ -57,29 +55,6 @@ TcpConnection::~TcpConnection()
 {
 	shutdown(_sock, SHUT_RD);
 	_log.debug("TcpConnection '%s' destroyed", name().c_str());
-}
-
-void TcpConnection::setTtl(std::chrono::milliseconds ttl)
-{
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-
-	auto now = std::chrono::steady_clock::now();
-	_realExpireTime = now + ttl;
-
-	auto prev = _nextExpireTime;
-	_nextExpireTime = std::min(_realExpireTime, std::max(now, _nextExpireTime));
-
-	if (prev <= _nextExpireTime)
-	{
-		return;
-	}
-
-	if (!_timeoutWatcher)
-	{
-		_timeoutWatcher = std::make_shared<TimeoutWatcher>(ptr());
-	}
-
-	_timeoutWatcher->restart(_nextExpireTime);
 }
 
 void TcpConnection::watch(epoll_event &ev)

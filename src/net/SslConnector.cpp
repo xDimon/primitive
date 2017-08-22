@@ -40,7 +40,7 @@ void SslConnector::createConnection(int sock, const sockaddr_in &cliaddr)
 	std::shared_ptr<Transport> transport = _transport.lock();
 	if (!transport)
 	{
-		return;
+		throw std::runtime_error("Lost transport");
 	}
 
 	auto newConnection = std::shared_ptr<TcpConnection>(new SslConnection(transport, sock, cliaddr, _sslContext, true));

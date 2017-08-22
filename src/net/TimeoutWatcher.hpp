@@ -23,8 +23,9 @@
 
 
 #include "../utils/Shareable.hpp"
-#include "Connection.hpp"
 #include <mutex>
+
+class Connection;
 
 class TimeoutWatcher: public Shareable<TimeoutWatcher>
 {
