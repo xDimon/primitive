@@ -30,12 +30,13 @@
 #include "../utils/Named.hpp"
 #include "../configs/Setting.hpp"
 #include "../log/Log.hpp"
+#include "../telemetry/Metric.hpp"
 
 class DbConnection;
 
 class DbConnectionPool : public Shareable<DbConnectionPool>, public Named
 {
-private:
+protected:
 	Log _log;
 	std::recursive_mutex _mutex;
 
@@ -53,6 +54,12 @@ public:
 
 	explicit DbConnectionPool(const Setting& setting);
 	~DbConnectionPool() override = default;
+
+	std::shared_ptr<Metric> metricConnectCount;
+	std::shared_ptr<Metric> metricSuccessQueryCount;
+	std::shared_ptr<Metric> metricFailQueryCount;
+	std::shared_ptr<Metric> metricAvgQueryPerSec;
+	std::shared_ptr<Metric> metricAvgExecutionTime;
 
 	void touch();
 

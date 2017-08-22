@@ -59,13 +59,15 @@ MysqlConnection::MysqlConnection(
 		dbport,
 		nullptr,
 		CLIENT_REMEMBER_OPTIONS
-	) == 0)
+	) == nullptr)
 	{
 		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
 	}
 
 	timeout = 900;
 	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+
+	pool->metricConnectCount->addValue();
 }
 
 MysqlConnection::MysqlConnection(
@@ -102,13 +104,15 @@ MysqlConnection::MysqlConnection(
 		0,
 		dbsocket.c_str(),
 		CLIENT_REMEMBER_OPTIONS
-	) == 0)
+	) == nullptr)
 	{
 		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
 	}
 
 	timeout = 900;
 	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+
+	pool->metricConnectCount->addValue();
 }
 
 MysqlConnection::~MysqlConnection()
@@ -182,11 +186,26 @@ bool MysqlConnection::rollback()
 
 bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affected, size_t* insertId)
 {
+	auto pool = _pool.lock();
+
 	auto result = dynamic_cast<MysqlResult *>(res);
 
+	auto beginTime = std::chrono::steady_clock::now();
+	if (pool) pool->metricAvgQueryPerSec->addValue();
+
 	// Выполнение запроса
-	if (mysql_query(_mysql, sql.c_str()) != 0)
+	auto success = mysql_query(_mysql, sql.c_str()) == 0;
+
+	auto now = std::chrono::steady_clock::now();
+	auto timeSpent = static_cast<double>((now - beginTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+	if (timeSpent > 0)
 	{
+		if (pool) pool->metricAvgExecutionTime->addValue(timeSpent, now);
+	}
+
+	if (!success)
+	{
+		if (pool) pool->metricFailQueryCount->addValue();
 		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 		return false;
 	}
@@ -206,24 +225,41 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 		result->set(mysql_store_result(_mysql));
 		if (result->get() == nullptr && mysql_errno(_mysql) != 0)
 		{
+			if (pool) pool->metricFailQueryCount->addValue();
 			Log("mysql").error("MySQL store result error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 			return false;
 		}
 	}
 
+	if (pool) pool->metricSuccessQueryCount->addValue();
 	return true;
 }
 
 bool MysqlConnection::multiQuery(const std::string& sql)
 {
+	auto pool = _pool.lock();
+
 	mysql_set_server_option(_mysql, MYSQL_OPTION_MULTI_STATEMENTS_ON);
 
+	auto beginTime = std::chrono::steady_clock::now();
+	if (pool) pool->metricAvgQueryPerSec->addValue();
+
 	// Выполнение запроса
-	if (mysql_query(_mysql, sql.c_str()) != 0)
+	auto success = mysql_query(_mysql, sql.c_str()) == 0;
+
+	auto now = std::chrono::steady_clock::now();
+	auto timeSpent = static_cast<double>((now - beginTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+	if (timeSpent > 0)
+	{
+		if (pool) pool->metricAvgExecutionTime->addValue(timeSpent, now);
+	}
+
+	if (!success)
 	{
 		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 
 		mysql_set_server_option(_mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
+		if (pool) pool->metricFailQueryCount->addValue();
 		return false;
 	}
 
@@ -238,5 +274,6 @@ bool MysqlConnection::multiQuery(const std::string& sql)
 	while (mysql_next_result(_mysql) == 0);
 
 	mysql_set_server_option(_mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
+	if (pool) pool->metricSuccessQueryCount->addValue();
 	return true;
 }

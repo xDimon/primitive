@@ -56,4 +56,6 @@ public:
 	static void closePool(const std::string& name, bool force);
 
 	static Db getConnection(const std::string& name);
+
+	static void forEach(const std::function<void(const std::shared_ptr<DbConnectionPool>&)>& handler);
 };

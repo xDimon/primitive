@@ -22,6 +22,7 @@
 #include <sstream>
 #include "DbConnectionPool.hpp"
 #include "DbConnection.hpp"
+#include "../telemetry/TelemetryManager.hpp"
 
 DbConnectionPool::DbConnectionPool(const Setting& setting)
 : _log("DbConnectionPool")
@@ -38,6 +39,12 @@ DbConnectionPool::DbConnectionPool(const Setting& setting)
 	}
 
 	_name = std::move(name);
+
+	metricConnectCount = TelemetryManager::metric("db/" + _name + "/connections", 1);
+	metricSuccessQueryCount = TelemetryManager::metric("db/" + _name + "/queries", 1);
+	metricFailQueryCount = TelemetryManager::metric("db/" + _name + "/errors", 1);
+	metricAvgQueryPerSec = TelemetryManager::metric("db/" + _name + "/queries_per_second", std::chrono::seconds(15));
+	metricAvgExecutionTime = TelemetryManager::metric("db/" + _name + "/queries_exec_time", std::chrono::seconds(15));
 
 	_log.debug("DbConnectionPool '%s' created", _name.c_str());
 }
@@ -79,7 +86,7 @@ std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 		_mutex.lock();
 
 		// Если соединение никем не захвачено - уничтожаем его
-		if (!conn->captured())
+		if (conn->captured() == 0)
 		{
 			conn.reset();
 		}
@@ -106,7 +113,7 @@ std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 		_mutex.lock();
 
 		// Если соединение никем не захвачено - уничтожаем его
-		if (!conn->captured())
+		if (conn->captured() == 0)
 		{
 			conn.reset();
 		}

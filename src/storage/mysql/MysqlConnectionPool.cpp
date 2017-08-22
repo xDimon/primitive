@@ -87,9 +87,11 @@ MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 
 std::shared_ptr<DbConnection> MysqlConnectionPool::create()
 {
-	if (_dbsocket.length())
+	std::shared_ptr<DbConnection> newDbConnection;
+
+	if (!_dbsocket.empty())
 	{
-		return std::make_shared<MysqlConnection>(
+		newDbConnection = std::make_shared<MysqlConnection>(
 			ptr(),
 			_dbname,
 			_dbuser,
@@ -99,7 +101,7 @@ std::shared_ptr<DbConnection> MysqlConnectionPool::create()
 	}
 	else
 	{
-		return std::make_shared<MysqlConnection>(
+		newDbConnection = std::make_shared<MysqlConnection>(
 			ptr(),
 			_dbname,
 			_dbuser,
@@ -108,6 +110,8 @@ std::shared_ptr<DbConnection> MysqlConnectionPool::create()
 			_dbport
 		);
 	}
+
+	return newDbConnection;
 }
 
 void MysqlConnectionPool::close()

@@ -103,3 +103,13 @@ Db DbManager::getConnection(const std::string& name)
 
 	return Db(pool);
 }
+
+void DbManager::forEach(const std::function<void(const std::shared_ptr<DbConnectionPool>&)>& handler)
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+	for (auto i : getInstance()._pools)
+	{
+		handler(i.second);
+	}
+}
