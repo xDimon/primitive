@@ -39,19 +39,19 @@ public:
 		return _value;
 	}
 
-	virtual operator std::string() const
+	operator std::string() const override
 	{
 		return std::string(_value ? "true" : "false");
 	};
-	virtual operator int() const
+	operator int() const override
 	{
 		return _value ? 1 : 0;
 	};
-	virtual operator double() const
+	operator double() const override
 	{
 		return _value ? 1 : 0;
 	};
-	virtual operator bool() const
+	operator bool() const override
 	{
 		return _value;
 	};

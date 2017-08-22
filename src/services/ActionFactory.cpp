@@ -28,7 +28,7 @@ bool ActionFactory::reg(
 		const std::shared_ptr<Context>&,
 		const SVal*
 	)
-)
+) noexcept
 {
 	auto& factory = getInstance();
 

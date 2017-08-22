@@ -21,7 +21,7 @@
 
 #include "ApplicationFactory.hpp"
 
-bool ApplicationFactory::reg(const std::string& type, std::shared_ptr<Application>(* creator)(const Setting&))
+bool ApplicationFactory::reg(const std::string& type, std::shared_ptr<Application>(* creator)(const Setting&)) noexcept
 {
 	auto& factory = getInstance();
 

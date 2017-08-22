@@ -21,7 +21,7 @@
 
 #include "SerializerFactory.hpp"
 
-bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)(uint32_t flags))
+bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)(uint32_t flags)) noexcept
 {
 	auto& factory = getInstance();
 

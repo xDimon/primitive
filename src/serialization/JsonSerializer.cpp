@@ -579,7 +579,7 @@ SNum* JsonSerializer::decodeNumber()
 			return new SFloat(value);
 		}
 
-		if (!isdigit(c) && c != '-')
+		if (isdigit(c) == 0 && c != '-')
 		{
 			break;
 		}
@@ -594,7 +594,7 @@ SNum* JsonSerializer::decodeNumber()
 	return new SInt(value);
 }
 
-void JsonSerializer::encodeNull(const SNull*)
+void JsonSerializer::encodeNull(const SNull* value)
 {
 	_oss << "null";
 }
@@ -645,7 +645,7 @@ void JsonSerializer::encodeString(const std::string& string)
 				_oss.put('r');
 				break;
 			default:
-				if (!(_flags & ESCAPED_UNICODE))
+				if ((_flags & ESCAPED_UNICODE) == 0)
 				{
 					_oss.put(c);
 					break;
@@ -693,7 +693,7 @@ void JsonSerializer::encodeString(const std::string& string)
 					{
 						throw std::runtime_error("Bad symbol in string value");
 					}
-					while (--bytes)
+					while (--bytes > 0)
 					{
 						if (++i >= string.length())
 						{
@@ -725,14 +725,14 @@ void JsonSerializer::encodeBinary(const SBinary* value)
 
 void JsonSerializer::encodeNumber(const SNum* value)
 {
-	const SInt* intVal = dynamic_cast<const SInt*>(value);
-	if (intVal)
+	auto intVal = dynamic_cast<const SInt*>(value);
+	if (intVal != nullptr)
 	{
 		_oss << intVal->value();
 		return;
 	}
-	const SFloat* floatVal = dynamic_cast<const SFloat*>(value);
-	if (floatVal)
+	auto floatVal = dynamic_cast<const SFloat*>(value);
+	if (floatVal != nullptr)
 	{
 		_oss << std::setprecision(15) << floatVal->value();
 		return;

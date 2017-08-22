@@ -28,7 +28,7 @@ bool TransportFactory::reg(const std::string& name, std::shared_ptr<ServerTransp
 	auto i = factory._creators.find(name);
 	if (i != factory._creators.end())
 	{
-		throw std::runtime_error(std::string("Attepmt to register action with the same name (") + name + ")");
+		throw std::runtime_error(std::string("Attepmt to register transport with the same name (") + name + ")");
 	}
 	factory._creators.emplace(name, creator);
 	return true;
@@ -43,7 +43,7 @@ std::shared_ptr<ServerTransport> TransportFactory::create(const Setting& setting
 	}
 	catch (const libconfig::SettingNotFoundException& exception)
 	{
-		throw std::runtime_error("Bad config or type undefined");
+		throw std::runtime_error("Bad config or transport type undefined");
 	}
 
 	auto& factory = getInstance();

@@ -49,7 +49,7 @@ public:
 	static bool reg(
 		const std::string& name,
 		std::shared_ptr<Event>(* creator)(const std::shared_ptr<Context>&, const SVal*)
-	);
+	) noexcept;
 	static std::shared_ptr<Event> create(
 		const std::string& name,
 		const std::shared_ptr<Context>& context,

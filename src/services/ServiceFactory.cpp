@@ -21,7 +21,7 @@
 
 #include "ServiceFactory.hpp"
 
-bool ServiceFactory::reg(const std::string& name, std::shared_ptr<Service> (* creator)(const Setting&))
+bool ServiceFactory::reg(const std::string& name, std::shared_ptr<Service> (* creator)(const Setting&)) noexcept
 {
 	auto& factory = getInstance();
 

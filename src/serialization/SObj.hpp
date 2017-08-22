@@ -274,21 +274,21 @@ public:
 		value = element->operator std::string();
 	}
 
-	virtual operator std::string() const
+	operator std::string() const override
 	{
 		std::ostringstream oss;
 		oss << "[object#" << this << "(" << _elements.size() << ")]";
 		return std::move(oss.str());
 	};
-	virtual operator int() const
+	operator int() const override
 	{
 		return _elements.size();
 	};
-	virtual operator double() const
+	operator double() const override
 	{
 		return _elements.size();
 	};
-	virtual operator bool() const
+	operator bool() const override
 	{
 		return !_elements.empty();
 	};

@@ -44,21 +44,21 @@ public:
 		return _value;
 	}
 
-	virtual operator std::string() const
+	operator std::string() const override
 	{
 		std::ostringstream oss;
 		oss << _value;
 		return std::move(oss.str());
 	};
-	virtual operator int() const
+	operator int() const override
 	{
 		return _value;
 	};
-	virtual operator double() const
+	operator double() const override
 	{
 		return _value;
 	};
-	virtual operator bool() const
+	operator bool() const override
 	{
 		return _value != 0;
 	};

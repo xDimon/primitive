@@ -45,6 +45,9 @@ private:
 	std::map<std::string, std::shared_ptr<DbConnectionPool>(*)(const Setting&)> _creators;
 
 public:
-	static bool reg(const std::string& type, std::shared_ptr<DbConnectionPool>(*)(const Setting&));
+	static bool reg(
+		const std::string& type,
+		std::shared_ptr<DbConnectionPool>(*)(const Setting&)
+	) noexcept;
 	static std::shared_ptr<DbConnectionPool> create(const Setting& setting);
 };

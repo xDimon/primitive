@@ -22,7 +22,6 @@
 #include <cstring>
 #include "ConnectionManager.hpp"
 
-#include <unistd.h>
 #include "../thread/ThreadPool.hpp"
 #include "../utils/ShutdownManager.hpp"
 
@@ -377,7 +376,7 @@ void ConnectionManager::dispatch()
 
 		auto task = std::make_shared<Task::Func>(
 			[wp = std::weak_ptr<Connection>(connection)](){
-				auto connection = std::dynamic_pointer_cast<Connection>(wp.lock());
+				auto connection = wp.lock();
 				if (!connection)
 				{
 					getInstance()._log.trace("Connection death");

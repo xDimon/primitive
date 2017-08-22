@@ -46,6 +46,9 @@ private:
 	std::map<std::string, std::shared_ptr<Application>(*)(const Setting&)> _creators;
 
 public:
-	static bool reg(const std::string& type, std::shared_ptr<Application>(*)(const Setting&));
+	static bool reg(
+		const std::string& type,
+		std::shared_ptr<Application>(*)(const Setting&)
+	) noexcept;
 	static std::shared_ptr<Application> create(const Setting& setting);
 };

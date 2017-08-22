@@ -21,7 +21,7 @@
 
 #include "EventFactory.hpp"
 
-bool EventFactory::reg(const std::string& name, std::shared_ptr<Event>(* creator)(const std::shared_ptr<Context>&, const SVal*))
+bool EventFactory::reg(const std::string& name, std::shared_ptr<Event>(* creator)(const std::shared_ptr<Context>&, const SVal*)) noexcept
 {
 	auto& factory = getInstance();
 

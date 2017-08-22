@@ -46,6 +46,6 @@ private:
 	std::map<const std::string, std::shared_ptr<Serializer>(*)(uint32_t)> _creators;
 
 public:
-	static bool reg(const std::string& name, std::shared_ptr<Serializer>(*)(uint32_t));
+	static bool reg(const std::string& name, std::shared_ptr<Serializer>(*)(uint32_t)) noexcept;
 	static std::shared_ptr<Serializer> create(const std::string& type, uint32_t flags = 0);
 };

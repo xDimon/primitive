@@ -25,7 +25,6 @@
 #include <cstring>
 #include <sys/ioctl.h>
 #include <sstream>
-#include <unistd.h>
 #include "../transport/ServerTransport.hpp"
 #include "../thread/ThreadPool.hpp"
 

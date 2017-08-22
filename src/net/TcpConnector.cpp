@@ -25,7 +25,6 @@
 #include <fcntl.h>
 #include <sstream>
 #include <cstring>
-#include <unistd.h>
 
 #include "ConnectionManager.hpp"
 

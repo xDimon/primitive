@@ -98,15 +98,18 @@ public:
 
 #include "ActionFactory.hpp"
 
-#define REGISTER_ACTION(Type,ActionName) const bool ActionName::__dummy_for_reg_call = ActionFactory::reg(#Type, ActionName::create);
+#define REGISTER_ACTION(Type,ActionName) const bool ActionName::__dummy = ActionFactory::reg(#Type, ActionName::create);
 #define DECLARE_ACTION(ActionName) \
-private:                                                                                        \
+public:                                                                                         \
     ActionName() = delete;                                                                      \
-    ActionName(const ActionName&) = delete;                                                     \
-    void operator= (ActionName const&) = delete;                                                \
+	ActionName(const ActionName&) = delete;                                                     \
+	void operator=(ActionName const&) = delete;                                                 \
+	ActionName(ActionName&&) = delete;                                                          \
+	ActionName& operator=(ActionName&&) = delete;                                               \
                                                                                                 \
+private:                                                                                        \
     ActionName(                                                                                 \
-		const std::shared_ptr<Service>& service,                                                \
+		const std::shared_ptr<::Service>& service,                                              \
 		const std::shared_ptr<Context>& context,                                                \
 		const SVal* input                                                                       \
 	)                                                                                           \
@@ -121,11 +124,11 @@ public:                                                                         
                                                                                                 \
 private:                                                                                        \
     static auto create(                                                                         \
-		const std::shared_ptr<Service>& service,                                                \
+		const std::shared_ptr<::Service>& service,                                              \
 		const std::shared_ptr<Context>& context,                                                \
 		const SVal* input                                                                       \
 	)                                                                                           \
     {                                                                                           \
         return std::shared_ptr<Action>(new ActionName(service, context, input));                \
     }                                                                                           \
-    static const bool __dummy_for_reg_call;
+    static const bool __dummy;

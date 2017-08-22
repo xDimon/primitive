@@ -35,7 +35,7 @@ public:
 	SStr() = default;
 
 	SStr(std::string value)
-	: _value(value)
+	: _value(std::move(value))
 	{}
 
 	SStr(SStr&& tmp)
@@ -67,25 +67,25 @@ public:
 		}
 	};
 
-	virtual operator std::string() const
+	operator std::string() const override
 	{
 		return _value;
 	};
-	virtual operator int() const
+	operator int() const override
 	{
 		int64_t intVal;
 		std::istringstream iss(_value);
 		iss >> intVal;
 		return intVal;
 	};
-	virtual operator double() const
+	operator double() const override
 	{
 		double fltVal;
 		std::istringstream iss(_value);
 		iss >> fltVal;
 		return fltVal;
 	};
-	virtual operator bool() const
+	operator bool() const override
 	{
 		if (_value.empty())
 		{

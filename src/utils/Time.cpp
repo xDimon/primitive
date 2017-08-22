@@ -19,6 +19,7 @@
 // Time.cpp
 
 
+#include <stdexcept>
 #include "Time.hpp"
 
 namespace Time

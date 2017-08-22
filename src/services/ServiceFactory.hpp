@@ -43,6 +43,9 @@ private:
 	std::map<std::string, std::shared_ptr<Service>(*)(const Setting &setting)> _requests;
 
 public:
-	static bool reg(const std::string& name, std::shared_ptr<Service>(*)(const Setting &setting));
+	static bool reg(
+		const std::string& name,
+		std::shared_ptr<Service>(*)(const Setting &setting)
+	) noexcept;
 	static std::shared_ptr<Service> create(const Setting& setting);
 };

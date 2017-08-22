@@ -27,7 +27,7 @@
 class SVal
 {
 public:
-	virtual ~SVal() {};
+	virtual ~SVal() = default;
 
 	virtual operator std::string() const = 0;
 	virtual operator int() const = 0;

@@ -25,19 +25,19 @@
 
 class SNull: public SVal
 {
-	virtual operator std::string() const
+	operator std::string() const override
 	{
 		return std::string("null");
 	};
-	virtual operator int() const
+	operator int() const override
 	{
 		return 0;
 	};
-	virtual operator double() const
+	operator double() const override
 	{
 		return 0.0;
 	};
-	virtual operator bool() const
+	operator bool() const override
 	{
 		return false;
 	};

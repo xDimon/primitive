@@ -29,6 +29,7 @@ private:
 
 public:
 	SBinary() = default;
+	~SBinary() override = default;
 
 	SBinary(std::string& value)
 	: _value(std::move(value))
@@ -51,7 +52,7 @@ public:
 		return _value;
 	}
 
-	virtual operator std::string() const
+	operator std::string() const override
 	{
 		std::ostringstream oss;
 		oss << "[";
@@ -62,15 +63,15 @@ public:
 		oss << "]";
 		return std::move(oss.str());
 	};
-	virtual operator int() const
+	operator int() const override
 	{
 		return _value.size();
 	};
-	virtual operator double() const
+	operator double() const override
 	{
 		return _value.size();
 	};
-	virtual operator bool() const
+	operator bool() const override
 	{
 		return !_value.empty();
 	};

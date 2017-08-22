@@ -23,7 +23,6 @@
 
 #include <openssl/err.h>
 #include <sstream>
-#include <unistd.h>
 
 #include "ConnectionManager.hpp"
 #include "../transport/ServerTransport.hpp"

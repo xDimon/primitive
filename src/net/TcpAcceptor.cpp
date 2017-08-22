@@ -29,8 +29,6 @@
 #include <sstream>
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"
-#include <unistd.h>
-#include <cstdint>
 #include "../utils/ShutdownManager.hpp"
 
 TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port)

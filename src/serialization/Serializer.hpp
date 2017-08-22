@@ -71,8 +71,8 @@ private:                                                                        
 public:                                                                                         \
     ~Class() override = default;                                                                \
                                                                                                 \
-	virtual SVal* decode(const std::string &data) override;                                     \
-	virtual std::string encode(const SVal* value) override;                           	        \
+	SVal* decode(const std::string &data) override;                                             \
+	std::string encode(const SVal* value) override;                                             \
                                                                                                 \
 private:                                                                                        \
     static const bool __dummy;

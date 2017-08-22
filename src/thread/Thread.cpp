@@ -24,7 +24,6 @@
 #include "ThreadPool.hpp"
 #include "../log/LoggerManager.hpp"
 
-#include <cstring>
 #include <sys/mman.h>
 #include <ucontext.h>
 #include <climits>

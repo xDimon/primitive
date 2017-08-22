@@ -60,7 +60,7 @@ public:
 			const std::shared_ptr<Context>&,
 			const SVal*
 		)
-	);
+	) noexcept;
 	static std::shared_ptr<Action> create(
 		const std::string& name,
 		const std::shared_ptr<Service>& service,
