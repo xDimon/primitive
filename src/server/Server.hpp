@@ -28,6 +28,7 @@
 #include "../storage/DbConnectionPool.hpp"
 #include "../services/Service.hpp"
 #include <map>
+#include "../telemetry/Metric.hpp"
 
 class Server final
 {

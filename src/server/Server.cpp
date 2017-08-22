@@ -26,8 +26,7 @@
 #include "../storage/DbManager.hpp"
 #include "../extra/Applications.hpp"
 #include "../transport/Transports.hpp"
-#include <sys/types.h>
-#include <unistd.h>
+#include "../telemetry/SysInfo.hpp"
 
 Server* Server::_instance = nullptr;
 
@@ -142,6 +141,8 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	{
 		_log.error("Can't init one of service ← %s", exception.what());
 	}
+
+	SysInfo::start();
 
 	ThreadPool::enqueue(
 		std::make_shared<Task::Func>(
