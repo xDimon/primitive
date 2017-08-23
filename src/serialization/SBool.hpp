@@ -34,6 +34,11 @@ private:
 public:
 	SBool(bool value): _value(value) {};
 
+	SBool* clone() const override
+	{
+		return new SBool(_value);
+	}
+
 	bool value() const
 	{
 		return _value;

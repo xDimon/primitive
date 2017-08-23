@@ -25,6 +25,11 @@
 
 class SNull: public SVal
 {
+	SNull* clone() const override
+	{
+		return new SNull();
+	}
+
 	operator std::string() const override
 	{
 		return std::string("null");

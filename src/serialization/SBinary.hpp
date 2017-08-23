@@ -31,6 +31,13 @@ public:
 	SBinary() = default;
 	~SBinary() override = default;
 
+	SBinary* clone() const override
+	{
+		auto copy = new SBinary();
+		copy->_value = _value;
+		return copy;
+	}
+
 	SBinary(std::string& value)
 	: _value(std::move(value))
 	{

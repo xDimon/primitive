@@ -49,6 +49,15 @@ public:
 		}
 	};
 
+	SArr* clone() const override
+	{
+		SArr *copy = new SArr();
+		forEach([&](const SVal& value){
+			copy->insert(value.clone());
+		});
+		return copy;
+	}
+
 	SArr(SArr&& tmp)
 	{
 		_elements.swap(tmp._elements);

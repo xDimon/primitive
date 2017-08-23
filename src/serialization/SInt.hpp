@@ -39,6 +39,11 @@ public:
 	: _value(value)
 	{}
 
+	SInt* clone() const override
+	{
+		return new SInt(_value);
+	}
+
 	type value() const
 	{
 		return _value;

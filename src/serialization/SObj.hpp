@@ -50,6 +50,15 @@ public:
 		_elements.clear();
 	};
 
+	SObj* clone() const override
+	{
+		SObj *copy = new SObj();
+		forEach([&](const std::string& key, const SVal& value){
+			copy->insert(key, value.clone());
+		});
+		return copy;
+	}
+
 	SObj(SObj&& tmp)
 	{
 		_elements.swap(tmp._elements);

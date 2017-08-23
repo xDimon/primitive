@@ -38,6 +38,13 @@ public:
 	: _value(std::move(value))
 	{}
 
+	SStr* clone() const override
+	{
+		auto copy = new SStr();
+		copy->_value = _value;
+		return copy;
+	}
+
 	SStr(SStr&& tmp)
 	{
 		_value.swap(tmp._value);

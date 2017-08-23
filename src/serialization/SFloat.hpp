@@ -37,6 +37,11 @@ public:
 	: _value(value)
 	{}
 
+	SFloat* clone() const override
+	{
+		return new SFloat(_value);
+	}
+
 	type value() const
 	{
 		return _value;
