@@ -44,6 +44,11 @@ public:
 		return _value;
 	}
 
+	virtual void operator=(SBool const& tmp)
+	{
+		_value = tmp._value;
+	}
+
 	operator std::string() const override
 	{
 		return std::string(_value ? "true" : "false");

@@ -47,6 +47,11 @@ public:
 		return _value;
 	}
 
+	void operator=(SFloat const& that)
+	{
+		_value = that._value;
+	}
+
 	operator std::string() const override
 	{
 		std::ostringstream oss;

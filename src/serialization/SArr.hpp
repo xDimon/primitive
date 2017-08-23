@@ -96,7 +96,18 @@ public:
 
 	void forEach(std::function<void (const SVal*)> handler) const
 	{
-		std::for_each(_elements.begin(), _elements.end(), handler);
+		for (auto const& element : _elements)
+		{
+			handler(element);
+		}
+	}
+
+	void forEach(std::function<void (const SVal&)> handler) const
+	{
+		for (auto const& element : _elements)
+		{
+			handler(*element);
+		}
 	}
 
 	operator std::string() const override

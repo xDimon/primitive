@@ -662,9 +662,9 @@ void TlvSerializer::encodeObject(const SObj* value)
 {
 	_oss.put(static_cast<char>(Token::OBJECT));
 	value->forEach(
-		[this](const std::pair<const std::string&, const SVal*>& element) {
-			encodeKey(element.first);
-			encodeValue(element.second);
+		[this](const std::string& key, const SVal* val) {
+			encodeKey(key);
+			encodeValue(val);
 		}
 	);
 	_oss.put(static_cast<char>(Token::OBJECT_END));

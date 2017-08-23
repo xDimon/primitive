@@ -179,9 +179,20 @@ public:
 		return val ? val->operator std::string() : defaultValue;
 	}
 
-	void forEach(std::function<void(const std::pair<const std::string, const SVal*>&)> handler) const
+	void forEach(std::function<void(const std::string&, const SVal*)> handler) const
 	{
-		std::for_each(_elements.cbegin(), _elements.cend(), handler);
+		for (auto const& element : _elements)
+		{
+			handler(element.first, element.second);
+		}
+	}
+
+	void forEach(std::function<void(const std::string&, const SVal&)> handler) const
+	{
+		for (auto const& element : _elements)
+		{
+			handler(element.first, *element.second);
+		}
 	}
 
 	void lookup(const char *key, int64_t &value, bool strict = false) const

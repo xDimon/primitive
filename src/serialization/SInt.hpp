@@ -44,6 +44,11 @@ public:
 		return new SInt(_value);
 	}
 
+	virtual void operator=(SInt const& that)
+	{
+		_value = that._value;
+	}
+
 	type value() const
 	{
 		return _value;

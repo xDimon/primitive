@@ -56,6 +56,16 @@ public:
 		return *this;
 	}
 
+	SStr(const SStr& tmp) // Copy-constructor
+	{
+		_value = tmp._value;
+	}
+
+	virtual void operator=(SStr const& tmp)
+	{
+		_value = tmp._value;
+	}
+
 	void insert(uint32_t symbol)
 	{
 		_value.push_back(symbol);
