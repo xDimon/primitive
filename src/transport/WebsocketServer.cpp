@@ -247,12 +247,13 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				if (connection->dataLen() > 0)
 				{
 					_log.debug("Not anough data for calc frame header size (%zu < 2)", connection->dataLen());
+					connection->setTtl(std::chrono::seconds(60));
 				}
 				else
 				{
 					_log.debug("No more data");
+					connection->setTtl(std::chrono::seconds(900));
 				}
-				connection->setTtl(std::chrono::seconds(60));
 				break;
 			}
 
