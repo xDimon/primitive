@@ -37,7 +37,10 @@ public:
 	MysqlResult(MysqlResult&&) = delete;
 	MysqlResult& operator=(MysqlResult&&) = delete;
 
-	MysqlResult() = default;
+	MysqlResult()
+	: _data(nullptr)
+	{
+	}
 
 	~MysqlResult() override
 	{
