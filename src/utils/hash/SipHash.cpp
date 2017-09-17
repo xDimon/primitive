@@ -65,7 +65,7 @@ static uint64_t u8to64_le(const uint8_t* p)
 }
 
 
-SipHash::SipHash(const char (& seed)[16])
+SipHash::SipHash(const char (& seed)[16]) noexcept
 	: d_v0(0x736f6d6570736575ULL)
 	, d_v1(0x646f72616e646f6dULL)
 	, d_v2(0x6c7967656e657261ULL)
@@ -83,7 +83,7 @@ SipHash::SipHash(const char (& seed)[16])
 }
 
 void
-SipHash::operator()(const void* data, size_t numBytes)
+SipHash::operator()(const void* data, size_t numBytes) noexcept
 {
 	uint8_t const* in = static_cast<const uint8_t*>(data);
 
@@ -119,7 +119,7 @@ SipHash::operator()(const void* data, size_t numBytes)
 	std::copy(end, end + d_bufSize, d_buf);
 }
 
-SipHash::result_type SipHash::computeHash()
+SipHash::result_type SipHash::computeHash() noexcept
 {
 	// The "FALL THROUGH" comments here are necessary to avoid the
 	// implicit-fallthrough warnings that GCC 7 introduces.  We could

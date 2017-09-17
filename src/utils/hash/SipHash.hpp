@@ -45,16 +45,15 @@ private:
 
 	size_t d_totalLength; // The total length of all data that has been passed into the algorithm.
 
-	SipHash(const SipHash& original) = delete; // Do not allow copy construction.
-
-	SipHash& operator=(const SipHash& rhs) = delete; // Do not allow assignment.
-
 public:
 	// TYPES
 	typedef uint64_t result_type; // Typedef indicating the value type returned by this algorithm.
 
+	SipHash(const SipHash& original) = delete; // Do not allow copy construction.
+	SipHash& operator=(const SipHash& rhs) = delete; // Do not allow assignment.
+
 	// CREATORS
-	explicit SipHash(const char (&seed)[16]);
+	explicit SipHash(const char (&seed)[16]) noexcept;
 	// Create a 'SipHash', seeded with a 128-bit
 	// ('k_SEED_LENGTH' bytes) seed pointed to by the specified 'seed'.
 	// Each bit of the supplied seed will contribute to the final hash
@@ -66,7 +65,11 @@ public:
 	~SipHash() = default;
 
 	// MANIPULATORS
-	void operator()(const void* data, size_t numBytes);
+	void operator()(const void* data, size_t numBytes) noexcept;
+	void operator()(const std::string& str) noexcept
+	{
+		operator()(str.data(), str.length());
+	}
 	// Incorporate the specified 'data', of at least the specified
 	// 'numBytes', into the internal state of the hashing algorithm.  Every
 	// bit of data incorporated into the internal state of the algorithm
@@ -78,7 +81,7 @@ public:
 	// 'data' points to a valid memory location with at least 'numBytes'
 	// bytes of initialized memory.
 
-	result_type computeHash();
+	result_type computeHash() noexcept;
 	// Return the finalized version of the hash that has been accumulated.
 	// Note that this changes the internal state of the object, so calling
 	// 'computeHash()' multiple times in a row will return different
