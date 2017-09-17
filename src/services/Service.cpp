@@ -23,7 +23,7 @@
 #include "Service.hpp"
 
 Service::Service(const Setting& setting)
-: _log("Service")
+: _log("Service:<unknown>")
 , _setting(setting)
 {
 	if (setting.exists("name"))
@@ -45,4 +45,12 @@ Service::Service(const Setting& setting)
 		ss << "_service[" << std::hex << this << "]";
 		_name = std::move(ss.str());
 	}
+
+	_log.setName("Service:" + _name);
+	_log.debug("Service '%s' created", _name.c_str());
+}
+
+Service::~Service()
+{
+	_log.debug("Service '%s' destroyed", _name.c_str());
 }

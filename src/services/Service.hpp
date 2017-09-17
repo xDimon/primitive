@@ -47,7 +47,7 @@ public:
 	Service(Service&&) = delete;
 	Service& operator=(Service&&) = delete;
 
-	virtual ~Service() = default;
+	virtual ~Service();
 
 	virtual void activate() = 0;
 	virtual void deactivate() = 0;
@@ -75,7 +75,7 @@ private:                                                                    \
     explicit Service(const Setting& setting);                               \
                                                                             \
 public:                                                                     \
-    ~Service() override;                                                    \
+    ~Service() override = default;                                          \
                                                                             \
     void activate() override;                                               \
     void deactivate() override;                                             \

@@ -27,13 +27,6 @@ REGISTER_SERVICE(status)
 status::Service::Service(const Setting& setting)
 : ::Service(setting)
 {
-	_log.setName("StatusService");
-	_log.debug("Service '%s' created", name().c_str());
-}
-
-status::Service::~Service()
-{
-	_log.debug("Service '%s' destroyed", name().c_str());
 }
 
 void status::Service::activate()
