@@ -50,14 +50,14 @@ databases = (
 		type = "mysql";
 
 		// Параметры подключения к серверу БД
-		dbserver = "127.0.0.1";       // IP сервера БД (при TCP подключении)
-		dbport = 3306;                // Порт сервера БД (при TCP подключении)
-		dbsocket = "/run/mysql.sock"; // Полное имя сокета (для UNIX-socket)
+		dbserver = "127.0.0.1";               // IP сервера БД (при TCP подключении)
+		dbport = 3306;                        // Порт сервера БД (при TCP подключении)
+		dbsocket = "/run/mysqld/mysqld.sock"; // Полное имя сокета (для UNIX-socket)
 
 		// Параметры доступа
-		dbuser = "wgms";              // Имя пользователя
-		dbpass = "Xde5a7mtmWDnc56Bs"; // Пароль пользователя
-		dbname = "wgms_payments";     // Имя БД по умолчанию
+		dbuser = "test"; // Имя пользователя
+		dbpass = "test"; // Пароль пользователя
+		dbname = "test"; // Имя БД по умолчанию
 	}
 );
 
@@ -66,11 +66,13 @@ databases = (
  *****************************************************************************/
 services = (
 	{
-		// Тип сервиса
-		//   Реализованы: payments и products
-		type="payments";
+		// Имя сервиса
+		name="status";
 
-		// Описание частей сервиса для работы с 3кв-party приложениями
+		// Тип сервиса
+		type="status";
+
+		// Описание частей сервиса для работы с 3rd-party приложениями
 		//   Каждая часть реализует логику для конкретной третьей стороны.
 		//   Может повторяться для работы на разных transport+endpoints
 		parts = (
@@ -85,28 +87,8 @@ services = (
 
 				// Начальная часть URI для роутинга
 				//   Имеет смысл только для транспорта, основанного на http
-				uri = "/payments/client";
-			},
-			{
-				type = "facebook";
-				transport = "transport1";
-				uri = "/payments/facebook";
+				uri = "/status";
 			}
-		);
-	},
-	{
-		type="products";
-		parts = (
-			{
-				type = "admin";
-				transport = "http";
-				uri = "/products/admin";
-			},
-			{
-            	type = "client";
-				transport = "http";
-				uri = "/products/client";
-			},
 		);
 	}
 );
@@ -117,27 +99,15 @@ services = (
 applications = (
 	{
 		// Тип 3rd-party приложения
-		//   Реализованы:
-		//    - admin
-		//    - vkontakte
-		//    - odnoklassniki
-		//    - moimir
-		//    - facebook
-		//    - rockyou
-		type = "vkontakte";
+		type = "admin";
 
 		// Идентификатор приложения
 		//   В рамках одного сервера предполагается, что appId уникален,
 		//   независимо от типа. С точки зрения сервера это индекс
-		appId = "1234567";
+		appId = "statusOfShard";
 
 		// Ключ или секрет приложения для формирования подписи запросов
-		appKey = "qAwSeDrFtGyHuJiKoLpZ";
-	},
-	{
-	 	type = "odnoklassniki";
-		appId = "987654321";
-		appKey = "1234567890QWERTYUIOPASDF";
+		appKey = "*sekret*";
 	}
 );
 
@@ -147,6 +117,16 @@ applications = (
 logs = {
 	// Конфигурация синков
 	sinks = (
+		{
+			name  = "console";
+			type = "console"; // Вывод в консоль
+			format = "%tm\t%tn\t%mn\t%lv\t%ms";
+/*		},
+		{
+			name  = "syslog";
+			type = "syslog"; // Вывод в Syslog
+			format = "%tm\t%tn\t%mn\t%lv\t%ms";
+		},
 		{
 			// Имя синка
 			name  = "file";
@@ -160,7 +140,7 @@ logs = {
 			format = "%tm\t%tn\t%mn\t%lv\t%ms";
 
 			// Папка логов
-			directory = "/opt/wgms/logs/";
+			directory = "/opt/logs/";
 
 			// Настройка ротации логов
 			//   100mb - создавать новый файл каждые 100 MB
@@ -169,17 +149,7 @@ logs = {
 
 			// Максимальное количество файлов. Самые старые удаляются.
 			maxcount = 500;
-		},
-		{
-			name  = "console";
-			type = "console"; // Вывод в консоль
-			format = "%tm\t%tn\t%mn\t%lv\t%ms";
-		},
-		{
-			name  = "syslog";
-			type = "syslog"; // Вывод в Syslog
-			format = "%tm\t%tn\t%mn\t%lv\t%ms";
-		}
+*/		}
 	);
 
 	// Конфигурация логгеров
@@ -190,7 +160,7 @@ logs = {
 			name = "*";
 
 			// Используемый логгером синк
-			sink = "file";
+			sink = "console";
 
 			// Уровень детализции лога
 			//   Возможные значения: trace, debug, info, warn, error, crit, off
@@ -198,4 +168,3 @@ logs = {
 		}
 	);
 };
-
