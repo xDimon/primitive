@@ -55,13 +55,13 @@ public:
 
 #include "ServiceFactory.hpp"
 
-#define REGISTER_SERVICE(Type) \
-const bool Type::Service::__dummy = ServiceFactory::reg(                    \
-	#Type,                                                                  \
-	[](const Setting& setting){                                             \
-		return std::shared_ptr<::Service>(new Type::Service(setting));      \
-	}                                                                       \
-);
+#define REGISTER_SERVICE(Type) const Dummy Type::Service::__dummy = \
+	ServiceFactory::reg(                                                    \
+		#Type,                                                              \
+		[](const Setting& setting){                                         \
+			return std::shared_ptr<::Service>(new Type::Service(setting));  \
+		}                                                                   \
+	);
 
 #define DECLARE_SERVICE() \
 public:                                                                     \
@@ -81,4 +81,4 @@ public:                                                                     \
     void deactivate() override;                                             \
                                                                             \
 private:                                                                    \
-    static const bool __dummy;
+    static const Dummy __dummy;

@@ -21,17 +21,17 @@
 
 #include "ServiceFactory.hpp"
 
-bool ServiceFactory::reg(const std::string& name, std::shared_ptr<Service> (* creator)(const Setting&)) noexcept
+Dummy ServiceFactory::reg(const std::string& name, std::shared_ptr<Service> (* creator)(const Setting&)) noexcept
 {
 	auto& factory = getInstance();
 
-	auto i = factory._requests.find(name);
-	if (i != factory._requests.end())
+	auto i = factory._creators.find(name);
+	if (i != factory._creators.end())
 	{
 		throw std::runtime_error(std::string("Attepmt to register action with the same name (") + name + ")");
 	}
-	factory._requests.emplace(name, creator);
-	return true;
+	factory._creators.emplace(name, creator);
+	return Dummy{};
 }
 
 std::shared_ptr<Service> ServiceFactory::create(const Setting& setting)
@@ -48,8 +48,8 @@ std::shared_ptr<Service> ServiceFactory::create(const Setting& setting)
 
 	auto& factory = getInstance();
 
-	auto i = factory._requests.find(type);
-	if (i == factory._requests.end())
+	auto i = factory._creators.find(type);
+	if (i == factory._creators.end())
 	{
 		throw std::runtime_error(std::string() + "Unknown service type '"+ type +"'");
 	}

@@ -98,7 +98,12 @@ public:
 
 #include "ActionFactory.hpp"
 
-#define REGISTER_ACTION(Type,ActionName) const bool ActionName::__dummy = ActionFactory::reg(#Type, ActionName::create);
+#define REGISTER_ACTION(Type,ActionName) const Dummy ActionName::__dummy = \
+	ActionFactory::reg(                                                                         \
+		#Type,                                                                                  \
+		ActionName::create                                                                      \
+	);
+
 #define DECLARE_ACTION(ActionName) \
 public:                                                                                         \
     ActionName() = delete;                                                                      \
@@ -131,4 +136,4 @@ private:                                                                        
     {                                                                                           \
         return std::shared_ptr<Action>(new ActionName(service, context, input));                \
     }                                                                                           \
-    static const bool __dummy;
+    static const Dummy __dummy;

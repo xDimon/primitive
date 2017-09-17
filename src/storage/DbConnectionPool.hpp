@@ -72,7 +72,7 @@ public:
 
 #include "DbConnectionPoolFactory.hpp"
 
-#define REGISTER_DBCONNECTIONPOOL(Type,Class) const bool Class::__dummy = \
+#define REGISTER_DBCONNECTIONPOOL(Type,Class) const Dummy Class::__dummy = \
     DbConnectionPoolFactory::reg(                                                               \
         #Type,                                                                                  \
         [](const Setting& setting){                                                             \
@@ -96,4 +96,4 @@ public:                                                                         
 	void close() override;                                                                      \
                                                                                                 \
 private:                                                                                        \
-    static const bool __dummy;
+	static const Dummy __dummy;

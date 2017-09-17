@@ -62,7 +62,7 @@ public:
 
 #include "TransportFactory.hpp"
 
-#define REGISTER_TRANSPORT(Type,Class) const bool Class::__dummy = \
+#define REGISTER_TRANSPORT(Type,Class) const Dummy Class::__dummy = \
     TransportFactory::reg(                                                                      \
         #Type,                                                                                  \
         [](const Setting& setting){                                                             \
@@ -97,4 +97,4 @@ public:                                                                         
     std::shared_ptr<Handler> getHandler(const std::string& subject) override;                   \
                                                                                                 \
 private:                                                                                        \
-    static const bool __dummy;
+    static const Dummy __dummy;

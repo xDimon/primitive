@@ -34,7 +34,7 @@ std::shared_ptr<ServerTransport> Transports::add(const Setting& setting, bool re
 		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 		if (getInstance()._registry.find(name) != getInstance()._registry.end())
 		{
-			throw std::runtime_error(std::string("Already exists application with the same appId ('") + name + "')");
+			throw std::runtime_error(std::string("Already exists transport with the same name ('") + name + "')");
 		}
 	}
 

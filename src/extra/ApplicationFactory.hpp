@@ -25,6 +25,7 @@
 #include "Application.hpp"
 
 #include <map>
+#include "../utils/Dummy.hpp"
 
 class ApplicationFactory
 {
@@ -46,7 +47,7 @@ private:
 	std::map<std::string, std::shared_ptr<Application>(*)(const Setting&)> _creators;
 
 public:
-	static bool reg(
+	static Dummy reg(
 		const std::string& type,
 		std::shared_ptr<Application>(*)(const Setting&)
 	) noexcept;

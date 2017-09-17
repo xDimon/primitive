@@ -27,15 +27,18 @@
 
 #include <memory>
 #include <map>
+#include "../utils/Dummy.hpp"
 
 class SerializerFactory final
 {
+public:
+	SerializerFactory(const SerializerFactory&) = delete;
+	void operator=(SerializerFactory const&) = delete;
+	SerializerFactory(SerializerFactory&&) = delete;
+	SerializerFactory& operator=(SerializerFactory&&) = delete;
+
 private:
 	SerializerFactory() = default;
-
-	SerializerFactory(SerializerFactory const&) = delete;
-
-	void operator=(SerializerFactory const&) = delete;
 
 	static SerializerFactory& getInstance()
 	{
@@ -46,6 +49,6 @@ private:
 	std::map<const std::string, std::shared_ptr<Serializer>(*)(uint32_t)> _creators;
 
 public:
-	static bool reg(const std::string& name, std::shared_ptr<Serializer>(*)(uint32_t)) noexcept;
+	static Dummy reg(const std::string& name, std::shared_ptr<Serializer>(*)(uint32_t)) noexcept;
 	static std::shared_ptr<Serializer> create(const std::string& type, uint32_t flags = 0);
 };

@@ -55,7 +55,7 @@ public:
 
 #include "ApplicationFactory.hpp"
 
-#define REGISTER_APPLICATION(Type,Class) const bool Class::__dummy = \
+#define REGISTER_APPLICATION(Type,Class) const Dummy Class::__dummy = \
     ApplicationFactory::reg(                                                                    \
         #Type,                                                                                  \
         [](const Setting& setting){                                                             \
@@ -76,4 +76,4 @@ private:                                                                        
     Class(const Setting& setting);                                                              \
                                                                                                 \
 private:                                                                                        \
-    static const bool __dummy;
+    static const Dummy __dummy;

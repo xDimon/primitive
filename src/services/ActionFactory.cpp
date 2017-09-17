@@ -21,7 +21,7 @@
 
 #include "ActionFactory.hpp"
 
-bool ActionFactory::reg(
+Dummy ActionFactory::reg(
 	const std::string& name,
 	std::shared_ptr<Action>(* creator)(
 		const std::shared_ptr<Service>&,
@@ -38,7 +38,7 @@ bool ActionFactory::reg(
 		throw std::runtime_error(std::string("Attepmt to register action with the same name (") + name + ")");
 	}
 	factory._creators.emplace(name, creator);
-	return true;
+	return Dummy{};
 }
 
 std::shared_ptr<Action> ActionFactory::create(

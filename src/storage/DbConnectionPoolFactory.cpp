@@ -21,7 +21,7 @@
 
 #include "DbConnectionPoolFactory.hpp"
 
-bool DbConnectionPoolFactory::reg(const std::string& type, std::shared_ptr<DbConnectionPool>(* creator)(const Setting&)) noexcept
+Dummy DbConnectionPoolFactory::reg(const std::string& type, std::shared_ptr<DbConnectionPool>(* creator)(const Setting&)) noexcept
 {
 	auto& factory = getInstance();
 
@@ -33,7 +33,7 @@ bool DbConnectionPoolFactory::reg(const std::string& type, std::shared_ptr<DbCon
 
 	factory._creators.emplace(type, creator);
 
-	return true;
+	return Dummy{};
 }
 
 std::shared_ptr<DbConnectionPool> DbConnectionPoolFactory::create(const Setting& setting)

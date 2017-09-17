@@ -21,7 +21,7 @@
 
 #include "TransportFactory.hpp"
 
-bool TransportFactory::reg(const std::string& name, std::shared_ptr<ServerTransport> (* creator)(const Setting&))
+Dummy TransportFactory::reg(const std::string& name, std::shared_ptr<ServerTransport> (* creator)(const Setting&))
 {
 	auto& factory = getInstance();
 
@@ -31,7 +31,7 @@ bool TransportFactory::reg(const std::string& name, std::shared_ptr<ServerTransp
 		throw std::runtime_error(std::string("Attepmt to register transport with the same name (") + name + ")");
 	}
 	factory._creators.emplace(name, creator);
-	return true;
+	return Dummy{};
 }
 
 std::shared_ptr<ServerTransport> TransportFactory::create(const Setting& setting)

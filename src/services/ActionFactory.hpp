@@ -27,6 +27,7 @@
 #include <memory>
 #include "Action.hpp"
 #include "../transport/ServerTransport.hpp"
+#include "../utils/Dummy.hpp"
 
 class ActionFactory final
 {
@@ -53,7 +54,7 @@ private:
 	> _creators;
 
 public:
-	static bool reg(
+	static Dummy reg(
 		const std::string& name,
 		std::shared_ptr<Action>(* creator)(
 			const std::shared_ptr<Service>&,

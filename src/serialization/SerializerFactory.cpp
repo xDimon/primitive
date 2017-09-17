@@ -21,7 +21,7 @@
 
 #include "SerializerFactory.hpp"
 
-bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)(uint32_t flags)) noexcept
+Dummy SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)(uint32_t flags)) noexcept
 {
 	auto& factory = getInstance();
 
@@ -31,7 +31,7 @@ bool SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer>
 		throw std::runtime_error(std::string("Attepmt to register serializer with the same name (") + name + ")");
 	}
 	factory._creators.emplace(name, creator);
-	return true;
+	return Dummy{};
 }
 
 std::shared_ptr<Serializer> SerializerFactory::create(const std::string& type, uint32_t flags)

@@ -26,6 +26,7 @@
 #include "../net/Connection.hpp"
 #include "../configs/Setting.hpp"
 #include "ServerTransport.hpp"
+#include "../utils/Dummy.hpp"
 
 class TransportFactory final
 {
@@ -48,6 +49,6 @@ private:
 	std::map<std::string, std::shared_ptr<ServerTransport>(*)(const Setting &setting)> _creators;
 
 public:
-	static bool reg(const std::string& name, std::shared_ptr<ServerTransport>(*)(const Setting &setting));
+	static Dummy reg(const std::string& name, std::shared_ptr<ServerTransport>(*)(const Setting &setting));
 	static std::shared_ptr<ServerTransport> create(const Setting& setting);
 };

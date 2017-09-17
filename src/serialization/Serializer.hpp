@@ -49,7 +49,7 @@ public:
 
 #include "SerializerFactory.hpp"
 
-#define REGISTER_SERIALIZER(Type,Class) const bool Class::__dummy = \
+#define REGISTER_SERIALIZER(Type,Class) const Dummy Class::__dummy = \
     SerializerFactory::reg(                                                                     \
         #Type,                                                                                  \
         [](uint32_t flags){                                                                     \
@@ -75,4 +75,4 @@ public:                                                                         
 	std::string encode(const SVal* value) override;                                             \
                                                                                                 \
 private:                                                                                        \
-    static const bool __dummy;
+    static const Dummy __dummy;

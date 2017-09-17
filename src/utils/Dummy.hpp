@@ -14,39 +14,20 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.05.31
+// File created on: 2017.09.13
 
-// ServiceFactory.hpp
+// Dummy.hpp
 
 
 #pragma once
 
 
-#include <map>
-#include "Service.hpp"
-#include "../utils/Dummy.hpp"
-
-class ServiceFactory final
+struct Dummy final
 {
-private:
-	ServiceFactory() = default;
-
-	ServiceFactory(ServiceFactory const&) = delete;
-
-	void operator=(ServiceFactory const&) = delete;
-
-	static ServiceFactory& getInstance()
-	{
-		static ServiceFactory instance;
-		return instance;
-	}
-
-	std::map<std::string, std::shared_ptr<Service>(*)(const Setting &setting)> _creators;
-
-public:
-	static Dummy reg(
-		const std::string& name,
-		std::shared_ptr<Service>(*)(const Setting &setting)
-	) noexcept;
-	static std::shared_ptr<Service> create(const Setting& setting);
+	Dummy() noexcept = default; // Trivial-constructor
+	Dummy(const Dummy&) = delete; // Copy-constructor
+	void operator=(Dummy const&) = delete; // Copy-assignment
+	Dummy(Dummy&&) = default; // Move-constructor
+	Dummy& operator=(Dummy&&) = delete; // Move-assignment
+	~Dummy() noexcept = default; // Destructor
 };

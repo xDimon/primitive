@@ -23,6 +23,7 @@
 
 
 #include "DbConnectionPool.hpp"
+#include "../utils/Dummy.hpp"
 
 class DbConnectionPoolFactory
 {
@@ -45,7 +46,7 @@ private:
 	std::map<std::string, std::shared_ptr<DbConnectionPool>(*)(const Setting&)> _creators;
 
 public:
-	static bool reg(
+	static Dummy reg(
 		const std::string& type,
 		std::shared_ptr<DbConnectionPool>(*)(const Setting&)
 	) noexcept;
