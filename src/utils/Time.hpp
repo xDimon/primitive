@@ -27,6 +27,7 @@
 
 namespace Time
 {
+
 extern std::chrono::system_clock::time_point startTime;
 
 extern std::chrono::steady_clock::time_point stStartTime;
@@ -53,14 +54,18 @@ enum class Interval
 	WEEK,
 	MONTH,
 	YEAR,
-	ETERNITY,
-	_COUNT
+	ETERNITY
 };
+
+inline Timestamp now()
+{
+	return std::time(nullptr);
+}
 
 Timestamp interval(Time::Interval interval, size_t number = 0);
 
-Timestamp trim(Timestamp value, Time::Interval quant);
+Timestamp trim(Timestamp value, Time::Interval quantity);
 
-std::string httpDate(std::time_t* ts_ = nullptr);
+std::string httpDate(std::time_t* ts = nullptr);
 
 };

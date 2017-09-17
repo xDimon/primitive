@@ -38,7 +38,7 @@ std::string httpDate(std::time_t* ts_)
 	{
 		ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	}
-	std::tm tm;
+	std::tm tm{};
 	::localtime_r(&ts, &tm);
 
 	char buff[40];
@@ -71,49 +71,39 @@ Timestamp interval(Time::Interval interval, size_t number)
 
 		case Interval::MONTH:
 		{
-			if (number != 0)
-			{
-				time_t ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-				tm tm;
+			time_t ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			std::tm tm{};
 
-				localtime_r(&ts, &tm);
+			localtime_r(&ts, &tm);
 
-				tm.tm_mon += number;
+			tm.tm_mon += ((number!=0) ? number : 1);
 
-				time_t ts2 = mktime(&tm);
-				ts2 += tm.tm_gmtoff;
-				ts2 -= ts;
-				return ts2;
-			}
-
-			return 86400 * 30;
+			time_t ts2 = mktime(&tm);
+			ts2 += tm.tm_gmtoff;
+			ts2 -= ts;
+			return ts2;
 		}
 
 		case Interval::YEAR:
 		{
-			if (number != 0)
-			{
-				time_t ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-				tm tm;
+			time_t ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			std::tm tm{};
 
-				localtime_r(&ts, &tm);
+			localtime_r(&ts, &tm);
 
-				tm.tm_year += number;
+			tm.tm_year += ((number!=0) ? number : 1);
 
-				time_t ts2 = mktime(&tm);
-				ts2 += tm.tm_gmtoff;
-				ts2 -= ts;
-				return ts2;
-			}
-
-			return 86400 * 365;
+			time_t ts2 = mktime(&tm);
+			ts2 += tm.tm_gmtoff;
+			ts2 -= ts;
+			return ts2;
 		}
 
 		case Interval::ETERNITY:
 			return std::numeric_limits<Timestamp>::max();
-
-		default: throw;
 	}
+
+	throw std::runtime_error("Unrecognized time interval type");
 }
 
 Timestamp trim(Timestamp timestamp, Interval quant)
@@ -123,7 +113,7 @@ Timestamp trim(Timestamp timestamp, Interval quant)
 		timestamp -= 4 * 86400;
 	}
 
-	tm tm;
+	std::tm tm{};
 	localtime_r(&timestamp, &tm);
 
 	if (quant == Interval::ZERO) goto done;
