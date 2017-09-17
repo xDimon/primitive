@@ -15,7 +15,6 @@ endif ()
 get_directory_property(hasParent PARENT_DIRECTORY)
 
 # Подключаем внешние модули cmake
-list(APPEND CMAKE_MODULE_PATH /usr/share/cmake-3.5/Modules/)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/)
 
 #message(STATUS "Module paths:")
@@ -56,7 +55,11 @@ set(${CODENAME}_LIBRARIES)
 list(APPEND "${CODENAME}_LIBRARIES" dl)
 
 # Подключаем многопоточность
-list(APPEND "${CODENAME}_LIBRARIES" pthread)
+find_package(Threads REQUIRED)
+if (NOT THREADS_FOUND)
+    message(FATAL_ERROR "library for multithreading not found")
+endif ()
+list(APPEND "${CODENAME}_LIBRARIES" ${CMAKE_THREAD_LIBS_INIT})
 
 # Подключаем cxxopts
 list(APPEND "${CODENAME}_INCLUDES" ${CMAKE_CURRENT_SOURCE_DIR}/lib/cxxopts/include)
@@ -106,23 +109,30 @@ endforeach()
 
 add_subdirectory(src)
 
-add_library(${CODENAME}_shared SHARED ${SOURCE_FILES})
+add_library(${CODENAME}_object OBJECT ${SOURCE_FILES})
+set_target_properties(${CODENAME}_object PROPERTIES COMPILE_FLAGS "-fPIC")
+
+add_library(${CODENAME}_shared SHARED $<TARGET_OBJECTS:${CODENAME}_object>)
 target_link_libraries(${CODENAME}_shared ${${CODENAME}_LIBRARIES})
 set_target_properties(${CODENAME}_shared PROPERTIES OUTPUT_NAME ${CODENAME})
+add_dependencies(${CODENAME}_shared ${CODENAME}_object)
 
-add_library(${CODENAME}_static STATIC ${SOURCE_FILES})
+add_library(${CODENAME}_static STATIC $<TARGET_OBJECTS:${CODENAME}_object>)
 target_link_libraries(${CODENAME}_static ${${CODENAME}_LIBRARIES})
 set_target_properties(${CODENAME}_static PROPERTIES OUTPUT_NAME ${CODENAME})
+add_dependencies(${CODENAME}_static ${CODENAME}_object)
 
-add_executable(${CODENAME}_bin ${SOURCE_FILES} test/main.cpp)
-target_link_libraries(${CODENAME}_bin ${${CODENAME}_LIBRARIES})
-set_target_properties(${CODENAME}_bin PROPERTIES OUTPUT_NAME ${CODENAME})
+add_executable(${CODENAME}_executable $<TARGET_OBJECTS:${CODENAME}_object> test/main.cpp)
+target_link_libraries(${CODENAME}_executable ${${CODENAME}_LIBRARIES})
+set_target_properties(${CODENAME}_executable PROPERTIES OUTPUT_NAME ${CODENAME})
+add_dependencies(${CODENAME}_executable ${CODENAME}_object)
 
 if(hasParent)
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} PARENT_SCOPE)
     set(${CODENAMEUC}_INCLUDES ${${CODENAME}_INCLUDES} PARENT_SCOPE)
     set(${CODENAMEUC}_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src" PARENT_SCOPE)
-    set(${CODENAMEUC}_LIBRARIES ${${CODENAME}_LIBRARIES} PARENT_SCOPE)
+    set(${CODENAMEUC}_LIBRARIES "${${CODENAME}_LIBRARIES}" PARENT_SCOPE)
     set(${CODENAMEUC}_LIBRARY ${CODENAME} PARENT_SCOPE)
+    set(${CODENAMEUC}_OBJECTS $<TARGET_OBJECTS:${CODENAME}_object> PARENT_SCOPE)
     set(${CODENAMEUC}_FOUND TRUE PARENT_SCOPE)
 endif()
