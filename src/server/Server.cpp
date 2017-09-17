@@ -27,6 +27,7 @@
 #include "../extra/Applications.hpp"
 #include "../transport/Transports.hpp"
 #include "../telemetry/SysInfo.hpp"
+#include "../services/Services.hpp"
 
 Server* Server::_instance = nullptr;
 
@@ -46,84 +47,6 @@ Server::Server(const std::shared_ptr<Config>& configs)
 
 	try
 	{
-		const auto& settings = _configs->getRoot()["applications"];
-
-		for (auto i = 0; i < settings.getLength(); i++)
-		{
-			const auto& setting = settings[i];
-//		for (const auto& setting : settings)
-//		{
-			Applications::add(setting);
-		}
-	}
-	catch (const std::exception& exception)
-	{
-		_log.error("Can't init one of application ← %s", exception.what());
-	}
-
-	try
-	{
-		const auto& settings = _configs->getRoot()["databases"];
-
-		for (auto i = 0; i < settings.getLength(); i++)
-		{
-			const auto& setting = settings[i];
-//		for (const auto& setting : settings)
-//		{
-			DbManager::openPool(setting);
-		}
-	}
-	catch (const std::exception& exception)
-	{
-		_log.error("Can't init one of database connection pool ← %s", exception.what());
-	}
-
-	try
-	{
-		const auto& settings = _configs->getRoot()["transports"];
-
-		for (auto i = 0; i < settings.getLength(); i++)
-		{
-			const auto& setting = settings[i];
-//		for (const auto& setting : settings)
-//		{
-			Transports::add(setting);
-		}
-	}
-	catch (const std::exception& exception)
-	{
-		_log.error("Can't init one of transport ← %s", exception.what());
-	}
-
-	try
-	{
-		const auto& settings = _configs->getRoot()["services"];
-
-		for (auto i = 0; i < settings.getLength(); i++)
-		{
-			const auto& setting = settings[i];
-//		for (const auto& setting : settings)
-//		{
-			auto service = ServiceFactory::create(setting);
-
-			if (!addService(service->name(), service))
-			{
-				throw std::runtime_error(std::string("Already exists service with the same name ('") + service->name() + "')");
-			}
-		}
-	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
-		_log.error("Services' config not found");
-		throw std::runtime_error("Services' config not found");
-	}
-	catch (const std::exception& exception)
-	{
-		_log.error("Can't init one of service ← %s", exception.what());
-	}
-
-	try
-	{
 		const auto& settings = _configs->getRoot()["core"];
 
 		uint count = 0;
@@ -134,12 +57,92 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	}
 	catch (const libconfig::SettingNotFoundException& exception)
 	{
-		_log.error("Core config not found");
-		throw std::runtime_error("Services' config not found");
+		_log.warn("Core config not found");
 	}
 	catch (const std::exception& exception)
 	{
-		_log.error("Can't init one of service ← %s", exception.what());
+		_log.error("Can't configure of core ← %s", exception.what());
+	}
+
+	try
+	{
+		const auto& settings = _configs->getRoot()["applications"];
+
+		for (const auto& setting : settings)
+		{
+			Applications::add(setting);
+		}
+	}
+	catch (const libconfig::SettingNotFoundException& exception)
+	{
+		_log.warn("Applications' config not found");
+	}
+	catch (const std::exception& exception)
+	{
+		_log.error("Can't init one of application ← %s", exception.what());
+	}
+
+	try
+	{
+		const auto& settings = _configs->getRoot()["databases"];
+
+		for (const auto& setting : settings)
+		{
+			try
+			{
+				DbManager::openPool(setting);
+			}
+			catch (const std::exception& exception)
+			{
+				_log.warn("Can't init one of database connection pool ← %s", exception.what());
+			}
+		}
+	}
+	catch (const libconfig::SettingNotFoundException& exception)
+	{
+		_log.warn("Databases' config not found");
+	}
+
+	try
+	{
+		const auto& settings = _configs->getRoot()["transports"];
+
+		for (const auto& setting : settings)
+		{
+			try
+			{
+				Transports::add(setting);
+			}
+			catch (const std::exception& exception)
+			{
+				_log.warn("Can't init one of transport ← %s", exception.what());
+			}
+		}
+	}
+	catch (const libconfig::SettingNotFoundException& exception)
+	{
+		_log.warn("Transports' config not found");
+	}
+
+	try
+	{
+		const auto& settings = _configs->getRoot()["services"];
+
+		for (const auto& setting : settings)
+		{
+			try
+			{
+				Services::add(setting);
+			}
+			catch (const std::exception& exception)
+			{
+				_log.error("Can't init one of service ← %s", exception.what());
+			}
+		}
+	}
+	catch (const libconfig::SettingNotFoundException& exception)
+	{
+		_log.error("Services' config not found");
 	}
 
 	SysInfo::start();
@@ -176,13 +179,7 @@ void Server::start()
 void Server::stop()
 {
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	while (!getInstance()._services.empty())
-	{
-		auto i = getInstance()._services.begin();
-		auto& service = i->second;
-		service->deactivate();
-		getInstance()._services.erase(i);
-	}
+	Services::deactivateAll();
 
 	Transports::disableAll();
 
@@ -191,42 +188,4 @@ void Server::stop()
 	ThreadPool::unhold();
 
 	_log.info("Server stop");
-}
-
-bool Server::addService(const std::string& name, const std::shared_ptr<Service>& service)
-{
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	auto i = _services.find(name);
-	if (i != _services.end())
-	{
-		return false;
-	}
-	service->activate();
-	_services.emplace(name, service->ptr());
-
-	return true;
-}
-
-void Server::removeService(const std::string& name)
-{
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	auto i = _services.find(name);
-	if (i == _services.end())
-	{
-		return;
-	}
-	auto& service = i->second;
-	service->deactivate();
-	_services.erase(i);
-}
-
-std::shared_ptr<Service> Server::getService(const std::string& name)
-{
-	std::lock_guard<std::recursive_mutex> guard(_mutex);
-	auto i = _services.find(name);
-	if (i == _services.end())
-	{
-		return nullptr;
-	}
-	return i->second;
 }

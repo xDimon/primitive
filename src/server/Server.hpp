@@ -43,8 +43,6 @@ private:
 
 	std::shared_ptr<Config> _configs;
 
-	std::map<const std::string, const std::shared_ptr<Service>> _services;
-
 public:
 	Server(const Server&) = delete;
 	void operator=(Server const&) = delete;
@@ -75,10 +73,6 @@ public:
 		#undef HELPER4QUOTE
 		#undef PRIMITIVE_DEF_NAME
 	}
-
-	bool addService(const std::string& name, const std::shared_ptr<Service>& service);
-	std::shared_ptr<Service> getService(const std::string& name);
-	void removeService(const std::string& name);
 
 	void start();
 	void stop();
