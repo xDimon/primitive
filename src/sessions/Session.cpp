@@ -20,6 +20,7 @@
 
 
 #include "Session.hpp"
+#include "SessionManager.hpp"
 
 const char Session::_hidSeed[16] = {};
 
@@ -40,4 +41,55 @@ Session::Session(
 void Session::setSid(SID sid)
 {
 	_sid = sid;
+}
+
+void Session::touch()
+{
+	if (!_timeoutForClose)
+	{
+		_timeoutForClose = std::make_shared<Timeout>(
+			[wp = std::weak_ptr<std::remove_reference<decltype(*this)>::type>(ptr())](){
+				auto session = wp.lock();
+				if (session)
+				{
+					session->close("timeout");
+				}
+			}
+		);
+	}
+
+	_timeoutForClose->restart(timeoutDuration());
+}
+
+void Session::changed()
+{
+	if (!_timeoutForSave)
+	{
+		_timeoutForSave = std::make_shared<Timeout>(
+			[wp = std::weak_ptr<std::remove_reference<decltype(*this)>::type>(ptr())](){
+				auto session = wp.lock();
+				if (session)
+				{
+					session->save();
+				}
+			}
+		);
+	}
+
+	_timeoutForSave->startOnce(saveDuration());
+}
+
+bool Session::load()
+{
+	return false;
+}
+
+bool Session::save()
+{
+	return false;
+}
+
+void Session::close(const std::string& reason)
+{
+	SessionManager::closeSession(hid);
 }

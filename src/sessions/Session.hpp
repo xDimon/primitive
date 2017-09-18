@@ -22,14 +22,16 @@
 #pragma once
 
 #include <memory>
+#include <chrono>
 #include "../utils/Shareable.hpp"
 #include "../utils/Context.hpp"
 #include "../services/Service.hpp"
+#include "../utils/Timeout.hpp"
 
 class Session : public Shareable<Session>
 {
 public:
-	typedef uint64_t HID;
+	typedef int64_t HID;
 	typedef uint64_t SID;
 
 protected:
@@ -37,6 +39,20 @@ protected:
 
 protected:
 	std::shared_ptr<Service> _service;
+
+	/// Таймаут сохранения
+	virtual std::chrono::seconds saveDuration() const
+	{
+		return std::chrono::seconds(60);
+	}
+	std::shared_ptr<Timeout> _timeoutForSave;
+
+	/// Таймаут закрытия
+	virtual std::chrono::seconds timeoutDuration() const
+	{
+		return std::chrono::seconds(900);
+	}
+	std::shared_ptr<Timeout> _timeoutForClose;
 
 public:
 	const HID hid;
@@ -59,6 +75,9 @@ public:
 	);
 	~Session() override = default;
 
+	void changed();
+	void touch();
+
 	const bool isReady() const
 	{
 		return _ready;
@@ -78,4 +97,8 @@ public:
 	{
 		return _context.lock();
 	}
+
+	virtual bool load();
+	virtual bool save();
+	virtual void close(const std::string& reason);
 };

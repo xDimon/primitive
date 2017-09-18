@@ -35,6 +35,7 @@ std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Sessio
 
 	if (i != getInstance()._sessions.end())
 	{
+		i->second->touch();
 		return i->second;
 	}
 
@@ -44,6 +45,8 @@ std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Sessio
 	}
 
 	getInstance()._sessions.emplace(session->hid, session);
+
+	session->touch();
 	return session;
 }
 
