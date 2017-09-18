@@ -25,7 +25,6 @@
 #include "../utils/Buffer.hpp"
 #include "ReaderConnection.hpp"
 #include "WriterConnection.hpp"
-#include "TimeoutWatcher.hpp"
 
 #include <netinet/in.h>
 

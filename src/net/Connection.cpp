@@ -22,18 +22,15 @@
 #include <unistd.h>
 #include "Connection.hpp"
 
-#include <unistd.h>
 #include <sstream>
 
-Connection::Connection(const std::shared_ptr<Transport>& transport)
+Connection::Connection(std::shared_ptr<Transport> transport)
 : _log("Connection")
 , _transport(transport)
 , _sock(-1)
 , _timeout(false)
 , _closed(true)
 , _error(false)
-, _realExpireTime(std::chrono::steady_clock::now())
-, _nextExpireTime(std::chrono::time_point<std::chrono::steady_clock>::max())
 {
 	_captured = false;
 	_events = 0;
@@ -56,23 +53,18 @@ Connection::~Connection()
 
 void Connection::setTtl(std::chrono::milliseconds ttl)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-
-	auto now = std::chrono::steady_clock::now();
-	_realExpireTime = now + ttl;
-
-	auto prev = _nextExpireTime;
-	_nextExpireTime = std::min(_realExpireTime, std::max(now, _nextExpireTime));
-
-	if (prev <= _nextExpireTime)
+	if (!_timeoutForClose)
 	{
-		return;
+		_timeoutForClose = std::make_shared<Timeout>(
+			[wp = std::weak_ptr<std::remove_reference<decltype(*this)>::type>(ptr())](){
+				auto connection = wp.lock();
+				if (connection)
+				{
+					connection->close();
+				}
+			}
+		);
 	}
 
-	if (!_timeoutWatcher)
-	{
-		_timeoutWatcher = std::make_shared<TimeoutWatcher>(ptr());
-	}
-
-	_timeoutWatcher->restart(_nextExpireTime);
+	_timeoutForClose->restart(ttl);
 }

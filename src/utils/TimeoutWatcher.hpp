@@ -22,21 +22,22 @@
 #pragma once
 
 
+#include <chrono>
 #include "../utils/Shareable.hpp"
-#include <mutex>
 
-class Connection;
+class Timeout;
 
 class TimeoutWatcher: public Shareable<TimeoutWatcher>
 {
 private:
-	std::weak_ptr<Connection> _wp;
+	std::weak_ptr<Timeout> _wp;
 	size_t _refCounter;
 
 public:
-	explicit TimeoutWatcher(const std::shared_ptr<Connection>& connection);
-
-	void restart(std::chrono::steady_clock::time_point time);
+	explicit TimeoutWatcher(const std::shared_ptr<Timeout>&);
+	~TimeoutWatcher() override = default;
 
 	void operator()();
+
+	void restart(std::chrono::steady_clock::time_point time);
 };
