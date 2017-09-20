@@ -621,7 +621,10 @@ void JsonSerializer::encodeString(const std::string& string)
 				_oss.put('\\');
 				break;
 			case '/':
-				_oss.put('\\');
+				if ((_flags & ESCAPED_UNICODE) != 0)
+				{
+					_oss.put('\\');
+				}
 				_oss.put('/');
 				break;
 			case '\b':

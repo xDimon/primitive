@@ -39,6 +39,7 @@ class JsonSerializer : public Serializer
 {
 public:
 	static const uint32_t ESCAPED_UNICODE = 1u<<31;
+	static const uint32_t ESCAPED_SLASH = 1u<<30;
 
 	std::istringstream _iss;
 	std::ostringstream _oss;
