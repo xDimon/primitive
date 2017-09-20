@@ -49,6 +49,8 @@ public:
 
 	virtual ~Service();
 
+	virtual const std::string& type() const = 0;
+
 	virtual void activate() = 0;
 	virtual void deactivate() = 0;
 };
@@ -61,9 +63,13 @@ public:
 		[](const Setting& setting){                                         \
 			return std::shared_ptr<::Service>(new Type::Service(setting));  \
 		}                                                                   \
-	);
+	);                                                                      \
+const std::string Type::Service::_type(#Type);                              \
 
 #define DECLARE_SERVICE() \
+private:                                                                    \
+	static const std::string _type;                                         \
+                                                                            \
 public:                                                                     \
 	Service() = delete;                                                     \
 	Service(const Service&) = delete;                                       \
@@ -77,6 +83,10 @@ private:                                                                    \
 public:                                                                     \
     ~Service() override = default;                                          \
                                                                             \
+	const std::string& type() const override                                \
+	{                                                                       \
+		return _type;                                                       \
+	}                                                                       \
     void activate() override;                                               \
     void deactivate() override;                                             \
                                                                             \
