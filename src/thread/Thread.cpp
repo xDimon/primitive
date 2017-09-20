@@ -35,12 +35,12 @@ Thread::Thread(std::function<void()>& function)
 , _thread([this]() { Thread::run(this); })
 , _finished(false)
 {
-	_log.debug("Thread 'Worker_%zu' created", _id);
+	_log.debug("Thread 'Worker#%zu' created", _id);
 }
 
 Thread::~Thread()
 {
-	_log.debug("Thread 'Worker_%zu' destroyed", _id);
+	_log.debug("Thread 'Worker#%zu' destroyed", _id);
 }
 
 void fake(Thread* thread)
@@ -52,7 +52,7 @@ void Thread::run(Thread* thread)
 {
 	{
 		char buff[32];
-		snprintf(buff, sizeof(buff), "Worker_%zu", thread->_id);
+		snprintf(buff, sizeof(buff), "Worker#%zu", thread->_id);
 
 		LoggerManager::regThread(buff);
 
@@ -61,7 +61,7 @@ void Thread::run(Thread* thread)
 		sigfillset(&sig);
 		sigprocmask(SIG_BLOCK, &sig, nullptr);
 
-		thread->_log.debug("Thread 'Worker_%zu' start", thread->_id);
+		thread->_log.debug("Thread 'Worker#%zu' start", thread->_id);
 	}
 
 #ifdef WITH_COROUTINE
