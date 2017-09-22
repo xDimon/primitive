@@ -47,8 +47,7 @@ void SslConnector::createConnection(int sock, const sockaddr_in &cliaddr)
 
 	newConnection->setTtl(std::chrono::seconds(15));
 
-	onConnect(newConnection);
-
-	ConnectionManager::remove(ptr());
 	ConnectionManager::add(newConnection);
+
+	onConnect(newConnection);
 }

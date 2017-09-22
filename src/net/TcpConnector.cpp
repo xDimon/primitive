@@ -186,13 +186,13 @@ bool TcpConnector::processing()
 			{
 				connected:
 
-				int sock = -1;
-				std::swap(_sock, sock);
-				_closed = true;
-
 				_log.debug("End processing on %s (was connected)", name().c_str());
 
 				ConnectionManager::remove(ptr());
+
+				int sock = -1;
+				std::swap(_sock, sock);
+				_closed = true;
 
 				try
 				{
@@ -266,10 +266,9 @@ void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
 
 	newConnection->setTtl(std::chrono::seconds(15));
 
-	onConnect(newConnection);
-
-	ConnectionManager::remove(ptr());
 	ConnectionManager::add(newConnection);
+
+	onConnect(newConnection);
 }
 
 void TcpConnector::addConnectedHandler(std::function<void(const std::shared_ptr<TcpConnection>&)> handler)

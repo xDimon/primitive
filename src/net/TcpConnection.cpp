@@ -33,10 +33,10 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 , _outgoing(outgoing)
 , _noRead(false)
 , _noWrite(false)
-, _error(false)
-, _closed(false)
 {
 	_sock = sock;
+
+	_closed = _sock < 0;
 
 	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
 

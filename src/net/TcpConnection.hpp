@@ -41,12 +41,6 @@ protected:
 	/// Писать больше не будем
 	bool _noWrite;
 
-	/// Ошибка соединения
-	bool _error;
-
-	/// Соединение закрыто
-	bool _closed;
-
 	virtual bool readFromSocket();
 
 	virtual bool writeToSocket();

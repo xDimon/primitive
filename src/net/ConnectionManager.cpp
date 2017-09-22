@@ -63,7 +63,7 @@ void ConnectionManager::add(const std::shared_ptr<Connection>& connection)
 
 	getInstance()._allConnections.emplace(connection.get(), connection);
 
-	epoll_event ev;
+	epoll_event ev{};
 
 	connection->watch(ev);
 
@@ -121,7 +121,7 @@ void ConnectionManager::watch(const std::shared_ptr<Connection>& connection)
 
 //	_log.trace("Watch for %s in ConnectionManager::watch()", connection->name().c_str());
 
-	epoll_event ev;
+	epoll_event ev{};
 
 	connection->watch(ev);
 

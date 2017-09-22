@@ -61,7 +61,6 @@ void SslConnection::watch(epoll_event &ev)
 
 	ev.events |= EPOLLERR;
 
-
 	if (!_sslEstablished)
 	{
 		if (_sslWantRead)
@@ -76,7 +75,7 @@ void SslConnection::watch(epoll_event &ev)
 	}
 	else if (!_noRead)
 	{
-		_log.trace("WATCH: no not read");
+		_log.trace("WATCH: Established and can read");
 		ev.events |= EPOLLIN | EPOLLRDNORM;
 	}
 
@@ -97,9 +96,9 @@ void SslConnection::watch(epoll_event &ev)
 				_log.trace("WATCH: No established and no want write");
 			}
 		}
-		else if (_outgoing || _outBuff.dataLen() > 0)
+		else if (_outBuff.dataLen() > 0)
 		{
-			_log.trace("WATCH: has data for write");
+			_log.trace("WATCH: Established and has data for write");
 			ev.events |= EPOLLOUT | EPOLLWRNORM;
 		}
 	}
@@ -164,7 +163,6 @@ bool SslConnection::processing()
 				}
 				if (e == SSL_ERROR_WANT_WRITE)
 				{
-					_sslWantRead = true;
 					_sslWantWrite = true;
 					_log.trace("SSH handshake incomplete yet on %s (want wtite)", name().c_str());
 					break;
