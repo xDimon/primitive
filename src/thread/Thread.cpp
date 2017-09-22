@@ -57,7 +57,7 @@ void Thread::run(Thread* thread)
 		LoggerManager::regThread(buff);
 
 		// Блокируем реакцию на все сигналы
-		sigset_t sig;
+		sigset_t sig{};
 		sigfillset(&sig);
 		sigprocmask(SIG_BLOCK, &sig, nullptr);
 
@@ -82,9 +82,8 @@ Thread* Thread::self()
 
 void Thread::reenter()
 {
-	ucontext_t context;
-	ucontext_t retContext;
-
+	ucontext_t context{};
+	ucontext_t retContext{};
 
 	// Инициализация контекста корутины. uc_link указывает на _parentContext, точку возврата при завершении корутины
 	getcontext(&context);
@@ -99,7 +98,6 @@ void Thread::reenter()
 
 	makecontext(&context, reinterpret_cast<void (*)()>(fake), 1, this);
 //	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 0);
-
 
 	volatile bool first = true;
 

@@ -26,8 +26,9 @@
 #include <chrono>
 #include <sys/ucontext.h>
 #include <memory>
+#include "../utils/Shareable.hpp"
 
-class Task
+class Task: public Shareable<Task>
 {
 public:
 	using Func = std::function<void()>;

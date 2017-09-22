@@ -23,16 +23,16 @@
 #include "Coroutine.hpp"
 #include "ThreadPool.hpp"
 
-void Coroutine(Task& task)
+void Coroutine(const std::shared_ptr<Task>& task)
 {
 	std::mutex orderMutex;
-	ucontext_t mainContext;
-	ucontext_t tmpContext;
+	ucontext_t mainContext{};
+	ucontext_t tmpContext{};
 
 	volatile bool first = true;
 
 	// сохранить указатели на контексты
-	task.saveContext(&tmpContext, &mainContext);
+	task->saveContext(&tmpContext, &mainContext);
 
 	// сохранить текущий контекст
 	getcontext(&mainContext);
@@ -42,27 +42,31 @@ void Coroutine(Task& task)
 	{
 		first = false;
 		{
-			Log log("Coroutine");
-
-			log.debug("Make coroutine");
+			Log("Coroutine").debug("Make coroutine");
 
 			std::lock_guard<std::mutex> lockGuardCoro(orderMutex);
 
 			// создать таск связанный с сохраненным контекстом и положить в очередь
 
 			auto taskWrapper = std::make_shared<Task::Func>(
-				[&]()
+//				[&orderMutex, wp = std::weak_ptr<Task>(task)]()
+				[&orderMutex,&task]()
 				{
 					std::lock_guard<std::mutex> lockGuardTask(orderMutex);
 
+//					auto task = wp.lock();
+//					if (!task)
+//					{
+//						return;
+//					}
+
 					try
 					{
-						task();
+						(*task)();
 					}
 					catch (const std::exception& exception)
 					{
-						Log log("Coroutine");
-						log.warn("Exception at execute task of coroutine: %s", exception.what());
+						Log("Coroutine").warn("Exception at execute task of coroutine: %s", exception.what());
 					}
 				}
 			);

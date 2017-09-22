@@ -25,4 +25,4 @@
 #include <functional>
 #include "Task.hpp"
 
-void Coroutine(Task& task);
+void Coroutine(const std::shared_ptr<Task>& task);
