@@ -73,22 +73,46 @@ public:
 	{
 		_elements.emplace_back(value);
 	}
-	void insert(SFloat::type value)
+
+	void insert(const SVal* value)
+	{
+		_elements.emplace_back(const_cast<SVal*>(value));
+	}
+
+	template<typename T>
+	typename std::enable_if<std::is_integral<T>::value, void>::type
+	insert(T value)
+	{
+		insert(new SInt(value));
+	}
+
+	template<typename T>
+	typename std::enable_if<std::is_floating_point<T>::value, void>::type
+	insert(T value)
 	{
 		insert(new SFloat(value));
 	}
-	void insert(const std::string value)
+
+	void insert(double value)
 	{
-		insert(new SStr(value));
+		insert(new SFloat(value));
 	}
-	void insert(const char* value)
-	{
-		insert(new SStr(value));
-	}
+
 	void insert(bool value)
 	{
 		insert(new SBool(value));
 	}
+
+	void insert(const char* value)
+	{
+		insert(new SStr(value));
+	}
+
+	void insert(const std::string& value)
+	{
+		insert(new SStr(value));
+	}
+
 	void insert(nullptr_t)
 	{
 		insert(new SNull());
@@ -108,6 +132,14 @@ public:
 		{
 			handler(*element);
 		}
+	}
+
+	template< template<typename, typename> class C, typename E, typename A>
+	void fill(C<E, A> &container) const noexcept
+	{
+		forEach([&](const SVal* value){
+			container.emplace_back(value);
+		});
 	}
 
 	operator std::string() const override

@@ -89,56 +89,38 @@ public:
 		insert(key, &value);
 	}
 
-	void insert(const std::string& key, uint64_t value)
-	{
-		insert(key, new SInt(value));
-	}
-	void insert(const std::string& key, int64_t value)
-	{
-		insert(key, new SInt(value));
-	}
-	void insert(const std::string& key, uint32_t value)
-	{
-		insert(key, new SInt(value));
-	}
-	void insert(const std::string& key, int32_t value)
-	{
-		insert(key, new SInt(value));
-	}
-	void insert(const std::string& key, uint16_t value)
-	{
-		insert(key, new SInt(value));
-	}
-	void insert(const std::string& key, int16_t value)
-	{
-		insert(key, new SInt(value));
-	}
-	void insert(const std::string& key, uint8_t value)
-	{
-		insert(key, new SInt(value));
-	}
-	void insert(const std::string& key, int8_t value)
+	template<typename T>
+	typename std::enable_if<std::is_integral<T>::value, void>::type
+	insert(const std::string& key, T value)
 	{
 		insert(key, new SInt(value));
 	}
 
-	void insert(const std::string& key, SFloat::type value)
+	template<typename T>
+	typename std::enable_if<std::is_floating_point<T>::value, void>::type
+	insert(const std::string& key, SFloat::type value)
 	{
 		insert(key, new SFloat(value));
 	}
 
-	void insert(const std::string& key, const std::string value)
+	void insert(const std::string& key, double value)
 	{
-		insert(key, new SStr(value));
-	}
-	void insert(const std::string& key, const char* value)
-	{
-		insert(key, new SStr(value));
+		insert(key, new SFloat(value));
 	}
 
 	void insert(const std::string& key, bool value)
 	{
 		insert(key, new SBool(value));
+	}
+
+	void insert(const std::string& key, const char* value)
+	{
+		insert(key, new SStr(value));
+	}
+
+	void insert(const std::string& key, const std::string& value)
+	{
+		insert(key, new SStr(value));
 	}
 
 	void insert(const std::string& key, nullptr_t)
@@ -154,29 +136,6 @@ public:
 			return nullptr;
 		}
 		return i->second;
-	}
-	SVal* get(SStr* key) const
-	{
-		return get(key->value());
-	}
-	SVal* get(SStr& key) const
-	{
-		return get(key);
-	}
-	int64_t getAsInt(const std::string& key, int64_t defaultValue = 0LL) const
-	{
-		auto val = get(key);
-		return val ? val->operator int() : defaultValue;
-	}
-	double getAsFlt(const std::string& key, double defaultValue = 0.0) const
-	{
-		auto val = get(key);
-		return val ? val->operator double() : defaultValue;
-	}
-	std::string getAsStr(const std::string& key, const std::string& defaultValue = "") const
-	{
-		auto val = get(key);
-		return val ? val->operator std::string() : defaultValue;
 	}
 
 	void forEach(std::function<void(const std::string&, const SVal*)> handler) const
@@ -195,7 +154,25 @@ public:
 		}
 	}
 
-	void lookup(const char *key, int64_t &value, bool strict = false) const
+	int64_t getAsInt(const std::string& key, int64_t defaultValue = 0LL) const
+	{
+		auto val = get(key);
+		return val ? (int)(*val) : defaultValue;
+	}
+	double getAsFlt(const std::string& key, double defaultValue = 0.0) const
+	{
+		auto val = get(key);
+		return val ? (double)(*val) : defaultValue;
+	}
+	std::string getAsStr(const std::string& key, const std::string& defaultValue = "") const
+	{
+		auto val = get(key);
+		return val ? (std::string)(*val) : defaultValue;
+	}
+
+	template<typename T>
+	typename std::enable_if<std::is_integral<T>::value, void>::type
+	lookup(const std::string& key, T &value, bool strict = false) const
 	{
 		auto element = get(key);
 		if (!element)
@@ -206,50 +183,35 @@ public:
 		{
 			throw std::runtime_error(std::string() + "Field '" + key + "' isn't integer");
 		}
-		value = element->operator int();
+		value = (int)*element;
 	}
-//	template<typename T>
-//	void lookup(const char *key, T &value, bool strict = false) const
-//	{
-//		int64_t tmp;
-//		lookup(key, tmp, strict);
-//		value = (decltype(value))(tmp);
-//	}
-	void lookup(const char *key, int32_t &value, bool strict = false) const
+
+	template<typename T>
+	typename std::enable_if<std::is_floating_point<T>::value, void>::type
+	lookup(const std::string& key, T &value, bool strict = false) const
 	{
-		int64_t tmp;
-		lookup(key, tmp, strict);
-		value = (decltype(value))(tmp);
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+		}
+		if (!dynamic_cast<const SFloat *>(element) && strict)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' isn't numeric");
+		}
+		value = (double)(*element);
 	}
-	void lookup(const char *key, uint32_t &value, bool strict = false) const
+
+	template<typename T>
+	typename std::enable_if<!std::is_integral<T>::value && !std::is_floating_point<T>::value, void>::type
+	lookup(const std::string& key, T &value, bool strict = false) const
 	{
-		int64_t tmp;
-		lookup(key, tmp, strict);
-		value = (decltype(value))(tmp);
-	}
-	void lookup(const char *key, int16_t &value, bool strict = false) const
-	{
-		int64_t tmp;
-		lookup(key, tmp, strict);
-		value = (decltype(value))(tmp);
-	}
-	void lookup(const char *key, uint16_t &value, bool strict = false) const
-	{
-		int64_t tmp;
-		lookup(key, tmp, strict);
-		value = (decltype(value))(tmp);
-	}
-	void lookup(const char *key, int8_t &value, bool strict = false) const
-	{
-		int64_t tmp;
-		lookup(key, tmp, strict);
-		value = (decltype(value))(tmp);
-	}
-	void lookup(const char *key, uint8_t &value, bool strict = false) const
-	{
-		int64_t tmp;
-		lookup(key, tmp, strict);
-		value = (decltype(value))(tmp);
+		const auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+		}
+		value = (T)(element);
 	}
 
 	void lookup(const std::string& key, bool &value, bool strict = false) const
@@ -263,21 +225,7 @@ public:
 		{
 			throw std::runtime_error(std::string() + "Field '" + key + "' isn't boolean");
 		}
-		value = static_cast<bool>(element);
-	}
-
-	void lookup(const char *key, double &value, bool strict = false) const
-	{
-		auto element = get(key);
-		if (!element)
-		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
-		}
-		if (!dynamic_cast<const SFloat *>(element) && strict)
-		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' isn't numeric");
-		}
-		value = element->operator double();
+		value = (bool)(*element);
 	}
 
 	void lookup(const std::string& key, std::string &value, bool strict = false) const
@@ -291,7 +239,29 @@ public:
 		{
 			throw std::runtime_error(std::string() + "Field '" + key + "' isn't string");
 		}
-		value = element->operator std::string();
+		value = std::remove_reference<decltype(value)>::type(*element);
+	}
+
+	template <typename T>
+	inline void trylookup(const std::string& key, T &value) const noexcept
+	{
+		try	{ lookup(key, value, false); } catch (...) { value = T(); }
+	}
+
+	template< template<typename, typename, typename> class C, typename E, typename Cmp, typename A>
+	void fill(C<E, Cmp, A> &container) const noexcept
+	{
+		forEach([&](const std::string& key, const SVal* value){
+			container.emplace(key, value);
+		});
+	}
+
+	template< template<typename, typename> class C, typename E, typename A>
+	void fill(C<E, A> &container) const noexcept
+	{
+		forEach([&](const std::string&, const SVal* value){
+			container.emplace_back(value);
+		});
 	}
 
 	operator std::string() const override
