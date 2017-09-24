@@ -168,7 +168,7 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 	regThread("MainThread");
 }
 
-void LoggerManager::regThread(std::string threadName)
+void LoggerManager::regThread(const std::string& threadName)
 {
 	auto& lm = getInstance();
 

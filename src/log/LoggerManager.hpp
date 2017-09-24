@@ -52,9 +52,9 @@ private:
 	std::map<std::string, std::tuple<std::shared_ptr<Sink>, Log::Detail>> _loggers;
 
 public:
-	static void init(const std::shared_ptr<Config> &configs);
+	static void init(const std::shared_ptr<Config>& configs);
 
-	static void regThread(std::string threadName);
+	static void regThread(const std::string& threadName);
 	static void unregThread();
 
 	static const std::tuple<std::shared_ptr<Sink>, Log::Detail>& getSinkAndLevel(const std::string& loggerName);
