@@ -291,12 +291,12 @@ void TcpConnection::close()
 	shutdown(_sock, SHUT_RD);
 }
 
-void TcpConnection::addCompleteHandler(std::function<void(const std::shared_ptr<Context>&)> handler)
+void TcpConnection::addCompleteHandler(std::function<void(TcpConnection&, const std::shared_ptr<Context>&)> handler)
 {
 	_completeHandler = std::move(handler);
 }
 
-void TcpConnection::addErrorHandler(std::function<void()> handler)
+void TcpConnection::addErrorHandler(std::function<void(TcpConnection&)> handler)
 {
 	_errorHandler = std::move(handler);
 }

@@ -27,6 +27,7 @@
 #include <cstring>
 
 #include "ConnectionManager.hpp"
+#include "../utils/ShutdownManager.hpp"
 
 TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& hostname, std::uint16_t port)
 : Connector(transport)
@@ -168,107 +169,105 @@ bool TcpConnector::processing()
 	_log.debug("Processing on %s", name().c_str());
 
 	std::lock_guard<std::mutex> guard(_mutex);
-//	for (;;)
-//	{
-//		if (ShutdownManager::shutingdown())
-//		{
-//			_log.debug("Interrupt processing on %s (shutdown)", name().c_str());
-//			ConnectionManager::remove(this->ptr());
-//			return false;
-//		}
 
-		int result;
-		socklen_t result_len = sizeof(result);
+	if (ShutdownManager::shutingdown())
+	{
+		_log.debug("Interrupt processing on %s (shutdown)", name().c_str());
+		ConnectionManager::remove(this->ptr());
+		return false;
+	}
 
-		if (getsockopt(_sock, SOL_SOCKET, SO_ERROR, &result, &result_len) == 0)
+	int result;
+	socklen_t result_len = sizeof(result);
+
+	if (getsockopt(_sock, SOL_SOCKET, SO_ERROR, &result, &result_len) == 0)
+	{
+		if (result == 0)
 		{
-			if (result == 0)
-			{
-				connected:
+			connected:
 
-				_log.debug("End processing on %s (was connected)", name().c_str());
+			_log.debug("End processing on %s (was connected)", name().c_str());
+
+			try
+			{
+				std::shared_ptr<Transport> transport = _transport.lock();
+				if (!transport)
+				{
+					throw std::runtime_error("Lost transport");
+				}
+
+				auto newConnection = createConnection(transport);
 
 				ConnectionManager::remove(ptr());
 
-				int sock = -1;
-				std::swap(_sock, sock);
+				_sock = -1;
 				_closed = true;
 
-				try
-				{
-					createConnection(sock, _sockaddr);
-					return true;
-				}
-				catch (const std::exception& exception)
-				{
-					onError();
-					shutdown(sock, SHUT_RDWR);
-					::close(sock);
-					return false;
-				}
-			}
-		}
+				newConnection->setTtl(std::chrono::seconds(15));
 
-		for ( ; *_addrIterator != nullptr; ++_addrIterator)
-		{
-			// Инициализируем структуру нулями
-			memset(&_sockaddr, 0, sizeof(_sockaddr));
+				ConnectionManager::add(newConnection);
 
-			// Задаем семейство сокетов (IPv4)
-			_sockaddr.sin_family = AF_INET;
+				onConnect(newConnection);
 
-			// Задаем хост
-			memcpy(&_sockaddr.sin_addr.s_addr, *_addrIterator, sizeof(_sockaddr.sin_addr.s_addr));
-
-			// Задаем порт
-			_sockaddr.sin_port = htons(_port);
-
-			again:
-			// Подключаемся
-			if (connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)) == 0)
-			{
-				// Подключились сразу?!
-				goto connected;
-			}
-
-			// Вызов прерван сигналом - повторяем
-			if (errno == EINTR)
-			{
-				goto again;
-			}
-
-			// Установление соединения в процессе
-			if (errno == EINPROGRESS)
-			{
 				return true;
 			}
+			catch (const std::exception& exception)
+			{
+				onError();
+				shutdown(_sock, SHUT_RDWR);
+				::close(_sock);
+				return false;
+			}
 		}
-
-		_log.debug("End processing on %s (was failure)", name().c_str());
-
-		ConnectionManager::remove(ptr());
-
-		onError();
-		shutdown(_sock, SHUT_RDWR);
-		return false;
-//	}
-}
-
-void TcpConnector::createConnection(int sock, const sockaddr_in& cliaddr)
-{
-	std::shared_ptr<Transport> transport = _transport.lock();
-	if (!transport)
-	{
-		throw std::runtime_error("Lost transport");
 	}
 
-	auto newConnection = std::make_shared<TcpConnection>(transport, sock, cliaddr, true);
+	for ( ; *_addrIterator != nullptr; ++_addrIterator)
+	{
+		// Инициализируем структуру нулями
+		memset(&_sockaddr, 0, sizeof(_sockaddr));
 
-	newConnection->setTtl(std::chrono::seconds(15));
+		// Задаем семейство сокетов (IPv4)
+		_sockaddr.sin_family = AF_INET;
 
-	ConnectionManager::add(newConnection);
+		// Задаем хост
+		memcpy(&_sockaddr.sin_addr.s_addr, *_addrIterator, sizeof(_sockaddr.sin_addr.s_addr));
 
-	onConnect(newConnection);
+		// Задаем порт
+		_sockaddr.sin_port = htons(_port);
+
+		again:
+		// Подключаемся
+		if (connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)) == 0)
+		{
+			// Подключились сразу?!
+			goto connected;
+		}
+
+		// Вызов прерван сигналом - повторяем
+		if (errno == EINTR)
+		{
+			goto again;
+		}
+
+		// Установление соединения в процессе
+		if (errno == EINPROGRESS)
+		{
+			return true;
+		}
+	}
+
+	_log.debug("End processing on %s (was failure)", name().c_str());
+
+	ConnectionManager::remove(ptr());
+
+	onError();
+	shutdown(_sock, SHUT_RDWR);
+	return false;
+}
+
+std::shared_ptr<TcpConnection> TcpConnector::createConnection(const std::shared_ptr<Transport>& transport)
+{
+	return std::make_shared<TcpConnection>(transport, _sock, _sockaddr, true);
 }
 
 void TcpConnector::addConnectedHandler(std::function<void(const std::shared_ptr<TcpConnection>&)> handler)

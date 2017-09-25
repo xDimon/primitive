@@ -21,6 +21,7 @@
 
 #include <unistd.h>
 #include "Connection.hpp"
+#include "ConnectionManager.hpp"
 
 #include <sstream>
 
@@ -60,7 +61,7 @@ void Connection::setTtl(std::chrono::milliseconds ttl)
 				auto connection = wp.lock();
 				if (connection)
 				{
-					connection->close();
+					ConnectionManager::timeout(connection);
 				}
 			}
 		);

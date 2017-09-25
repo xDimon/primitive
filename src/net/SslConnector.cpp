@@ -35,19 +35,7 @@ SslConnector::SslConnector(
 {
 }
 
-void SslConnector::createConnection(int sock, const sockaddr_in &cliaddr)
+std::shared_ptr<TcpConnection> SslConnector::createConnection(const std::shared_ptr<Transport>& transport)
 {
-	std::shared_ptr<Transport> transport = _transport.lock();
-	if (!transport)
-	{
-		throw std::runtime_error("Lost transport");
-	}
-
-	auto newConnection = std::shared_ptr<TcpConnection>(new SslConnection(transport, sock, cliaddr, _sslContext, true));
-
-	newConnection->setTtl(std::chrono::seconds(15));
-
-	ConnectionManager::add(newConnection);
-
-	onConnect(newConnection);
+	return std::make_shared<SslConnection>(transport, _sock, _sockaddr, _sslContext, true);
 }

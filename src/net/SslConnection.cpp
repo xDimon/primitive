@@ -44,7 +44,6 @@ SslConnection::~SslConnection()
 	SSL_free(_sslConnect);
 
 	shutdown(_sock, SHUT_RD);
-	_log.debug("Connection '%s' closed for read", name().c_str());
 }
 
 void SslConnection::watch(epoll_event &ev)
@@ -124,68 +123,10 @@ bool SslConnection::processing()
 
 		if (!_sslEstablished)
 		{
-			int n = _outgoing
-					? SSL_connect(_sslConnect)
-					: SSL_accept(_sslConnect);
-			if(n <= 0)
+			if (!sslHandshake())
 			{
-				_sslWantRead = false;
-				_sslWantWrite = false;
-
-				auto e = SSL_get_error(_sslConnect, n);
-				// Повторяем вызов прерваный сигналом
-				if (e == SSL_ERROR_SYSCALL)
-				{
-					if (isHalfHup() || isHup())
-					{
-						_log.trace("Can't complete SSH handshake: already closed %s", name().c_str());
-						shutdown(_sock, SHUT_RD);
-						setTtl(std::chrono::milliseconds(50));
-						_noRead = true;
-//						_noWrite = true;
-						break;
-					}
-
-					if (errno)
-					{
-						_log.debug("SSL_ERROR_SYSCALL while SSH handshake on %s: %s", name().c_str(), strerror(errno));
-						break;
-					}
-
-					_log.debug("SSL_ERROR_SYSCALL with errno=0 while SSH handshake on %s", name().c_str());
-					break;
-				}
-				if (e == SSL_ERROR_WANT_READ)
-				{
-					_sslWantRead = true;
-					_log.trace("SSH handshake incomplete yet on %s (want read)", name().c_str());
-					break;
-				}
-				if (e == SSL_ERROR_WANT_WRITE)
-				{
-					_sslWantWrite = true;
-					_log.trace("SSH handshake incomplete yet on %s (want wtite)", name().c_str());
-					break;
-				}
-
-				char err[1<<7];
-				ERR_error_string_n(ERR_get_error(), err, sizeof(err));
-
-				_log.trace("Fail SSH handshake on %s: %s", name().c_str(), err);
-
-				char msg[] = "HTTP/1.1 525 SSL handshake failed\r\n\r\nSSL handshake failed\n";
-				::write(_sock, msg, sizeof(msg));
-
-				shutdown(_sock, SHUT_RD);
-				setTtl(std::chrono::milliseconds(50));
-				_noRead = true;
-				_noWrite = true;
 				break;
 			}
-
-			_sslEstablished = true;
-
-			_log.trace("Success SSH handshake on %s", name().c_str());
 		}
 
 		if (isReadyForWrite())
@@ -201,6 +142,20 @@ bool SslConnection::processing()
 		if (_outBuff.dataLen() > 0)
 		{
 			writeToSocket();
+		}
+
+		if (isHup())
+		{
+			_noRead = true;
+			_noWrite = true;
+			setTtl(std::chrono::milliseconds(50));
+			break;
+		}
+		else if (isHalfHup())
+		{
+			_noRead = true;
+			setTtl(std::chrono::milliseconds(50));
+			break;
 		}
 
 		ConnectionManager::rotateEvents(this->ptr());
@@ -244,6 +199,79 @@ bool SslConnection::processing()
 		_closed = true;
 	}
 
+	return true;
+}
+
+bool SslConnection::sslHandshake()
+{
+	again:
+
+	int n = _outgoing ? SSL_connect(_sslConnect) : SSL_accept(_sslConnect);
+	if(n <= 0)
+	{
+		auto e = SSL_get_error(_sslConnect, n);
+		// Повторяем вызов прерваный сигналом
+		if (e == SSL_ERROR_SYSCALL)
+		{
+			if (isHup() || isHalfHup())
+			{
+				_log.trace("Can't complete SSH handshake: already closed %s", name().c_str());
+				shutdown(_sock, SHUT_RD);
+				setTtl(std::chrono::milliseconds(50));
+				_noRead = true;
+				if (isHup())
+				{
+					_noWrite = true;
+				}
+				return false;
+			}
+
+			if (errno)
+			{
+				_error = true;
+				_log.debug("SSL_ERROR_SYSCALL while SSH handshake on %s: %s", name().c_str(), strerror(errno));
+				return false;
+			}
+
+			_log.debug("SSL_ERROR_SYSCALL with errno=0 while SSH handshake on %s", name().c_str());
+			goto again;
+		}
+		if (e == SSL_ERROR_WANT_READ)
+		{
+			_sslWantRead = true;
+			_sslWantWrite = false;
+			_log.trace("SSH handshake incomplete yet on %s (want read)", name().c_str());
+			return false;
+		}
+		if (e == SSL_ERROR_WANT_WRITE)
+		{
+			_sslWantRead = false;
+			_sslWantWrite = true;
+			_log.trace("SSH handshake incomplete yet on %s (want wtite)", name().c_str());
+			return false;
+		}
+
+		char err[1<<7];
+		ERR_error_string_n(ERR_get_error(), err, sizeof(err));
+
+		_log.trace("Fail SSH handshake on %s: %s", name().c_str(), err);
+
+		char msg[] = "HTTP/1.1 525 SSL handshake failed\r\n\r\nSSL handshake failed\n";
+		::write(_sock, msg, sizeof(msg));
+
+		shutdown(_sock, SHUT_RD);
+		setTtl(std::chrono::milliseconds(50));
+		_noRead = true;
+		_noWrite = true;
+		return false;
+	}
+
+	_sslWantRead = false;
+	_sslWantWrite = false;
+
+	_sslEstablished = true;
+
+	_log.trace("Success SSH handshake on %s", name().c_str());
 	return true;
 }
 

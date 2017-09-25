@@ -101,7 +101,7 @@ bool Request::connect()
 		connector->addConnectedHandler([this](const std::shared_ptr<TcpConnection>& connection){
 			_log.debug("connected");
 			_state = State::CONNECTED;
-			connection->addCompleteHandler([this,connection](const std::shared_ptr<Context>&context_){
+			connection->addCompleteHandler([this](TcpConnection& connection, const std::shared_ptr<Context>&context_){
 				_log.debug("done");
 
 				auto context = std::dynamic_pointer_cast<HttpContext>(context_);
@@ -109,8 +109,8 @@ bool Request::connect()
 				{
 					_error = "Internal error: Bad context";
 					_state = State::ERROR;
-					connection->setTtl(std::chrono::milliseconds(50));
-					connection->close();
+					connection.setTtl(std::chrono::milliseconds(50));
+					connection.close();
 					operator()();
 					return;
 				}
@@ -119,8 +119,8 @@ bool Request::connect()
 				{
 					_error = "Internal error: No response";
 					_state = State::ERROR;
-					connection->setTtl(std::chrono::milliseconds(50));
-					connection->close();
+					connection.setTtl(std::chrono::milliseconds(50));
+					connection.close();
 					operator()();
 					return;
 				}
@@ -131,23 +131,23 @@ bool Request::connect()
 				{
 					_error = std::string("No OK response: ") + std::to_string(context->getResponse()->statusCode()) + " " + context->getResponse()->statusMessage();
 					_state = State::ERROR;
-					connection->setTtl(std::chrono::milliseconds(50));
-					connection->close();
+					connection.setTtl(std::chrono::milliseconds(50));
+					connection.close();
 					operator()();
 					return;
 				}
 
 				_state = State::DONE;
-				connection->setTtl(std::chrono::milliseconds(50));
-				connection->close();
+				connection.setTtl(std::chrono::milliseconds(50));
+				connection.close();
 				operator()();
 			});
 
-			connection->addErrorHandler([this,connection](){
+			connection->addErrorHandler([this](TcpConnection& connection){
 				_log.debug("connection error");
 				_state = State::ERROR;
-				connection->setTtl(std::chrono::milliseconds(50));
-				connection->close();
+				connection.setTtl(std::chrono::milliseconds(50));
+				connection.close();
 				operator()();
 			});
 

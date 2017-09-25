@@ -37,7 +37,6 @@ protected:
 	std::uint16_t _port;
 	std::mutex _mutex;
 
-private:
 	char* _buff;
 	size_t _buffSize;
 	hostent _hostbuf;
@@ -45,9 +44,8 @@ private:
 	char** _addrIterator;
 	sockaddr_in _sockaddr;
 
-	virtual void createConnection(int sock, const sockaddr_in& cliaddr);
+	virtual std::shared_ptr<TcpConnection> createConnection(const std::shared_ptr<Transport>& transport);
 
-// protected:
 	std::function<void(const std::shared_ptr<TcpConnection>&)> _connectHandler;
 	std::function<void()> _errorHandler;
 
@@ -74,17 +72,11 @@ public:
 
 	void onConnect(const std::shared_ptr<TcpConnection>& connection)
 	{
-		if (_connectHandler)
-		{
-			_connectHandler(connection);
-		}
+		_connectHandler(connection);
 	}
 	void onError()
 	{
-		if (_errorHandler)
-		{
-			_errorHandler();
-		}
+		_errorHandler();
 	}
 
 	static std::shared_ptr<TcpConnector> create(const std::shared_ptr<ClientTransport>& transport, const std::string& host, std::uint16_t port)

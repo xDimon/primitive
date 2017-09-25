@@ -31,7 +31,7 @@ class SslConnector : public TcpConnector
 private:
 	std::shared_ptr<SSL_CTX> _sslContext;
 
-	void createConnection(int sock, const sockaddr_in& cliaddr) override;
+	std::shared_ptr<TcpConnection> createConnection(const std::shared_ptr<Transport>& transport) override;
 
 public:
 	SslConnector() = delete;

@@ -45,8 +45,8 @@ protected:
 
 	virtual bool writeToSocket();
 
-	std::function<void(const std::shared_ptr<Context>&)> _completeHandler;
-	std::function<void()> _errorHandler;
+	std::function<void(TcpConnection&, const std::shared_ptr<Context>&)> _completeHandler;
+	std::function<void(TcpConnection&)> _errorHandler;
 
 public:
 	TcpConnection() = delete;
@@ -55,7 +55,7 @@ public:
 	TcpConnection(TcpConnection&& tmp) = delete;
 	TcpConnection& operator=(TcpConnection&& tmp) = delete;
 
-	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in &cliaddr, bool outgoing);
+	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, bool outgoing);
 	~TcpConnection() override;
 
 	bool noRead() const
@@ -63,25 +63,25 @@ public:
 		return _noRead;
 	}
 
-	void watch(epoll_event &ev) override;
+	void watch(epoll_event& ev) override;
 
 	bool processing() override;
 
-	void addCompleteHandler(std::function<void(const std::shared_ptr<Context>&)>);
-	void addErrorHandler(std::function<void()>);
+	void addCompleteHandler(std::function<void(TcpConnection&, const std::shared_ptr<Context>&)>);
+	void addErrorHandler(std::function<void(TcpConnection&)>);
 
 	void onComplete()
 	{
 		if (_completeHandler)
 		{
-			_completeHandler(_context);
+			_completeHandler(*this, _context);
 		}
 	}
 	void onError()
 	{
 		if (_errorHandler)
 		{
-			_errorHandler();
+			_errorHandler(*this);
 		}
 	}
 

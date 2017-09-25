@@ -75,13 +75,19 @@ std::shared_ptr<AcceptorFactory::Creator> AcceptorFactory::creator(const Setting
 	if (secure)
 	{
 		return std::make_shared<Creator>(
-			std::bind(SslAcceptor::create, std::placeholders::_1, host, port, SslHelper::getServerContext())
+			[host = std::move(host), port](const std::shared_ptr<ServerTransport>& transport)
+			{
+				return SslAcceptor::create(transport, host, port, SslHelper::getServerContext());
+			}
 		);
 	}
 	else
 	{
 		return std::make_shared<Creator>(
-			std::bind(TcpAcceptor::create, std::placeholders::_1, host, port)
+			[host = std::move(host), port](const std::shared_ptr<ServerTransport>& transport)
+			{
+				return TcpAcceptor::create(transport, host, port);
+			}
 		);
 	}
 }

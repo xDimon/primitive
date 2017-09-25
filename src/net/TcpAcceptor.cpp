@@ -51,7 +51,7 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 
 	setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
 
-	sockaddr_in servaddr;
+	sockaddr_in servaddr{};
 	socklen_t addrlen = sizeof(sockaddr_in);
 
 	// Инициализируем структуру нулями
@@ -140,7 +140,7 @@ bool TcpAcceptor::processing()
 			throw std::runtime_error("Error on TcpAcceptor");
 		}
 
-		sockaddr_in cliaddr;
+		sockaddr_in cliaddr{};
 		socklen_t clilen = sizeof(cliaddr);
 		memset(&cliaddr, 0, clilen);
 

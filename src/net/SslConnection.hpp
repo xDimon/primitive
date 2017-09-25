@@ -41,6 +41,8 @@ private:
 	bool _sslWantRead;
 	bool _sslWantWrite;
 
+	bool sslHandshake();
+
 	bool readFromSocket() override;
 	bool writeToSocket() override;
 

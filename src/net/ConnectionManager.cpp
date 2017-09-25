@@ -55,24 +55,26 @@ void ConnectionManager::add(const std::shared_ptr<Connection>& connection)
 
 	if (getInstance()._allConnections.find(connection.get()) != getInstance()._allConnections.end())
 	{
-		getInstance()._log.debug("Fail of add %s in ConnectionManager::add()", connection->name().c_str());
+		getInstance()._log.warn("Connection %s already registered in manager", connection->name().c_str());
 		return;
 	}
 
-	getInstance()._log.debug("Add %s in ConnectionManager::add()", connection->name().c_str());
-
 	getInstance()._allConnections.emplace(connection.get(), connection);
+
+	getInstance()._log.debug("Connection %s registered in manager", connection->name().c_str());
 
 	epoll_event ev{};
 
 	connection->watch(ev);
 
-	getInstance()._log.trace("Call `epoll_ctl(ADD)` for %s in ConnectionManager::add(): %p", connection->name().c_str(), ev.data.ptr);
-
 	// Включаем наблюдение
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_ADD, connection->fd(), &ev) == -1)
 	{
-		getInstance()._log.debug("Fail call `epoll_ctl(ADD)` for %s (error: '%s') in ConnectionManager::add()", connection->name().c_str(), strerror(errno));
+		getInstance()._log.warn("Fail add %s for watching (error: '%s')", connection->name().c_str(), strerror(errno));
+	}
+	else
+	{
+		getInstance()._log.trace("Add %s for watching: %p", connection->name().c_str(), ev.data.ptr);
 	}
 }
 
@@ -84,18 +86,22 @@ bool ConnectionManager::remove(const std::shared_ptr<Connection>& connection)
 		return false;
 	}
 
-	getInstance()._log.trace("Call `epoll_ctl(DEL)` for %s in ConnectionManager::add()", connection->name().c_str());
-
 	// Удаляем из очереди событий
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_DEL, connection->fd(), nullptr) == -1)
 	{
-		getInstance()._log.debug("Fail call `epoll_ctl(DEL)` for %s (error: '%s') in ConnectionManager::add()", connection->name().c_str(), strerror(errno));
+		getInstance()._log.warn("Fail remove %s from watching (error: '%s')", connection->name().c_str(), strerror(errno));
+	}
+	else
+	{
+		getInstance()._log.trace("Remove %s from watching: %p", connection->name().c_str());
 	}
 
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
 	getInstance()._allConnections.erase(connection.get());
 	getInstance()._readyConnections.erase(connection);
 	getInstance()._capturedConnections.erase(connection);
+
+	getInstance()._log.debug("Connection %s unregistered from manager", connection->name().c_str());
 
 	return true;
 }
@@ -125,12 +131,14 @@ void ConnectionManager::watch(const std::shared_ptr<Connection>& connection)
 
 	connection->watch(ev);
 
-	getInstance()._log.trace("Call `epoll_ctl(MOD)` for %s in ConnectionManager::watch(): %p", connection->name().c_str(), ev.data.ptr);
-
 	// Включаем наблюдение
 	if (epoll_ctl(getInstance()._epfd, EPOLL_CTL_MOD, connection->fd(), &ev) == -1)
 	{
-		getInstance()._log.debug("Fail call `epoll_ctl(MOD)` for %s (error: '%s') in ConnectionManager::watch()", connection->name().c_str(), strerror(errno));
+		getInstance()._log.warn("Fail modify watching on %s (error: '%s')", connection->name().c_str(), strerror(errno));
+	}
+	else
+	{
+		getInstance()._log.trace("Modify watching on %s: %p", connection->name().c_str(), ev.data.ptr);
 	}
 }
 
@@ -333,7 +341,7 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 	_readyConnections.erase(it);
 	_capturedConnections.insert(connection);
 
-	_log.trace("Capture %s in ConnectionManager::capture()", connection->name().c_str());
+	_log.trace("Capture %s", connection->name().c_str());
 
 	connection->setCaptured();
 
@@ -347,7 +355,7 @@ void ConnectionManager::release(const std::shared_ptr<Connection>& connection)
 
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 
-//	_log.trace("Remove %s from captured connection list in ConnectionManager::captured()", connection->name().c_str());
+	_log.trace("Release %s", connection->name().c_str());
 
 	_capturedConnections.erase(connection);
 
@@ -385,7 +393,16 @@ void ConnectionManager::dispatch()
 
 				getInstance()._log.trace("Begin processing on %s", connection->name().c_str());
 
-				bool status = connection->processing();
+				bool status;
+				try
+				{
+					status = connection->processing();
+				}
+				catch (const std::exception& exception)
+				{
+					status = false;
+					getInstance()._log.warn("Uncatched exception at processing on %s: %s", connection->name().c_str(), exception.what());
+				}
 
 				getInstance().release(connection);
 
