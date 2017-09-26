@@ -49,10 +49,13 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	{
 		const auto& settings = _configs->getRoot()["core"];
 
-		uint count = 0;
-		if (settings.lookupValue("workers", count))
+		if (!settings.lookupValue("workers", _workerCount))
 		{
-			_workerCount = count;
+			_workerCount = std::thread::hardware_concurrency();
+		}
+		if (_workerCount < 2)
+		{
+			throw std::runtime_error("Count of workers too few. Programm won't be work correctly");
 		}
 	}
 	catch (const libconfig::SettingNotFoundException& exception)
@@ -169,9 +172,8 @@ void Server::start()
 {
 	_log.info("Server start (pid=%u)", getpid());
 
-	ThreadPool::hold();
 
-	ThreadPool::setThreadNum(std::max(_workerCount, 3ul));
+	ThreadPool::setThreadNum(_workerCount);
 
 	Transports::enableAll();
 }
@@ -183,9 +185,6 @@ void Server::stop()
 
 	Transports::disableAll();
 
-	ThreadPool::setThreadNum(0);
-
-	ThreadPool::unhold();
 
 	_log.info("Server stop");
 }

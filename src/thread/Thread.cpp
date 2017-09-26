@@ -70,9 +70,9 @@ void Thread::run(Thread* thread)
 	fake(thread);
 #endif
 
-	LoggerManager::unregThread();
-
 	thread->_finished = true;
+
+	LoggerManager::unregThread();
 }
 
 Thread* Thread::self()

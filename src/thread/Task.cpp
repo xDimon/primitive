@@ -23,6 +23,7 @@
 #include "Task.hpp"
 #include "../log/Log.hpp"
 #include "ThreadPool.hpp"
+#include "../utils/ShutdownManager.hpp"
 
 Task::Task(const std::shared_ptr<Func>& function)
 : _function(function)
@@ -67,7 +68,7 @@ Task& Task::operator=(Task &&that) noexcept
 
 bool Task::operator()()
 {
-	if (_until != Time::min() && Clock::now() < _until && !ThreadPool::stops())
+	if (_until != Time::min() && Clock::now() < _until && !ShutdownManager::shutingdown())
 	{
 		return false;
 	}
@@ -86,7 +87,6 @@ void Task::saveContext(ucontext_t* tmpContext, ucontext_t* mainContext)
 {
 	_tmpContext = tmpContext;
 	_mainContext = mainContext;
-
 }
 
 void Task::restoreContext() const

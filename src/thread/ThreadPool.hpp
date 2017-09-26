@@ -64,14 +64,11 @@ public:
 	static void hold();
 	static void unhold();
 
-	static bool stops();
-
 private:
 	Log _log;
 
 	std::mutex _counterMutex;
 	size_t _workerCounter;
-	size_t _workerNumber;
 
 	size_t _hold;
 

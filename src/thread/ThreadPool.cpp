@@ -34,15 +34,6 @@ ThreadPool::ThreadPool()
 // the destructor joins all threads
 ThreadPool::~ThreadPool()
 {
-	// Switch to stop
-	{
-		std::unique_lock<std::mutex> lock(_queueMutex);
-		_workerNumber = 0;
-	}
-
-	// Talk to stop threads
-	_workersWakeupCondition.notify_all();
-
 	// Wait end all threads
 	while (!_workers.empty())
 	{
@@ -70,20 +61,11 @@ void ThreadPool::unhold()
 	--pool._hold;
 }
 
-bool ThreadPool::stops()
-{
-	auto& pool = getInstance();
-
-	std::unique_lock<std::mutex> lock(pool._counterMutex);
-	return pool._workerNumber == 0;
-}
-
 void ThreadPool::setThreadNum(size_t num)
 {
 	auto& pool = getInstance();
 
 	std::unique_lock<std::mutex> lock(pool._queueMutex);
-	pool._workerNumber = num;
 
 	size_t remain = (num < pool._workers.size()) ? 0 : (num - pool._workers.size());
 	while (remain-- > 0)
@@ -117,13 +99,7 @@ void ThreadPool::createThread()
 			}
 			if (_tasks.empty())
 			{
-				_log.trace("continueCondition: no task");
 				return _hold == 0;
-			}
-			if (_workerNumber == 0)
-			{
-				_log.trace("continueCondition: no workers");
-				return true;
 			}
 			waitUntil = _tasks.top()->until();
 			return waitUntil <= std::chrono::steady_clock::now();
@@ -131,24 +107,25 @@ void ThreadPool::createThread()
 
 		_log.debug("Begin thread's loop");
 
+		std::shared_ptr<Task> task;
+
 		for (;;)
 		{
-			std::shared_ptr<Task> task;
-
-			_log.trace("Waiting for task on thread");
+			task.reset();
 
 			{
-				_log.trace("lock");
 				std::unique_lock<std::mutex> lock(_queueMutex);
-				_log.trace("locked");
 
 //				auto now = std::chrono::steady_clock::now();
-//				if (!_tasks.empty()) log.trace("Wait: task =%20lld", _tasks.top().until());
-//				log.trace("Wait: until=%20lld", waitUntil);
-//				log.trace("Wait:   now=%20lld", now);
-//				log.trace("Wait for    %20lld", waitUntil - now);
-//				log.trace("Queue       %s", _tasks.empty()?"empty":"have a task");
-//				log.trace("Hold        %s", _hold?"yes":"no");
+//				if (!_tasks.empty())
+//				{
+//					_log.trace("Wait: task =%20lld", _tasks.top()->until());
+//				}
+//				_log.trace("Wait: until=%20lld", waitUntil);
+//				_log.trace("Wait:   now=%20lld", now);
+//				_log.trace("Wait for    %20lld", waitUntil - now);
+//				_log.trace("Queue       %s", _tasks.empty()?"empty":"have a task");
+//				_log.trace("Hold        %s", _hold?"yes":"no");
 
 				// Condition for run thread
 				if (!_workersWakeupCondition.wait_until(lock, waitUntil, continueCondition))
@@ -176,8 +153,6 @@ void ThreadPool::createThread()
 				{
 					_workersWakeupCondition.notify_one();
 				}
-
-				_log.trace("unlocked");
 			}
 
 			// Execute task
@@ -190,7 +165,7 @@ void ThreadPool::createThread()
 			}
 			catch (const std::exception& exception)
 			{
-				_log.warn("Exception at execute task of pool: %s", exception.what());
+				_log.warn("Uncatched exception at execute task of pool: %s", exception.what());
 			}
 			if (!done)
 			{
@@ -206,6 +181,8 @@ void ThreadPool::createThread()
 //				waitUntil = std::chrono::steady_clock::now();
 //				std::chrono::time_point<std::chrono::steady_clock>::min();
 			}
+
+			_log.trace("Waiting for task on thread");
 		}
 
 //		{
@@ -238,7 +215,7 @@ void ThreadPool::wait()
 	{
 		// Wait end all threads
 		{
-			std::unique_lock<std::mutex> qLock(pool._queueMutex);
+			std::unique_lock<std::mutex> lock(pool._queueMutex);
 			for (auto i = pool._workers.begin(); i != pool._workers.end(); )
 			{
 				auto ci = i++;
@@ -246,22 +223,17 @@ void ThreadPool::wait()
 				if (thread->finished())
 				{
 					pool._workers.erase(ci);
-					thread->join();
 					delete thread;
 				}
 			}
-			std::unique_lock<std::mutex> cLock(pool._counterMutex);
-			if (pool._hold == 0)
-			{
 				if (pool._workers.empty())
 				{
 					break;
 				}
-				if (pool._workerNumber == 0)
+				if (ShutdownManager::shutingdown())
 				{
 					pool._workersWakeupCondition.notify_all();
 				}
-			}
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}

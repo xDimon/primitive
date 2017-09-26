@@ -22,9 +22,15 @@
 #include <ucontext.h>
 #include "Coroutine.hpp"
 #include "ThreadPool.hpp"
+#include "../utils/ShutdownManager.hpp"
 
 void Coroutine(const std::shared_ptr<Task>& task)
 {
+	if (ShutdownManager::shutingdown())
+	{
+		return;
+	}
+
 	std::mutex orderMutex;
 	ucontext_t mainContext{};
 	ucontext_t tmpContext{};

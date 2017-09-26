@@ -39,7 +39,7 @@ private:
 
 	std::recursive_mutex _mutex;
 
-	size_t _workerCount;
+	uint32_t _workerCount;
 
 	std::shared_ptr<Config> _configs;
 
@@ -52,26 +52,15 @@ public:
 	explicit Server(const std::shared_ptr<Config> &configs);
 	~Server();
 
-	static Server& getInstance()
-	{
-		if (_instance == nullptr)
-		{
-			throw std::runtime_error("Server isn't instantiate yet");
-		}
-		return *_instance;
-	}
-
 	static std::string httpName()
 	{
-		#define PRIMITIVE_DEF_NAME primitive
-		#define HELPER4QUOTE(N) #N
-		#if defined(PROJECT_NAME) && (PROJECT_NAME!=PRIMITIVE_DEF_NAME)
-			return HELPER4QUOTE(PRIMITIVE_DEF_NAME) " for " HELPER4QUOTE(PROJECT_NAME);
+		#if defined(PROJECT_NAME)
+		 #define HELPER4QUOTE(N) #N
+			return "primitive for " HELPER4QUOTE(PROJECT_NAME);
+		 #undef HELPER4QUOTE
 		#else
-			return HELPER4QUOTE(PRIMITIVE_DEF_NAME);
+			return "primitive";
 		#endif
-		#undef HELPER4QUOTE
-		#undef PRIMITIVE_DEF_NAME
 	}
 
 	void start();
