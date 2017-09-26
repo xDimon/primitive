@@ -58,15 +58,13 @@ const std::string& ExePath()
 void SetProcessName()
 {
 	// Назначаем имя процесса
-#define PRIMITIVE_DEF_NAME primitive
-#define HELPER4QUOTE(N) #N
-#if defined(PROJECT_NAME) && PROJECT_NAME!=PRIMITIVE_DEF_NAME
+#ifdef PROJECT_NAME
+ #define HELPER4QUOTE(N) #N
 	prctl(PR_SET_NAME, HELPER4QUOTE(PROJECT_NAME));
+ #undef HELPER4QUOTE
 #else
-	prctl(PR_SET_NAME, HELPER4QUOTE(PRIMITIVE_DEF_NAME));
+	prctl(PR_SET_NAME, "primitive");
 #endif
-#undef HELPER4QUOTE
-#undef PRIMITIVE_DEF_NAME
 }
 
 void SetDaemonMode()
