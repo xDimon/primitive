@@ -22,34 +22,43 @@
 #pragma once
 
 #include "../log/Log.hpp"
-
-#define WITH_COROUTINE
+#include <mutex>
 
 class Thread
 {
-	friend void fake(Thread *thread);
+public:
+	typedef size_t Id;
+
 private:
-	size_t _id;
+	std::mutex _mutex;
+	Id _id;
 	Log _log;
 	std::function<void()> _function;
-	std::thread _thread;
 	bool _finished;
+	std::thread _thread;
 
-	static void run(Thread *);
+	static thread_local Id _tid;
+
+	static void run(Thread*);
+
+public:
+	static void coroutine(Thread*);
 
 public:
 	Thread() = delete;
-	Thread(const Thread&) = delete;
-	void operator=(Thread const&) = delete;
-	Thread(Thread&&) = delete;
-	Thread& operator=(Thread&&) = delete;
+	Thread(const Thread&) = delete; // Copy-constructor
+	void operator=(Thread const&) = delete; // Copy-assignment
+	Thread(Thread&&) = delete; // Move-constructor
+	Thread& operator=(Thread&&) = delete; // Move-assignment
 
 	explicit Thread(std::function<void()>& threadLoop);
 	virtual ~Thread();
 
-	inline void join()
+	static Thread* self();
+
+	inline void waitStart()
 	{
-		_thread.join();
+		std::lock_guard<std::mutex> lockGuard(_mutex);
 	}
 
 	inline bool finished()
@@ -59,10 +68,8 @@ public:
 
 	inline auto id() const
 	{
-		return _thread.get_id();
+		return _id;
 	}
 
 	void reenter();
-
-	static Thread * self();
 };

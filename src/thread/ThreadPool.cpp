@@ -22,26 +22,33 @@
 #include "ThreadPool.hpp"
 #include "../utils/ShutdownManager.hpp"
 #include "../utils/Time.hpp"
+#include "../utils/ShutdownManager.hpp"
+#include <chrono>
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
 : _log("ThreadPool")
 , _workerCounter(0)
-, _workerNumber(0)
 {
 }
 
 // the destructor joins all threads
 ThreadPool::~ThreadPool()
 {
-	// Wait end all threads
-	while (!_workers.empty())
-	{
-		auto i = _workers.begin();
-		i->second->join();
-		_workers.erase(i);
-		delete i->second;
-	}
+//	// Wait end all threads
+//	while (!_workers.empty())
+//	{
+//		auto i = _workers.begin();
+//		if (i->second->finished())
+//		{
+//			_workers.erase(i);
+//			delete i->second;
+//		}
+//		else
+//		{
+//			std::this_thread::sleep_for(std::chrono::milliseconds(30));
+//		}
+//	}
 }
 
 void ThreadPool::hold()
@@ -199,6 +206,8 @@ void ThreadPool::createThread()
 
 	auto thread = new Thread(threadLoop);
 
+	thread->waitStart();
+
 	_workers.emplace(thread->id(), thread);
 
 	_workersWakeupCondition.notify_one();
@@ -226,24 +235,26 @@ void ThreadPool::wait()
 					delete thread;
 				}
 			}
-				if (pool._workers.empty())
-				{
-					break;
-				}
-				if (ShutdownManager::shutingdown())
-				{
-					pool._workersWakeupCondition.notify_all();
-				}
+			if (pool._workers.empty())
+			{
+				break;
+			}
+			if (ShutdownManager::shutingdown())
+			{
+				pool._workersWakeupCondition.notify_all();
+			}
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 
-Thread *ThreadPool::getCurrent()
+Thread *ThreadPool::getThread(Thread::Id tid)
 {
 	auto& pool = getInstance();
 
-	auto i = pool._workers.find(std::this_thread::get_id());
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
+
+	auto i = pool._workers.find(tid);
 	if (i == pool._workers.end())
 	{
 		throw std::runtime_error("Unrecognized thread");
@@ -293,4 +304,13 @@ void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function, Task::Time
 	pool._tasks.emplace(std::make_shared<Task>(function, time));
 
 	pool._workersWakeupCondition.notify_one();
+}
+
+bool ThreadPool::empty()
+{
+	auto& pool = getInstance();
+
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
+
+	return pool._workers.empty();
 }

@@ -28,13 +28,16 @@
 #include <ucontext.h>
 #include <climits>
 
+thread_local Thread::Id Thread::_tid;
+
 Thread::Thread(std::function<void()>& function)
 : _id(ThreadPool::genThreadId())
 , _log("Thread")
 , _function(std::move(function))
+, _finished((_mutex.lock(), false))
 , _thread([this]() { Thread::run(this); })
-, _finished(false)
 {
+	_thread.detach();
 	_log.debug("Thread 'Worker#%zu' created", _id);
 }
 
@@ -43,13 +46,23 @@ Thread::~Thread()
 	_log.debug("Thread 'Worker#%zu' destroyed", _id);
 }
 
-void fake(Thread* thread)
+void Thread::coroutine(Thread* thread)
 {
-	thread->_function();
+	try
+	{
+		thread->_function();
+	}
+	catch (const std::exception& exception)
+	{
+		thread->_log.error("Uncatched exception on thread 'Worker#%zu': %s", thread->_id, exception.what());
+	}
 }
 
 void Thread::run(Thread* thread)
 {
+	_tid = thread->_id;
+	thread->_mutex.unlock();
+
 	{
 		char buff[32];
 		snprintf(buff, sizeof(buff), "Worker#%zu", thread->_id);
@@ -64,11 +77,7 @@ void Thread::run(Thread* thread)
 		thread->_log.debug("Thread 'Worker#%zu' start", thread->_id);
 	}
 
-#ifdef WITH_COROUTINE
 	thread->reenter();
-#else
-	fake(thread);
-#endif
 
 	thread->_finished = true;
 
@@ -77,7 +86,8 @@ void Thread::run(Thread* thread)
 
 Thread* Thread::self()
 {
-	return ThreadPool::getCurrent();
+	auto tid = Thread::_tid;
+	return ThreadPool::getThread(tid);
 }
 
 void Thread::reenter()
@@ -96,8 +106,7 @@ void Thread::reenter()
 		MAP_PRIVATE | MAP_ANON, -1, 0
 	);
 
-	makecontext(&context, reinterpret_cast<void (*)()>(fake), 1, this);
-//	makecontext(&context, reinterpret_cast<void (*)(void)>(fake), 0);
+	makecontext(&context, reinterpret_cast<void (*)()>(coroutine), 1, this);
 
 	volatile bool first = true;
 

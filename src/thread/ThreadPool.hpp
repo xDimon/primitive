@@ -37,6 +37,8 @@ public:
 	ThreadPool(ThreadPool&&) = delete;
 	ThreadPool& operator=(ThreadPool&&) = delete;
 
+	static bool empty();
+
 private:
 	ThreadPool();
 	virtual ~ThreadPool();
@@ -59,7 +61,7 @@ public:
 
 	static void wait();
 
-	static Thread* getCurrent();
+	static Thread* getThread(Thread::Id tid);
 
 	static void hold();
 	static void unhold();
@@ -73,7 +75,7 @@ private:
 	size_t _hold;
 
 	// need to keep track of threads so we can join them
-	std::map<const std::thread::id, Thread*> _workers;
+	std::map<Thread::Id, Thread*> _workers;
 
 	struct TaskComparator
 	{
