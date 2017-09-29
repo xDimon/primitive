@@ -55,16 +55,15 @@ void Coroutine(const std::shared_ptr<Task>& task)
 			// создать таск связанный с сохраненным контекстом и положить в очередь
 
 			auto taskWrapper = std::make_shared<Task::Func>(
-//				[&orderMutex, wp = std::weak_ptr<Task>(task)]()
-				[&orderMutex,&task]()
+				[&orderMutex, wp = std::weak_ptr<Task>(task)]()
 				{
 					std::lock_guard<std::mutex> lockGuardTask(orderMutex);
 
-//					auto task = wp.lock();
-//					if (!task)
-//					{
-//						return;
-//					}
+					auto task = wp.lock();
+					if (!task)
+					{
+						return;
+					}
 
 					try
 					{
@@ -82,11 +81,5 @@ void Coroutine(const std::shared_ptr<Task>& task)
 
 		// переключиться на контекст входа в поток
 		Thread::self()->reenter();
-	}
-	else
-	{
-//		munmap(tmpContext.uc_stack.ss_sp, tmpContext.uc_stack.ss_size);
-//		tmpContext.uc_stack.ss_sp = nullptr;
-//		tmpContext.uc_stack.ss_size = 0;
 	}
 }

@@ -26,15 +26,16 @@
 
 #include <cxxabi.h>
 #include <climits>
-#include <sstream>
 #include <csignal>
-#include <cstring>
 #include <set>
 #include <execinfo.h>
 #include <sys/prctl.h>
 #include <dlfcn.h>
 #include <elf.h>
 #include <unistd.h>
+#include <sys/resource.h>
+#include <sys/mman.h>
+#include <cstring>
 
 static void SignalsHandler(int sig, siginfo_t* info, void* context);
 
@@ -77,13 +78,23 @@ void SetDaemonMode()
 
 void StartManageSignals()
 {
+	stack_t ss{};
+	ss.ss_size = SIGSTKSZ;//PTHREAD_STACK_MIN;
+	ss.ss_sp = mmap(
+		nullptr, ss.ss_size,
+		PROT_READ | PROT_WRITE | PROT_EXEC,
+		MAP_PRIVATE | MAP_ANON, -1, 0
+	);
+
+	sigaltstack(&ss, nullptr);
+
 	// Игнорируемые сигналы
 	std::set<int> ignoredSignals = {
 		SIGHUP,
 		SIGPIPE
 	};
 
-	struct sigaction act;
+	struct sigaction act{};
 	memset(&act, 0, sizeof(act));
 
 	act.sa_flags = SA_SIGINFO; // обработчик требует 3 аргумента
@@ -91,7 +102,7 @@ void StartManageSignals()
 
 	for (int n = 1; n < _NSIG; n++)
 	{
-		sigset_t mask;
+		sigset_t mask{};
 		sigemptyset(&mask);
 		sigaddset(&mask, n);
 		if (ignoredSignals.find(n) != ignoredSignals.end())

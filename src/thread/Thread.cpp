@@ -23,6 +23,7 @@
 
 #include "ThreadPool.hpp"
 #include "../log/LoggerManager.hpp"
+#include "RollbackStackAndRestoreContext.hpp"
 
 #include <sys/mman.h>
 #include <ucontext.h>
@@ -52,6 +53,8 @@ void Thread::coroutine(Thread* thread)
 	{
 		thread->_function();
 	}
+	catch (const RollbackStackAndRestoreContext& exception)
+	{}
 	catch (const std::exception& exception)
 	{
 		thread->_log.error("Uncatched exception on thread 'Worker#%zu': %s", thread->_id, exception.what());
@@ -95,7 +98,7 @@ void Thread::reenter()
 	ucontext_t context{};
 	ucontext_t retContext{};
 
-	// Инициализация контекста корутины. uc_link указывает на _parentContext, точку возврата при завершении корутины
+	// Инициализация контекста. uc_link указывает на точку возврата при выходе из стека
 	getcontext(&context);
 	context.uc_link = &retContext;
 	context.uc_stack.ss_flags = 0;
@@ -121,8 +124,11 @@ void Thread::reenter()
 			throw std::runtime_error("Can't change context");
 		}
 	}
-
-//	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
-//	context.uc_stack.ss_sp = nullptr;
-//	context.uc_stack.ss_size = 0;
+	else
+	{
+		munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
+		context.uc_stack.ss_sp = nullptr;
+		context.uc_stack.ss_size = 0;
+		context.uc_link = nullptr;
+	}
 }

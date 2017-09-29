@@ -20,8 +20,8 @@
 
 
 #include "ThreadPool.hpp"
-#include "../utils/ShutdownManager.hpp"
 #include "../utils/Time.hpp"
+#include "RollbackStackAndRestoreContext.hpp"
 #include "../utils/ShutdownManager.hpp"
 #include <chrono>
 
@@ -169,6 +169,10 @@ void ThreadPool::createThread()
 			try
 			{
 				done = (*task)();
+			}
+			catch (const RollbackStackAndRestoreContext& exception)
+			{
+				throw;
 			}
 			catch (const std::exception& exception)
 			{

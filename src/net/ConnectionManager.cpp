@@ -24,6 +24,7 @@
 
 #include "../thread/ThreadPool.hpp"
 #include "../utils/ShutdownManager.hpp"
+#include "../thread/RollbackStackAndRestoreContext.hpp"
 
 ConnectionManager::ConnectionManager()
 : _log("ConnectionManager")
@@ -397,6 +398,10 @@ void ConnectionManager::dispatch()
 				try
 				{
 					status = connection->processing();
+				}
+				catch (const RollbackStackAndRestoreContext& exception)
+				{
+					throw;
 				}
 				catch (const std::exception& exception)
 				{
