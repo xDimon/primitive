@@ -20,178 +20,321 @@
 
 
 #include "Request.hpp"
+#include "../thread/RollbackStackAndRestoreContext.hpp"
 
-Request::Request(const HttpUri& uri, HttpRequest::Method method, const std::string& body)
+Request::Request(
+	const HttpUri& uri,
+	HttpRequest::Method method,
+	const std::string& body,
+	const std::string& contentType
+)
 : Task(std::make_shared<Task::Func>([this](){return operator()();}))
 , _log("Request")
 , _clientTransport(new HttpClient())
 , _method(method)
 , _uri(uri)
 , _body(body)
-, _error("Not executed")
+, _contentType(contentType)
+, _error("No run")
 , _state(State::INIT)
 {
 }
 
-bool Request::execute()
+bool Request::operator()()
 {
-	switch (_state)
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state != State::INIT)
 	{
-		case State::INIT:
-			_log.trace("Request::execute INIT");
-			return this->connect();
-
-		case State::CONNECT_IN_PROGRESS:
-			_log.trace("Request::execute CONNECT_IN_PROGRESS");
-			break;
-
-		case State::CONNECTED:
-			_log.trace("Request::execute CONNECTED");
-			break;
-
-		case State::WRITE:
-			_log.trace("Request::execute WRITE");
-			break;
-
-		case State::READ:
-			_log.trace("Request::execute READ");
-			break;
-
-		case State::DONE:
-		case State::ERROR:
-		{
-			Log log("Request");
-			log.debug("REQUEST: %s", _uri.str().c_str());
-			if (!_answer.empty())
-			{
-				log.debug("RESPONSE: %s", _answer.c_str());
-			}
-			if (!_error.empty())
-			{
-				log.debug("ERROR: %s", _error.c_str());
-			}
-
-			restoreContext();
-			return true;
-		}
+		_log.warn("Bad step: connect");
+		return false;
 	}
 
-	return false;
-}
-
-bool Request::connect()
-{
-	_log.trace("Request::execute connect");
+	_error.clear();
+	_log.trace("--------------------------------------------------------------------------------------------------------");
+	_log.trace("Connect...");
 
 	try
 	{
-		_log.debug("connector in progress");
-		_state = State::CONNECT_IN_PROGRESS;
-		std::shared_ptr<TcpConnector> connector;
+		_state = State::CONNECT;
+
 		if (_uri.scheme() == HttpUri::Scheme::HTTPS)
 		{
 			auto context = SslHelper::getClientContext();
-			connector.reset(new SslConnector(_clientTransport, _uri.host(), _uri.port(), context));
+			_connector = std::make_shared<SslConnector>(_clientTransport, _uri.host(), _uri.port(), context);
 		}
 		else
 		{
-			connector.reset(new TcpConnector(_clientTransport, _uri.host(), _uri.port()));
+			_connector = std::make_shared<TcpConnector>(_clientTransport, _uri.host(), _uri.port());
 		}
-		connector->setTtl(std::chrono::seconds(15));
-		connector->addConnectedHandler([this](const std::shared_ptr<TcpConnection>& connection){
-			_log.debug("connected");
-			_state = State::CONNECTED;
-			connection->addCompleteHandler([this](TcpConnection& connection, const std::shared_ptr<Context>&context_){
-				_log.debug("done");
+		_connector->setTtl(std::chrono::seconds(15));
 
-				auto context = std::dynamic_pointer_cast<HttpContext>(context_);
-				if (!context)
-				{
-					_error = "Internal error: Bad context";
-					_state = State::ERROR;
-					connection.setTtl(std::chrono::milliseconds(50));
-					connection.close();
-					operator()();
-					return;
-				}
-
-				if (!context->getResponse())
-				{
-					_error = "Internal error: No response";
-					_state = State::ERROR;
-					connection.setTtl(std::chrono::milliseconds(50));
-					connection.close();
-					operator()();
-					return;
-				}
-
-				_answer = std::move(std::string(context->getResponse()->dataPtr(), context->getResponse()->dataLen()));
-
-				if (context->getResponse()->statusCode() != 200)
-				{
-					_error = std::string("No OK response: ") + std::to_string(context->getResponse()->statusCode()) + " " + context->getResponse()->statusMessage();
-					_state = State::ERROR;
-					connection.setTtl(std::chrono::milliseconds(50));
-					connection.close();
-					operator()();
-					return;
-				}
-
-				_state = State::DONE;
-				connection.setTtl(std::chrono::milliseconds(50));
-				connection.close();
-				operator()();
-			});
-
-			connection->addErrorHandler([this](TcpConnection& connection){
-				_log.debug("connection error");
-				_state = State::ERROR;
-				connection.setTtl(std::chrono::milliseconds(50));
-				connection.close();
-				operator()();
-			});
-
-			std::ostringstream oss;
-			oss << (
-				_method == HttpRequest::Method::GET ? "GET " :
-				_method == HttpRequest::Method::POST ? "POST " :
-				"UNKNOWN "
-			) << _uri.path() << (_uri.hasQuery() ? "?" : "") << (_uri.hasQuery() ? _uri.query() : "") << " HTTP/1.1\r\n"
-				<< "Host: " << _uri.host() << ":" << _uri.port() << "\r\n"
-				<< "Connection: Close\r\n";
-			if (_method == HttpRequest::Method::POST)
+		_connector->addConnectedHandler(
+			[this](const std::shared_ptr<TcpConnection>& connection)
 			{
-				oss << "Content-Length: " << _body.length() << "\r\n";
+				_connector.reset();
+				_connection = connection;
+				onConnected();
 			}
-			oss	<< "\r\n";
-			if (_method == HttpRequest::Method::POST)
+		);
+
+		_connector->addErrorHandler(
+			[this]()
 			{
-				oss << _body;
+				_connector.reset();
+				failConnect();
 			}
+		);
 
-//			Log("Request", detail).debug("REQUEST: %s", oss.str().c_str());
-
-			connection->write(oss.str().c_str(), oss.str().length());
-			connection->setTtl(std::chrono::milliseconds(5000));
-			ConnectionManager::watch(connection);
-			operator()();
-		});
-		connector->addErrorHandler([this,connector](){
-			_log.debug("connector error");
-			_state = State::ERROR;
-			operator()();
-		});
-		_log.debug("add connector");
-		ConnectionManager::add(connector);
+		ConnectionManager::add(_connector);
 	}
 	catch (const std::exception& exception)
 	{
-		_log.debug("connector exception");
-		_error = "Internal error: Uncatched exception ← ";
+		_error = "Internal error: Uncatched exception at connect ← ";
 		_error += exception.what();
-		_state = State::ERROR;
-		operator()();
+
+		exceptionAtConnect();
 	}
 
 	return true;
+}
+
+void Request::failConnect()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state != State::CONNECT)
+	{
+		_log.warn("Bad step: failConnect");
+		return;
+	}
+
+	_log.trace("Fail connect");
+
+	_state = State::ERROR;
+
+	done();
+}
+
+void Request::exceptionAtConnect()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state != State::CONNECT)
+	{
+		_log.warn("Bad step: exceptionConnect");
+		return;
+	}
+
+	_log.trace("Exception at connect");
+
+	_state = State::ERROR;
+
+	done();
+}
+
+void Request::onConnected()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state != State::CONNECT)
+	{
+		_log.warn("Bad step: connected");
+		return;
+	}
+
+	_log.trace("Connected");
+
+	_state = State::CONNECTED;
+
+	_connection->addCompleteHandler(
+		[this] (TcpConnection& connection, const std::shared_ptr<Context>& context)
+		{
+			_httpContext = std::dynamic_pointer_cast<HttpContext>(context);
+			onComplete();
+		}
+	);
+
+	_connection->addErrorHandler(
+		[this] (TcpConnection& connection)
+		{
+			failProcessing();
+		}
+	);
+
+	submit();
+}
+
+void Request::submit()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state != State::CONNECTED)
+	{
+		_log.warn("Bad step: submit");
+		return;
+	}
+
+	_log.trace("Submit...");
+
+	_state = State::SUBMIT;
+
+	try
+	{
+		std::ostringstream oss;
+		oss << (
+			_method == HttpRequest::Method::GET
+			? "GET "
+			: _method == HttpRequest::Method::POST
+			  ? "POST "
+			  : "UNKNOWN "
+		) << _uri.path() << (_uri.hasQuery() ? "?" : "") << (_uri.hasQuery() ? _uri.query() : "") << " HTTP/1.1\r\n"
+			<< "Host: " << _uri.host() << ":" << _uri.port() << "\r\n"
+			<< "Connection: Close\r\n";
+		if (_method == HttpRequest::Method::POST)
+		{
+			oss << "Content-Length: " << _body.length() << "\r\n";
+		}
+		if (_method == HttpRequest::Method::POST)
+		{
+			if (!_contentType.empty())
+			{
+				oss << "Content-Type: " << _contentType << "\r\n";
+			}
+			oss << "\r\n";
+			oss << _body;
+		}
+		else
+		{
+			oss << "\r\n";
+		}
+
+//		_log.debug("REQUEST: %s", _uri.str().c_str());
+
+		_connection->write(oss.str().c_str(), oss.str().length());
+		_connection->setTtl(std::chrono::milliseconds(5000));
+
+		_log.trace("Submited");
+
+		_state = State::SUBMITED;
+
+		ConnectionManager::watch(_connection);
+	}
+	catch (const std::exception& exception)
+	{
+		_error = "Internal error: Uncatched exception at submit ← ";
+		_error += exception.what();
+
+		exceptionAtSubmit();
+	}
+}
+
+void Request::exceptionAtSubmit()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state != State::SUBMIT)
+	{
+		_log.warn("Bad step: exceptionSubmit");
+		return;
+	}
+
+	_log.trace("Exception at submit");
+
+	_state = State::ERROR;
+
+	done();
+}
+
+void Request::failProcessing()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (
+		_state != State::CONNECTED &&
+		_state != State::SUBMIT &&
+		_state != State::SUBMITED
+	)
+	{
+		_log.warn("Bad step: failProcessing");
+		return;
+	}
+
+	_log.trace("Error after connected");
+
+	_state = State::ERROR;
+
+	done();
+}
+
+void Request::onComplete()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state != State::SUBMITED)
+	{
+		_log.warn("Bad step: complete");
+		return;
+	}
+
+	if (!_httpContext)
+	{
+		_error = "complete with error (Bad context)";
+		onError();
+		return;
+	}
+
+	if (!_httpContext->getResponse())
+	{
+		_error = "complete with error (No response)";
+		onError();
+		return;
+	}
+
+	_answer = std::string(_httpContext->getResponse()->dataPtr(), _httpContext->getResponse()->dataLen());
+
+	if (_httpContext->getResponse()->statusCode() != 200)
+	{
+		_error = "No OK response: " + std::to_string(_httpContext->getResponse()->statusCode()) + " " + _httpContext->getResponse()->statusMessage();
+		onError();
+		return;
+	}
+
+	_error.clear();
+
+	_log.trace("Completed");
+	_state = State::COMPLETE;
+
+	done();
+}
+
+void Request::onError()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (
+		_state != State::CONNECTED &&
+		_state != State::SUBMIT &&
+		_state != State::SUBMITED
+	)
+	{
+		_log.warn("Bad step: failProcessing");
+		return;
+	}
+
+	_log.trace("Error at processing");
+
+	_state = State::ERROR;
+
+	_connection->setTtl(std::chrono::milliseconds(50));
+
+	done();
+}
+
+void Request::done()
+{
+	_log.trace("Cleanup...");
+
+	_httpContext.reset();
+
+	ConnectionManager::remove(_connection);
+	_connection.reset();
+
+	ConnectionManager::remove(_connector);
+	_connector.reset();
+
+	_log.trace("Done");
+
+	throw RollbackStackAndRestoreContext(ptr());
 }

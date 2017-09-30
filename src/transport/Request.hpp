@@ -42,37 +42,50 @@ private:
 	HttpRequest::Method _method;
 	HttpUri _uri;
 	std::string _body;
+	std::string _contentType;
 	std::string _answer;
 	std::string _error;
+	std::recursive_mutex _mutex;
+	std::shared_ptr<TcpConnector> _connector;
+	std::shared_ptr<TcpConnection> _connection;
+	std::shared_ptr<HttpContext> _httpContext;
 
 	enum class State
 	{
 		INIT,
-		CONNECT_IN_PROGRESS,
+		CONNECT,
 		CONNECTED,
-		WRITE,
-		READ,
-		DONE,
-		ERROR
+		SUBMIT,
+		SUBMITED,
+		COMPLETE,
+		ERROR,
+		DONE
 	} _state;
 
-protected:
-	virtual bool execute();
+	void onConnected();
+	void failConnect();
+	void exceptionAtConnect();
+
+	void submit();
+	void exceptionAtSubmit();
+
+	void onComplete();
+	void failProcessing();
+	void onError();
+
+	void done();
 
 public:
 	Request(
 		const HttpUri& uri,
 		HttpRequest::Method method = HttpRequest::Method::GET,
-		const std::string& body = std::string()
+		const std::string& body = "",
+		const std::string& contentType = ""
 	);
 
 	~Request() override = default;
 
-	bool operator()() override
-	{
-		_error.clear();
-		return execute();
-	}
+	bool operator()() override;
 
 	const std::string& uri() const
 	{
@@ -90,6 +103,4 @@ public:
 	{
 		return !_error.empty();
 	}
-
-	bool connect();
 };
