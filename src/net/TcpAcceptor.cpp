@@ -83,14 +83,12 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 	// Связываем сокет с локальным адресом протокола
 	if (bind(_sock, (struct sockaddr *) &servaddr, addrlen) != 0)
 	{
-		::close(_sock);
 		throw std::runtime_error(std::string("Can't bind socket ← ") + strerror(errno));
 	}
 
 	// Преобразуем сокет в пассивный (слушающий) и устанавливаем длину очереди соединений
 	if (listen(_sock, 16) != 0)
 	{
-		::close(_sock);
 		throw std::runtime_error(std::string("Can't listen port ← ") + strerror(errno));
 	}
 

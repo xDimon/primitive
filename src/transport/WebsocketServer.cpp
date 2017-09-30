@@ -299,6 +299,8 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 			case WsFrame::Opcode::Text:
 			case WsFrame::Opcode::Binary:
 			{
+				_log.debug("TEXT-FRAME: \"%s\" %zu bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
+
 				context->setTransmitter(
 					std::make_shared<ServerTransport::Transmitter>(
 						[wp = std::weak_ptr<TcpConnection>(connection), opcode = context->getFrame()->opcode()]
@@ -316,9 +318,9 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 								memcpy(const_cast<char*>(msg.data()), &code, sizeof(code));
 
 								WsFrame::send(connection, WsFrame::Opcode::Close, msg.c_str(), msg.length());
+								connection->setTtl(std::chrono::milliseconds(50));
 								connection->close();
 								connection->resetContext();
-								connection->setTtl(std::chrono::milliseconds(50));
 							}
 							ConnectionManager::watch(connection);
 						}
@@ -334,22 +336,6 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				n++;
 				continue;
 			}
-//			case WsFrame::Opcode::Text:
-//			{
-//				_log.debug("TEXT-FRAME: \"%s\" %zu bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
-//				WsFrame::send(connection, WsFrame::Opcode::Text, context->getFrame()->dataPtr(), context->getFrame()->dataLen());
-//				context->setFrame(nullptr);
-//				n++;
-//				continue;
-//			}
-//			case WsFrame::Opcode::Binary:
-//			{
-//				_log.debug("BINARY-FRAME: %zu bytes", context->getFrame()->dataLen());
-//				WsFrame::send(connection, WsFrame::Opcode::Text, "Received binary data", 21);
-//				context->setFrame(nullptr);
-//				n++;
-//				continue;
-//			}
 			case WsFrame::Opcode::Ping:
 			{
 				_log.debug("PING-FRAME: %zu bytes", context->getFrame()->dataLen());

@@ -70,8 +70,7 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 			{
 				_log.debug("Headers part of request too large (%zu bytes)", endHeaders - connection->dataPtr());
 
-				connection->close(); // TODO обработать ошибку
-
+				connection->setTtl(std::chrono::milliseconds(50));
 				break;
 			}
 
@@ -88,8 +87,7 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 			}
 			catch (std::runtime_error& exception)
 			{
-				connection->close(); // TODO обработать ошибку
-
+				connection->setTtl(std::chrono::milliseconds(50));
 				break;
 			}
 

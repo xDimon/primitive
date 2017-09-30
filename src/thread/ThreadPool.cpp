@@ -23,7 +23,6 @@
 #include "../utils/Time.hpp"
 #include "RollbackStackAndRestoreContext.hpp"
 #include "../utils/ShutdownManager.hpp"
-#include <chrono>
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
