@@ -23,7 +23,7 @@
 #include "ConnectionManager.hpp"
 
 #include "../thread/ThreadPool.hpp"
-#include "../utils/ShutdownManager.hpp"
+#include "../utils/Daemon.hpp"
 #include "../thread/RollbackStackAndRestoreContext.hpp"
 
 ConnectionManager::ConnectionManager()
@@ -183,7 +183,7 @@ void ConnectionManager::wait()
 			_log.trace("Catch event(s) on %d connection(s) in ConnectionManager::wait()", n);
 			break;
 		}
-		if (ShutdownManager::shutingdown())
+		if (Daemon::shutingdown())
 		{
 			// Закрываем оставшееся
 			_epool_mutex.unlock();
@@ -313,7 +313,7 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 	while (_readyConnections.empty())
 	{
 		// то выходим при остановке сервера
-		if (ShutdownManager::shutingdown() && _allConnections.empty())
+		if (Daemon::shutingdown() && _allConnections.empty())
 		{
 			return nullptr;
 		}

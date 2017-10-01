@@ -27,7 +27,7 @@
 #include <cstring>
 
 #include "ConnectionManager.hpp"
-#include "../utils/ShutdownManager.hpp"
+#include "../utils/Daemon.hpp"
 
 TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& hostname, std::uint16_t port)
 : Connector(transport)
@@ -170,7 +170,7 @@ bool TcpConnector::processing()
 
 	std::lock_guard<std::mutex> guard(_mutex);
 
-	if (ShutdownManager::shutingdown())
+	if (Daemon::shutingdown())
 	{
 		_log.debug("Interrupt processing on %s (shutdown)", name().c_str());
 		ConnectionManager::remove(this->ptr());

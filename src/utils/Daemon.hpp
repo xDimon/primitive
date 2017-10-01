@@ -22,13 +22,49 @@
 #pragma once
 
 
-#include <string>
-#include <functional>
+#include <mutex>
+#include <deque>
+#include <csignal>
 
-const std::string& ExePath();
+class Daemon final
+{
+public:
+	Daemon(const Daemon&) = delete;
+	void operator=(Daemon const&) = delete;
+	Daemon(Daemon&&) = delete;
+	Daemon& operator=(Daemon&&) = delete;
 
-void SetProcessName();
+private:
+	Daemon();
+	~Daemon();
 
-void StartManageSignals();
+	static Daemon &getInstance()
+	{
+		static Daemon instance;
+		return instance;
+	}
 
-void SetDaemonMode();
+	std::mutex _mutex;
+
+	bool _shutingdown;
+
+	std::deque<std::function<void ()>> _handlers;
+
+public:
+	static const std::string& ExePath();
+
+	static void SetProcessName();
+
+	static void SignalsHandler(int sig, siginfo_t* info, void* context);
+
+	static void StartManageSignals();
+
+	static void SetDaemonMode();
+
+	static void doAtShutdown(std::function<void ()> handler);
+	static void shutdown();
+	static bool shutingdown()
+	{
+		return getInstance()._shutingdown;
+	}
+};

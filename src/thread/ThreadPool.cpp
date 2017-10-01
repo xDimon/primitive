@@ -22,7 +22,7 @@
 #include "ThreadPool.hpp"
 #include "../utils/Time.hpp"
 #include "RollbackStackAndRestoreContext.hpp"
-#include "../utils/ShutdownManager.hpp"
+#include "../utils/Daemon.hpp"
 
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
@@ -99,7 +99,7 @@ void ThreadPool::createThread()
 
 		auto continueCondition = [this,&waitUntil](){
 			std::unique_lock<std::mutex> lock(_counterMutex);
-			if (ShutdownManager::shutingdown())
+			if (Daemon::shutingdown())
 			{
 				return true;
 			}
@@ -242,7 +242,7 @@ void ThreadPool::wait()
 			{
 				break;
 			}
-			if (ShutdownManager::shutingdown())
+			if (Daemon::shutingdown())
 			{
 				pool._workersWakeupCondition.notify_all();
 			}

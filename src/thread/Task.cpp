@@ -23,7 +23,7 @@
 #include "Task.hpp"
 #include "../log/Log.hpp"
 #include "ThreadPool.hpp"
-#include "../utils/ShutdownManager.hpp"
+#include "../utils/Daemon.hpp"
 
 Task::Task(const std::shared_ptr<Func>& function)
 : _function(function)
@@ -68,7 +68,7 @@ Task& Task::operator=(Task &&that) noexcept
 
 bool Task::operator()()
 {
-	if (_until != Time::min() && Clock::now() < _until && !ShutdownManager::shutingdown())
+	if (_until != Time::min() && Clock::now() < _until && !Daemon::shutingdown())
 	{
 		return false;
 	}

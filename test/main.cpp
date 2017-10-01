@@ -25,13 +25,12 @@
 #include "../src/configs/Config.hpp"
 #include "../src/server/Server.hpp"
 #include "../src/utils/Daemon.hpp"
-#include "../src/utils/ShutdownManager.hpp"
 #include "../src/log/LoggerManager.hpp"
 
 int main(int argc, char *argv[])
 {
-	SetProcessName();
-	StartManageSignals();
+	Daemon::SetProcessName();
+	Daemon::StartManageSignals();
 
 	std::shared_ptr<Options> options;
 	try
@@ -79,11 +78,11 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-//	SetDaemonMode();
+//	Daemon::SetDaemonMode();
 
 	server->start();
 
-	ShutdownManager::doAtShutdown([server](){
+	Daemon::doAtShutdown([server](){
 		server->stop();
 	});
 

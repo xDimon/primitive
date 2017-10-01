@@ -20,7 +20,7 @@
 
 
 #include "Timeout.hpp"
-#include "ShutdownManager.hpp"
+#include "Daemon.hpp"
 
 Timeout::Timeout(std::function<void()> handler)
 : realExpireTime(std::chrono::steady_clock::now())
@@ -77,7 +77,7 @@ void Timeout::restart(std::chrono::milliseconds duration)
 
 bool Timeout::operator()()
 {
-	if (realExpireTime > std::chrono::steady_clock::now() && !ShutdownManager::shutingdown())
+	if (realExpireTime > std::chrono::steady_clock::now() && !Daemon::shutingdown())
 	{
 		return false;
 	}

@@ -20,26 +20,36 @@
 
 
 #include "Daemon.hpp"
-#include "../log/Log.hpp"
 #include "../thread/ThreadPool.hpp"
-#include "ShutdownManager.hpp"
 
 #include <cxxabi.h>
 #include <climits>
-#include <csignal>
 #include <set>
 #include <execinfo.h>
 #include <sys/prctl.h>
 #include <dlfcn.h>
 #include <elf.h>
 #include <unistd.h>
-#include <sys/resource.h>
 #include <sys/mman.h>
 #include <cstring>
+#include <sys/resource.h>
 
-static void SignalsHandler(int sig, siginfo_t* info, void* context);
+Daemon::Daemon()
+: _shutingdown(false)
+{
+	// Включаем генерацию core-файла
+	rlimit corelimit = { RLIM_INFINITY, RLIM_INFINITY };
+	setrlimit(RLIMIT_CORE, &corelimit);
 
-const std::string& ExePath()
+	atexit(Daemon::shutdown);
+};
+
+Daemon::~Daemon()
+{
+	shutdown();
+};
+
+const std::string& Daemon::ExePath()
 {
 	static std::string result;
 	if (result.empty())
@@ -56,11 +66,11 @@ const std::string& ExePath()
 	return result;
 }
 
-void SetProcessName()
+void Daemon::SetProcessName()
 {
 	// Назначаем имя процесса
 #ifdef PROJECT_NAME
- #define HELPER4QUOTE(N) #N
+	#define HELPER4QUOTE(N) #N
 	prctl(PR_SET_NAME, HELPER4QUOTE(PROJECT_NAME));
  #undef HELPER4QUOTE
 #else
@@ -68,7 +78,7 @@ void SetProcessName()
 #endif
 }
 
-void SetDaemonMode()
+void Daemon::SetDaemonMode()
 {
 	if (daemon(0, 0) == -1)
 	{
@@ -76,7 +86,7 @@ void SetDaemonMode()
 	}
 }
 
-void StartManageSignals()
+void Daemon::StartManageSignals()
 {
 	stack_t ss{};
 	ss.ss_size = SIGSTKSZ;//PTHREAD_STACK_MIN;
@@ -98,7 +108,7 @@ void StartManageSignals()
 	memset(&act, 0, sizeof(act));
 
 	act.sa_flags = SA_SIGINFO; // обработчик требует 3 аргумента
-	act.sa_sigaction = SignalsHandler; // обработчик
+	act.sa_sigaction = Daemon::SignalsHandler; // обработчик
 
 	for (int n = 1; n < _NSIG; n++)
 	{
@@ -117,7 +127,7 @@ void StartManageSignals()
 	}
 }
 
-void SignalsHandler(int sig, siginfo_t* info, void* context)
+void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 {
 	static volatile bool fatalError = false;
 	bool needBacktrace;
@@ -132,26 +142,26 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGHUP:
 				log.info("Daemon begin to reload...");
 				log.flush();
-				ShutdownManager::shutdown();
+				Daemon::shutdown();
 				// TODO Реализовать перезагрузку
 				return;
 
 			case SIGQUIT:
 				log.info("Daemon will be stopped now (quit)");
 				log.flush();
-				ShutdownManager::shutdown();
+				Daemon::shutdown();
 				return;
 
 			case SIGTERM:
 				log.info("Daemon will be stopped now (terminate)");
 				log.flush();
-				ShutdownManager::shutdown();
+				Daemon::shutdown();
 				return;
 
 			case SIGINT:
 				log.info("Daemon will be stopped now (interrupt)");
 				log.flush();
-				ShutdownManager::shutdown();
+				Daemon::shutdown();
 				return;
 
 			case SIGSEGV:
@@ -280,5 +290,27 @@ void SignalsHandler(int sig, siginfo_t* info, void* context)
 	if (needReraise)
 	{
 		raise(sig);
+	}
+}
+
+void Daemon::doAtShutdown(std::function<void()> handler)
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+	getInstance()._handlers.emplace_front(std::move(handler));
+}
+
+void Daemon::shutdown()
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+	if (!getInstance()._shutingdown)
+	{
+		getInstance()._shutingdown = true;
+
+		for (const auto& handler : getInstance()._handlers)
+		{
+			handler();
+		}
 	}
 }

@@ -23,7 +23,7 @@
 #include "TelemetryManager.hpp"
 #include "../thread/Task.hpp"
 #include "../thread/ThreadPool.hpp"
-#include "../utils/ShutdownManager.hpp"
+#include "../utils/Daemon.hpp"
 
 #include <sys/resource.h>
 #include <iomanip>
@@ -130,7 +130,7 @@ void SysInfo::collect()
 	instance._prevUTime = ru.ru_utime;
 	instance._prevSTime = ru.ru_stime;
 
-	if (!ShutdownManager::shutingdown())
+	if (!Daemon::shutingdown())
 	{
 		ThreadPool::enqueue(std::make_shared<Task::Func>(SysInfo::collect), std::chrono::seconds(1));
 	}

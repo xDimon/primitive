@@ -29,7 +29,7 @@
 #include <sstream>
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"
-#include "../utils/ShutdownManager.hpp"
+#include "../utils/Daemon.hpp"
 
 TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port)
 : Acceptor(transport)
@@ -122,7 +122,7 @@ bool TcpAcceptor::processing()
 	std::lock_guard<std::mutex> guard(_mutex);
 	for (;;)
 	{
-		if (ShutdownManager::shutingdown())
+		if (Daemon::shutingdown())
 		{
 			_log.debug("Interrupt processing on %s (shutdown)", name().c_str());
 			ConnectionManager::remove(ptr());

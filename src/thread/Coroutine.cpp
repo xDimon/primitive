@@ -22,11 +22,11 @@
 #include <ucontext.h>
 #include "Coroutine.hpp"
 #include "ThreadPool.hpp"
-#include "../utils/ShutdownManager.hpp"
+#include "../utils/Daemon.hpp"
 
 void Coroutine(const std::shared_ptr<Task>& task)
 {
-	if (ShutdownManager::shutingdown())
+	if (Daemon::shutingdown())
 	{
 		return;
 	}
