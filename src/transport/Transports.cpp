@@ -83,14 +83,14 @@ void Transports::del(const std::string& name)
 	getInstance()._registry.erase(i);
 }
 
-void Transports::enable(const std::string& name)
+bool Transports::enable(const std::string& name)
 {
 	auto transport = get(name);
 	if (!transport)
 	{
-		return;
+		return false;
 	}
-	transport->enable();
+	return transport->enable();
 }
 
 void Transports::disable(const std::string& name)
@@ -103,12 +103,14 @@ void Transports::disable(const std::string& name)
 	transport->disable();
 }
 
-void Transports::enableAll()
+bool Transports::enableAll()
 {
+	bool result = true;
 	for (auto i : getInstance()._registry)
 	{
-		i.second->enable();
+		result = i.second->enable() && result;
 	}
+	return result;
 }
 
 void Transports::disableAll()

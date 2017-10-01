@@ -54,9 +54,9 @@ public:
 	static std::shared_ptr<ServerTransport> get(const std::string& name);
 	static void del(const std::string& name);
 
-	static void enable(const std::string& name);
+	static bool enable(const std::string& name);
 	static void disable(const std::string& name);
 
-	static void enableAll();
+	static bool enableAll();
 	static void disableAll();
 };

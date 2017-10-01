@@ -168,14 +168,18 @@ void Server::wait()
 	ThreadPool::wait();
 }
 
-void Server::start()
+bool Server::start()
 {
-	_log.info("Server start (pid=%u)", getpid());
-
+	if (!Transports::enableAll())
+	{
+		_log.info("Can't enable all services");
+		return false;
+	}
 
 	ThreadPool::setThreadNum(_workerCount);
 
-	Transports::enableAll();
+	_log.info("Server start (pid=%u)", getpid());
+	return true;
 }
 
 void Server::stop()
@@ -184,7 +188,6 @@ void Server::stop()
 	Services::deactivateAll();
 
 	Transports::disableAll();
-
 
 	_log.info("Server stop");
 }

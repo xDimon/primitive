@@ -63,7 +63,7 @@ public:
 		#endif
 	}
 
-	void start();
+	bool start();
 	void stop();
 
 	void wait();
