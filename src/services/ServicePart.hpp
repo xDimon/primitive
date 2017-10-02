@@ -47,6 +47,12 @@ public:
 
 	virtual void init(const Setting& setting) {};
 
+	template <class Service>
+	std::shared_ptr<Service> service()
+	{
+		return std::dynamic_pointer_cast<Service>(_service.lock());
+	}
+
 	class Comparator
 	{
 	public:

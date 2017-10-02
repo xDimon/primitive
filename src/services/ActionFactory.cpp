@@ -24,7 +24,7 @@
 Dummy ActionFactory::reg(
 	const std::string& name,
 	std::shared_ptr<Action>(* creator)(
-		const std::shared_ptr<Service>&,
+		const std::shared_ptr<ServicePart>&,
 		const std::shared_ptr<Context>&,
 		const SVal*
 	)
@@ -43,7 +43,7 @@ Dummy ActionFactory::reg(
 
 std::shared_ptr<Action> ActionFactory::create(
 	const std::string& name,
-	const std::shared_ptr<Service>& service,
+	const std::shared_ptr<ServicePart>& servicePart,
 	const std::shared_ptr<Context>& context,
 	const SVal* input
 )
@@ -55,5 +55,5 @@ std::shared_ptr<Action> ActionFactory::create(
 	{
 		return nullptr;
 	}
-	return i->second(service, context, input);
+	return i->second(servicePart, context, input);
 }

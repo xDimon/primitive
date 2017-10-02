@@ -25,11 +25,11 @@
 uint64_t Action::_requestCount = 0;
 
 Action::Action(
-	const std::shared_ptr<Service>& service,
+	const std::shared_ptr<ServicePart>& servicePart,
 	const std::shared_ptr<Context>& context,
 	const SVal* input_
 )
-: _service(service)
+: _servicePart(servicePart)
 , _context(context)
 , _data(nullptr)
 , _requestId(0)
@@ -37,6 +37,17 @@ Action::Action(
 , _lastConfirmedResponse(0)
 , _answerSent(false)
 {
+	if (!_servicePart)
+	{
+		throw std::runtime_error("Internal error ← Bad service part");
+	}
+
+	_service = servicePart->service<::Service>();
+	if (!_service)
+	{
+		throw std::runtime_error("Internal error ← Bad service");
+	}
+
 	auto input = dynamic_cast<const SObj *>(input_);
 
 	if (input == nullptr)
