@@ -25,7 +25,7 @@
 static uint32_t id4noname = 0;
 
 Service::Service(const Setting& setting)
-: _log("Service:<unknown>")
+: _log("service[" + std::to_string(++id4noname) + "_unknown]")
 , _setting(setting)
 {
 	if (setting.exists("name"))
@@ -39,15 +39,15 @@ Service::Service(const Setting& setting)
 			std::string type;
 			setting.lookupValue("type", type);
 
-			_name = "service[" + std::to_string(++id4noname) + "_" + type + "]";
+			_name = "service[" + std::to_string(id4noname) + "_" + type + "]";
 		}
 		else
 		{
-			_name = "service[" + std::to_string(++id4noname) + "_unknown]";
+			_name = "service[" + std::to_string(id4noname) + "_unknown]";
 		}
 	}
 
-	_log.setName("Service:" + _name);
+	_log.setName(_name);
 	_log.debug("Service '%s' created", _name.c_str());
 }
 

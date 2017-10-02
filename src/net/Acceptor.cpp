@@ -19,13 +19,12 @@
 // Acceptor.cpp
 
 
-#include <sstream>
 #include "Acceptor.hpp"
+
+static uint64_t id4noname = 0;
 
 Acceptor::Acceptor(const std::shared_ptr<ServerTransport>& transport)
 : Connection(transport)
 {
-	std::ostringstream ss;
-	ss << "[__acceptor#" << this << "][" << _sock << "]";
-	_name = std::move(ss.str());
+	_name = "Acceptor[" + std::to_string(++id4noname) + "]";
 }

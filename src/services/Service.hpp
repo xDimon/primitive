@@ -49,6 +49,11 @@ public:
 
 	virtual ~Service();
 
+	Log& log()
+	{
+		return _log;
+	}
+
 	virtual const std::string& type() const = 0;
 
 	virtual void activate() = 0;

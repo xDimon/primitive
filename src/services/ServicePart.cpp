@@ -27,11 +27,11 @@ static uint32_t id4noname = 0;
 
 ServicePart::ServicePart(const std::shared_ptr<Service>& service)
 : _service(service)
-, _log("")
+, _log(service->name() + ":part[" + std::to_string(++id4noname) + "_unknown]")
 {
 	if (_service.expired())
 	{
 		throw std::runtime_error("Bad service");
 	}
-	_name = service->name() + ":part[" + std::to_string(++id4noname) + "_unknown]";
+	_name = service->name() + ":part[" + std::to_string(id4noname) + "_unknown]";
 }

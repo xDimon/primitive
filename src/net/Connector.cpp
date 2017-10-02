@@ -21,8 +21,6 @@
 
 #include "Connector.hpp"
 
-#include <sstream>
-
 static uint64_t id4noname = 0;
 
 Connector::Connector(const std::shared_ptr<ClientTransport>& transport)

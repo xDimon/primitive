@@ -23,7 +23,6 @@
 
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <sstream>
 #include <cstring>
 
 #include "ConnectionManager.hpp"

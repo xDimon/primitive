@@ -24,7 +24,6 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <sys/ioctl.h>
-#include <sstream>
 #include "../transport/ServerTransport.hpp"
 #include "../thread/ThreadPool.hpp"
 

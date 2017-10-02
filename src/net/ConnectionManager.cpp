@@ -122,11 +122,9 @@ void ConnectionManager::watch(const std::shared_ptr<Connection>& connection)
 	// Те, что в обработке, не трогаем
 	if (connection->isCaptured())
 	{
-//		_log.trace("Skip watch for %s in ConnectionManager::watch() because already captured", connection->name().c_str());
+//		_log.trace("Skip watch for %s because already captured", connection->name().c_str());
 		return;
 	}
-
-//	_log.trace("Watch for %s in ConnectionManager::watch()", connection->name().c_str());
 
 	epoll_event ev{};
 
@@ -149,15 +147,12 @@ void ConnectionManager::wait()
 	// Если набор готовых соединений не пустой, то выходим
 	if (!_readyConnections.empty())
 	{
-//		_log.trace("No wait in ConnectionManager::wait() because have ready connection");
 		return;
 	}
 
 	_mutex.unlock();
 
 	_epool_mutex.lock();
-
-//	_log.trace("Begin waiting in ConnectionManager::wait()");
 
 	int n = 0;
 
@@ -173,14 +168,14 @@ void ConnectionManager::wait()
 		{
 			if (errno != EINTR)
 			{
-				_log.warn("epoll_wait error (%s) in ConnectionManager::wait()", strerror(errno));
+				_log.warn("Error waiting events of connections: fail epoll_wait (%s)", strerror(errno));
 				break;
 			}
 			continue;
 		}
 		if (n > 0)
 		{
-			_log.trace("Catch event(s) on %d connection(s) in ConnectionManager::wait()", n);
+			_log.trace("Catch events on %d connection(s)", n);
 			break;
 		}
 		if (Daemon::shutingdown())
@@ -224,53 +219,45 @@ void ConnectionManager::wait()
 			_log.trace("Skip catching of unregistered Connection %p", _epev[i].data.ptr);
 			continue;
 		}
-
 		auto connection = it->second;
 
-		_log.trace("Catch events set `%04x` on %s", _epev[i].events, connection->name().c_str());
-
 		uint32_t fdEvent = _epev[i].events;
-
 		uint32_t events = 0;
+
 		if (fdEvent & (EPOLLIN | EPOLLRDNORM))
 		{
-			_log.trace("Catch event EPOLLIN on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::READ);
 		}
 		if (fdEvent & (EPOLLOUT | EPOLLWRNORM))
 		{
-			_log.trace("Catch event EPOLLOUT on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::WRITE);
 		}
 		if (fdEvent & EPOLLHUP)
 		{
-			_log.trace("Catch event EPOLLEHUP on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::HUP);
 		}
 		if (fdEvent & EPOLLRDHUP)
 		{
-			_log.trace("Catch event EPOLLERDHUP on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::HALFHUP);
 		}
 		if (fdEvent & EPOLLERR)
 		{
-			_log.trace("Catch event EPOLLERR on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::ERROR);
 		}
+
+		_log.trace("Catch events `%s` (%04x) on %s", fdEvent, ConnectionEvent::code(events), connection->name().c_str());
 
 		connection->appendEvents(events);
 
 		// Если не в списке захваченых...
 		if (_capturedConnections.find(connection) == _capturedConnections.end())
 		{
-			_log.trace("Insert %s into ready connection list and will be processed now", connection->name().c_str());
+			_log.trace("Insert %s into ready connection list and will be processed now (by events)", connection->name().c_str());
 
 			// ...добавляем в список готовых
 			_readyConnections.insert(connection);
 		}
 	}
-
-//	_log.trace("End waiting");
 
 	_epool_mutex.unlock();
 }
@@ -292,10 +279,12 @@ void ConnectionManager::timeout(const std::shared_ptr<Connection>& connection)
 
 	connection->appendEvents(static_cast<uint32_t>(ConnectionEvent::TIMEOUT));
 
+	instance._log.trace("Catch event `T` on %s", connection->name().c_str());
+
 	// Если не в списке захваченых...
 	if (instance._capturedConnections.find(connection) == instance._capturedConnections.end())
 	{
-		instance._log.trace("Insert %s into ready connection list and will be processed now in ConnectionManager::timeout()", connection->name().c_str());
+		instance._log.trace("Insert %s into ready connection list and will be processed now (by timeout)", connection->name().c_str());
 
 		// ...добавляем в список готовых
 		instance._readyConnections.insert(connection);
@@ -307,8 +296,6 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
-//	_log.trace("Try capture connection in ConnectionManager::capture()");
-
 	// Если нет готовых...
 	while (_readyConnections.empty())
 	{
@@ -318,13 +305,13 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 			return nullptr;
 		}
 
-		_log.trace("Not found ready connection in ConnectionManager::capture()");
+		_log.trace("Not found ready connection");
 
 		// а в штатном режиме ожидаем появления готового соединения
 		wait();
 	}
 
-	_log.trace("Found ready connection in ConnectionManager::capture()");
+	_log.trace("Found ready connection");
 
 	if (_readyConnections.empty())
 	{
@@ -335,8 +322,6 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 	auto it = _readyConnections.begin();
 
 	auto connection = *it;
-
-//	_log.trace("Move %s from ready into captured connection list in ConnectionManager::captured()", connection->name().c_str());
 
 	// Перемещаем соединение из набора готовых к обработке в набор захваченных
 	_readyConnections.erase(it);
@@ -352,8 +337,6 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 /// Освободить соединение
 void ConnectionManager::release(const std::shared_ptr<Connection>& connection)
 {
-//	_log.trace("Enter into ConnectionManager::release() for %s", connection->name().c_str());
-
 	std::lock_guard<std::recursive_mutex> guard(_mutex);
 
 	_log.trace("Release %s", connection->name().c_str());
@@ -371,8 +354,6 @@ void ConnectionManager::release(const std::shared_ptr<Connection>& connection)
 /// Обработка событий
 void ConnectionManager::dispatch()
 {
-//	getInstance()._log.debug("Start dispatching in ConnectionManager::dispatch()");
-//
 	for (;;)
 	{
 		std::shared_ptr<Connection> connection = getInstance().capture();

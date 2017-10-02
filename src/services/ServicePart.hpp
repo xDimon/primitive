@@ -47,6 +47,11 @@ public:
 
 	virtual void init(const Setting& setting) {};
 
+	Log& log()
+	{
+		return _log;
+	}
+
 	template <class Service>
 	std::shared_ptr<Service> service()
 	{

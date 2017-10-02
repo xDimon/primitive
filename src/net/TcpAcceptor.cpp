@@ -22,11 +22,9 @@
 #include "TcpAcceptor.hpp"
 
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <cstring>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <sstream>
 #include "ConnectionManager.hpp"
 #include "TcpConnection.hpp"
 #include "../utils/Daemon.hpp"
@@ -43,9 +41,7 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 		throw std::runtime_error("Can't create socket");
 	}
 
-	std::ostringstream ss;
-	ss << "[" << _sock << "][" << host << ":" << port << "]";
-	_name = std::move(ss.str());
+	_name = "TcpAcceptor[" + std::to_string(_sock) + "][" + host + ":" + std::to_string(port) + "]";
 
 	const int val = 1;
 
@@ -96,12 +92,12 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 	int rrc = fcntl(_sock, F_GETFL, 0);
 	fcntl(_sock, F_SETFL, rrc | O_NONBLOCK);
 
-	_log.debug("TcpAcceptor '%s' created", name().c_str());
+	_log.debug("%s created", name().c_str());
 }
 
 TcpAcceptor::~TcpAcceptor()
 {
-	_log.debug("TcpAcceptor '%s' destroyed", name().c_str());
+	_log.debug("%s destroyed", name().c_str());
 }
 
 void TcpAcceptor::watch(epoll_event &ev)

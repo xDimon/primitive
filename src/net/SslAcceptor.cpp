@@ -27,6 +27,7 @@ SslAcceptor::SslAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 : TcpAcceptor(transport, host, port)
 , _sslContext(context)
 {
+	_name = "SslAcceptor" + _name.substr(11);
 }
 
 void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
