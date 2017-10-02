@@ -43,17 +43,15 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 	char ip[64];
 	inet_ntop(AF_INET, &_sockaddr.sin_addr, ip, sizeof(ip));
 
-	std::ostringstream ss;
-	ss << "[" << _sock << "][" << ip << ":" << htons(_sockaddr.sin_port) << "]";
-	_name = std::move(ss.str());
+	_name = "TcpConnection[" + std::to_string(_sock) + "][" + ip + ":" + std::to_string(htons(_sockaddr.sin_port)) + "]";
 
-	_log.debug("TcpConnection '%s' created", name().c_str());
+	_log.debug("%s created", name().c_str());
 }
 
 TcpConnection::~TcpConnection()
 {
 	shutdown(_sock, SHUT_RD);
-	_log.debug("TcpConnection '%s' destroyed", name().c_str());
+	_log.debug("%s destroyed", name().c_str());
 }
 
 void TcpConnection::watch(epoll_event &ev)
@@ -89,7 +87,7 @@ void TcpConnection::watch(epoll_event &ev)
 
 bool TcpConnection::processing()
 {
-	_log.debug("Processing on %s", name().c_str());
+	_log.debug("Begin processing on %s", name().c_str());
 
 	do
 	{
@@ -149,6 +147,7 @@ bool TcpConnection::processing()
 	{
 		ConnectionManager::remove(ptr());
 
+		_log.debug("End processing on %s: Closed", name().c_str());
 		return true;
 	}
 
@@ -159,6 +158,7 @@ bool TcpConnection::processing()
 		_closed = true;
 	}
 
+	_log.debug("End processing on %s: Ready", name().c_str());
 	return true;
 }
 

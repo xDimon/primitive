@@ -22,6 +22,8 @@
 #include <sstream>
 #include "Service.hpp"
 
+static uint32_t id4noname = 0;
+
 Service::Service(const Setting& setting)
 : _log("Service:<unknown>")
 , _setting(setting)
@@ -30,20 +32,19 @@ Service::Service(const Setting& setting)
 	{
 		setting.lookupValue("name", _name);
 	}
-	if (_name.empty() && setting.exists("type"))
-	{
-		std::string type;
-		setting.lookupValue("type", type);
-
-		std::ostringstream ss;
-		ss << "_service[" << type << "]";
-		_name = std::move(ss.str());
-	}
 	if (_name.empty())
 	{
-		std::ostringstream ss;
-		ss << "_service[" << std::hex << this << "]";
-		_name = std::move(ss.str());
+		if (setting.exists("type"))
+		{
+			std::string type;
+			setting.lookupValue("type", type);
+
+			_name = "service[" + std::to_string(++id4noname) + "_" + type + "]";
+		}
+		else
+		{
+			_name = "service[" + std::to_string(++id4noname) + "_unknown]";
+		}
 	}
 
 	_log.setName("Service:" + _name);

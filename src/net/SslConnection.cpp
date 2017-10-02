@@ -34,6 +34,8 @@ SslConnection::SslConnection(const std::shared_ptr<Transport>& transport, int so
 , _sslWantRead(!outgoing)
 , _sslWantWrite(outgoing)
 {
+	_name = "SslConnection" + _name.substr(13);
+
 	_sslConnect = SSL_new(_sslContext.get());
 	SSL_set_fd(_sslConnect, _sock);
 }
@@ -105,7 +107,7 @@ void SslConnection::watch(epoll_event &ev)
 
 bool SslConnection::processing()
 {
-	_log.debug("Processing on %s", name().c_str());
+	_log.debug("Begin processing on %s", name().c_str());
 
 	do
 	{
@@ -189,6 +191,7 @@ bool SslConnection::processing()
 	{
 		ConnectionManager::remove(ptr());
 
+		_log.debug("End processing on %s: Close", name().c_str());
 		return true;
 	}
 
@@ -199,6 +202,7 @@ bool SslConnection::processing()
 		_closed = true;
 	}
 
+	_log.debug("End processing on %s: Ready", name().c_str());
 	return true;
 }
 

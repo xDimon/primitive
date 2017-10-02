@@ -23,6 +23,8 @@
 #include "ServicePart.hpp"
 #include "Service.hpp"
 
+static uint32_t id4noname = 0;
+
 ServicePart::ServicePart(const std::shared_ptr<Service>& service)
 : _service(service)
 , _log("")
@@ -31,7 +33,5 @@ ServicePart::ServicePart(const std::shared_ptr<Service>& service)
 	{
 		throw std::runtime_error("Bad service");
 	}
-	std::ostringstream ss;
-	ss << service->name() << ":[__part#" << this << "]";
-	_name = std::move(ss.str());
+	_name = service->name() + ":part[" + std::to_string(++id4noname) + "_unknown]";
 }

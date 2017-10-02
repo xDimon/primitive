@@ -46,9 +46,7 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 	}
 	_closed = false;
 
-	std::ostringstream ss;
-	ss << "[" << _sock << "][" << _host << ":" << port << "]";
-	_name = std::move(ss.str());
+	_name = "TcpConnector[" + std::to_string(_sock) + "][" + _host + ":" + std::to_string(port) + "]";
 
 	const int val = 1;
 	setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
@@ -144,13 +142,13 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 
 	end:
 
-	_log.debug("TcpConnector '%s' created", name().c_str());
+	_log.debug("%s created", name().c_str());
 }
 
 TcpConnector::~TcpConnector()
 {
 	free(_buff);
-	_log.debug("TcpConnector '%s' destroyed", name().c_str());
+	_log.debug("%s destroyed", name().c_str());
 }
 
 void TcpConnector::watch(epoll_event& ev)
@@ -166,13 +164,13 @@ void TcpConnector::watch(epoll_event& ev)
 
 bool TcpConnector::processing()
 {
-	_log.debug("Processing on %s", name().c_str());
+	_log.debug("Begin processing on %s", name().c_str());
 
 	std::lock_guard<std::mutex> guard(_mutex);
 
 	if (Daemon::shutingdown())
 	{
-		_log.debug("Interrupt processing on %s (shutdown)", name().c_str());
+		_log.debug("Interrupt processing on %s (shutingdown)", name().c_str());
 		ConnectionManager::remove(this->ptr());
 		return false;
 	}
@@ -252,16 +250,17 @@ bool TcpConnector::processing()
 		// Установление соединения в процессе
 		if (errno == EINPROGRESS)
 		{
+			_log.debug("End processing on %s: In progress", name().c_str());
 			return true;
 		}
 	}
 
-	_log.debug("End processing on %s (was failure)", name().c_str());
+	_log.debug("End processing on %s: Fail '%s'", name().c_str(), strerror(result));
 
 	ConnectionManager::remove(ptr());
 
-	onError();
 	shutdown(_sock, SHUT_RDWR);
+	onError();
 	return false;
 }
 

@@ -22,10 +22,10 @@
 #include <sstream>
 #include "Transport.hpp"
 
+static uint32_t id4noname = 0;
+
 Transport::Transport()
 : _log("Transport")
 {
-	std::ostringstream ss;
-	ss << "_transport#" << this;
-	_name = std::move(ss.str());
+	_name = "transport[" + std::to_string(++id4noname) + "_unknown]";
 }

@@ -33,6 +33,7 @@ SslConnector::SslConnector(
 : TcpConnector(transport, host, port)
 , _sslContext(context)
 {
+	_name = "SslConnector" + _name.substr(12);
 }
 
 std::shared_ptr<TcpConnection> SslConnector::createConnection(const std::shared_ptr<Transport>& transport)

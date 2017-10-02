@@ -56,13 +56,13 @@ void ConnectionManager::add(const std::shared_ptr<Connection>& connection)
 
 	if (getInstance()._allConnections.find(connection.get()) != getInstance()._allConnections.end())
 	{
-		getInstance()._log.warn("Connection %s already registered in manager", connection->name().c_str());
+		getInstance()._log.warn("%s already registered in manager", connection->name().c_str());
 		return;
 	}
 
 	getInstance()._allConnections.emplace(connection.get(), connection);
 
-	getInstance()._log.debug("Connection %s registered in manager", connection->name().c_str());
+	getInstance()._log.debug("%s registered in manager", connection->name().c_str());
 
 	epoll_event ev{};
 
@@ -75,7 +75,7 @@ void ConnectionManager::add(const std::shared_ptr<Connection>& connection)
 	}
 	else
 	{
-		getInstance()._log.trace("Add %s for watching: %p", connection->name().c_str(), ev.data.ptr);
+		getInstance()._log.trace("Add %s for watching", connection->name().c_str());
 	}
 }
 
@@ -94,7 +94,7 @@ bool ConnectionManager::remove(const std::shared_ptr<Connection>& connection)
 	}
 	else
 	{
-		getInstance()._log.trace("Remove %s from watching: %p", connection->name().c_str());
+		getInstance()._log.trace("Remove %s from watching", connection->name().c_str());
 	}
 
 	std::lock_guard<std::recursive_mutex> guard(getInstance()._mutex);
@@ -102,7 +102,7 @@ bool ConnectionManager::remove(const std::shared_ptr<Connection>& connection)
 	getInstance()._readyConnections.erase(connection);
 	getInstance()._capturedConnections.erase(connection);
 
-	getInstance()._log.debug("Connection %s unregistered from manager", connection->name().c_str());
+	getInstance()._log.debug("%s unregistered from manager", connection->name().c_str());
 
 	return true;
 }
@@ -139,7 +139,7 @@ void ConnectionManager::watch(const std::shared_ptr<Connection>& connection)
 	}
 	else
 	{
-		getInstance()._log.trace("Modify watching on %s: %p", connection->name().c_str(), ev.data.ptr);
+		getInstance()._log.trace("Modify watching on %s", connection->name().c_str());
 	}
 }
 
@@ -221,40 +221,40 @@ void ConnectionManager::wait()
 		auto it = _allConnections.find(static_cast<const Connection *>(_epev[i].data.ptr));
 		if (it == _allConnections.end())
 		{
-			_log.trace("Skip Connection#%p in ConnectionManager::wait() because unregistered", _epev[i].data.ptr);
+			_log.trace("Skip catching of unregistered Connection %p", _epev[i].data.ptr);
 			continue;
 		}
 
 		auto connection = it->second;
 
-		_log.trace("Catch event(s) `%d` on %s in ConnectionManager::wait(): %p", _epev[i].events, connection->name().c_str(), _epev[i].data.ptr);
+		_log.trace("Catch events set `%04x` on %s", _epev[i].events, connection->name().c_str());
 
 		uint32_t fdEvent = _epev[i].events;
 
 		uint32_t events = 0;
 		if (fdEvent & (EPOLLIN | EPOLLRDNORM))
 		{
-			_log.trace("Catch event EPOLLIN on %s in ConnectionManager::wait()", connection->name().c_str());
+			_log.trace("Catch event EPOLLIN on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::READ);
 		}
 		if (fdEvent & (EPOLLOUT | EPOLLWRNORM))
 		{
-			_log.trace("Catch event EPOLLOUT on %s in ConnectionManager::wait()", connection->name().c_str());
+			_log.trace("Catch event EPOLLOUT on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::WRITE);
 		}
 		if (fdEvent & EPOLLHUP)
 		{
-			_log.trace("Catch event EPOLLEHUP on %s in ConnectionManager::wait()", connection->name().c_str());
+			_log.trace("Catch event EPOLLEHUP on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::HUP);
 		}
 		if (fdEvent & EPOLLRDHUP)
 		{
-			_log.trace("Catch event EPOLLERDHUP on %s in ConnectionManager::wait()", connection->name().c_str());
+			_log.trace("Catch event EPOLLERDHUP on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::HALFHUP);
 		}
 		if (fdEvent & EPOLLERR)
 		{
-			_log.trace("Catch event EPOLLERR on %s in ConnectionManager::wait()", connection->name().c_str());
+			_log.trace("Catch event EPOLLERR on %s", connection->name().c_str());
 			events |= static_cast<uint32_t>(ConnectionEvent::ERROR);
 		}
 
@@ -263,14 +263,14 @@ void ConnectionManager::wait()
 		// Если не в списке захваченых...
 		if (_capturedConnections.find(connection) == _capturedConnections.end())
 		{
-			_log.trace("Insert %s into ready connection list and will be processed now in ConnectionManager::wait()", connection->name().c_str());
+			_log.trace("Insert %s into ready connection list and will be processed now", connection->name().c_str());
 
 			// ...добавляем в список готовых
 			_readyConnections.insert(connection);
 		}
 	}
 
-//	_log.trace("End waiting in ConnectionManager::wait()");
+//	_log.trace("End waiting");
 
 	_epool_mutex.unlock();
 }
@@ -286,7 +286,7 @@ void ConnectionManager::timeout(const std::shared_ptr<Connection>& connection)
 	auto it = instance._allConnections.find(connection.get());
 	if (it == instance._allConnections.end())
 	{
-		instance._log.trace("Skip Connection#%p in ConnectionManager::timeout() because unregistered", connection.get());
+		instance._log.trace("Skip timeout adding for noregistered Connection %p", connection.get());
 		return;
 	}
 
@@ -381,7 +381,7 @@ void ConnectionManager::dispatch()
 			break;
 		}
 
-		getInstance()._log.debug("Enqueue %s for procession", connection->name().c_str());
+		getInstance()._log.debug("Enqueue %s for '%s' events processing", connection->name().c_str(), ConnectionEvent::code(connection->events()).c_str());
 
 		auto task = std::make_shared<Task::Func>(
 			[wp = std::weak_ptr<Connection>(connection)](){

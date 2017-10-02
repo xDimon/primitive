@@ -163,7 +163,7 @@ bool TcpAcceptor::processing()
 			return false;
 		}
 
-		_log.debug("TcpAcceptor '%s' accept [%u]", name().c_str(), sock);
+		_log.debug("%s accept [%u]", name().c_str(), sock);
 
 		// Перевод сокета в неблокирующий режим
 		int val = fcntl(sock, F_GETFL, 0);
@@ -176,7 +176,7 @@ bool TcpAcceptor::processing()
 		catch (const std::exception& exception)
 		{
 			shutdown(sock, SHUT_RDWR);
-			_log.info("TcpAcceptor '%s' close [%u]", name().c_str(), sock);
+			_log.info("%s close [%u]", name().c_str(), sock);
 			::close(sock);
 		}
 	}

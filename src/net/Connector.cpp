@@ -23,10 +23,10 @@
 
 #include <sstream>
 
+static uint64_t id4noname = 0;
+
 Connector::Connector(const std::shared_ptr<ClientTransport>& transport)
 : Connection(transport)
 {
-	std::ostringstream ss;
-	ss << "[__connector#" << this << "][" << _sock << "]";
-	_name = std::move(ss.str());
+	_name = "Connector[" + std::to_string(++id4noname) + "]";
 }

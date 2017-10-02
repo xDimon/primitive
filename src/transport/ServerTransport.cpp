@@ -24,6 +24,8 @@
 #include "../net/ConnectionManager.hpp"
 #include "../thread/ThreadPool.hpp"
 
+static uint32_t id4noname = 0;
+
 ServerTransport::ServerTransport(const Setting& setting)
 {
 	std::string name;
@@ -34,9 +36,7 @@ ServerTransport::ServerTransport(const Setting& setting)
 
 	if (name.empty())
 	{
-		std::ostringstream ss;
-		ss << "_server#" << this;
-		name = std::move(ss.str());
+		name = "server[" + std::to_string(++id4noname) + "_unknown]";
 	}
 
 	_name = std::move(name);

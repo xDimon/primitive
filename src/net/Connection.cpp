@@ -25,6 +25,8 @@
 
 #include <sstream>
 
+static uint64_t id4noname = 0;
+
 Connection::Connection(std::shared_ptr<Transport> transport)
 : _log("Connection")
 , _transport(transport)
@@ -37,9 +39,7 @@ Connection::Connection(std::shared_ptr<Transport> transport)
 	_events = 0;
 	_postponedEvents = 0;
 
-	std::ostringstream ss;
-	ss << "[__connection#" << this << "][" << _sock << "]";
-	_name = std::move(ss.str());
+	_name = "Connection[" + std::to_string(++id4noname) + "]";
 
 	_ready = false;
 }

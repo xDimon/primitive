@@ -21,11 +21,26 @@
 
 #pragma once
 
-enum class ConnectionEvent {
-	READ	= 1<<0,
-	WRITE	= 1<<1,
-	HUP		= 1<<2,
-	HALFHUP	= 1<<3,
-	TIMEOUT	= 1<<6,
-	ERROR	= 1<<7
+struct ConnectionEvent
+{
+	enum {
+		READ	= 1<<0,
+		WRITE	= 1<<1,
+		HUP		= 1<<2,
+		HALFHUP	= 1<<3,
+		TIMEOUT	= 1<<6,
+		ERROR	= 1<<7
+	};
+
+	static std::string code(uint32_t events)
+	{
+		std::string result;
+		if (events&READ) result.push_back('R');
+		if (events&WRITE) result.push_back('W');
+		if (events&HUP) result.push_back('C');
+		if (events&HALFHUP) result.push_back('H');
+		if (events&TIMEOUT) result.push_back('T');
+		if (events&ERROR) result.push_back('E');
+		return std::move(result);
+	}
 };

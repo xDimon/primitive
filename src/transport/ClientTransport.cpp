@@ -22,9 +22,9 @@
 #include <sstream>
 #include "ClientTransport.hpp"
 
+static uint32_t id4noname = 0;
+
 ClientTransport::ClientTransport()
 {
-	std::ostringstream ss;
-	ss << "_client#" << this;
-	_name = std::move(ss.str());
+	_name = "client[" + std::to_string(++id4noname) + "_unknown]";
 }

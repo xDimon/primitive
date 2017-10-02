@@ -111,13 +111,10 @@ public:
 		return _captured;
 	}
 
-	uint32_t rotateEvents()
+	uint32_t events()
 	{
-		_events = _postponedEvents;
-		_postponedEvents = 0;
 		return _events;
 	}
-
 	void appendEvents(uint32_t events)
 	{
 		if (_captured)
@@ -129,6 +126,13 @@ public:
 			_events |= events;
 		}
 	}
+	uint32_t rotateEvents()
+	{
+		_events = _postponedEvents;
+		_postponedEvents = 0;
+		return _events;
+	}
+
 
 	inline bool isReadyForRead() const
 	{
