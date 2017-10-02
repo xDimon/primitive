@@ -51,7 +51,7 @@ std::shared_ptr<Service> ServiceFactory::create(const Setting& setting)
 	auto i = factory._creators.find(type);
 	if (i == factory._creators.end())
 	{
-		throw std::runtime_error(std::string() + "Unknown service type '"+ type +"'");
+		throw std::runtime_error("Unknown service type '"+ type +"'");
 	}
 	return i->second(setting);
 }

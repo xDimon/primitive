@@ -60,7 +60,7 @@ void status::Service::activate()
 			}
 			else
 			{
-				throw std::runtime_error(std::string() + "Unknown part with type '" + type + "'");
+				throw std::runtime_error("Unknown part with type '" + type + "'");
 			}
 			auto insertResult = _parts.insert(part);
 			if (!insertResult.second)

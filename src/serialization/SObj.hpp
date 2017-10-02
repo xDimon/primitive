@@ -177,11 +177,11 @@ public:
 		auto element = get(key);
 		if (!element)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+			throw std::runtime_error("Field '" + key + "' not found");
 		}
 		if (!dynamic_cast<const SInt *>(element) && strict)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' isn't integer");
+			throw std::runtime_error("Field '" + key + "' isn't integer");
 		}
 		value = (int)*element;
 	}
@@ -193,11 +193,11 @@ public:
 		auto element = get(key);
 		if (!element)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+			throw std::runtime_error("Field '" + key + "' not found");
 		}
 		if (!dynamic_cast<const SFloat *>(element) && strict)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' isn't numeric");
+			throw std::runtime_error("Field '" + key + "' isn't numeric");
 		}
 		value = (double)(*element);
 	}
@@ -209,7 +209,7 @@ public:
 		const auto element = get(key);
 		if (!element)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+			throw std::runtime_error("Field '" + key + "' not found");
 		}
 		value = (T)(element);
 	}
@@ -219,11 +219,11 @@ public:
 		auto element = get(key);
 		if (!element)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+			throw std::runtime_error("Field '" + key + "' not found");
 		}
 		if (!dynamic_cast<SBool *>(element) && strict)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' isn't boolean");
+			throw std::runtime_error("Field '" + key + "' isn't boolean");
 		}
 		value = (bool)(*element);
 	}
@@ -233,11 +233,11 @@ public:
 		auto element = get(key);
 		if (!element)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' not found");
+			throw std::runtime_error("Field '" + key + "' not found");
 		}
 		if (!dynamic_cast<SStr *>(element) && strict)
 		{
-			throw std::runtime_error(std::string() + "Field '" + key + "' isn't string");
+			throw std::runtime_error("Field '" + key + "' isn't string");
 		}
 		value = std::remove_reference<decltype(value)>::type(*element);
 	}

@@ -74,12 +74,12 @@ void status::ClientPart::init(const Setting& setting)
 		}
 		catch (const std::exception& exception)
 		{
-			throw std::runtime_error(std::string() + "Can't bind uri '" + uri + "' on transport '" + transportName + "': " + exception.what());
+			throw std::runtime_error("Can't bind uri '" + uri + "' on transport '" + transportName + "': " + exception.what());
 		}
 	}
 	catch (const std::exception& exception)
 	{
-		throw std::runtime_error(std::string() + "Fail init part '" + _name + "' ← " + exception.what());
+		throw std::runtime_error("Fail init part '" + _name + "' ← " + exception.what());
 	}
 }
 

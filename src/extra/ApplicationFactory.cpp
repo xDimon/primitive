@@ -49,7 +49,7 @@ std::shared_ptr<Application> ApplicationFactory::create(const Setting& setting)
 	auto i = factory._creators.find(type);
 	if (i == factory._creators.end())
 	{
-		throw std::runtime_error(std::string() + "Unknown type ('" + type + "')");
+		throw std::runtime_error("Unknown type ('" + type + "')");
 	}
 
 	return std::move(i->second(setting));
