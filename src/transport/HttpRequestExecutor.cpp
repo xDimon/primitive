@@ -16,20 +16,20 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.06.06
 
-// Request.cpp
+// HttpRequestExecutor.cpp
 
 
-#include "Request.hpp"
+#include "HttpRequestExecutor.hpp"
 #include "../thread/RollbackStackAndRestoreContext.hpp"
 
-Request::Request(
+HttpRequestExecutor::HttpRequestExecutor(
 	const HttpUri& uri,
 	HttpRequest::Method method,
 	const std::string& body,
 	const std::string& contentType
 )
 : Task(std::make_shared<Task::Func>([this](){return operator()();}))
-, _log("Request")
+, _log("HttpRequestExecutor")
 , _clientTransport(new HttpClient())
 , _method(method)
 , _uri(uri)
@@ -40,7 +40,7 @@ Request::Request(
 {
 }
 
-bool Request::operator()()
+bool HttpRequestExecutor::operator()()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::INIT)
@@ -98,7 +98,7 @@ bool Request::operator()()
 	return true;
 }
 
-void Request::failConnect()
+void HttpRequestExecutor::failConnect()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
@@ -114,7 +114,7 @@ void Request::failConnect()
 	done();
 }
 
-void Request::exceptionAtConnect()
+void HttpRequestExecutor::exceptionAtConnect()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
@@ -130,7 +130,7 @@ void Request::exceptionAtConnect()
 	done();
 }
 
-void Request::onConnected()
+void HttpRequestExecutor::onConnected()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
@@ -146,7 +146,7 @@ void Request::onConnected()
 	_connection->addCompleteHandler(
 		[this] (TcpConnection& connection, const std::shared_ptr<Context>& context)
 		{
-			_httpContext = std::dynamic_pointer_cast<HttpContext>(context);
+			_context = std::dynamic_pointer_cast<HttpContext>(context);
 			onComplete();
 		}
 	);
@@ -161,7 +161,7 @@ void Request::onConnected()
 	submit();
 }
 
-void Request::submit()
+void HttpRequestExecutor::submit()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECTED)
@@ -224,7 +224,7 @@ void Request::submit()
 	}
 }
 
-void Request::exceptionAtSubmit()
+void HttpRequestExecutor::exceptionAtSubmit()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::SUBMIT)
@@ -240,7 +240,7 @@ void Request::exceptionAtSubmit()
 	done();
 }
 
-void Request::failProcessing()
+void HttpRequestExecutor::failProcessing()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (
@@ -260,7 +260,7 @@ void Request::failProcessing()
 	done();
 }
 
-void Request::onComplete()
+void HttpRequestExecutor::onComplete()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::SUBMITED)
@@ -269,25 +269,25 @@ void Request::onComplete()
 		return;
 	}
 
-	if (!_httpContext)
+	if (!_context)
 	{
-		_error = "complete with error (Bad context)";
+		_error = "Complete with error (Bad context)";
 		onError();
 		return;
 	}
 
-	if (!_httpContext->getResponse())
+	if (!_context->getResponse())
 	{
-		_error = "complete with error (No response)";
+		_error = "Complete with error (No response)";
 		onError();
 		return;
 	}
 
-	_answer = std::string(_httpContext->getResponse()->dataPtr(), _httpContext->getResponse()->dataLen());
+	_answer = std::string(_context->getResponse()->dataPtr(), _context->getResponse()->dataLen());
 
-	if (_httpContext->getResponse()->statusCode() != 200)
+	if (_context->getResponse()->statusCode() != 200)
 	{
-		_error = "No OK response: " + std::to_string(_httpContext->getResponse()->statusCode()) + " " + _httpContext->getResponse()->statusMessage();
+		_error = "No OK response: " + std::to_string(_context->getResponse()->statusCode()) + " " + _context->getResponse()->statusMessage();
 		onError();
 		return;
 	}
@@ -300,7 +300,7 @@ void Request::onComplete()
 	done();
 }
 
-void Request::onError()
+void HttpRequestExecutor::onError()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (
@@ -322,11 +322,11 @@ void Request::onError()
 	done();
 }
 
-void Request::done()
+void HttpRequestExecutor::done()
 {
 	_log.trace("Cleanup...");
 
-	_httpContext.reset();
+	_context.reset();
 
 	ConnectionManager::remove(_connection);
 	_connection.reset();

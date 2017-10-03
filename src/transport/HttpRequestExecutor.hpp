@@ -16,7 +16,7 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.06.06
 
-// Request.hpp
+// HttpRequestExecutor.hpp
 
 
 #pragma once
@@ -34,11 +34,11 @@
 #include "../net/SslConnector.hpp"
 #include "../utils/SslHelper.hpp"
 
-class Request: public Task
+class HttpRequestExecutor: public Task
 {
 private:
 	Log _log;
-	std::shared_ptr<ClientTransport> _clientTransport;
+	std::shared_ptr<HttpClient> _clientTransport;
 	HttpRequest::Method _method;
 	HttpUri _uri;
 	std::string _body;
@@ -48,7 +48,7 @@ private:
 	std::recursive_mutex _mutex;
 	std::shared_ptr<TcpConnector> _connector;
 	std::shared_ptr<TcpConnection> _connection;
-	std::shared_ptr<HttpContext> _httpContext;
+	std::shared_ptr<HttpContext> _context;
 
 	enum class State
 	{
@@ -58,8 +58,7 @@ private:
 		SUBMIT,
 		SUBMITED,
 		COMPLETE,
-		ERROR,
-		DONE
+		ERROR
 	} _state;
 
 	void onConnected();
@@ -76,14 +75,14 @@ private:
 	void done();
 
 public:
-	Request(
+	HttpRequestExecutor(
 		const HttpUri& uri,
 		HttpRequest::Method method = HttpRequest::Method::GET,
 		const std::string& body = "",
 		const std::string& contentType = ""
 	);
 
-	~Request() override = default;
+	~HttpRequestExecutor() override = default;
 
 	bool operator()() override;
 

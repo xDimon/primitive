@@ -183,7 +183,7 @@ bool TcpConnector::processing()
 		{
 			connected:
 
-			_log.debug("End processing on %s (was connected)", name().c_str());
+			_log.debug("End processing on %s: Success", name().c_str());
 
 			try
 			{

@@ -127,7 +127,7 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 			}
 		}
 
-		_log.debug("REQUEST: %u '%s' %zu",
+		_log.debug("RESPONSE: %u '%s' %zu",
 			context->getResponse()->statusCode(),
 			context->getResponse()->statusMessage().c_str(),
 			context->getResponse()->hasContentLength() ? context->getResponse()->contentLength() : 0

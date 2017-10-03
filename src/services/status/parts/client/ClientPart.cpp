@@ -20,7 +20,7 @@
 
 
 #include "ClientPart.hpp"
-#include "../../../../transport/Request.hpp"
+#include "../../../../transport/HttpRequestExecutor.hpp"
 #include "../../Service.hpp"
 #include "../../../../transport/Transports.hpp"
 #include "../../../../telemetry/SysInfo.hpp"
