@@ -29,6 +29,7 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
 
 HttpUri::HttpUri()
 : _scheme(Scheme::UNDEFINED)
@@ -110,19 +111,24 @@ void HttpUri::parse(const char *string, size_t length)
 		{
 			throw std::runtime_error("Out of data");
 		}
-		_port = 0;
+		uint64_t port = 0;
 		while (*s != 0 && *s != '/' && *s != '?' && *s != '#' && isspace(*s) == 0)
 		{
 			if (isdigit(*s) == 0)
 			{
 				throw std::runtime_error("Wrong port");
 			}
-			_host.push_back(*s);
+			port = port * 10 + *s - '0';
+			if (port < 1 || port > 65535)
+			{
+				throw std::runtime_error("Wrong port");
+			}
 			if (++s > end)
 			{
 				throw std::runtime_error("Out of data");
 			}
 		}
+		_port = static_cast<uint16_t>(port);
 	}
 
 	// Читаем путь
