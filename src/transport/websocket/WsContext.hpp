@@ -21,17 +21,13 @@
 
 #pragma once
 
-
-#include "../TransportContext.hpp"
-#include "../http/HttpRequest.hpp"
-#include "../../net/TcpConnection.hpp"
+#include "../http/HttpContext.hpp"
 #include "WsFrame.hpp"
 #include "../../sessions/Session.hpp"
 
-class WsContext : public TransportContext
+class WsContext : public HttpContext
 {
-private:
-	std::shared_ptr<HttpRequest> _request;
+protected:
 	bool _established;
 	std::shared_ptr<WsFrame> _frame;
 	std::weak_ptr<Session> _session;
@@ -47,24 +43,12 @@ public:
 	{
 		_established = true;
 		_frame.reset();
+		_request.reset();
+		_response.reset();
 	}
-
 	bool established()
 	{
 		return _established;
-	}
-
-	const std::shared_ptr<HttpRequest>& getRequest()
-	{
-		return _request;
-	}
-	void setRequest(const std::shared_ptr<HttpRequest>& request)
-	{
-		_request = request;
-	}
-	void resetRequest()
-	{
-		_request.reset();
 	}
 
 	const std::shared_ptr<WsFrame>& getFrame()

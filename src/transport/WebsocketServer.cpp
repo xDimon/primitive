@@ -208,8 +208,6 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				return true;
 			}
 
-			context->setRequest(nullptr);
-
 			context->setHandler(handler);
 
 			context->setEstablished();

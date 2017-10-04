@@ -28,28 +28,36 @@
 
 class HttpContext: public TransportContext
 {
-private:
+protected:
 	std::shared_ptr<HttpRequest> _request;
 	std::shared_ptr<HttpResponse> _response;
 
 public:
 	virtual ~HttpContext() {};
 
+	const std::shared_ptr<HttpRequest>& getRequest()
+	{
+		return _request;
+	}
 	void setRequest(const std::shared_ptr<HttpRequest>& request)
 	{
 		_request = request;
 	}
-	std::shared_ptr<HttpRequest> getRequest()
+	void resetRequest()
 	{
-		return _request;
+		_request.reset();
 	}
 
+	const std::shared_ptr<HttpResponse>& getResponse()
+	{
+		return _response;
+	}
 	void setResponse(const std::shared_ptr<HttpResponse>& response)
 	{
 		_response = response;
 	}
-	std::shared_ptr<HttpResponse> getResponse()
+	void resetResponse()
 	{
-		return _response;
+		_response.reset();
 	}
 };
