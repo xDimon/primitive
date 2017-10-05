@@ -21,6 +21,7 @@
 
 #include "HttpRequestExecutor.hpp"
 #include "../thread/RollbackStackAndRestoreContext.hpp"
+#include "http/HttpContext.hpp"
 
 HttpRequestExecutor::HttpRequestExecutor(
 	const HttpUri& uri,
@@ -69,19 +70,29 @@ bool HttpRequestExecutor::operator()()
 		_connector->setTtl(std::chrono::seconds(15));
 
 		_connector->addConnectedHandler(
-			[this](const std::shared_ptr<TcpConnection>& connection)
+			[wp = std::weak_ptr<Task>(ptr())]
+			(const std::shared_ptr<TcpConnection>& connection)
 			{
-				_connector.reset();
-				_connection = connection;
-				onConnected();
+				auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+				if (iam)
+				{
+					iam->_connector.reset();
+					iam->_connection = connection;
+					iam->onConnected();
+				}
 			}
 		);
 
 		_connector->addErrorHandler(
-			[this]()
+			[wp = std::weak_ptr<Task>(ptr())]
+			()
 			{
-				_connector.reset();
-				failConnect();
+				auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+				if (iam)
+				{
+					iam->_connector.reset();
+					iam->failConnect();
+				}
 			}
 		);
 
@@ -143,18 +154,37 @@ void HttpRequestExecutor::onConnected()
 
 	_state = State::CONNECTED;
 
+	if (!_connection->getContext())
+	{
+		_connection->setContext(std::make_shared<HttpContext>(_connection));
+	}
+	auto context = std::dynamic_pointer_cast<HttpContext>(_connection->getContext());
+	if (!context)
+	{
+		throw std::runtime_error("Bad context");
+	}
+
 	_connection->addCompleteHandler(
-		[this] (TcpConnection& connection, const std::shared_ptr<Context>& context)
+		[wp = std::weak_ptr<Task>(ptr())]
+		(TcpConnection&, const std::shared_ptr<Context>&)
 		{
-			_context = std::dynamic_pointer_cast<HttpContext>(context);
-			onComplete();
+			auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+			if (iam)
+			{
+				iam->onComplete();
+			}
 		}
 	);
 
 	_connection->addErrorHandler(
-		[this] (TcpConnection& connection)
+		[wp = std::weak_ptr<Task>(ptr())]
+		(TcpConnection&)
 		{
-			failProcessing();
+			auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+			if (iam)
+			{
+				iam->failProcessing();
+			}
 		}
 	);
 
@@ -263,31 +293,34 @@ void HttpRequestExecutor::failProcessing()
 void HttpRequestExecutor::onComplete()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state == State::COMPLETE)
+	{
+		return;
+	}
 	if (_state != State::SUBMITED)
 	{
 		_log.warn("Bad step: complete");
 		return;
 	}
 
-	if (!_context)
+	auto context = std::dynamic_pointer_cast<HttpContext>(_connection->getContext());
+	if (!context)
 	{
-		_error = "Complete with error (Bad context)";
-		onError();
-		return;
+		throw std::runtime_error("Bad context");
 	}
 
-	if (!_context->getResponse())
+	if (!context->getResponse())
 	{
 		_error = "Complete with error (No response)";
 		onError();
 		return;
 	}
 
-	_answer = std::string(_context->getResponse()->dataPtr(), _context->getResponse()->dataLen());
+	_answer = std::string(context->getResponse()->dataPtr(), context->getResponse()->dataLen());
 
-	if (_context->getResponse()->statusCode() != 200)
+	if (context->getResponse()->statusCode() != 200)
 	{
-		_error = "No OK response: " + std::to_string(_context->getResponse()->statusCode()) + " " + _context->getResponse()->statusMessage();
+		_error = "No OK response: " + std::to_string(context->getResponse()->statusCode()) + " " + context->getResponse()->statusMessage();
 		onError();
 		return;
 	}
@@ -296,6 +329,8 @@ void HttpRequestExecutor::onComplete()
 
 	_log.trace("Completed");
 	_state = State::COMPLETE;
+
+	_connection->setTtl(std::chrono::milliseconds(50));
 
 	done();
 }
@@ -326,12 +361,7 @@ void HttpRequestExecutor::done()
 {
 	_log.trace("Cleanup...");
 
-	_context.reset();
-
-	ConnectionManager::remove(_connection);
 	_connection.reset();
-
-	ConnectionManager::remove(_connector);
 	_connector.reset();
 
 	_log.trace("Done");

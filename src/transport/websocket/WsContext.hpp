@@ -33,10 +33,10 @@ protected:
 	std::weak_ptr<Session> _session;
 
 public:
-	WsContext()
-	: _established(false)
+	WsContext(const std::shared_ptr<Connection>& connection)
+	: HttpContext(connection)
+	, _established(false)
 	{};
-
 	virtual ~WsContext() = default;
 
 	void setEstablished()

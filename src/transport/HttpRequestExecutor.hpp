@@ -30,7 +30,7 @@
 #include "../net/ConnectionManager.hpp"
 #include "../thread/Task.hpp"
 #include "HttpClient.hpp"
-#include "http/HttpContext.hpp"
+#include "http/HttpRequest.hpp"
 #include "../net/SslConnector.hpp"
 #include "../utils/SslHelper.hpp"
 
@@ -48,7 +48,6 @@ private:
 	std::recursive_mutex _mutex;
 	std::shared_ptr<TcpConnector> _connector;
 	std::shared_ptr<TcpConnection> _connection;
-	std::shared_ptr<HttpContext> _context;
 
 	enum class State
 	{

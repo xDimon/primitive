@@ -33,7 +33,10 @@ protected:
 	std::shared_ptr<HttpResponse> _response;
 
 public:
-	virtual ~HttpContext() {};
+	HttpContext(const std::shared_ptr<Connection>& connection)
+	: TransportContext(connection)
+	{};
+	virtual ~HttpContext() = default;
 
 	const std::shared_ptr<HttpRequest>& getRequest()
 	{

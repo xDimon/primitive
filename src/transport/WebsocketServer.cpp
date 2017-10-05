@@ -43,7 +43,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 
 	if (!connection->getContext())
 	{
-		connection->setContext(std::make_shared<WsContext>());
+		connection->setContext(std::make_shared<WsContext>(connection));
 	}
 	auto context = std::dynamic_pointer_cast<WsContext>(connection->getContext());
 	if (!context)

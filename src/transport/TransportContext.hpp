@@ -28,10 +28,14 @@
 class TransportContext : public Context
 {
 protected:
+	std::weak_ptr<Connection> _connection;
 	std::shared_ptr<Transport::Handler> _handler;
 	std::shared_ptr<Transport::Transmitter> _transmitter;
 
 public:
+	TransportContext(const std::shared_ptr<Connection>& connection)
+	: _connection(connection)
+	{};
 	virtual ~TransportContext()	= default;
 
 	void setTransmitter(const std::shared_ptr<Transport::Transmitter>& transmitter)
