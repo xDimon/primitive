@@ -77,7 +77,7 @@ void TcpConnection::watch(epoll_event &ev)
 
 	if (!_error)
 	{
-		if (_outgoing || _outBuff.dataLen() > 0)
+		if (hasDataForSend())
 		{
 			ev.events |= EPOLLOUT | EPOLLWRNORM;
 		}
@@ -102,7 +102,7 @@ bool TcpConnection::processing()
 			break;
 		}
 
-		if (isReadyForWrite())
+		if (isReadyForWrite() && hasDataForSend())
 		{
 			writeToSocket();
 		}
@@ -112,14 +112,14 @@ bool TcpConnection::processing()
 			readFromSocket();
 		}
 
-		if (_outBuff.dataLen() > 0)
+		if (hasDataForSend())
 		{
 			writeToSocket();
 		}
 
 		ConnectionManager::rotateEvents(this->ptr());
 	}
-	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()) || wasFailure() || timeIsOut());
+	while (isReadyForRead() || (isReadyForWrite() && hasDataForSend()) || wasFailure() || timeIsOut());
 
 	if (_timeout)
 	{
@@ -133,7 +133,7 @@ bool TcpConnection::processing()
 
 	if (_noRead)
 	{
-		if (_outBuff.dataLen() == 0)
+		if (!hasDataForSend())
 		{
 			_noWrite = true;
 
@@ -176,7 +176,7 @@ bool TcpConnection::writeToSocket()
 		std::lock_guard<std::recursive_mutex> guard(_outBuff.mutex());
 
 		// Нечего отправлять
-		if (_outBuff.dataLen() == 0)
+		if (!hasDataForSend())
 		{
 			break;
 		}

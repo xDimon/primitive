@@ -63,6 +63,11 @@ public:
 		return _noRead;
 	}
 
+	bool hasDataForSend() const
+	{
+		return _outBuff.dataLen() > 0;
+	}
+
 	void watch(epoll_event& ev) override;
 
 	bool processing() override;

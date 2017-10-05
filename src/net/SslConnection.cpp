@@ -97,7 +97,7 @@ void SslConnection::watch(epoll_event &ev)
 				_log.trace("WATCH: No established and no want write");
 			}
 		}
-		else if (_outBuff.dataLen() > 0)
+		else if (hasDataForSend())
 		{
 			_log.trace("WATCH: Established and has data for write");
 			ev.events |= EPOLLOUT | EPOLLWRNORM;
@@ -131,7 +131,7 @@ bool SslConnection::processing()
 			}
 		}
 
-		if (isReadyForWrite())
+		if (isReadyForWrite() && hasDataForSend())
 		{
 			writeToSocket();
 		}
@@ -141,7 +141,7 @@ bool SslConnection::processing()
 			readFromSocket();
 		}
 
-		if (_outBuff.dataLen() > 0)
+		if (hasDataForSend())
 		{
 			writeToSocket();
 		}
@@ -162,7 +162,7 @@ bool SslConnection::processing()
 
 		ConnectionManager::rotateEvents(this->ptr());
 	}
-	while (isReadyForRead() || (_outBuff.dataLen() > 0 && isReadyForWrite()) || wasFailure() || timeIsOut());
+	while (isReadyForRead() || (isReadyForWrite() && hasDataForSend()) || wasFailure() || timeIsOut());
 
 	if (_timeout)
 	{
@@ -178,7 +178,7 @@ bool SslConnection::processing()
 
 	if (_noRead)
 	{
-		if (!_outBuff.dataLen())
+		if (!hasDataForSend())
 		{
 			shutdown(_sock, SHUT_WR);
 			setTtl(std::chrono::milliseconds(50));
@@ -289,7 +289,7 @@ bool SslConnection::writeToSocket()
 		std::lock_guard<std::recursive_mutex> guard(_outBuff.mutex());
 
 		// Нечего отправлять
-		if (_outBuff.dataLen() == 0)
+		if (!hasDataForSend())
 		{
 			break;
 		}
