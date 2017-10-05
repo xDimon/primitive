@@ -300,7 +300,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 				_log.debug("TEXT-FRAME: \"%s\" %zu bytes", context->getFrame()->dataPtr(), context->getFrame()->dataLen());
 
 				context->setTransmitter(
-					std::make_shared<ServerTransport::Transmitter>(
+					std::make_shared<Transport::Transmitter>(
 						[wp = std::weak_ptr<TcpConnection>(connection), opcode = context->getFrame()->opcode()]
 							(const char* data, size_t size, const std::string&, bool close) {
 							auto connection = std::dynamic_pointer_cast<TcpConnection>(wp.lock());

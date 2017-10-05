@@ -53,9 +53,6 @@ public:
 	virtual bool enable() final;
 	virtual bool disable() final;
 
-	typedef std::function<void(const char*, size_t, const std::string&, bool)> Transmitter;
-	typedef std::function<void(const std::shared_ptr<Context>&)> Handler;
-
 	virtual void bindHandler(const std::string& selector, const std::shared_ptr<Handler>& handler) = 0;
 	virtual std::shared_ptr<Handler> getHandler(const std::string& subject) = 0;
 };

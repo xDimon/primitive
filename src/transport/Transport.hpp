@@ -24,6 +24,7 @@
 
 #include "../utils/Shareable.hpp"
 #include "../utils/Named.hpp"
+#include "../utils/Context.hpp"
 #include "../log/Log.hpp"
 
 class Connection;
@@ -32,6 +33,10 @@ class Transport : public Named
 {
 protected:
 	Log _log;
+
+public:
+	typedef std::function<void(const char*, size_t, const std::string&, bool)> Transmitter;
+	typedef std::function<void(const std::shared_ptr<Context>&)> Handler;
 
 public:
 	Transport(const Transport&) = delete;

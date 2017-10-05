@@ -201,7 +201,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 			context->setHandler(std::move(handler));
 
 			context->setTransmitter(
-				std::make_shared<ServerTransport::Transmitter>(
+				std::make_shared<Transport::Transmitter>(
 					[this,connection]
 					(const char*data, size_t size, const std::string& contentType, bool close)
 					{
