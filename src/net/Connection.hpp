@@ -79,7 +79,7 @@ public:
 
 	void setTtl(std::chrono::milliseconds ttl);
 
-	std::shared_ptr<Context>& getContext()
+	std::shared_ptr<Context> getContext()
 	{
 		return _context;
 	}
@@ -90,6 +90,11 @@ public:
 	void resetContext()
 	{
 		_context.reset();
+	}
+
+	void setTransport(const std::shared_ptr<Transport>& transport)
+	{
+		_transport = transport;
 	}
 
 	virtual bool isClosed() const

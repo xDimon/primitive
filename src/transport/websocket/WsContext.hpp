@@ -31,6 +31,8 @@ protected:
 	bool _established;
 	std::shared_ptr<WsFrame> _frame;
 	std::weak_ptr<Session> _session;
+	std::string _key;
+	std::function<void(WsContext&)> _establishHandler;
 
 public:
 	WsContext(const std::shared_ptr<Connection>& connection)
@@ -39,17 +41,13 @@ public:
 	{};
 	virtual ~WsContext() = default;
 
-	void setEstablished()
-	{
-		_established = true;
-		_frame.reset();
-		_request.reset();
-		_response.reset();
-	}
+	void setEstablished();
 	bool established()
 	{
 		return _established;
 	}
+
+	const std::string& key();
 
 	const std::shared_ptr<WsFrame>& getFrame()
 	{
@@ -76,4 +74,6 @@ public:
 	{
 		_session.reset();
 	}
+
+	void addEstablishedHandler(std::function<void(WsContext&)>);
 };
