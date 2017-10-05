@@ -102,20 +102,20 @@ void SysInfo::collect()
 
 
     FILE* file = fopen("/proc/self/status", "r");
-    int rss = -1;
+    ssize_t rss = -1;
     char line[128];
     while (fgets(line, 128, file) != nullptr)
 	{
         if (strncmp(line, "VmRSS:", 6) == 0)
 		{
             rss =
-				[](char* line)->int
+				[](char* oneLine)
 				{
 					// This assumes that a digit will be found and the line ends in " Kb".
-					int i = strlen(line);
-					const char* p = line;
+					ssize_t i = strlen(oneLine);
+					const char* p = oneLine;
 					while (*p <'0' || *p > '9') p++;
-					line[i-3] = '\0';
+					oneLine[i-3] = '\0';
 					i = atoi(p);
 					return i;
 				}(line);

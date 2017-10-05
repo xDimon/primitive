@@ -28,12 +28,15 @@
 
 class ServiceFactory final
 {
+public:
+	ServiceFactory(const ServiceFactory&) = delete;
+	void operator=(ServiceFactory const&) = delete;
+	ServiceFactory(ServiceFactory&&) = delete;
+	ServiceFactory& operator=(ServiceFactory&&) = delete;
+
 private:
 	ServiceFactory() = default;
-
-	ServiceFactory(ServiceFactory const&) = delete;
-
-	void operator=(ServiceFactory const&) = delete;
+	~ServiceFactory() = default;
 
 	static ServiceFactory& getInstance()
 	{

@@ -254,9 +254,9 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 		{
 			Dl_info dli{};
 
-			Elf64_Sym *info;
+			Elf64_Sym *symptr;
 
-			dladdr1(bt[i], &dli, reinterpret_cast<void **>(&info), RTLD_DL_SYMENT);
+			dladdr1(bt[i], &dli, reinterpret_cast<void **>(&symptr), RTLD_DL_SYMENT);
 
 			int status;
 			auto symbol = abi::__cxa_demangle(dli.dli_sname, 0, 0, &status);

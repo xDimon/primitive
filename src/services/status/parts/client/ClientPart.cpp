@@ -113,11 +113,11 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 		std::ostringstream oss;
 
 		auto tsStart = std::chrono::system_clock::to_time_t(Time::startTime);
-		tm tmStart;
+		tm tmStart{};
 		::localtime_r(&tsStart, &tmStart);
 
 		auto tsNow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-		tm tmNow;
+		tm tmNow{};
 		::localtime_r(&tsNow, &tmNow);
 
 		auto run = tsNow - tsStart;

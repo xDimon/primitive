@@ -32,7 +32,7 @@ namespace Number
 			src < std::numeric_limits<D>::min()
 		)
 		{
-			dst = 0;
+			dst = def;
 		}
 		else
 		{

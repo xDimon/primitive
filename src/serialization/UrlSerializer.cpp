@@ -57,15 +57,13 @@ SVal* UrlSerializer::decode(const std::string& data)
 	{
 		auto obj = std::make_unique<SObj>();
 
-		for (auto pair : pairs)
+		for (const auto& pair : pairs)
 		{
 			auto seperatorPos = pair.find('=');
 			auto key = pair.substr(0, seperatorPos);
 			auto val = pair.substr(seperatorPos + 1);
 
 			emplace(obj.get(), key, val);
-
-			continue;
 		}
 
 		return obj.release();
@@ -127,8 +125,7 @@ void UrlSerializer::emplace(SObj* parent, std::string& keyline, const std::strin
 	auto oKey = HttpUri::urldecode(key);
 	if (keyline.length())
 	{
-		auto a = parent->get(oKey);
-		SObj* object = dynamic_cast<SObj*>(a);
+		auto object = dynamic_cast<SObj*>(parent->get(oKey));
 		if (!object)
 		{
 			object = new SObj;

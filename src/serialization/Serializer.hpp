@@ -38,7 +38,7 @@ public:
 	Serializer(Serializer&&) = delete;
 	Serializer& operator=(Serializer&&) = delete;
 
-	Serializer(uint32_t flags)
+	explicit Serializer(uint32_t flags)
 	: _flags(flags)
 	{}
 	virtual ~Serializer() = default;
@@ -66,7 +66,7 @@ public:                                                                         
 	Class& operator=(Class&&) = delete;                                                         \
                                                                                                 \
 private:                                                                                        \
-    Class(uint32_t flags): Serializer(flags) {}                                                 \
+    explicit Class(uint32_t flags): Serializer(flags) {}                                        \
                                                                                                 \
 public:                                                                                         \
     ~Class() override = default;                                                                \

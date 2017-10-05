@@ -74,7 +74,7 @@ public:
 		return *this;
 	}
 	// Move assignment operator.
-	Db& operator=(Db&& that)
+	Db& operator=(Db&& that) noexcept
 	{
 		_conn = std::move(that._conn);
 		return *this;

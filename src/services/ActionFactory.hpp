@@ -31,12 +31,15 @@
 
 class ActionFactory final
 {
+public:
+	ActionFactory(const ActionFactory&) = delete;
+	void operator=(ActionFactory const&) = delete;
+	ActionFactory(ActionFactory&&) = delete;
+	ActionFactory& operator=(ActionFactory&&) = delete;
+
 private:
 	ActionFactory() = default;
-
-	ActionFactory(ActionFactory const&) = delete;
-
-	void operator=(ActionFactory const&) = delete;
+	~ActionFactory() = default;
 
 	static ActionFactory& getInstance()
 	{
