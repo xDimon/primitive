@@ -26,6 +26,7 @@
 #include "../../../../telemetry/SysInfo.hpp"
 #include "../../../../utils/Time.hpp"
 #include "../../../../storage/DbManager.hpp"
+#include "../../../../transport/http/HttpContext.hpp"
 
 #include <iomanip>
 

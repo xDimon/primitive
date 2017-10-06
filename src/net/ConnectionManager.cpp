@@ -382,6 +382,7 @@ void ConnectionManager::dispatch()
 				}
 				catch (const RollbackStackAndRestoreContext& exception)
 				{
+					getInstance().release(connection);
 					throw;
 				}
 				catch (const std::exception& exception)
