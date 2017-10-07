@@ -21,8 +21,8 @@
 
 #include <string.h>
 #include "HttpClient.hpp"
-#include "../net/TcpConnection.hpp"
-#include "http/HttpContext.hpp"
+#include "../../net/TcpConnection.hpp"
+#include "HttpContext.hpp"
 
 bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 {

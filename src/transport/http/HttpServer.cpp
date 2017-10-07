@@ -22,12 +22,12 @@
 #include <sstream>
 #include <memory>
 #include <cstring>
-#include "../net/ConnectionManager.hpp"
-#include "../net/TcpConnection.hpp"
-#include "../server/Server.hpp"
-#include "http/HttpContext.hpp"
+#include "../../net/ConnectionManager.hpp"
+#include "../../net/TcpConnection.hpp"
+#include "../../server/Server.hpp"
+#include "HttpContext.hpp"
 #include "HttpServer.hpp"
-#include "../serialization/SObj.hpp"
+#include "../../serialization/SObj.hpp"
 
 REGISTER_TRANSPORT(http, HttpServer);
 

@@ -14,36 +14,28 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.06.06
+// File created on: 2017.10.07
 
-// HttpRequestExecutor.hpp
+// WsCommunicator.hpp
 
 
 #pragma once
 
+#include <mutex>
+#include "../../thread/Task.hpp"
+#include "../../log/Log.hpp"
+#include "WsClient.hpp"
+#include "../http/HttpUri.hpp"
+#include "../../net/TcpConnector.hpp"
+#include "WsContext.hpp"
+#include "../Transport.hpp"
 
-#include <string>
-#include <ucontext.h>
-#include <sstream>
-#include "ClientTransport.hpp"
-#include "../net/TcpConnector.hpp"
-#include "../net/ConnectionManager.hpp"
-#include "../thread/Task.hpp"
-#include "HttpClient.hpp"
-#include "http/HttpRequest.hpp"
-#include "../net/SslConnector.hpp"
-#include "../utils/SslHelper.hpp"
-
-class HttpRequestExecutor: public Task
+class WsCommunicator: public Task
 {
 private:
 	Log _log;
-	std::shared_ptr<HttpClient> _clientTransport;
-	HttpRequest::Method _method;
+	std::shared_ptr<WsClient> _websocketClient;
 	HttpUri _uri;
-	std::string _body;
-	std::string _contentType;
-	std::string _answer;
 	std::string _error;
 	std::recursive_mutex _mutex;
 	std::shared_ptr<TcpConnector> _connector;
@@ -56,7 +48,7 @@ private:
 		CONNECTED,
 		SUBMIT,
 		SUBMITED,
-		COMPLETE,
+		ESTABLISHED,
 		ERROR
 	} _state;
 
@@ -74,14 +66,11 @@ private:
 	void done();
 
 public:
-	HttpRequestExecutor(
+	WsCommunicator(
 		const HttpUri& uri,
-		HttpRequest::Method method = HttpRequest::Method::GET,
-		const std::string& body = "",
-		const std::string& contentType = ""
+		const std::shared_ptr<Transport::Handler>& handler
 	);
-
-	~HttpRequestExecutor() override = default;
+	~WsCommunicator() override;
 
 	bool operator()() override;
 
@@ -89,9 +78,13 @@ public:
 	{
 		return _uri.str();
 	}
-	const std::string& answer() const
+	std::shared_ptr<TcpConnection> connection() const
 	{
-		return _answer;
+		return _connection;
+	}
+	std::shared_ptr<WsClient> client() const
+	{
+		return _websocketClient;
 	}
 	const std::string& error() const
 	{

@@ -16,24 +16,24 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.29
 
-// WebsocketServer.cpp
+// WsServer.cpp
 
 
 #include <sstream>
 #include <memory>
 #include <cstring>
-#include "../net/ConnectionManager.hpp"
-#include "../net/TcpConnection.hpp"
-#include "../server/Server.hpp"
-#include "../utils/Base64.hpp"
-#include "../utils/hash/SHA1.hpp"
-#include "websocket/WsContext.hpp"
-#include "WebsocketServer.hpp"
-#include "http/HttpResponse.hpp"
+#include "../../net/ConnectionManager.hpp"
+#include "../../net/TcpConnection.hpp"
+#include "../../server/Server.hpp"
+#include "../../utils/Base64.hpp"
+#include "../../utils/hash/SHA1.hpp"
+#include "WsContext.hpp"
+#include "WsServer.hpp"
+#include "../http/HttpResponse.hpp"
 
-REGISTER_TRANSPORT(websocket, WebsocketServer);
+REGISTER_TRANSPORT(websocket, WsServer);
 
-bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
+bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
@@ -230,7 +230,7 @@ bool WebsocketServer::processing(const std::shared_ptr<Connection>& connection_)
 	return true;
 }
 
-void WebsocketServer::bindHandler(const std::string& selector, const std::shared_ptr<ServerTransport::Handler>& handler)
+void WsServer::bindHandler(const std::string& selector, const std::shared_ptr<ServerTransport::Handler>& handler)
 {
 	if (_handlers.find(selector) != _handlers.end())
 	{
@@ -240,7 +240,7 @@ void WebsocketServer::bindHandler(const std::string& selector, const std::shared
 	_handlers.emplace(selector, handler);
 }
 
-std::shared_ptr<ServerTransport::Handler> WebsocketServer::getHandler(const std::string& subject_)
+std::shared_ptr<ServerTransport::Handler> WsServer::getHandler(const std::string& subject_)
 {
 	auto subject = subject_;
 	do

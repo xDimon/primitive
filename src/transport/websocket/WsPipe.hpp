@@ -14,35 +14,40 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.06.06
+// File created on: 2017.10.05
 
-// HttpClient.hpp
+// WsPipe.hpp
 
 
 #pragma once
 
 
-#include "ClientTransport.hpp"
-#include "ServerTransport.hpp"
+#include "../Transport.hpp"
+#include "../../net/TcpConnection.hpp"
 
-class HttpClient : public ClientTransport
+class WsPipe : public Transport
 {
+private:
+	std::shared_ptr<Handler> _handler;
+
 public:
-	HttpClient(const HttpClient&) = delete;
-	void operator=(HttpClient const&) = delete;
-	HttpClient(HttpClient&&) = delete;
-	HttpClient& operator=(HttpClient&&) = delete;
+	WsPipe(const WsPipe&) = delete; // Copy-constructor
+	void operator=(WsPipe const&) = delete; // Copy-assignment
+	WsPipe(WsPipe&&) = delete; // Move-constructor
+	WsPipe& operator=(WsPipe&&) = delete; // Move-assignment
 
-	HttpClient()
-	{
-		_log.setName("HttpClient");
-		_log.debug("Transport '%s' created", name().c_str());
-	}
+	WsPipe(
+		const std::shared_ptr<Handler>& handler
+	);
 
-	~HttpClient() override
-	{
-		_log.debug("Transport '%s' destroyed", name().c_str());
-	}
+	~WsPipe() override;
 
 	bool processing(const std::shared_ptr<Connection>& connection) override;
+
+	void transmit(
+		const std::shared_ptr<Connection>& connection,
+		const char* data, size_t size,
+		const std::string& contentType,
+		bool close
+	);
 };

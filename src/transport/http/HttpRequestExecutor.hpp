@@ -14,28 +14,36 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.10.07
+// File created on: 2017.06.06
 
-// WebsocketCommunicator.hpp
+// HttpRequestExecutor.hpp
 
 
 #pragma once
 
-#include <mutex>
-#include "../thread/Task.hpp"
-#include "../log/Log.hpp"
-#include "WebsocketClient.hpp"
-#include "http/HttpUri.hpp"
-#include "../net/TcpConnector.hpp"
-#include "websocket/WsContext.hpp"
-#include "Transport.hpp"
 
-class WebsocketCommunicator: public Task
+#include <string>
+#include <ucontext.h>
+#include <sstream>
+#include "../ClientTransport.hpp"
+#include "../../net/TcpConnector.hpp"
+#include "../../net/ConnectionManager.hpp"
+#include "../../thread/Task.hpp"
+#include "HttpClient.hpp"
+#include "HttpRequest.hpp"
+#include "../../net/SslConnector.hpp"
+#include "../../utils/SslHelper.hpp"
+
+class HttpRequestExecutor: public Task
 {
 private:
 	Log _log;
-	std::shared_ptr<WebsocketClient> _websocketClient;
+	std::shared_ptr<HttpClient> _clientTransport;
+	HttpRequest::Method _method;
 	HttpUri _uri;
+	std::string _body;
+	std::string _contentType;
+	std::string _answer;
 	std::string _error;
 	std::recursive_mutex _mutex;
 	std::shared_ptr<TcpConnector> _connector;
@@ -48,7 +56,7 @@ private:
 		CONNECTED,
 		SUBMIT,
 		SUBMITED,
-		ESTABLISHED,
+		COMPLETE,
 		ERROR
 	} _state;
 
@@ -66,11 +74,14 @@ private:
 	void done();
 
 public:
-	WebsocketCommunicator(
+	HttpRequestExecutor(
 		const HttpUri& uri,
-		const std::shared_ptr<Transport::Handler>& handler
+		HttpRequest::Method method = HttpRequest::Method::GET,
+		const std::string& body = "",
+		const std::string& contentType = ""
 	);
-	~WebsocketCommunicator() override;
+
+	~HttpRequestExecutor() override = default;
 
 	bool operator()() override;
 
@@ -78,13 +89,9 @@ public:
 	{
 		return _uri.str();
 	}
-	std::shared_ptr<TcpConnection> connection() const
+	const std::string& answer() const
 	{
-		return _connection;
-	}
-	std::shared_ptr<WebsocketClient> client() const
-	{
-		return _websocketClient;
+		return _answer;
 	}
 	const std::string& error() const
 	{

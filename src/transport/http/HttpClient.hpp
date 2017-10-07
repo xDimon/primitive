@@ -14,36 +14,32 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.10.06
+// File created on: 2017.06.06
 
-// WebsocketClient.hpp
+// HttpClient.hpp
 
 
 #pragma once
 
 
-#include "ClientTransport.hpp"
+#include "../ClientTransport.hpp"
+#include "../ServerTransport.hpp"
 
-class WebsocketClient : public ClientTransport
+class HttpClient : public ClientTransport
 {
-private:
-	std::shared_ptr<Transport::Handler> _handler;
-
 public:
-	WebsocketClient(const WebsocketClient&) = delete;
-	void operator=(WebsocketClient const&) = delete;
-	WebsocketClient(WebsocketClient&&) = delete;
-	WebsocketClient& operator=(WebsocketClient&&) = delete;
+	HttpClient(const HttpClient&) = delete;
+	void operator=(HttpClient const&) = delete;
+	HttpClient(HttpClient&&) = delete;
+	HttpClient& operator=(HttpClient&&) = delete;
 
-	WebsocketClient(const std::shared_ptr<Handler>& handler)
-	: _handler(handler)
+	HttpClient()
 	{
-
-		_log.setName("WebsocketClient");
+		_log.setName("HttpClient");
 		_log.debug("Transport '%s' created", name().c_str());
 	}
 
-	~WebsocketClient() override
+	~HttpClient() override
 	{
 		_log.debug("Transport '%s' destroyed", name().c_str());
 	}

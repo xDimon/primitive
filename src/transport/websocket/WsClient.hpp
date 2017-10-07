@@ -14,40 +14,39 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.10.05
+// File created on: 2017.10.06
 
-// WebsocketPipe.hpp
+// WsClient.hpp
 
 
 #pragma once
 
 
-#include "Transport.hpp"
-#include "../net/TcpConnection.hpp"
+#include "../ClientTransport.hpp"
 
-class WebsocketPipe : public Transport
+class WsClient : public ClientTransport
 {
 private:
-	std::shared_ptr<Handler> _handler;
+	std::shared_ptr<Transport::Handler> _handler;
 
 public:
-	WebsocketPipe(const WebsocketPipe&) = delete; // Copy-constructor
-	void operator=(WebsocketPipe const&) = delete; // Copy-assignment
-	WebsocketPipe(WebsocketPipe&&) = delete; // Move-constructor
-	WebsocketPipe& operator=(WebsocketPipe&&) = delete; // Move-assignment
+	WsClient(const WsClient&) = delete;
+	void operator=(WsClient const&) = delete;
+	WsClient(WsClient&&) = delete;
+	WsClient& operator=(WsClient&&) = delete;
 
-	WebsocketPipe(
-		const std::shared_ptr<Handler>& handler
-	);
+	WsClient(const std::shared_ptr<Handler>& handler)
+	: _handler(handler)
+	{
 
-	~WebsocketPipe() override;
+		_log.setName("WsClient");
+		_log.debug("Transport '%s' created", name().c_str());
+	}
+
+	~WsClient() override
+	{
+		_log.debug("Transport '%s' destroyed", name().c_str());
+	}
 
 	bool processing(const std::shared_ptr<Connection>& connection) override;
-
-	void transmit(
-		const std::shared_ptr<Connection>& connection,
-		const char* data, size_t size,
-		const std::string& contentType,
-		bool close
-	);
 };

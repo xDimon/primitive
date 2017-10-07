@@ -16,16 +16,16 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.29
 
-// WebsocketServer.hpp
+// WsServer.hpp
 
 
 #pragma once
 
-#include "ServerTransport.hpp"
+#include "../ServerTransport.hpp"
 
-class WebsocketServer : public ServerTransport
+class WsServer : public ServerTransport
 {
-	DECLARE_TRANSPORT(WebsocketServer);
+	DECLARE_TRANSPORT(WsServer);
 
 	std::map<std::string, std::shared_ptr<ServerTransport::Handler>> _handlers;
 };

@@ -16,33 +16,33 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.10.05
 
-// WebsocketPipe.cpp
+// WsPipe.cpp
 
 
 #include <cstring>
-#include "WebsocketPipe.hpp"
-#include "../net/TcpConnection.hpp"
-#include "websocket/WsContext.hpp"
-#include "../net/ConnectionManager.hpp"
+#include "WsPipe.hpp"
+#include "../../net/TcpConnection.hpp"
+#include "WsContext.hpp"
+#include "../../net/ConnectionManager.hpp"
 
 static uint32_t id4noname = 0;
 
-WebsocketPipe::WebsocketPipe(
+WsPipe::WsPipe(
 	const std::shared_ptr<Handler>& handler
 )
 : _handler(handler)
 {
 	_name = "WsPipe[" + std::to_string(++id4noname) + "]";
-	_log.setName("WebsocketPipe");
+	_log.setName("WsPipe");
 	_log.debug("%s created", name().c_str());
 }
 
-WebsocketPipe::~WebsocketPipe()
+WsPipe::~WsPipe()
 {
 	_log.debug("%s destroyed", name().c_str());
 }
 
-bool WebsocketPipe::processing(const std::shared_ptr<Connection>& connection_)
+bool WsPipe::processing(const std::shared_ptr<Connection>& connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
@@ -201,7 +201,7 @@ bool WebsocketPipe::processing(const std::shared_ptr<Connection>& connection_)
 	return true;
 }
 
-void WebsocketPipe::transmit(
+void WsPipe::transmit(
 	const std::shared_ptr<Connection>& connection_,
 	const char* data, size_t size,
 	const std::string& contentType,

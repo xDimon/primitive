@@ -14,34 +14,41 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.06.06
+// File created on: 2017.10.07
 
-// HttpRequestExecutor.cpp
+// WsCommunicator.cpp
 
 
-#include "HttpRequestExecutor.hpp"
-#include "../thread/RollbackStackAndRestoreContext.hpp"
-#include "http/HttpContext.hpp"
+#include <random>
+#include "WsCommunicator.hpp"
+#include "../../utils/SslHelper.hpp"
+#include "../../net/SslConnector.hpp"
+#include "../../net/ConnectionManager.hpp"
+#include "../../server/Server.hpp"
+#include "../../utils/Base64.hpp"
+#include "../../thread/RollbackStackAndRestoreContext.hpp"
+#include "WsPipe.hpp"
 
-HttpRequestExecutor::HttpRequestExecutor(
+WsCommunicator::WsCommunicator(
 	const HttpUri& uri,
-	HttpRequest::Method method,
-	const std::string& body,
-	const std::string& contentType
+	const std::shared_ptr<Transport::Handler>& handler
 )
 : Task(std::make_shared<Task::Func>([this](){return operator()();}))
-, _log("HttpRequestExecutor")
-, _clientTransport(new HttpClient())
-, _method(method)
+, _log("WsCommunicator")
+, _websocketClient(std::make_shared<WsClient>(handler))
 , _uri(uri)
-, _body(body)
-, _contentType(contentType)
 , _error("No run")
 , _state(State::INIT)
 {
+	_log.debug("Created for address %s", _uri.str().c_str());
 }
 
-bool HttpRequestExecutor::operator()()
+WsCommunicator::~WsCommunicator()
+{
+	_log.debug("Destroyed for address %s", _uri.str().c_str());
+}
+
+bool WsCommunicator::operator()()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::INIT)
@@ -61,11 +68,11 @@ bool HttpRequestExecutor::operator()()
 		if (_uri.scheme() == HttpUri::Scheme::HTTPS)
 		{
 			auto context = SslHelper::getClientContext();
-			_connector = std::make_shared<SslConnector>(_clientTransport, _uri.host(), _uri.port(), context);
+			_connector = std::make_shared<SslConnector>(_websocketClient, _uri.host(), _uri.port(), context);
 		}
 		else
 		{
-			_connector = std::make_shared<TcpConnector>(_clientTransport, _uri.host(), _uri.port());
+			_connector = std::make_shared<TcpConnector>(_websocketClient, _uri.host(), _uri.port());
 		}
 		_connector->setTtl(std::chrono::seconds(15));
 
@@ -73,7 +80,7 @@ bool HttpRequestExecutor::operator()()
 			[wp = std::weak_ptr<Task>(ptr())]
 			(const std::shared_ptr<TcpConnection>& connection)
 			{
-				auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+				auto iam = std::dynamic_pointer_cast<WsCommunicator>(wp.lock());
 				if (iam)
 				{
 					iam->_connector.reset();
@@ -87,7 +94,7 @@ bool HttpRequestExecutor::operator()()
 			[wp = std::weak_ptr<Task>(ptr())]
 			()
 			{
-				auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+				auto iam = std::dynamic_pointer_cast<WsCommunicator>(wp.lock());
 				if (iam)
 				{
 					iam->_connector.reset();
@@ -109,7 +116,7 @@ bool HttpRequestExecutor::operator()()
 	return true;
 }
 
-void HttpRequestExecutor::failConnect()
+void WsCommunicator::failConnect()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
@@ -125,7 +132,7 @@ void HttpRequestExecutor::failConnect()
 	done();
 }
 
-void HttpRequestExecutor::exceptionAtConnect()
+void WsCommunicator::exceptionAtConnect()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
@@ -141,7 +148,7 @@ void HttpRequestExecutor::exceptionAtConnect()
 	done();
 }
 
-void HttpRequestExecutor::onConnected()
+void WsCommunicator::onConnected()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
@@ -156,19 +163,19 @@ void HttpRequestExecutor::onConnected()
 
 	if (!_connection->getContext())
 	{
-		_connection->setContext(std::make_shared<HttpContext>(_connection));
+		_connection->setContext(std::make_shared<WsContext>(_connection));
 	}
-	auto context = std::dynamic_pointer_cast<HttpContext>(_connection->getContext());
+	auto context = std::dynamic_pointer_cast<WsContext>(_connection->getContext());
 	if (!context)
 	{
 		throw std::runtime_error("Bad context");
 	}
 
-	_connection->addCompleteHandler(
+	context->addEstablishedHandler(
 		[wp = std::weak_ptr<Task>(ptr())]
-		(TcpConnection&, const std::shared_ptr<Context>&)
+		(WsContext&)
 		{
-			auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+			auto iam = std::dynamic_pointer_cast<WsCommunicator>(wp.lock());
 			if (iam)
 			{
 				iam->onComplete();
@@ -180,7 +187,7 @@ void HttpRequestExecutor::onConnected()
 		[wp = std::weak_ptr<Task>(ptr())]
 		(TcpConnection&)
 		{
-			auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+			auto iam = std::dynamic_pointer_cast<WsCommunicator>(wp.lock());
 			if (iam)
 			{
 				iam->failProcessing();
@@ -191,7 +198,7 @@ void HttpRequestExecutor::onConnected()
 	submit();
 }
 
-void HttpRequestExecutor::submit()
+void WsCommunicator::submit()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECTED)
@@ -206,33 +213,23 @@ void HttpRequestExecutor::submit()
 
 	try
 	{
+		auto context = std::dynamic_pointer_cast<WsContext>(_connection->getContext());
+		if (!context)
+		{
+			throw std::runtime_error("Bad context");
+		}
+
 		std::ostringstream oss;
-		oss << (
-			_method == HttpRequest::Method::GET
-			? "GET "
-			: _method == HttpRequest::Method::POST
-			  ? "POST "
-			  : "UNKNOWN "
-		) << _uri.path() << (_uri.hasQuery() ? "?" : "") << (_uri.hasQuery() ? _uri.query() : "") << " HTTP/1.1\r\n"
+		oss << "GET " << _uri.path() << (_uri.hasQuery() ? "?" : "") << (_uri.hasQuery() ? _uri.query() : "") << " HTTP/1.1\r\n"
 			<< "Host: " << _uri.host() << ":" << _uri.port() << "\r\n"
-			<< "Connection: Close\r\n";
-		if (_method == HttpRequest::Method::POST)
-		{
-			oss << "Content-Length: " << _body.length() << "\r\n";
-		}
-		if (_method == HttpRequest::Method::POST)
-		{
-			if (!_contentType.empty())
-			{
-				oss << "Content-Type: " << _contentType << "\r\n";
-			}
-			oss << "\r\n";
-			oss << _body;
-		}
-		else
-		{
-			oss << "\r\n";
-		}
+			<< "User-Agent: " << Server::httpName() << "\r\n"
+			<< "Pragma: no-cache\r\n"
+			<< "Cache-Control: no-cache\r\n"
+			<< "Connection: Upgrade\r\n"
+			<< "Upgrade: websocket\r\n"
+			<< "Sec-WebSocket-Version: 13\r\n"
+			<< "Sec-WebSocket-Key: " << context->key() << "\r\n"
+			<< "\r\n";
 
 //		_log.debug("REQUEST: %s", _uri.str().c_str());
 
@@ -254,7 +251,7 @@ void HttpRequestExecutor::submit()
 	}
 }
 
-void HttpRequestExecutor::exceptionAtSubmit()
+void WsCommunicator::exceptionAtSubmit()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::SUBMIT)
@@ -270,14 +267,14 @@ void HttpRequestExecutor::exceptionAtSubmit()
 	done();
 }
 
-void HttpRequestExecutor::failProcessing()
+void WsCommunicator::failProcessing()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (
 		_state != State::CONNECTED &&
 		_state != State::SUBMIT &&
 		_state != State::SUBMITED
-	)
+		)
 	{
 		_log.warn("Bad step: failProcessing");
 		return;
@@ -290,59 +287,33 @@ void HttpRequestExecutor::failProcessing()
 	done();
 }
 
-void HttpRequestExecutor::onComplete()
+void WsCommunicator::onComplete()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-	if (_state == State::COMPLETE)
-	{
-		return;
-	}
 	if (_state != State::SUBMITED)
 	{
 		_log.warn("Bad step: complete");
 		return;
 	}
 
-	auto context = std::dynamic_pointer_cast<HttpContext>(_connection->getContext());
-	if (!context)
-	{
-		throw std::runtime_error("Bad context");
-	}
-
-	if (!context->getResponse())
-	{
-		_error = "Complete with error (No response)";
-		onError();
-		return;
-	}
-
-	_answer = std::string(context->getResponse()->dataPtr(), context->getResponse()->dataLen());
-
-	if (context->getResponse()->statusCode() != 200)
-	{
-		_error = "No OK response: " + std::to_string(context->getResponse()->statusCode()) + " " + context->getResponse()->statusMessage();
-		onError();
-		return;
-	}
+	_connection->setTtl(std::chrono::seconds(10));
 
 	_error.clear();
 
-	_log.trace("Completed");
-	_state = State::COMPLETE;
-
-	_connection->setTtl(std::chrono::milliseconds(50));
+	_log.trace("Established");
+	_state = State::ESTABLISHED;
 
 	done();
 }
 
-void HttpRequestExecutor::onError()
+void WsCommunicator::onError()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (
 		_state != State::CONNECTED &&
 		_state != State::SUBMIT &&
 		_state != State::SUBMITED
-	)
+		)
 	{
 		_log.warn("Bad step: failProcessing");
 		return;
@@ -357,11 +328,15 @@ void HttpRequestExecutor::onError()
 	done();
 }
 
-void HttpRequestExecutor::done()
+void WsCommunicator::done()
 {
 	_log.trace("Cleanup...");
 
-	_connection.reset();
+	if (_state != State::ESTABLISHED)
+	{
+		_connection.reset();
+	}
+
 	_connector.reset();
 
 	_log.trace("Done");

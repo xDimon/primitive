@@ -22,7 +22,7 @@
 #include <random>
 #include "WsContext.hpp"
 #include "../../utils/Base64.hpp"
-#include "../WebsocketPipe.hpp"
+#include "WsPipe.hpp"
 
 const std::string& WsContext::key()
 {
@@ -53,7 +53,7 @@ void WsContext::setEstablished()
 	_request.reset();
 	_response.reset();
 
-	auto transport = std::make_shared<WebsocketPipe>(_handler);
+	auto transport = std::make_shared<WsPipe>(_handler);
 
 	connection->setTransport(transport);
 

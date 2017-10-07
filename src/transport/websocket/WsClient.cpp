@@ -16,20 +16,20 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.10.06
 
-// WebsocketClient.cpp
+// WsClient.cpp
 
 
 #include <string.h>
-#include "WebsocketClient.hpp"
-#include "../net/TcpConnection.hpp"
-#include "http/HttpContext.hpp"
-#include "websocket/WsContext.hpp"
-#include "../utils/Base64.hpp"
-#include "../utils/hash/SHA1.hpp"
-#include "../net/ConnectionManager.hpp"
-#include "WebsocketPipe.hpp"
+#include "WsClient.hpp"
+#include "../../net/TcpConnection.hpp"
+#include "../http/HttpContext.hpp"
+#include "WsContext.hpp"
+#include "../../utils/Base64.hpp"
+#include "../../utils/hash/SHA1.hpp"
+#include "../../net/ConnectionManager.hpp"
+#include "WsPipe.hpp"
 
-bool WebsocketClient::processing(const std::shared_ptr<Connection>& connection_)
+bool WsClient::processing(const std::shared_ptr<Connection>& connection_)
 {
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
