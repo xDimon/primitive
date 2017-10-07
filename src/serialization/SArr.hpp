@@ -52,8 +52,8 @@ public:
 	SArr* clone() const override
 	{
 		SArr *copy = new SArr();
-		forEach([&](const SVal& value){
-			copy->insert(value.clone());
+		forEach([&](const SVal* value){
+			copy->insert(value->clone());
 		});
 		return copy;
 	}
@@ -118,19 +118,21 @@ public:
 		insert(new SNull());
 	}
 
+	const SVal* operator[](size_t index) const
+	{
+		return index < _elements.size() ? _elements[index] : nullptr;
+	}
+
+	SVal* operator[](size_t index)
+	{
+		return index < _elements.size() ? _elements[index] : nullptr;
+	}
+
 	void forEach(std::function<void (const SVal*)> handler) const
 	{
 		for (auto const& element : _elements)
 		{
 			handler(element);
-		}
-	}
-
-	void forEach(std::function<void (const SVal&)> handler) const
-	{
-		for (auto const& element : _elements)
-		{
-			handler(*element);
 		}
 	}
 

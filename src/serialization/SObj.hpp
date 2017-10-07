@@ -31,6 +31,7 @@
 #include "SInt.hpp"
 #include "SFloat.hpp"
 #include "SNull.hpp"
+#include "SArr.hpp"
 
 class SObj : public SVal
 {
@@ -53,8 +54,8 @@ public:
 	SObj* clone() const override
 	{
 		SObj *copy = new SObj();
-		forEach([&](const std::string& key, const SVal& value){
-			copy->insert(key, value.clone());
+		forEach([&](const std::string& key, const SVal* value){
+			copy->insert(key, value->clone());
 		});
 		return copy;
 	}
@@ -146,14 +147,6 @@ public:
 		}
 	}
 
-	void forEach(std::function<void(const std::string&, const SVal&)> handler) const
-	{
-		for (auto const& element : _elements)
-		{
-			handler(element.first, *element.second);
-		}
-	}
-
 	int64_t getAsInt(const std::string& key, int64_t defaultValue = 0LL) const
 	{
 		auto val = get(key);
@@ -168,6 +161,14 @@ public:
 	{
 		auto val = get(key);
 		return val ? (std::string)(*val) : defaultValue;
+	}
+	const SArr* getAsArr(const std::string& key) const
+	{
+		return dynamic_cast<const SArr*>(get(key));
+	}
+	const SObj* getAsObj(const std::string& key) const
+	{
+		return dynamic_cast<const SObj*>(get(key));
 	}
 
 	template<typename T>
@@ -202,8 +203,72 @@ public:
 		value = (double)(*element);
 	}
 
+	template<typename T, typename _ = void>
+	struct is_container : std::false_type
+	{
+	};
+
+	template<typename... Ts>
+	struct is_container_helper
+	{
+	};
+
 	template<typename T>
-	typename std::enable_if<!std::is_integral<T>::value && !std::is_floating_point<T>::value, void>::type
+	struct is_container<
+		T,
+		std::conditional_t<
+			false,
+			is_container_helper<
+				typename T::value_type,
+				typename T::size_type,
+				typename T::allocator_type,
+				typename T::iterator,
+				typename T::const_iterator,
+				decltype(std::declval<T>().size()),
+				decltype(std::declval<T>().begin()),
+				decltype(std::declval<T>().end()),
+				decltype(std::declval<T>().cbegin()),
+				decltype(std::declval<T>().cend())
+			>,
+			void
+		>
+	> : public std::true_type
+	{
+	};
+
+	template<typename T>
+	typename std::enable_if<is_container<T>::value, void>::type
+	lookup(const std::string& key, T &value, bool strict = false) const
+	{
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error("Field '" + key + "' not found");
+		}
+		auto arr = dynamic_cast<const SArr*>(element);
+		if (arr)
+		{
+			arr->forEach([&value](const SVal* val) {
+				value.emplace_back(*val);
+			});
+			return;
+		}
+		auto obj = dynamic_cast<const SObj*>(element);
+		if (obj)
+		{
+			obj->forEach([&value](const std::string&, const SVal* val) {
+				value.emplace_back(*val);
+			});
+			return;
+		}
+		if (strict)
+		{
+			throw std::runtime_error("Field '" + key + "' isn't appropriate container");
+		}
+	}
+
+	template<typename T>
+	typename std::enable_if<!std::is_integral<T>::value && !std::is_floating_point<T>::value && !is_container<T>::value, void>::type
 	lookup(const std::string& key, T &value, bool strict = false) const
 	{
 		const auto element = get(key);
@@ -282,4 +347,18 @@ public:
 	{
 		return !_elements.empty();
 	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 };
