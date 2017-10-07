@@ -19,12 +19,10 @@
 // String.cpp
 
 
+#include <sstream>
 #include "String.hpp"
 
-namespace String
-{
-
-size_t utf8strlen(const char *s)
+size_t String::utf8strlen(const char *s)
 {
 	size_t i = 0, j = 0;
 	while(s[i])
@@ -35,4 +33,14 @@ size_t utf8strlen(const char *s)
 	return j;
 }
 
+std::vector<std::string> String::split(const std::string& in, char separator)
+{
+	std::istringstream iss(in);
+	std::vector<std::string> param;
+	std::string s;
+	while (std::getline(iss, s, separator))
+	{
+		param.push_back(std::move(s));
+	}
+	return std::move(param);
 }

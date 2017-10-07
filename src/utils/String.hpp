@@ -26,6 +26,7 @@
 #include <functional>
 #include <iterator>
 #include <string>
+#include <vector>
 
 namespace String
 {
@@ -51,4 +52,6 @@ namespace String
 	    ltrim(s);
 	    rtrim(s);
 	}
+
+	std::vector<std::string> split(const std::string& in, char separator = ' ');
 }
