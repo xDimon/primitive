@@ -58,5 +58,5 @@ public:
 	static void unregThread();
 
 	static const std::tuple<std::shared_ptr<Sink>, Log::Detail>& getSinkAndLevel(const std::string& loggerName);
-	static const std::shared_ptr<Sink>& getSink(const std::string& sinkName);
+	static std::shared_ptr<Sink> getSink(const std::string& sinkName);
 };

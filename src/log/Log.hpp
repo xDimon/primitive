@@ -71,6 +71,11 @@ public:
 	~Log() = default;
 
 	void setName(const std::string& name);
+
+	Detail detail() const
+	{
+		return _detail;
+	}
 	void setDetail(Detail detail);
 
 	template<typename... Args>

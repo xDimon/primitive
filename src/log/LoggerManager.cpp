@@ -218,7 +218,7 @@ const std::tuple<std::shared_ptr<Sink>, Log::Detail>& LoggerManager::getSinkAndL
 	return i->second;
 }
 
-const std::shared_ptr<Sink>& LoggerManager::getSink(const std::string& name)
+std::shared_ptr<Sink> LoggerManager::getSink(const std::string& name)
 {
 	auto& lm = getInstance();
 
