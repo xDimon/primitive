@@ -245,7 +245,7 @@ void ConnectionManager::wait()
 			events |= static_cast<uint32_t>(ConnectionEvent::ERROR);
 		}
 
-		_log.trace("Catch events `%s` (%04x) on %s", fdEvent, ConnectionEvent::code(events), connection->name().c_str());
+		_log.trace("Catch events `%s` (%04x) on %s", ConnectionEvent::code(events).c_str(), fdEvent, connection->name().c_str());
 
 		connection->appendEvents(events);
 

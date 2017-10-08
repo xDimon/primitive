@@ -71,6 +71,8 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 						<< "Bad request ← Bad request line ← Bad method ← Unknown method" << "\r\n"
 						>> *connection;
 
+					_log.info("HTTP Unsupported method in request line");
+
 					connection->setTtl(std::chrono::milliseconds(50));
 					break;
 				}
@@ -101,6 +103,8 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					<< "Headers data too large\r\n"
 					>> *connection;
 
+				_log.info("HTTP Bad request: headers too large");
+
 				connection->setTtl(std::chrono::milliseconds(50));
 				break;
 			}
@@ -126,6 +130,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 				connection->setTtl(std::chrono::milliseconds(50));
 
 				_log.debug("Bad request");
+				_log.info("HTTP Bad request");
 				break;
 			}
 
@@ -192,6 +197,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					>> *connection;
 
 				_log.debug("RESPONSE: 404 Not found service-handler for uri %s", context->getRequest()->uri().path().c_str());
+				_log.info("HTTP Not found '%s' for '%s'", context->getRequest()->uri().path().c_str(), context->getRequest()->uri().str().c_str());
 
 				connection->resetContext();
 				connection->setTtl(std::chrono::milliseconds(50));

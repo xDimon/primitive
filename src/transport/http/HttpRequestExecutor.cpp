@@ -100,7 +100,7 @@ bool HttpRequestExecutor::operator()()
 	}
 	catch (const std::exception& exception)
 	{
-		_error = "Internal error: Uncatched exception at connect ← ";
+		_error = "Exception at connect ← ";
 		_error += exception.what();
 
 		exceptionAtConnect();
@@ -121,6 +121,10 @@ void HttpRequestExecutor::failConnect()
 	_log.trace("Fail connect");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Fail connect";
+	}
 
 	done();
 }
@@ -137,6 +141,10 @@ void HttpRequestExecutor::exceptionAtConnect()
 	_log.trace("Exception at connect");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Exception at connect";
+	}
 
 	done();
 }
@@ -266,6 +274,10 @@ void HttpRequestExecutor::exceptionAtSubmit()
 	_log.trace("Exception at submit");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Exception at submit";
+	}
 
 	done();
 }
@@ -286,6 +298,10 @@ void HttpRequestExecutor::failProcessing()
 	_log.trace("Error after connected");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Exception after connected";
+	}
 
 	done();
 }
@@ -351,6 +367,10 @@ void HttpRequestExecutor::onError()
 	_log.trace("Error at processing");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Error at processing";
+	}
 
 	_connection->setTtl(std::chrono::milliseconds(50));
 

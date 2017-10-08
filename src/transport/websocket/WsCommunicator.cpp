@@ -107,7 +107,7 @@ bool WsCommunicator::operator()()
 	}
 	catch (const std::exception& exception)
 	{
-		_error = "Internal error: Uncatched exception at connect ← ";
+		_error = "Exception at connect ← ";
 		_error += exception.what();
 
 		exceptionAtConnect();

@@ -79,6 +79,8 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 
 			_log.debug("Sent policy file");
 
+			_log.info("WS  Sent policy");
+
 			return true;
 		}
 
@@ -97,6 +99,7 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 			connection->resetContext();
 
 			_log.debug("Bad initial request");
+			_log.info("WS  Unsupported method in request line");
 
 			return true;
 		}
@@ -126,6 +129,8 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 
 		connection->resetContext();
 		connection->setTtl(std::chrono::milliseconds(50));
+
+		_log.info("WS  Bad request: headers too large");
 
 		return true;
 	}
@@ -167,6 +172,7 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 			request->getHeader("Sec-WebSocket-Key").empty()
 		)
 		{
+			_log.info("WS  Bad HTTP headers for '%s'", context->getRequest()->uri().str().c_str());
 			throw std::runtime_error("Bad headers");
 		}
 
@@ -183,6 +189,8 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 				<< HttpHeader("Connection", "Close")
 				<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
 				>> *connection;
+
+			_log.info("WS  Not found '%s' for '%s'", context->getRequest()->uri().path().c_str(), context->getRequest()->uri().str().c_str());
 
 			connection->resetContext();
 			connection->setTtl(std::chrono::milliseconds(50));
