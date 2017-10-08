@@ -39,7 +39,7 @@ std::shared_ptr<Metric> TelemetryManager::metric(
 	const auto& i = instance._metrics.find(name);
 	if (i != instance._metrics.end())
 	{
-		return i->second.lock();
+		return i->second;
 	}
 
 	auto metric = std::make_shared<Metric>(
@@ -73,7 +73,7 @@ std::shared_ptr<Metric> TelemetryManager::metric(
 	const auto& i = instance._metrics.find(name);
 	if (i != instance._metrics.end())
 	{
-		return i->second.lock();
+		return i->second;
 	}
 
 	auto metric = std::make_shared<Metric>(
@@ -88,4 +88,10 @@ std::shared_ptr<Metric> TelemetryManager::metric(
 	instance._metrics.emplace(metric->name(), metric);
 
 	return metric;
+}
+
+const std::map<std::string, std::shared_ptr<Metric>>& TelemetryManager::metrics()
+{
+	auto& instance = getInstance();
+	return instance._metrics;
 }

@@ -21,7 +21,6 @@
 
 #pragma once
 
-
 #include <deque>
 #include <memory>
 #include <map>
@@ -48,7 +47,7 @@ private:
 
 	std::mutex _mutex;
 
-	std::map<std::string, std::weak_ptr<Metric>> _metrics;
+	std::map<std::string, std::shared_ptr<Metric>> _metrics;
 
 public:
 	static std::shared_ptr<Metric> metric(
@@ -68,4 +67,6 @@ public:
 		Metric::type min = std::numeric_limits<Metric::type>::min(),
 		Metric::type max = std::numeric_limits<Metric::type>::max()
 	);
+
+	static const std::map<std::string, std::shared_ptr<Metric>>& metrics();
 };
