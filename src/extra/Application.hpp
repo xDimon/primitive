@@ -59,7 +59,7 @@ public:
     ApplicationFactory::reg(                                                                    \
         #Type,                                                                                  \
         [](const Setting& setting){                                                             \
-            return std::shared_ptr<Application>(new Class(setting));                            \
+            return std::shared_ptr<::Application>(new Class(setting));                          \
         }                                                                                       \
     );
 

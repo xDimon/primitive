@@ -29,14 +29,15 @@
 
 class ApplicationFactory
 {
-private:
-	ApplicationFactory() {};
-
-	virtual ~ApplicationFactory() {};
-
-	ApplicationFactory(ApplicationFactory const&) = delete;
-
+public:
+	ApplicationFactory(const ApplicationFactory&) = delete;
 	void operator=(ApplicationFactory const&) = delete;
+	ApplicationFactory(ApplicationFactory&&) = delete;
+	ApplicationFactory& operator=(ApplicationFactory&&) = delete;
+
+private:
+	ApplicationFactory() = default;
+	~ApplicationFactory() = default;
 
 	static ApplicationFactory& getInstance()
 	{
