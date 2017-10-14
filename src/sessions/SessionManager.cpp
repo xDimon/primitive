@@ -82,3 +82,13 @@ void SessionManager::closeSession(Session::HID uid)
 
 	getInstance()._sessions.erase(i);
 }
+
+void SessionManager::forEach(const std::function<void(const std::shared_ptr<Session>&)>& handler)
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
+
+	for (auto i : getInstance()._sessions)
+	{
+		handler(i.second);
+	}
+}

@@ -62,4 +62,6 @@ public:
 	static void closeSession(Session::HID hid);
 
 	static std::shared_ptr<Session> putSession(const std::shared_ptr<Session>& session);
+
+	static void forEach(const std::function<void(const std::shared_ptr<Session>&)>& handler);
 };

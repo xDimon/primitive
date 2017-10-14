@@ -120,3 +120,13 @@ void Transports::disableAll()
 		i.second->disable();
 	}
 }
+
+void Transports::forEach(const std::function<void(const std::shared_ptr<ServerTransport>&)>& handler)
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+	for (auto i : getInstance()._registry)
+	{
+		handler(i.second);
+	}
+}

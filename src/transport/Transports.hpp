@@ -59,4 +59,6 @@ public:
 
 	static bool enableAll();
 	static void disableAll();
+
+	static void forEach(const std::function<void(const std::shared_ptr<ServerTransport>&)>& handler);
 };
