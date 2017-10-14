@@ -27,6 +27,7 @@
 
 #include "ConnectionManager.hpp"
 #include "../utils/Daemon.hpp"
+#include "../thread/Coroutine.hpp"
 
 TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& hostname, std::uint16_t port)
 : Connector(transport)
@@ -97,6 +98,8 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 
 	_addrIterator = _hostptr->h_addr_list;
 
+	errno = 0;
+
 	for ( ; *_addrIterator; ++_addrIterator)
 	{
 		// Инициализируем структуру нулями
@@ -116,12 +119,6 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 		if (connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)) == 0)
 		{
 			throw std::runtime_error(std::string("Too fast connect to ") + _host);
-
-//			// Подключились сразу?!
-//			createConnection(_sock, _sockaddr);
-//			_sock = -1;
-//			_closed = true;
-//			goto end;
 		}
 
 		// Вызов прерван сигналом - повторяем
@@ -134,6 +131,13 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 		if (errno == EINPROGRESS)
 		{
 			goto end;
+		}
+
+		// Нет доступных пар адрес-порт для исходящего соединения
+		if (errno == EADDRNOTAVAIL)
+		{
+			Coroutine(std::make_shared<Task>(std::make_shared<Task::Func>([](){})));
+			goto again;
 		}
 	}
 
@@ -200,7 +204,7 @@ bool TcpConnector::processing()
 				_sock = -1;
 				_closed = true;
 
-				newConnection->setTtl(std::chrono::seconds(15));
+				newConnection->setTtl(std::chrono::seconds(60));
 
 				ConnectionManager::add(newConnection);
 
@@ -251,6 +255,13 @@ bool TcpConnector::processing()
 		{
 			_log.debug("End processing on %s: In progress", name().c_str());
 			return true;
+		}
+
+		// Нет доступных пар адрес-порт для исходящего соединения
+		if (errno == EADDRNOTAVAIL)
+		{
+			Coroutine(std::make_shared<Task>(std::make_shared<Task::Func>([](){})));
+			goto again;
 		}
 	}
 

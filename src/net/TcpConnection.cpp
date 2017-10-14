@@ -35,6 +35,9 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 {
 	_sock = sock;
 
+	const int val = 1;
+	setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+
 	_closed = _sock < 0;
 
 	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
