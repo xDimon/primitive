@@ -180,7 +180,7 @@ bool TcpAcceptor::processing()
 
 void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 {
-	std::shared_ptr<Transport> transport = _transport.lock();
+	auto transport = std::dynamic_pointer_cast<ServerTransport>(_transport.lock());
 	if (!transport)
 	{
 		return;

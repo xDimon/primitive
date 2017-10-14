@@ -96,6 +96,10 @@ public:
 	{
 		_transport = transport;
 	}
+	auto transport()
+	{
+		return _transport.lock();
+	}
 
 	virtual bool isClosed() const
 	{
