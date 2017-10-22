@@ -24,6 +24,7 @@
 
 #include "../Transport.hpp"
 #include "../../net/TcpConnection.hpp"
+#include "../../telemetry/Metric.hpp"
 
 class WsPipe : public Transport
 {
@@ -41,6 +42,10 @@ public:
 	);
 
 	~WsPipe() override;
+
+	std::shared_ptr<Metric> metricRequestCount;
+	std::shared_ptr<Metric> metricAvgRequestPerSec;
+	std::shared_ptr<Metric> metricAvgExecutionTime;
 
 	bool processing(const std::shared_ptr<Connection>& connection) override;
 

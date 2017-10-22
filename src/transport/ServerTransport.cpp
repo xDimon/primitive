@@ -23,6 +23,7 @@
 #include "ServerTransport.hpp"
 #include "../net/ConnectionManager.hpp"
 #include "../thread/ThreadPool.hpp"
+#include "../telemetry/TelemetryManager.hpp"
 
 static uint32_t id4noname = 0;
 
@@ -42,6 +43,11 @@ ServerTransport::ServerTransport(const Setting& setting)
 	_name = std::move(name);
 
 	_acceptorCreator = AcceptorFactory::creator(setting);
+
+	metricConnectCount = TelemetryManager::metric("transport/" + _name + "/connections", 1);
+	metricRequestCount = TelemetryManager::metric("transport/" + _name + "/requests", 1);
+	metricAvgRequestPerSec = TelemetryManager::metric("transport/" + _name + "/requests_per_second", std::chrono::seconds(15));
+	metricAvgExecutionTime = TelemetryManager::metric("transport/" + _name + "/requests_exec_time", std::chrono::seconds(15));
 }
 
 bool ServerTransport::enable()

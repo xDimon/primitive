@@ -30,6 +30,7 @@
 #include "../configs/Setting.hpp"
 #include "../serialization/SerializerFactory.hpp"
 #include "../utils/Context.hpp"
+#include "../telemetry/Metric.hpp"
 
 #include <memory>
 #include <functional>
@@ -48,7 +49,12 @@ public:
 	ServerTransport& operator=(ServerTransport&&) = delete;
 
 	explicit ServerTransport(const Setting& setting);
-	~ServerTransport() override = default ;
+	~ServerTransport() override = default;
+
+	std::shared_ptr<Metric> metricConnectCount;
+	std::shared_ptr<Metric> metricRequestCount;
+	std::shared_ptr<Metric> metricAvgRequestPerSec;
+	std::shared_ptr<Metric> metricAvgExecutionTime;
 
 	virtual bool enable() final;
 	virtual bool disable() final;

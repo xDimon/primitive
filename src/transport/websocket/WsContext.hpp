@@ -49,7 +49,7 @@ public:
 
 	const std::string& key();
 
-	const std::shared_ptr<WsFrame>& getFrame()
+	std::shared_ptr<WsFrame> getFrame()
 	{
 		return _frame;
 	}

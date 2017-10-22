@@ -47,4 +47,6 @@ void SslAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
 	newConnection->setTtl(std::chrono::seconds(5));
 
 	ConnectionManager::add(newConnection->ptr());
+
+	transport->metricConnectCount->addValue();
 }

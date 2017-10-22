@@ -38,7 +38,7 @@ public:
 	{};
 	virtual ~HttpContext() = default;
 
-	const std::shared_ptr<HttpRequest>& getRequest()
+	std::shared_ptr<HttpRequest> getRequest()
 	{
 		return _request;
 	}
@@ -51,7 +51,7 @@ public:
 		_request.reset();
 	}
 
-	const std::shared_ptr<HttpResponse>& getResponse()
+	std::shared_ptr<HttpResponse> getResponse()
 	{
 		return _response;
 	}

@@ -55,6 +55,14 @@ void WsContext::setEstablished()
 
 	auto transport = std::make_shared<WsPipe>(_handler);
 
+	auto prevTransport = std::dynamic_pointer_cast<ServerTransport>(connection->transport());
+	if (prevTransport)
+	{
+		transport->metricRequestCount = prevTransport->metricRequestCount;
+		transport->metricAvgRequestPerSec = prevTransport->metricAvgRequestPerSec;
+		transport->metricAvgExecutionTime = prevTransport->metricAvgExecutionTime;
+	}
+
 	connection->setTransport(transport);
 
 	_transmitter =

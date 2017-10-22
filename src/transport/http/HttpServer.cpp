@@ -237,7 +237,18 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 				)
 			);
 
+			if (metricRequestCount) metricRequestCount->addValue();
+			if (metricAvgRequestPerSec) metricAvgRequestPerSec->addValue();
+			auto beginTime = std::chrono::steady_clock::now();
+
 			context->handle();
+
+			auto now = std::chrono::steady_clock::now();
+			auto timeSpent = static_cast<double>((now - beginTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+			if (timeSpent > 0)
+			{
+				if (metricAvgExecutionTime) metricAvgExecutionTime->addValue(timeSpent, now);
+			}
 
 			connection->resetContext();
 			n++;
