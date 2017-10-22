@@ -21,8 +21,8 @@
 
 #include <cxxabi.h>
 #include "Action.hpp"
-
-uint64_t Action::_requestCount = 0;
+#include "../utils/NopeException.hpp"
+#include "../telemetry/TelemetryManager.hpp"
 
 Action::Action(
 	const std::shared_ptr<ServicePart>& servicePart,
@@ -75,11 +75,6 @@ Action::Action(
 	}
 
 	_data = dynamic_cast<const SVal*>(input->get("data"));
-}
-
-Action::~Action()
-{
-	_requestCount++;
 }
 
 const SObj* Action::response(const SVal* data) const
@@ -138,4 +133,57 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 	_answerSent = true;
 
 	return error.release();
+}
+
+bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_point beginExecTime)
+{
+	bool throwNope = false;
+
+	TelemetryManager::metric(where + "/" + _actionName + "/count", 1)->addValue();
+	TelemetryManager::metric(where + "/" + _actionName + "/avg_per_sec", std::chrono::seconds(15))->addValue();
+
+	// Валидация
+	try
+	{
+		if (!validate())
+		{
+			throw std::runtime_error("Data isn't valid");
+		}
+	}
+	catch (const std::exception& exception)
+	{
+		TelemetryManager::metric(where + "/" + _actionName + "/invalid", 1)->addValue();
+		throw std::runtime_error(std::string() + "Fail validation of action data ← " + exception.what());
+	}
+
+	// Выполнение
+	try
+	{
+		if (!execute())
+		{
+			throw std::runtime_error("Fail execute of action");
+		}
+	}
+	catch (const NopeException& exception)
+	{
+		throwNope = true;
+	}
+	catch (const std::exception& exception)
+	{
+		TelemetryManager::metric(where + "/" + _actionName + "/fail", 1)->addValue();
+		throw std::runtime_error(std::string() + "Fail execute of action ← " + exception.what());
+	}
+
+	TelemetryManager::metric(where + "/" + _actionName + "/success", 1)->addValue();
+
+	auto now = std::chrono::steady_clock::now();
+	auto timeSpent = static_cast<double>((now - beginExecTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+	if (timeSpent > 0)
+	{
+		TelemetryManager::metric(where + "/" + _actionName + "/avg_exec_time", std::chrono::seconds(15))->addValue(timeSpent, now);
+	}
+
+	if (throwNope) throw NopeException{};
+
+	return true;
 }

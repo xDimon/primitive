@@ -36,7 +36,6 @@ protected:
 
 	std::string _actionName;
 
-	static uint64_t _requestCount;
 	std::shared_ptr<Service> _service;
 	std::shared_ptr<ServicePart> _servicePart;
 	std::shared_ptr<Context> _context;
@@ -45,6 +44,9 @@ protected:
 	Id _lastConfirmedEvent;
 	Id _lastConfirmedResponse;
 	mutable bool _answerSent;
+
+	virtual bool validate() = 0;
+	virtual bool execute() = 0;
 
 public:
 	Action() = delete;
@@ -58,16 +60,14 @@ public:
 		const std::shared_ptr<Context>& context,
 		const SVal* input
 	);
-	virtual ~Action();
+	virtual ~Action() = default;
 
-	static inline auto getCount()
+	inline auto name()
 	{
-		return _requestCount;
+		return _actionName;
 	}
 
-	virtual bool validate() = 0;
-
-	virtual bool execute() = 0;
+	bool doIt(const std::string& where, std::chrono::steady_clock::time_point beginExecTime = std::chrono::steady_clock::now());
 
 	std::shared_ptr<ServicePart> servicePart() const
 	{
@@ -135,10 +135,10 @@ private:                                                                        
 public:                                                                                         \
     ~ActionName() override = default;                                                           \
                                                                                                 \
+private:                                                                                        \
     bool validate() override;                                                                   \
     bool execute() override;                                                                    \
                                                                                                 \
-private:                                                                                        \
     static auto create(                                                                         \
 		const std::shared_ptr<::ServicePart>& servicePart,                                      \
 		const std::shared_ptr<Context>& context,                                                \
