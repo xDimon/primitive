@@ -53,7 +53,7 @@ private:
 public:
 	static const std::string& ExePath();
 
-	static void SetProcessName();
+	static void SetProcessName(const std::string& processName = "");
 
 	static void SignalsHandler(int sig, siginfo_t* info, void* context);
 

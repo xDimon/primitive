@@ -66,16 +66,23 @@ const std::string& Daemon::ExePath()
 	return result;
 }
 
-void Daemon::SetProcessName()
+void Daemon::SetProcessName(const std::string& processName)
 {
+	if (processName.empty())
+	{
 	// Назначаем имя процесса
 #ifdef PROJECT_NAME
-	#define HELPER4QUOTE(N) #N
+  #define HELPER4QUOTE(N) #N
 	prctl(PR_SET_NAME, HELPER4QUOTE(PROJECT_NAME));
- #undef HELPER4QUOTE
+  #undef HELPER4QUOTE
 #else
-	prctl(PR_SET_NAME, "primitive");
+		prctl(PR_SET_NAME, "primitive");
 #endif
+	}
+	else
+	{
+		prctl(PR_SET_NAME, processName.c_str());
+	}
 }
 
 void Daemon::SetDaemonMode()
@@ -240,7 +247,7 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 	actions:
 
 	// Выгрузка стека
-	if (needBacktrace)
+	if (false && needBacktrace)
 	{
 		void *bt[128];
 		int n = backtrace(bt, 128);

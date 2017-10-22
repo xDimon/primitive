@@ -28,6 +28,7 @@
 #include "../transport/Transports.hpp"
 #include "../telemetry/SysInfo.hpp"
 #include "../services/Services.hpp"
+#include "../utils/Daemon.hpp"
 
 Server* Server::_instance = nullptr;
 
@@ -49,6 +50,11 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	{
 		const auto& settings = _configs->getRoot()["core"];
 
+		std::string processName;
+		if (settings.lookupValue("processName", processName) && !processName.empty())
+		{
+			Daemon::SetProcessName(processName);
+		}
 		if (!settings.lookupValue("workers", _workerCount))
 		{
 			_workerCount = std::thread::hardware_concurrency();
