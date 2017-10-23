@@ -47,7 +47,7 @@ MysqlConnection::MysqlConnection(
 
 	mysql_options(_mysql, MYSQL_OPT_RECONNECT, &on);
 	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
-	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8mb4");
 	mysql_options(_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+00:00';\n");
 
 	if (mysql_real_connect(
@@ -192,6 +192,8 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 
 	auto beginTime = std::chrono::steady_clock::now();
 	if (pool) pool->metricAvgQueryPerSec->addValue();
+
+	Log("mysql").debug("MySQL query: %s", sql.c_str());
 
 	// Выполнение запроса
 	auto success = mysql_query(_mysql, sql.c_str()) == 0;

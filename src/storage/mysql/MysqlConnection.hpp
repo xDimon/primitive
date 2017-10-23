@@ -63,17 +63,9 @@ public:
 
 	std::string escape(const std::string& str) override
 	{
-		std::string res;
-		res.reserve(str.length() * 2);
-		for (char c : str)
-		{
-			if (c == '\x00' || c == '\n' || c == '\r' || c == '\\' || c == '\'' || c == '"' || c == '\x1A')
-			{
-				res.push_back('\\');
-			}
-			res.push_back(c);
-		}
-		return std::move(res);
+		auto buff = new char[str.length() * 4 + 1];
+		mysql_escape_string(buff, str.c_str(), str.length());
+		return std::string(buff);
 	}
 
 	bool alive() override
