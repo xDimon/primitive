@@ -52,22 +52,22 @@ Timestamp interval(Time::Interval interval, size_t number)
 	switch (interval)
 	{
 		case Interval::ZERO:
-			return ((number!=0) ? number : 1) * 0;
+			return /*number * */0;
 
 		case Interval::SECOND:
-			return ((number!=0) ? number : 1) * 1;
+			return number/* * 1*/;
 
 		case Interval::MINUTE:
-			return ((number!=0) ? number : 1) * 60;
+			return number * 60;
 
 		case Interval::HOUR:
-			return ((number!=0) ? number : 1) * 3600;
+			return number * 3600;
 
 		case Interval::DAY:
-			return ((number!=0) ? number : 1) * 86400;
+			return number * 86400;
 
 		case Interval::WEEK:
-			return ((number!=0) ? number : 1) * 86400 * 7;
+			return number * 86400 * 7;
 
 		case Interval::MONTH:
 		{
@@ -76,7 +76,7 @@ Timestamp interval(Time::Interval interval, size_t number)
 
 			localtime_r(&ts, &tm);
 
-			tm.tm_mon += ((number!=0) ? number : 1);
+			tm.tm_mon += number;
 
 			time_t ts2 = mktime(&tm);
 			ts2 += tm.tm_gmtoff;
@@ -91,7 +91,7 @@ Timestamp interval(Time::Interval interval, size_t number)
 
 			localtime_r(&ts, &tm);
 
-			tm.tm_year += ((number!=0) ? number : 1);
+			tm.tm_year += number;
 
 			time_t ts2 = mktime(&tm);
 			ts2 += tm.tm_gmtoff;

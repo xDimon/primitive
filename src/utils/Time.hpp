@@ -62,7 +62,7 @@ inline Timestamp now()
 	return std::time(nullptr);
 }
 
-Timestamp interval(Time::Interval interval, size_t number = 0);
+Timestamp interval(Time::Interval interval, size_t number = 1);
 
 Timestamp trim(Timestamp value, Time::Interval quantity);
 
