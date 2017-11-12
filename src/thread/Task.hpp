@@ -41,7 +41,7 @@ private:
 	Time _until;
 
 protected:
-	ucontext_t* _tmpContext;
+public:
 	ucontext_t* _mainContext;
 
 public:
@@ -62,7 +62,7 @@ public:
 
 	virtual bool operator()();
 
-	const std::shared_ptr<Func> func() const
+	std::shared_ptr<Func> func() const
 	{
 		return _function;
 	}
@@ -72,6 +72,6 @@ public:
 		return _until;
 	}
 
-	void saveContext(ucontext_t* tmpContext, ucontext_t* mainContext);
+	void saveContext(ucontext_t* mainContext);
 	void restoreContext() const;
 };

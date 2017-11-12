@@ -23,6 +23,7 @@
 #include "Coroutine.hpp"
 #include "ThreadPool.hpp"
 #include "../utils/Daemon.hpp"
+#include "RollbackStackAndRestoreContext.hpp"
 
 void Coroutine(const std::shared_ptr<Task>& task)
 {
@@ -33,12 +34,11 @@ void Coroutine(const std::shared_ptr<Task>& task)
 
 	std::mutex orderMutex;
 	ucontext_t mainContext{};
-	ucontext_t tmpContext{};
 
 	volatile bool first = true;
 
 	// сохранить указатели на контексты
-	task->saveContext(&tmpContext, &mainContext);
+	task->saveContext(&mainContext);
 
 	// сохранить текущий контекст
 	getcontext(&mainContext);
@@ -68,6 +68,10 @@ void Coroutine(const std::shared_ptr<Task>& task)
 					try
 					{
 						(*task)();
+					}
+					catch (const RollbackStackAndRestoreContext& exception)
+					{
+						throw;
 					}
 					catch (const std::exception& exception)
 					{

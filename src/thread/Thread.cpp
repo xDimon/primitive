@@ -102,12 +102,19 @@ void Thread::reenter()
 	getcontext(&context);
 	context.uc_link = &retContext;
 	context.uc_stack.ss_flags = 0;
-	context.uc_stack.ss_size = PTHREAD_STACK_MIN;
+	context.uc_stack.ss_size = 1<<20;// PTHREAD_STACK_MIN;
 	context.uc_stack.ss_sp = mmap(
 		nullptr, context.uc_stack.ss_size,
 		PROT_READ | PROT_WRITE | PROT_EXEC,
 		MAP_PRIVATE | MAP_ANON, -1, 0
 	);
+
+
+	if (context.uc_stack.ss_sp == MAP_FAILED)
+	{
+		_log.warn("Can't to map memory for stack of context");
+		return;
+	}
 
 	makecontext(&context, reinterpret_cast<void (*)()>(coroutine), 1, this);
 
@@ -124,11 +131,9 @@ void Thread::reenter()
 			throw std::runtime_error("Can't change context");
 		}
 	}
-	else
-	{
-		munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
-		context.uc_stack.ss_sp = nullptr;
-		context.uc_stack.ss_size = 0;
-		context.uc_link = nullptr;
-	}
+
+	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
+	context.uc_stack.ss_sp = nullptr;
+	context.uc_stack.ss_size = 0;
+	context.uc_link = nullptr;
 }

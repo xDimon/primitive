@@ -171,7 +171,6 @@ void ThreadPool::createThread()
 			}
 			catch (const RollbackStackAndRestoreContext& exception)
 			{
-				throw;
 			}
 			catch (const std::exception& exception)
 			{
