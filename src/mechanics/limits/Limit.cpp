@@ -267,14 +267,15 @@ SObj* Limit::serialize() const
 	auto data = std::make_unique<SObj>();
 
 	data->insert("id", id); // Id лимита
-	data->insert("clarifier", clarifier); // Уточнение
-	data->insert("type", typeToString(_config->type)); // Тип поведения
-	data->insert("start", _config->start); // Начальное значение
-	data->insert("max", _config->max); // Максимальное значение
-	data->insert("offset", _config->offset); // Сдвиг для фиксированных сбросов (Day, Week, Month, Year)
-	data->insert("duration", _config->duration); // Продолжительность
+	if (!clarifier.empty())
+	{
+		data->insert("clarifier", clarifier); // Уточнение
+	}
 	data->insert("value", _value); // Текущее значение
-	data->insert("expire", _expire);
+	if (_expire)
+	{
+		data->insert("expire", _expire);
+	}
 
 	return data.release();
 }
