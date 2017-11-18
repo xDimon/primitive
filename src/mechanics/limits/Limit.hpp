@@ -67,6 +67,11 @@ public:
 	Limit(const Id& id, const Clarifier& clarifier, Value value, Time::Timestamp expire);
 	virtual ~Limit() = default;
 
+	std::shared_ptr<const LimitConfig> config() const
+	{
+		return _config;
+	}
+
 	inline Value value() const
 	{
 		return _value;
@@ -84,10 +89,11 @@ public:
 	Value remain() const;
 	bool available() const;
 
-	bool change(int32_t delta = 1);
+	bool change(int32_t delta = 1, Time::Timestamp expire = 0);
 
 	bool reset();
-	bool expireInit();
+	bool initExpire();
+	bool setExpire(Time::Timestamp expire);
  	bool setToMax();
 
 	bool inDefaultState() const;

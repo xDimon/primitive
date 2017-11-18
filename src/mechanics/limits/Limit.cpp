@@ -37,33 +37,7 @@ Limit::Limit(
 	}
 
 	_value = _config->start;
-	switch (_config->type)
-	{
-		case Type::Daily:
-			_expire = Time::trim(Time::now(), Time::Interval::DAY) + Time::interval(Time::Interval::DAY, 1) + _config->offset;
-			break;
-
-		case Type::Weekly:
-			_expire = Time::trim(Time::now(), Time::Interval::WEEK) + Time::interval(Time::Interval::WEEK, 1) + _config->offset;
-			break;
-
-		case Type::Monthly:
-			_expire = Time::trim(Time::now(), Time::Interval::MONTH) + Time::interval(Time::Interval::MONTH, 1) + _config->offset;
-			break;
-
-		case Type::Yearly:
-			_expire = Time::trim(Time::now(), Time::Interval::YEAR) + Time::interval(Time::Interval::YEAR, 1) + _config->offset;
-			break;
-
-		case Type::None:
-		case Type::Loop:
-		case Type::Always:
-		case Type::Never:
-
-		default:
-			_expire = Time::interval(Time::Interval::ETERNITY);
-			break;
-	}
+	_expire = 0;
 
 	_changed = false;
 }
@@ -97,7 +71,7 @@ void Limit::setChanged(bool isChanged)
 	_changed = isChanged;
 }
 
-bool Limit::change(int32_t delta)
+bool Limit::change(int32_t delta, Time::Timestamp expire)
 {
 	if (_config->type == Type::Always || _config->type == Type::Never)
 	{
@@ -124,20 +98,27 @@ bool Limit::change(int32_t delta)
 			delta = std::min(abs(delta), abs(remain()));
 		}
 	}
-	if (delta == 0)
+	if (delta == 0 && expire == 0)
 	{
 		return false;
 	}
 
 	_value += delta;
-	expireInit();
+	if (expire)
+	{
+		setExpire(expire);
+	}
+	else
+	{
+		initExpire();
+	}
 
 	setChanged();
 
 	return true;
 }
 
-bool Limit::expireInit()
+bool Limit::initExpire()
 {
 	if (_expire != 0)
 	{
@@ -149,34 +130,34 @@ bool Limit::expireInit()
 	switch (_config->type)
 	{
 		case Type::None:
-			expire = Time::now() + _config->duration;
+			expire = _config->duration ? (Time::now() + _config->duration) : Time::interval(Time::Interval::ETERNITY);
 			break;
 
 		case Type::Daily:
 			expire = std::min(
 				Time::trim(Time::now(), Time::Interval::DAY) + Time::interval(Time::Interval::DAY, 1),
-				Time::now() + _config->duration
+				_config->duration ? (Time::now() + _config->duration) : Time::interval(Time::Interval::ETERNITY)
 			);
 			break;
 
 		case Type::Weekly:
 			expire = std::min(
 				Time::trim(Time::now(), Time::Interval::WEEK) + Time::interval(Time::Interval::WEEK, 1),
-				Time::now() + _config->duration
+				_config->duration ? (Time::now() + _config->duration) : Time::interval(Time::Interval::ETERNITY)
 			);
 			break;
 
 		case Type::Monthly:
 			expire = std::min(
 				Time::trim(Time::now(), Time::Interval::MONTH) + Time::interval(Time::Interval::MONTH, 1),
-				Time::now() + _config->duration
+				_config->duration ? (Time::now() + _config->duration) : Time::interval(Time::Interval::ETERNITY)
 			);
 			break;
 
 		case Type::Yearly:
 			expire = std::min(
 				Time::trim(Time::now(), Time::Interval::YEAR) + Time::interval(Time::Interval::YEAR, 1),
-				Time::now() + _config->duration
+				_config->duration ? (Time::now() + _config->duration) : Time::interval(Time::Interval::ETERNITY)
 			);
 			break;
 
@@ -189,6 +170,11 @@ bool Limit::expireInit()
 			break;
 	}
 
+	return setExpire(expire);
+}
+
+bool Limit::setExpire(Time::Timestamp expire)
+{
 	if (_expire == expire)
 	{
 		return false;
@@ -197,7 +183,6 @@ bool Limit::expireInit()
 	_expire = expire;
 
 	setChanged();
-
 	return true;
 }
 
