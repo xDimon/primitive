@@ -287,7 +287,7 @@ void UrlSerializer::encodeArray(const std::string& keyline, const SArr* value)
 void UrlSerializer::encodeObject(const std::string& keyline, const SObj* value)
 {
 	bool empty = true;
-	value->forEach([this,&keyline,&empty](const std::string& key, const SVal* val)
+	value->forEach([&](const std::string& key, const SVal* val)
 	{
 		if (!empty)
 		{

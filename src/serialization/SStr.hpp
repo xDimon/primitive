@@ -21,7 +21,6 @@
 
 #pragma once
 
-
 #include "SVal.hpp"
 
 #include <sstream>
@@ -90,14 +89,14 @@ public:
 	};
 	operator int() const override
 	{
-		int64_t intVal;
+		int64_t intVal = 0;
 		std::istringstream iss(_value);
 		iss >> intVal;
 		return intVal;
 	};
 	operator double() const override
 	{
-		double fltVal;
+		double fltVal = 0;
 		std::istringstream iss(_value);
 		iss >> fltVal;
 		return fltVal;
@@ -109,7 +108,7 @@ public:
 			return false;
 		}
 		{
-			double fltVal;
+			double fltVal = 0;
 			std::istringstream iss(_value);
 			iss >> fltVal;
 			if (fltVal)

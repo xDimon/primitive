@@ -38,6 +38,11 @@ public:
 		return copy;
 	}
 
+	SBinary(const std::string& value)
+	: _value(value)
+	{
+	}
+
 	SBinary(std::string& value)
 	: _value(std::move(value))
 	{
