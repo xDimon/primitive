@@ -102,6 +102,14 @@ endif ()
 list(APPEND "${CODENAME}_INCLUDES" ${MYSQL_INCLUDE_DIR})
 list(APPEND "${CODENAME}_LIBRARIES" ${MYSQL_LIBRARIES})
 
+# Подключаем protobuf++
+find_package(Protobuf REQUIRED)
+if (NOT PROTOBUF_FOUND)
+    message(FATAL_ERROR "Protobuf not found")
+endif ()
+list(APPEND "${CODENAME}_INCLUDES" ${PROTOBUF_INCLUDE_DIRS})
+list(APPEND "${CODENAME}_LIBRARIES" ${PROTOBUF_LIBRARIES})
+
 #message(STATUS "Project includes:")
 foreach(F ${${CODENAME}_INCLUDES})
 #	message(STATUS "  ${F}")
