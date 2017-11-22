@@ -46,6 +46,7 @@ public:
 	~ServicePart() override = default;
 
 	virtual void init(const Setting& setting) {};
+	virtual void postInit() {};
 
 	Log& log()
 	{

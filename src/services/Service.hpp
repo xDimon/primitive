@@ -21,7 +21,6 @@
 
 #pragma once
 
-
 #include "../utils/Shareable.hpp"
 #include "../utils/Named.hpp"
 #include <set>
@@ -34,7 +33,7 @@ class Server;
 class Service : public Shareable<Service>, public Named
 {
 protected:
-	Log _log;
+	mutable Log _log;
 	const Setting& _setting;
 
 	std::set<std::shared_ptr<ServicePart>, ServicePart::Comparator> _parts;
@@ -49,7 +48,7 @@ public:
 
 	virtual ~Service();
 
-	Log& log()
+	Log& log() const
 	{
 		return _log;
 	}
