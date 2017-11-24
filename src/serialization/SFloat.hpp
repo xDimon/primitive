@@ -21,8 +21,8 @@
 
 #pragma once
 
-
 #include "SNum.hpp"
+#include <cmath>
 
 class SFloat : public SNum
 {

@@ -184,7 +184,7 @@ public:
 		{
 			throw std::runtime_error("Field '" + key + "' isn't integer");
 		}
-		value = (int)*element;
+		value = (T)dynamic_cast<const SInt *>(element)->value();
 	}
 
 	template<typename T>
@@ -200,7 +200,7 @@ public:
 		{
 			throw std::runtime_error("Field '" + key + "' isn't numeric");
 		}
-		value = (double)(*element);
+		value = (T)dynamic_cast<const SFloat *>(element)->value();
 	}
 
 	template<typename T, typename _ = void>
