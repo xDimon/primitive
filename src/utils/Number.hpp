@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <climits>
+
 
 namespace Number
 {
@@ -38,5 +40,73 @@ namespace Number
 		{
 			dst = static_cast<D>(src);
 		}
+	}
+
+	template<typename T>
+	T obfuscate(T src, size_t rounds = 0)
+	{
+		size_t bits = sizeof(T) * CHAR_BIT;
+
+		if (rounds == 0)
+		{
+			if (bits > 32) rounds = 4;
+			else if (bits > 16) rounds = 3;
+			else if (bits > 8) rounds = 2;
+			else rounds = 1;
+		}
+
+		T s;
+		T d = src;
+
+		for (size_t r = 0; r < rounds; r++)
+		{
+			s = d;
+			d = 0;
+
+			for (size_t i = 0; i < (bits >> 1); i++)
+			{
+				d |= ((s >> i) & 1) << (bits - 1 - i * 2);
+			}
+			for (size_t i = (bits >> 1); i < bits; i++)
+			{
+				d |= ((s >> i) & 1) << ((i - (bits >> 1)) * 2);
+			}
+		}
+
+		return d;
+	}
+
+	template<typename T>
+	T deobfuscate(T src, size_t rounds = 0)
+	{
+		size_t bits = sizeof(T) * CHAR_BIT;
+
+		if (rounds == 0)
+		{
+			if (bits > 32) rounds = 4;
+			else if (bits > 16) rounds = 3;
+			else if (bits > 8) rounds = 2;
+			else rounds = 1;
+		}
+
+		T s;
+		T d = src;
+
+		for (size_t r = 0; r < rounds; r++)
+		{
+			s = d;
+			d = 0;
+
+			for (size_t i = 0; i < (bits >> 1); i++)
+			{
+				d |= ((s >> (bits - 1 - i * 2)) & 1) << i;
+			}
+			for (size_t i = (bits >> 1); i < bits; i++)
+			{
+				d |= ((s >> ((i - (bits >> 1)) * 2)) & 1) << i;
+			}
+		}
+
+		return d;
 	}
 };
