@@ -245,7 +245,7 @@ void HttpRequestExecutor::submit()
 //		_log.debug("REQUEST: %s", _uri.str().c_str());
 
 		_connection->write(oss.str().c_str(), oss.str().length());
-		_connection->setTtl(std::chrono::milliseconds(5000));
+		_connection->setTtl(std::chrono::seconds(60));
 
 		_log.trace("Submited");
 
