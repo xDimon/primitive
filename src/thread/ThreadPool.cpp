@@ -20,6 +20,7 @@
 
 
 #include <ucontext.h>
+#include <sys/mman.h>
 #include "ThreadPool.hpp"
 #include "../utils/Time.hpp"
 #include "RollbackStackAndRestoreContext.hpp"
@@ -32,30 +33,11 @@ ThreadPool::ThreadPool()
 {
 }
 
-// the destructor joins all threads
-ThreadPool::~ThreadPool()
-{
-//	// Wait end all threads
-//	while (!_workers.empty())
-//	{
-//		auto i = _workers.begin();
-//		if (i->second->finished())
-//		{
-//			_workers.erase(i);
-//			delete i->second;
-//		}
-//		else
-//		{
-//			std::this_thread::sleep_for(std::chrono::milliseconds(30));
-//		}
-//	}
-}
-
 void ThreadPool::hold()
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._counterMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._counterMutex);
 	++pool._hold;
 	pool._workersWakeupCondition.notify_one();
 }
@@ -64,7 +46,7 @@ void ThreadPool::unhold()
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._counterMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._counterMutex);
 	--pool._hold;
 }
 
@@ -72,7 +54,7 @@ void ThreadPool::setThreadNum(size_t num)
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._queueMutex);
 
 	size_t remain = (num < pool._workers.size()) ? 0 : (num - pool._workers.size());
 	while (remain-- > 0)
@@ -87,7 +69,7 @@ size_t ThreadPool::genThreadId()
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._counterMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._counterMutex);
 	return ++pool._workerCounter;
 }
 
@@ -96,10 +78,9 @@ void ThreadPool::createThread()
 	std::function<void()> threadLoop = [this]()
 	{
 		Task::Time waitUntil = std::chrono::steady_clock::now() + std::chrono::hours(24);
-//								std::chrono::time_point<std::chrono::steady_clock>::max();
 
 		auto continueCondition = [this,&waitUntil](){
-			std::unique_lock<std::mutex> lock(_counterMutex);
+			std::lock_guard<std::mutex> lockGuard(_counterMutex);
 			if (Daemon::shutingdown())
 			{
 				return true;
@@ -123,22 +104,10 @@ void ThreadPool::createThread()
 			{
 				std::unique_lock<std::mutex> lock(_queueMutex);
 
-//				auto now = std::chrono::steady_clock::now();
-//				if (!_tasks.empty())
-//				{
-//					_log.trace("Wait: task =%20lld", _tasks.top()->until());
-//				}
-//				_log.trace("Wait: until=%20lld", waitUntil);
-//				_log.trace("Wait:   now=%20lld", now);
-//				_log.trace("Wait for    %20lld", waitUntil - now);
-//				_log.trace("Queue       %s", _tasks.empty()?"empty":"have a task");
-//				_log.trace("Hold        %s", _hold?"yes":"no");
-
 				// Condition for run thread
 				if (!_workersWakeupCondition.wait_until(lock, waitUntil, continueCondition))
 				{
 					waitUntil = std::chrono::steady_clock::now() + std::chrono::hours(24);
-//								std::chrono::time_point<std::chrono::steady_clock>::max();
 					continue;
 				}
 
@@ -159,6 +128,28 @@ void ThreadPool::createThread()
 				if (!_tasks.empty())
 				{
 					_workersWakeupCondition.notify_one();
+
+					static time_t pt = 0;
+					time_t t = time(nullptr);
+					if (pt != t)
+					{
+						pt = t;
+						_log.info("Task queue length:           %llu", _tasks.size());
+					}
+				}
+			}
+
+			{
+				static time_t pt = 0;
+				time_t t = time(nullptr);
+				if (pt != t)
+				{
+					pt = t;
+
+					std::lock_guard<std::mutex> lockGuard(_contextsMutex);
+
+					_log.info("Waiting contexts:            %llu", _waitingContexts.size());
+					_log.info("Ready for continue contexts: %llu", _readyForContinueContexts.size());
 				}
 			}
 
@@ -181,7 +172,7 @@ void ThreadPool::createThread()
 			{
 				_log.trace("Reenqueue task");
 
-				std::unique_lock<std::mutex> lock(_queueMutex);
+				std::lock_guard<std::mutex> lockGuard(_queueMutex);
 				waitUntil = task->until();
 				_tasks.emplace(std::move(task));
 			}
@@ -190,27 +181,35 @@ void ThreadPool::createThread()
 				task->restoreCtx();
 
 				_log.trace("End execution task on thread");
-//				waitUntil = std::chrono::steady_clock::now();
-//				std::chrono::time_point<std::chrono::steady_clock>::min();
 
-				std::unique_lock<std::mutex> lock(_queueMutex);
-				if (!_readyForContinueContexts.empty())
+				std::lock_guard<std::mutex> lockGuard(_contextsMutex);
+				if (Thread::onSubContext())
 				{
-					auto ctx = _readyForContinueContexts.front();
-					_readyForContinueContexts.pop();
-					setcontext(&ctx);
+					_log.info("Has subContext");
+					if (!_readyForContinueContexts.empty())
+					{
+						auto ctx = _readyForContinueContexts.front();
+						_readyForContinueContexts.pop();
+
+						Thread::self()->replacedContext() = ctx;
+
+						_log.info("Context %p: Set for replace (%llu on %p)", ctx, ctx->uc_stack.ss_size, ctx->uc_stack.ss_sp);
+
+//						_log.debug("End of secondary task");
+
+						_workersWakeupCondition.notify_one();
+
+						break;
+					}
+				}
+				else
+				{
+					_log.info("Hasn't subContext");
 				}
 			}
 
 			_log.trace("Waiting for task on thread");
 		}
-
-//		{
-//			std::unique_lock<std::mutex> lock(pool._queueMutex);
-//			auto i = _workers.find(std::this_thread::get_id());
-//			_workers.erase(i);
-//			delete i->second;
-//		}
 
 		_workersWakeupCondition.notify_one();
 	};
@@ -237,7 +236,7 @@ void ThreadPool::wait()
 	{
 		// Wait end all threads
 		{
-			std::unique_lock<std::mutex> lock(pool._queueMutex);
+			std::lock_guard<std::mutex> lockGuard(pool._queueMutex);
 			for (auto i = pool._workers.begin(); i != pool._workers.end(); )
 			{
 				auto ci = i++;
@@ -265,7 +264,7 @@ Thread *ThreadPool::getThread(Thread::Id tid)
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._queueMutex);
 
 	auto i = pool._workers.find(tid);
 	if (i == pool._workers.end())
@@ -279,7 +278,7 @@ void ThreadPool::enqueue(const std::shared_ptr<Task>& task)
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._queueMutex);
 
 	pool._tasks.emplace(task);
 
@@ -290,7 +289,7 @@ void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function)
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._queueMutex);
 
 	pool._tasks.emplace(std::make_shared<Task>(function));
 
@@ -301,7 +300,7 @@ void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function, Task::Dura
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._queueMutex);
 
 	pool._tasks.emplace(std::make_shared<Task>(function, delay));
 
@@ -312,7 +311,7 @@ void ThreadPool::enqueue(const std::shared_ptr<Task::Func>& function, Task::Time
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._queueMutex);
 
 	pool._tasks.emplace(std::make_shared<Task>(function, time));
 
@@ -323,30 +322,30 @@ bool ThreadPool::empty()
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._queueMutex);
 
 	return pool._workers.empty();
 }
 
-uint64_t ThreadPool::postponeContext(const ucontext_t& context)
+uint64_t ThreadPool::postponeContext(ucontext_t* context)
 {
-	static uint64_t n = 0;
+	static uint64_t ctxId = 0;
 
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._contextsMutex);
 
-//	pool._log.info("postponeContext %p", context);
-	pool._waitingContexts.emplace(++n, context);
+	pool._waitingContexts.emplace(++ctxId, context);
+//	pool._log.info("postponeContext %llu", ctxId);
 
-	return n;
+	return ctxId;
 }
 
 void ThreadPool::continueContext(uint64_t ctxId)
 {
 	auto& pool = getInstance();
 
-	std::unique_lock<std::mutex> lock(pool._queueMutex);
+	std::lock_guard<std::mutex> lockGuard(pool._contextsMutex);
 
 	auto i = pool._waitingContexts.find(ctxId);
 	if (i == pool._waitingContexts.end())
@@ -354,7 +353,7 @@ void ThreadPool::continueContext(uint64_t ctxId)
 		throw std::runtime_error("Context Id not found");
 	}
 
-//	pool._log.info("continueContext %p", i->second);
+//	pool._log.info("continueContext %llu", ctxId);
 	pool._readyForContinueContexts.emplace(i->second);
 
 	pool._waitingContexts.erase(i);

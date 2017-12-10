@@ -30,7 +30,6 @@ Task::Task(const std::shared_ptr<Func>& function)
 : _function(function)
 , _until(Time::min())
 , _ctxId(0)
-, _mainContext(nullptr)
 {
 }
 
@@ -38,7 +37,6 @@ Task::Task(const std::shared_ptr<Func>& function, Duration delay)
 : _function(function)
 , _until(Clock::now() + delay)
 , _ctxId(0)
-, _mainContext(nullptr)
 {
 }
 
@@ -46,7 +44,6 @@ Task::Task(const std::shared_ptr<Func>& function, Time time)
 : _function(function)
 , _until(time)
 , _ctxId(0)
-, _mainContext(nullptr)
 {
 }
 
@@ -54,11 +51,9 @@ Task::Task(Task &&that) noexcept
 : _function(std::move(that._function))
 , _until(that._until)
 , _ctxId(that._ctxId)
-, _mainContext(that._mainContext)
 {
 	that._until = Time::min();
 	that._ctxId = 0;
-	that._mainContext = nullptr;
 }
 
 Task& Task::operator=(Task &&that) noexcept
@@ -68,8 +63,6 @@ Task& Task::operator=(Task &&that) noexcept
 	that._until = Time::min();
 	_ctxId = that._ctxId;
 	that._ctxId = 0;
-	_mainContext = that._mainContext;
-	that._mainContext = nullptr;
 	return *this;
 }
 
@@ -88,25 +81,6 @@ bool Task::operator()()
 bool Task::operator<(const Task& that) const
 {
 	return this->_until > that._until;
-}
-
-void Task::saveContext(ucontext_t* mainContext)
-{
-	_mainContext = mainContext;
-}
-
-void Task::restoreContext() const
-{
-	if (_mainContext == nullptr)
-	{
-		return;
-	}
-
-	// при завершении таска вернуться в связанный контекст, и удалить предыдущий
-	if (setcontext(_mainContext) != 0)
-	{
-		throw std::runtime_error("Can't change context");
-	}
 }
 
 void Task::saveCtx(uint64_t ctxId)

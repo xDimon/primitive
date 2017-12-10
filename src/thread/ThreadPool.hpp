@@ -41,7 +41,7 @@ public:
 
 private:
 	ThreadPool();
-	virtual ~ThreadPool();
+	~ThreadPool() = default;
 
 public:
 	static ThreadPool& getInstance()
@@ -67,10 +67,11 @@ public:
 	static void unhold();
 
 private:
-	std::map<uint64_t, ucontext_t> _waitingContexts;
-	std::queue<ucontext_t> _readyForContinueContexts;
+	std::mutex _contextsMutex;
+	std::map<uint64_t, ucontext_t *> _waitingContexts;
+	std::queue<ucontext_t *> _readyForContinueContexts;
 public:
-	static uint64_t postponeContext(const ucontext_t& context);
+	static uint64_t postponeContext(ucontext_t* context);
 	static void continueContext(uint64_t ctxId);
 
 private:
@@ -100,4 +101,6 @@ private:
 	std::condition_variable _workersWakeupCondition;
 
 	void createThread();
+
+	std::tuple<void*, size_t> getStack();
 };

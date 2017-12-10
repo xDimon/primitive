@@ -21,8 +21,11 @@
 
 #pragma once
 
-#include "../log/Log.hpp"
+#include <functional>
 #include <mutex>
+#include <ucontext.h>
+#include <stack>
+#include "../log/Log.hpp"
 
 class Task;
 
@@ -40,11 +43,14 @@ private:
 	std::thread _thread;
 
 	static thread_local Id _tid;
+	static thread_local ucontext_t* _currentContext;
+	static thread_local ucontext_t* _obsoletedContext;
+	static thread_local ucontext_t* _replacedContext;
 
-	static void run(Thread*);
+	static void run(Thread* thread);
 
 public:
-	static void coroutine(Thread*);
+	static void execute(Thread* thread);
 
 public:
 	Thread() = delete;
@@ -73,7 +79,15 @@ public:
 		return _id;
 	}
 
-	void reenter();
-
 	void yield(const std::shared_ptr<Task>& task);
+
+	static void coroWrapper(Thread* thread, ucontext_t* context, std::mutex* mutex);
+	static ucontext_t* obsoletedContext();
+
+	ucontext_t*& replacedContext();
+
+	static bool onSubContext()
+	{
+		return _currentContext != nullptr;
+	}
 };

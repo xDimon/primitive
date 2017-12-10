@@ -39,7 +39,6 @@ public:
 		auto& task = *_task;
 		_task.reset();
 
-		task.restoreContext();
 		task.restoreCtx();
 	};
 

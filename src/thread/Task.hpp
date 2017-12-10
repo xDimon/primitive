@@ -41,10 +41,6 @@ protected:
 	Time _until;
 	uint64_t _ctxId;
 
-protected:
-public:
-	ucontext_t* _mainContext;
-
 public:
 	Task() = delete;
 	Task(const Task&) = delete;
@@ -72,9 +68,6 @@ public:
 	{
 		return _until;
 	}
-
-	void saveContext(ucontext_t* mainContext);
-	void restoreContext() const;
 
 	void saveCtx(uint64_t ctxId);
 	void restoreCtx();

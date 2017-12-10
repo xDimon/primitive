@@ -419,6 +419,7 @@ void HttpRequestExecutor::badStep(const std::string& msg)
 
 void HttpRequestExecutor::done()
 {
+	{
 		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
 		_log.trace("Cleanup...");
@@ -428,6 +429,11 @@ void HttpRequestExecutor::done()
 
 		_log.trace("Done");
 
+		if (_savedCtxId)
+		{
+			std::swap(_savedCtxId, _ctxId);
+		}
+	}
 
 	throw RollbackStackAndRestoreContext(ptr());
 }

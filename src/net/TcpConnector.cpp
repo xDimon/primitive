@@ -27,7 +27,8 @@
 
 #include "ConnectionManager.hpp"
 #include "../utils/Daemon.hpp"
-#include "../thread/Coroutine.hpp"
+#include "../thread/Thread.hpp"
+#include "../thread/Task.hpp"
 
 TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& hostname, std::uint16_t port)
 : Connector(transport)
@@ -136,7 +137,7 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 		// Нет доступных пар адрес-порт для исходящего соединения
 		if (errno == EADDRNOTAVAIL)
 		{
-			Coroutine(std::make_shared<Task>(std::make_shared<Task::Func>([](){})));
+			Thread::self()->yield(std::make_shared<Task>(std::make_shared<Task::Func>([](){})));
 			goto again;
 		}
 	}
@@ -260,7 +261,7 @@ bool TcpConnector::processing()
 		// Нет доступных пар адрес-порт для исходящего соединения
 		if (errno == EADDRNOTAVAIL)
 		{
-			Coroutine(std::make_shared<Task>(std::make_shared<Task::Func>([](){})));
+			Thread::self()->yield(std::make_shared<Task>(std::make_shared<Task::Func>([](){})));
 			goto again;
 		}
 	}
