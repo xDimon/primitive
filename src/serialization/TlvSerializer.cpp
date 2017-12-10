@@ -624,7 +624,8 @@ void TlvSerializer::encodeFloat(const SFloat* value)
 	{
 		char data[4];
 
-		memcpy(data, &htole32(f32), sizeof(data));
+		f32 = htole32(f32);
+		memcpy(data, &f32, sizeof(data));
 
 		_oss.put(static_cast<char>(Token::FLOAT_32));
 		for (char i : data)
@@ -638,7 +639,8 @@ void TlvSerializer::encodeFloat(const SFloat* value)
 
 	char data[8];
 
-	memcpy(data, &htole64(f64), sizeof(data));
+	f64 = htole64(f64);
+	memcpy(data, &f64, sizeof(data));
 
 	_oss.put(static_cast<char>(Token::FLOAT_64));
 	for (char i : data)
