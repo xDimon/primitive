@@ -24,6 +24,8 @@
 #include "../log/Log.hpp"
 #include <mutex>
 
+class Task;
+
 class Thread
 {
 public:
@@ -72,4 +74,6 @@ public:
 	}
 
 	void reenter();
+
+	void yield(const std::shared_ptr<Task>& task);
 };

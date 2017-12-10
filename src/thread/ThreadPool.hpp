@@ -67,6 +67,13 @@ public:
 	static void unhold();
 
 private:
+	std::map<uint64_t, ucontext_t> _waitingContexts;
+	std::queue<ucontext_t> _readyForContinueContexts;
+public:
+	static uint64_t postponeContext(const ucontext_t& context);
+	static void continueContext(uint64_t ctxId);
+
+private:
 	Log _log;
 
 	std::mutex _counterMutex;

@@ -37,6 +37,7 @@
 class HttpRequestExecutor: public Task
 {
 private:
+	uint64_t _savedCtxId;
 	Log _log;
 	std::shared_ptr<HttpClient> _clientTransport;
 	HttpRequest::Method _method;

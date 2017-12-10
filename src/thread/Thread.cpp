@@ -80,7 +80,8 @@ void Thread::run(Thread* thread)
 		thread->_log.debug("Thread 'Worker#%zu' start", thread->_id);
 	}
 
-	thread->reenter();
+//	thread->reenter();
+	coroutine(thread);
 
 	thread->_finished = true;
 
@@ -93,47 +94,145 @@ Thread* Thread::self()
 	return ThreadPool::getThread(tid);
 }
 
-void Thread::reenter()
+//void Thread::reenter()
+//{
+//	ucontext_t retContext{};
+//	ucontext_t context{};
+//
+//	// Инициализация контекста. uc_link указывает на точку возврата при выходе из стека
+//	getcontext(&context);
+//	context.uc_link = &retContext;
+//	context.uc_stack.ss_flags = 0;
+//	context.uc_stack.ss_size = 1<<20;// PTHREAD_STACK_MIN;
+//	context.uc_stack.ss_sp = mmap(
+//		nullptr, context.uc_stack.ss_size,
+//		PROT_READ | PROT_WRITE | PROT_EXEC,
+//		MAP_PRIVATE | MAP_ANON, -1, 0
+//	);
+//
+//	if (context.uc_stack.ss_sp == MAP_FAILED)
+//	{
+//		_log.warn("Can't to map memory for stack of context");
+//		return;
+//	}
+//
+//	_log.info("Map memory for stack of context (%lld on %p)", context.uc_stack.ss_size, context.uc_stack.ss_sp);
+//
+//	volatile bool first = true;
+//
+//	getcontext(&retContext);
+//
+//	if (first)
+//	{
+//		makecontext(&context, reinterpret_cast<void (*)()>(coroutine), 1, this);
+//
+//		first = false;
+//
+//		if (setcontext(&context))
+//		{
+//			throw std::runtime_error("Can't change context");
+//		}
+//	}
+//
+//	_log.info("UnMap memory for stack of context (%lld on %p)", context.uc_stack.ss_size, context.uc_stack.ss_sp);
+//
+//	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
+//	context.uc_stack.ss_sp = nullptr;
+//	context.uc_stack.ss_size = 0;
+//	context.uc_link = nullptr;
+//}
+
+void Thread::yield(const std::shared_ptr<Task>& task)
 {
-	ucontext_t context{};
-	ucontext_t retContext{};
-
-	// Инициализация контекста. uc_link указывает на точку возврата при выходе из стека
-	getcontext(&context);
-	context.uc_link = &retContext;
-	context.uc_stack.ss_flags = 0;
-	context.uc_stack.ss_size = 1<<20;// PTHREAD_STACK_MIN;
-	context.uc_stack.ss_sp = mmap(
-		nullptr, context.uc_stack.ss_size,
-		PROT_READ | PROT_WRITE | PROT_EXEC,
-		MAP_PRIVATE | MAP_ANON, -1, 0
-	);
-
-
-	if (context.uc_stack.ss_sp == MAP_FAILED)
-	{
-		_log.warn("Can't to map memory for stack of context");
-		return;
-	}
-
-	makecontext(&context, reinterpret_cast<void (*)()>(coroutine), 1, this);
-
 	volatile bool first = true;
 
+	ucontext_t retContext{};
+
+	// Получить контекст
 	getcontext(&retContext);
 
 	if (first)
 	{
 		first = false;
+		{
+			std::mutex orderMutex;
+			std::lock_guard<std::mutex> lockGuardOuterCoro(orderMutex);
+
+			// 1. Сохранить контекст и Получить его номер, чтоб мочь продолжить его
+			uint64_t ctxId = ThreadPool::postponeContext(retContext);
+
+			// 3. Создать задачу, так, чтоб она знала контекст для возврата
+			task->saveCtx(ctxId);
+
+			auto taskWrapper = std::make_shared<Task::Func>(
+				[&orderMutex, wp = std::weak_ptr<Task>(task)]
+				{
+					std::lock_guard<std::mutex> lockGuardInnerCoro(orderMutex);
+
+					auto originalTask = wp.lock();
+					if (!originalTask)
+					{
+						return;
+					}
+
+					(*originalTask)();
+
+					originalTask->restoreCtx();
+				}
+			);
+
+			// 4. Поместить задачу в очередь
+			ThreadPool::enqueue(taskWrapper);
+		}
+
+		// 5. Переключить контекст
+		ucontext_t context{};
+
+		ucontext_t cleanContext{};
+
+		// Инициализация контекста
+		getcontext(&context);
+		context.uc_link = &cleanContext;
+		context.uc_stack.ss_flags = 0;
+		context.uc_stack.ss_size = 1<<20;// PTHREAD_STACK_MIN;
+		context.uc_stack.ss_sp = mmap(
+			nullptr, context.uc_stack.ss_size,
+			PROT_READ | PROT_WRITE | PROT_EXEC,
+			MAP_PRIVATE | MAP_ANON, -1, 0
+		);
+
+		if (context.uc_stack.ss_sp == MAP_FAILED)
+		{
+			_log.warn("Can't to map memory for stack of context");
+			return;
+		}
+
+		_log.info("Map memory for stack of context (%lld on %p)", context.uc_stack.ss_size, context.uc_stack.ss_sp);
+
+		makecontext(&context, reinterpret_cast<void (*)()>(coroutine), 1, this);
+
+		volatile bool clean = false;
+
+		getcontext(&cleanContext);
+
+		if (clean)
+		{
+			_log.info("UnMap memory for stack of context (%lld on %p)", context.uc_stack.ss_size, context.uc_stack.ss_sp);
+
+			munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
+			context.uc_stack.ss_sp = nullptr;
+			context.uc_stack.ss_size = 0;
+			context.uc_link = nullptr;
+		}
+		clean = true;
 
 		if (setcontext(&context))
 		{
 			throw std::runtime_error("Can't change context");
 		}
 	}
-
-	munmap(context.uc_stack.ss_sp, context.uc_stack.ss_size);
-	context.uc_stack.ss_sp = nullptr;
-	context.uc_stack.ss_size = 0;
-	context.uc_link = nullptr;
+	else
+	{
+		return;
+	}
 }

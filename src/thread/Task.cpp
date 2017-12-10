@@ -29,6 +29,7 @@
 Task::Task(const std::shared_ptr<Func>& function)
 : _function(function)
 , _until(Time::min())
+, _ctxId(0)
 , _mainContext(nullptr)
 {
 }
@@ -36,6 +37,7 @@ Task::Task(const std::shared_ptr<Func>& function)
 Task::Task(const std::shared_ptr<Func>& function, Duration delay)
 : _function(function)
 , _until(Clock::now() + delay)
+, _ctxId(0)
 , _mainContext(nullptr)
 {
 }
@@ -43,6 +45,7 @@ Task::Task(const std::shared_ptr<Func>& function, Duration delay)
 Task::Task(const std::shared_ptr<Func>& function, Time time)
 : _function(function)
 , _until(time)
+, _ctxId(0)
 , _mainContext(nullptr)
 {
 }
@@ -50,15 +53,23 @@ Task::Task(const std::shared_ptr<Func>& function, Time time)
 Task::Task(Task &&that) noexcept
 : _function(std::move(that._function))
 , _until(that._until)
+, _ctxId(that._ctxId)
 , _mainContext(that._mainContext)
 {
+	that._until = Time::min();
+	that._ctxId = 0;
+	that._mainContext = nullptr;
 }
 
 Task& Task::operator=(Task &&that) noexcept
 {
 	_function = std::move(that._function);
 	_until = that._until;
+	that._until = Time::min();
+	_ctxId = that._ctxId;
+	that._ctxId = 0;
 	_mainContext = that._mainContext;
+	that._mainContext = nullptr;
 	return *this;
 }
 
@@ -96,4 +107,24 @@ void Task::restoreContext() const
 	{
 		throw std::runtime_error("Can't change context");
 	}
+}
+
+void Task::saveCtx(uint64_t ctxId)
+{
+	if (_ctxId != 0)
+	{
+		throw std::runtime_error("Context Id already set");
+	}
+	_ctxId = ctxId;
+}
+
+void Task::restoreCtx()
+{
+	if (_ctxId == 0)
+	{
+		return;
+		throw std::runtime_error("Context Id didn't set");
+	}
+	ThreadPool::continueContext(_ctxId);
+	_ctxId = 0;
 }

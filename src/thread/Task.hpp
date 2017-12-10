@@ -36,9 +36,10 @@ public:
 	using Duration = Clock::duration;
 	using Time = Clock::time_point;
 
-private:
+protected:
 	std::shared_ptr<Func> _function;
 	Time _until;
+	uint64_t _ctxId;
 
 protected:
 public:
@@ -74,4 +75,7 @@ public:
 
 	void saveContext(ucontext_t* mainContext);
 	void restoreContext() const;
+
+	void saveCtx(uint64_t ctxId);
+	void restoreCtx();
 };

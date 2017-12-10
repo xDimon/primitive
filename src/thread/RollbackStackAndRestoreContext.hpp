@@ -40,6 +40,7 @@ public:
 		_task.reset();
 
 		task.restoreContext();
+		task.restoreCtx();
 	};
 
 	// Non-copyable

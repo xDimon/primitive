@@ -19,6 +19,7 @@
 // ThreadPool.cpp
 
 
+#include <ucontext.h>
 #include "ThreadPool.hpp"
 #include "../utils/Time.hpp"
 #include "RollbackStackAndRestoreContext.hpp"
@@ -186,9 +187,19 @@ void ThreadPool::createThread()
 			}
 			else
 			{
+				task->restoreCtx();
+
 				_log.trace("End execution task on thread");
 //				waitUntil = std::chrono::steady_clock::now();
 //				std::chrono::time_point<std::chrono::steady_clock>::min();
+
+				std::unique_lock<std::mutex> lock(_queueMutex);
+				if (!_readyForContinueContexts.empty())
+				{
+					auto ctx = _readyForContinueContexts.front();
+					_readyForContinueContexts.pop();
+					setcontext(&ctx);
+				}
 			}
 
 			_log.trace("Waiting for task on thread");
@@ -315,4 +326,36 @@ bool ThreadPool::empty()
 	std::unique_lock<std::mutex> lock(pool._queueMutex);
 
 	return pool._workers.empty();
+}
+
+uint64_t ThreadPool::postponeContext(const ucontext_t& context)
+{
+	static uint64_t n = 0;
+
+	auto& pool = getInstance();
+
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
+
+//	pool._log.info("postponeContext %p", context);
+	pool._waitingContexts.emplace(++n, context);
+
+	return n;
+}
+
+void ThreadPool::continueContext(uint64_t ctxId)
+{
+	auto& pool = getInstance();
+
+	std::unique_lock<std::mutex> lock(pool._queueMutex);
+
+	auto i = pool._waitingContexts.find(ctxId);
+	if (i == pool._waitingContexts.end())
+	{
+		throw std::runtime_error("Context Id not found");
+	}
+
+//	pool._log.info("continueContext %p", i->second);
+	pool._readyForContinueContexts.emplace(i->second);
+
+	pool._waitingContexts.erase(i);
 }
