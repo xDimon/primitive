@@ -28,7 +28,7 @@ Dummy ApplicationFactory::reg(const std::string& type, std::shared_ptr<Applicati
 	auto i = factory._creators.find(type);
 	if (i != factory._creators.end())
 	{
-		throw std::runtime_error(std::string("Attepmt to register application with the same type (") + type + ")");
+		throw std::runtime_error("Attepmt to register application with the same type (" + type + ")");
 	}
 
 	factory._creators.emplace(type, creator);

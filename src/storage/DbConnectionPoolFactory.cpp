@@ -28,7 +28,7 @@ Dummy DbConnectionPoolFactory::reg(const std::string& type, std::shared_ptr<DbCo
 	auto i = factory._creators.find(type);
 	if (i != factory._creators.end())
 	{
-		throw std::runtime_error(std::string("Attepmt to register database connection pool with the same type (") + type + ")");
+		throw std::runtime_error("Attepmt to register database connection pool with the same type (" + type + ")");
 	}
 
 	factory._creators.emplace(type, creator);

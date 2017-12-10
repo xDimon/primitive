@@ -22,6 +22,7 @@
 #pragma once
 
 
+#include <functional>
 #include <mutex>
 #include <deque>
 #include <csignal>

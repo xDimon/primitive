@@ -35,7 +35,7 @@ Dummy ActionFactory::reg(
 	auto i = factory._creators.find(name);
 	if (i != factory._creators.end())
 	{
-		throw std::runtime_error(std::string("Attepmt to register action with the same name (") + name + ")");
+		throw std::runtime_error("Attepmt to register action with the same name (" + name + ")");
 	}
 	factory._creators.emplace(name, creator);
 	return Dummy{};

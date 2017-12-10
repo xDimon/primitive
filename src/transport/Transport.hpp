@@ -22,6 +22,7 @@
 #pragma once
 
 
+#include <functional>
 #include "../utils/Shareable.hpp"
 #include "../utils/Named.hpp"
 #include "../utils/Context.hpp"

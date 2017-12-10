@@ -52,10 +52,6 @@ public:
 	Db(Db&& that) noexcept
 	: _conn(std::move(that._conn))
 	{
-		if (!_conn)
-		{
-			throw std::runtime_error("Can't database connect");
-		}
 	}
 
 	// Copy assignment operator.

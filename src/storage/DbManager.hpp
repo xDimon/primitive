@@ -21,11 +21,10 @@
 
 #pragma once
 
-
+#include <functional>
+#include <mutex>
 #include "DbConnectionPool.hpp"
 #include "Db.hpp"
-
-#include <mutex>
 
 class DbManager final
 {

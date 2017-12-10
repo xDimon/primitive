@@ -62,7 +62,7 @@ public:
 	{
 		if (_captured > 0)
 		{
-			throw std::runtime_error("Destroy of captured connection ");
+//			throw std::runtime_error("Destroy of captured connection ");
 		}
 	}
 

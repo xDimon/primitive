@@ -315,7 +315,7 @@ void WsCommunicator::onError()
 		_state != State::SUBMITED
 		)
 	{
-		_log.warn("Bad step: failProcessing");
+		_log.warn("Bad step: onError");
 		return;
 	}
 

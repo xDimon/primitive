@@ -157,7 +157,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					{
 						connection->setTtl(std::chrono::seconds(5));
 
-						_log.debug("Not anough data for read request body ({%zu < %zu)",
+						_log.debug("Not anough data for read request body (%zu < %zu)",
 									context->getRequest()->dataLen(), context->getRequest()->contentLength());
 						break;
 					}
