@@ -47,7 +47,8 @@ bool HttpRequestExecutor::operator()()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::INIT)
 	{
-		_log.warn("Bad step: connect");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + ", but expected "
+			"INIT(" + std::to_string(static_cast<int>(State::INIT)) + ")");
 		return false;
 	}
 
@@ -121,7 +122,8 @@ void HttpRequestExecutor::failConnect()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
 	{
-		_log.warn("Bad step: failConnect");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at failConnect(), but expected "
+			"CONNECT (" + std::to_string(static_cast<int>(State::CONNECT)) + ")");
 		return;
 	}
 
@@ -141,7 +143,8 @@ void HttpRequestExecutor::exceptionAtConnect()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
 	{
-		_log.warn("Bad step: exceptionConnect");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at exceptionConnect(), but expected "
+			"CONNECT (" + std::to_string(static_cast<int>(State::CONNECT)) + ")");
 		return;
 	}
 
@@ -161,7 +164,8 @@ void HttpRequestExecutor::onConnected()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
 	{
-		_log.warn("Bad step: connected");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at onConnected(), but expected "
+			"CONNECT(" + std::to_string(static_cast<int>(State::CONNECT)) + ")");
 		return;
 	}
 
@@ -211,7 +215,8 @@ void HttpRequestExecutor::submit()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECTED)
 	{
-		_log.warn("Bad step: submit");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at submit(), but expected "
+			"CONNECTED(" + std::to_string(static_cast<int>(State::CONNECTED)) + ")");
 		return;
 	}
 
@@ -274,7 +279,8 @@ void HttpRequestExecutor::exceptionAtSubmit()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::SUBMIT)
 	{
-		_log.warn("Bad step: exceptionSubmit");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at exceptionAtSubmit(), but expected "
+			"SUBMIT(" + std::to_string(static_cast<int>(State::SUBMIT)) + ")");
 		return;
 	}
 
@@ -298,7 +304,10 @@ void HttpRequestExecutor::failProcessing()
 		_state != State::SUBMITED
 	)
 	{
-		_log.warn("Bad step: failProcessing");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at failProcessing(), but expected "
+			"CONNECTED(" + std::to_string(static_cast<int>(State::CONNECTED)) + "), "
+			"SUBMIT(" + std::to_string(static_cast<int>(State::SUBMIT)) + "), "
+			"SUBMITED(" + std::to_string(static_cast<int>(State::SUBMITED)) + ")");
 		return;
 	}
 
@@ -322,7 +331,8 @@ void HttpRequestExecutor::onComplete()
 	}
 	if (_state != State::SUBMITED)
 	{
-		_log.warn("Bad step: complete");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at onComplete(), but expected "
+			"SUBMITED(" + std::to_string(static_cast<int>(State::SUBMITED)) + ")");
 		return;
 	}
 
@@ -367,7 +377,10 @@ void HttpRequestExecutor::onError()
 		_state != State::SUBMITED
 	)
 	{
-		_log.warn("Bad step: failProcessing");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at onError(), but expected "
+			"CONNECTED(" + std::to_string(static_cast<int>(State::CONNECTED)) + "), "
+			"SUBMIT(" + std::to_string(static_cast<int>(State::SUBMIT)) + "), "
+			"SUBMITED(" + std::to_string(static_cast<int>(State::SUBMITED)) + ")");
 		return;
 	}
 
@@ -384,16 +397,37 @@ void HttpRequestExecutor::onError()
 	done();
 }
 
+void HttpRequestExecutor::badStep(const std::string& msg)
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
+	if (_state == State::ERROR || _state == State::COMPLETE)
+	{
+		return;
+	}
+
+	_log.warn("Bad step: %s", msg.c_str());
+
+	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Processing order error";
+	}
+
+	done();
+}
+
 void HttpRequestExecutor::done()
 {
-	_log.trace("Cleanup...");
+		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
-	_connection.reset();
-	_connector.reset();
+		_log.trace("Cleanup...");
 
-	_log.trace("Done");
+		_connection.reset();
+		_connector.reset();
 
-	std::swap(_savedCtxId, _ctxId);
+		_log.trace("Done");
+
 
 	throw RollbackStackAndRestoreContext(ptr());
 }

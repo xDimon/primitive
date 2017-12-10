@@ -52,13 +52,13 @@ private:
 
 	enum class State
 	{
-		INIT,
-		CONNECT,
-		CONNECTED,
-		SUBMIT,
-		SUBMITED,
-		COMPLETE,
-		ERROR
+		INIT 		= 0,
+		CONNECT		= 1,
+		CONNECTED	= 2,
+		SUBMIT		= 3,
+		SUBMITED	= 4,
+		COMPLETE	= 5,
+		ERROR		= 255
 	} _state;
 
 	void onConnected();
@@ -102,4 +102,6 @@ public:
 	{
 		return !_error.empty();
 	}
+
+	void badStep(const std::string& msg);
 };
