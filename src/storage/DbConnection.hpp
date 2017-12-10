@@ -58,7 +58,7 @@ public:
 		}
 	}
 
-	~DbConnection() override
+	~DbConnection() //override
 	{
 		if (_captured > 0)
 		{
