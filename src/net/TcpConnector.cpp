@@ -28,16 +28,12 @@
 #include "ConnectionManager.hpp"
 #include "../utils/Daemon.hpp"
 #include "../thread/Thread.hpp"
-#include "../thread/Task.hpp"
+#include "HostnameResolver.hpp"
 
 TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& hostname, std::uint16_t port)
 : Connector(transport)
 , _host(hostname)
 , _port(port)
-, _buff(reinterpret_cast<char*>(malloc(1024)))
-, _buffSize(1024)
-, _hostptr(nullptr)
-, _addrIterator(nullptr)
 {
 	// Создаем сокет
 	_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -56,53 +52,28 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 	int rrc = fcntl(_sock, F_GETFL, 0);
 	fcntl(_sock, F_SETFL, rrc | O_NONBLOCK);
 
-	int herr = 0;
-
-	// Список адресов по хосту
-	while (gethostbyname_r(_host.c_str(), &_hostbuf, _buff, _buffSize, &_hostptr, &herr) == ERANGE)
+	auto resolvingResult = HostnameResolver::resolve(_host);
+	switch (std::get<0>(resolvingResult))
 	{
-		// realloc
-		_buffSize <<= 1;
-		auto tmp = reinterpret_cast<char*>(realloc(_buff, _buffSize));
-		if (tmp == nullptr)
-		{
-			// OOM?
-			_buffSize >>= 1;
-			_buffSize += 64;
-			tmp = reinterpret_cast<char*>(realloc(_buff, _buffSize));
-			if (tmp == nullptr)
-			{ // OOM!
-				throw std::bad_alloc();
-			}
-		}
-
-		_buff = tmp;
+		case 0: break;
+		case HOST_NOT_FOUND:
+			throw std::runtime_error("Host not found " + _host);
+		case NO_ADDRESS:
+			throw std::runtime_error("The requested name ("  + _host + ") does not have an IP address");
+		case NO_RECOVERY:
+			throw std::runtime_error("A non-recoverable name server error occurred while resolving '"  + _host + "'");
+		case TRY_AGAIN:
+			throw std::runtime_error("A temporary error occurred on an authoritative name server while resolving '"  + _host + "'");
+		default:
+			throw std::runtime_error("Unknown error code from gethostbyname_r for '" + _host + "'");
 	}
 
-	if (_hostptr == nullptr)
+	_addresses = std::move(std::get<1>(resolvingResult));
+
+	for (_addressesIterator = _addresses.begin() ; _addressesIterator != _addresses.end(); ++_addressesIterator)
 	{
-		// error translation.
-		switch (herr)
-		{
-			case HOST_NOT_FOUND:
-				throw std::runtime_error("Host not found " + _host);
-			case NO_ADDRESS:
-				throw std::runtime_error("The requested name ("  + _host + ") does not have an IP address");
-			case NO_RECOVERY:
-				throw std::runtime_error("A non-recoverable name server error occurred while resolving '"  + _host + "'");
-			case TRY_AGAIN:
-				throw std::runtime_error("A temporary error occurred on an authoritative name server while resolving '"  + _host + "'");
-			default:
-				throw std::runtime_error("Unknown error code from gethostbyname_r for '" + _host + "'");
-		}
-	}
+		const auto& addr = *_addressesIterator;
 
-	_addrIterator = _hostptr->h_addr_list;
-
-	errno = 0;
-
-	for ( ; *_addrIterator; ++_addrIterator)
-	{
 		// Инициализируем структуру нулями
 		memset(&_sockaddr, 0, sizeof(_sockaddr));
 
@@ -110,7 +81,7 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 		_sockaddr.sin_family = AF_INET;
 
 		// Задаем хост
-		memcpy(&_sockaddr.sin_addr.s_addr, *_addrIterator, sizeof(_sockaddr.sin_addr.s_addr));
+		memcpy(&_sockaddr.sin_addr.s_addr, &addr, sizeof(_sockaddr.sin_addr.s_addr));
 
 		// Задаем порт
 		_sockaddr.sin_port = htons(_port);
@@ -151,7 +122,6 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 
 TcpConnector::~TcpConnector()
 {
-	free(_buff);
 	_log.debug("%s destroyed", name().c_str());
 }
 
@@ -223,8 +193,10 @@ bool TcpConnector::processing()
 		}
 	}
 
-	for ( ; *_addrIterator != nullptr; ++_addrIterator)
+	for ( ; _addressesIterator != _addresses.end(); ++_addressesIterator)
 	{
+		const auto& addr = *_addressesIterator;
+
 		// Инициализируем структуру нулями
 		memset(&_sockaddr, 0, sizeof(_sockaddr));
 
@@ -232,7 +204,7 @@ bool TcpConnector::processing()
 		_sockaddr.sin_family = AF_INET;
 
 		// Задаем хост
-		memcpy(&_sockaddr.sin_addr.s_addr, *_addrIterator, sizeof(_sockaddr.sin_addr.s_addr));
+		memcpy(&_sockaddr.sin_addr.s_addr, &addr, sizeof(_sockaddr.sin_addr.s_addr));
 
 		// Задаем порт
 		_sockaddr.sin_port = htons(_port);

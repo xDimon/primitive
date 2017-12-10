@@ -37,11 +37,9 @@ protected:
 	std::uint16_t _port;
 	std::mutex _mutex;
 
-	char* _buff;
-	size_t _buffSize;
-	hostent _hostbuf;
-	hostent* _hostptr;
-	char** _addrIterator;
+	std::vector<in_addr> _addresses;
+	std::vector<in_addr>::const_iterator _addressesIterator;
+
 	sockaddr_in _sockaddr;
 
 	virtual std::shared_ptr<TcpConnection> createConnection(const std::shared_ptr<Transport>& transport);
