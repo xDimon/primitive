@@ -21,18 +21,18 @@
 
 #pragma once
 
+#include <sys/ucontext.h>
 #include <mutex>
-#include "../../thread/Task.hpp"
+#include "../../utils/Shareable.hpp"
 #include "../../log/Log.hpp"
 #include "WsClient.hpp"
 #include "../http/HttpUri.hpp"
 #include "../../net/TcpConnector.hpp"
-#include "WsContext.hpp"
-#include "../Transport.hpp"
 
-class WsCommunicator: public Task
+class WsCommunicator: public Shareable<WsCommunicator>
 {
 private:
+	ucontext_t* _savedCtx;
 	Log _log;
 	std::shared_ptr<WsClient> _websocketClient;
 	HttpUri _uri;
@@ -72,7 +72,7 @@ public:
 	);
 	~WsCommunicator() override;
 
-	bool operator()() override;
+	void operator()();
 
 	const std::string& uri() const
 	{
@@ -94,4 +94,6 @@ public:
 	{
 		return !_error.empty();
 	}
+
+	void badStep(const std::string& msg);
 };

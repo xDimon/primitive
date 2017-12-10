@@ -25,9 +25,9 @@
 #include <mutex>
 #include <ucontext.h>
 #include <stack>
+#include <queue>
 #include "../log/Log.hpp"
-
-class Task;
+#include "STask.hpp"
 
 class Thread
 {
@@ -36,16 +36,24 @@ public:
 
 private:
 	std::mutex _mutex;
-	Id _id;
-	Log _log;
-	std::function<void()> _function;
-	bool _finished;
+
+	static thread_local Id _id;
+	static thread_local Log _log;
+	static thread_local std::function<void()> _function;
+	static thread_local bool _finished;
 	std::thread _thread;
 
-	static thread_local Id _tid;
+public:// TODO временно
+	static thread_local Thread* _self;
 	static thread_local ucontext_t* _currentContext;
+	static thread_local size_t _currentContextCount;
 	static thread_local ucontext_t* _obsoletedContext;
 	static thread_local ucontext_t* _replacedContext;
+	static thread_local std::queue<ucontext_t*> _replacedContexts;
+
+	static thread_local ucontext_t* _contextPtrBuffer;
+	static thread_local ucontext_t* _currentTaskContextPtrBuffer;
+	static size_t _stacksCount;
 
 	static void run(Thread* thread);
 
@@ -62,7 +70,10 @@ public:
 	explicit Thread(std::function<void()>& threadLoop);
 	virtual ~Thread();
 
-	static Thread* self();
+	static Thread* self()
+	{
+		return _self;
+	}
 
 	inline void waitStart()
 	{
@@ -79,15 +90,27 @@ public:
 		return _id;
 	}
 
-	void yield(const std::shared_ptr<Task>& task);
+	// Кладем указатель на контекст в буффер потока
+	static void putContext(ucontext_t* context);
+	// Извлекаем указатель на контекст из буффера потока
+	static ucontext_t* getContext();
+
+	static void setCurrTaskContext(ucontext_t* context);
+	static ucontext_t* getCurrTaskContext();
+
+	static void putContextForReplace(ucontext_t* context);
+	static ucontext_t* getContextForReplace();
+	static size_t sizeContextForReplace();
+
+	static size_t getCurrContextCount();
+
+	void yield(STask::Func&& func);
+
+	template<class F>
+	void yield(F& func)
+	{
+		yield([&func]{ func(); });
+	}
 
 	static void coroWrapper(Thread* thread, ucontext_t* context, std::mutex* mutex);
-	static ucontext_t* obsoletedContext();
-
-	ucontext_t*& replacedContext();
-
-	static bool onSubContext()
-	{
-		return _currentContext != nullptr;
-	}
 };

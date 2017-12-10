@@ -85,20 +85,20 @@ bool Task::operator<(const Task& that) const
 
 void Task::saveCtx(uint64_t ctxId)
 {
-	if (_ctxId != 0)
-	{
-		throw std::runtime_error("Context Id already set");
-	}
-	_ctxId = ctxId;
+//	if (_ctxId != 0)
+//	{
+//		throw std::runtime_error("Context Id already set");
+//	}
+//	_ctxId = ctxId;
 }
 
 void Task::restoreCtx()
 {
-	if (_ctxId == 0)
-	{
-		return;
-		throw std::runtime_error("Context Id didn't set");
-	}
-	ThreadPool::continueContext(_ctxId);
-	_ctxId = 0;
+//	if (_ctxId == 0)
+//	{
+//		return;
+//		throw std::runtime_error("Context Id didn't set");
+//	}
+//	ThreadPool::continueContext(_ctxId);
+//	_ctxId = 0;
 }

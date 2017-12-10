@@ -137,7 +137,7 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 		// Нет доступных пар адрес-порт для исходящего соединения
 		if (errno == EADDRNOTAVAIL)
 		{
-			Thread::self()->yield(std::make_shared<Task>(std::make_shared<Task::Func>([](){})));
+			Thread::self()->yield([]{});
 			goto again;
 		}
 	}
@@ -261,7 +261,7 @@ bool TcpConnector::processing()
 		// Нет доступных пар адрес-порт для исходящего соединения
 		if (errno == EADDRNOTAVAIL)
 		{
-			Thread::self()->yield(std::make_shared<Task>(std::make_shared<Task::Func>([](){})));
+			Thread::self()->yield([]{});
 			goto again;
 		}
 	}

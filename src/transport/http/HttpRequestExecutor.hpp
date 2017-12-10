@@ -21,23 +21,17 @@
 
 #pragma once
 
-
-#include <string>
-#include <ucontext.h>
-#include <sstream>
-#include "../ClientTransport.hpp"
-#include "../../net/TcpConnector.hpp"
-#include "../../net/ConnectionManager.hpp"
-#include "../../thread/Task.hpp"
+#include <sys/ucontext.h>
+#include "../../utils/Shareable.hpp"
+#include "../../log/Log.hpp"
 #include "HttpClient.hpp"
 #include "HttpRequest.hpp"
-#include "../../net/SslConnector.hpp"
-#include "../../utils/SslHelper.hpp"
+#include "../../net/TcpConnector.hpp"
 
-class HttpRequestExecutor: public Task
+class HttpRequestExecutor: public Shareable<HttpRequestExecutor>
 {
 private:
-	uint64_t _savedCtxId;
+	ucontext_t* _savedCtx;
 	Log _log;
 	std::shared_ptr<HttpClient> _clientTransport;
 	HttpRequest::Method _method;
@@ -82,9 +76,9 @@ public:
 		const std::string& contentType = ""
 	);
 
-	~HttpRequestExecutor() override = default;
+	~HttpRequestExecutor() override;
 
-	bool operator()() override;
+	void operator()();
 
 	const std::string& uri() const
 	{

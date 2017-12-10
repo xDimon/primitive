@@ -24,21 +24,39 @@
 #include "ThreadPool.hpp"
 #include "../log/LoggerManager.hpp"
 #include "RollbackStackAndRestoreContext.hpp"
+#include "TaskManager.hpp"
 
 #include <csignal>
 #include <sys/mman.h>
 
-thread_local Thread::Id Thread::_tid;
+thread_local Thread::Id Thread::_id;
+thread_local Log Thread::_log("Thread");
+thread_local std::function<void()> Thread::_function;
+thread_local bool Thread::_finished;
+
+thread_local Thread* Thread::_self = nullptr;
 thread_local ucontext_t* Thread::_currentContext = nullptr;
+thread_local size_t Thread::_currentContextCount = 0;
 thread_local ucontext_t* Thread::_obsoletedContext = nullptr;
 thread_local ucontext_t* Thread::_replacedContext = nullptr;
+thread_local std::queue<ucontext_t*> Thread::_replacedContexts;
+
+thread_local ucontext_t* Thread::_contextPtrBuffer = nullptr;
+thread_local ucontext_t* Thread::_currentTaskContextPtrBuffer = nullptr;
+
+size_t Thread::_stacksCount = 0;
 
 Thread::Thread(std::function<void()>& function)
-: _id(ThreadPool::genThreadId())
-, _log("Thread")
-, _function(std::move(function))
-, _finished((_mutex.lock(), false))
-, _thread([this]() { Thread::run(this); })
+: _thread((
+	_mutex.lock(),
+	[this, &function]
+	{
+		_id = ThreadPool::genThreadId();
+		_function = std::move(function);
+		_finished = false;
+		Thread::run(this);
+	}
+))
 {
 	_thread.detach();
 	_log.debug("Thread 'Worker#%zu' created", _id);
@@ -51,7 +69,7 @@ Thread::~Thread()
 
 void Thread::run(Thread* thread)
 {
-	_tid = thread->_id;
+	_self = thread;
 	thread->_mutex.unlock();
 
 	{
@@ -68,26 +86,34 @@ void Thread::run(Thread* thread)
 		thread->_log.debug("Thread 'Worker#%zu' start", thread->_id);
 	}
 
-	execute(thread);
+	do
+	{
+		execute(thread);
+//		thread->_function();
+	}
+	while (thread->getCurrContextCount());
+
+	auto lvl = thread->getCurrContextCount();
+	auto q = thread->sizeContextForReplace();
 
 	thread->_finished = true;
 
+	thread->_log.info("thread->id=%zu _self->id=%zu", thread->_id, _self->_id);
+	thread->_log.info("Thread 'Worker#%zu' exit: %zu %zu", thread->_id, lvl, q);
 	thread->_log.debug("Thread 'Worker#%zu' exit", thread->_id);
 
 	LoggerManager::unregThread();
-}
-
-Thread* Thread::self()
-{
-	auto tid = Thread::_tid;
-	return ThreadPool::getThread(tid);
 }
 
 void Thread::execute(Thread* thread)
 {
 	try
 	{
-		thread->_function();
+//		do
+//		{
+			thread->_function();
+//		}
+//		while (!thread->getCurrContextCount());
 	}
 	catch (const RollbackStackAndRestoreContext& exception)
 	{
@@ -96,6 +122,10 @@ void Thread::execute(Thread* thread)
 	catch (const std::exception& exception)
 	{
 		thread->_log.error("Uncatched exception on thread 'Worker#%zu': %s", thread->_id, exception.what());
+	}
+	catch (...)
+	{
+		thread->_log.error("Uncatched exception on thread 'Worker#%zu'", thread->_id);
 	}
 }
 
@@ -106,76 +136,71 @@ void Thread::coroWrapper(Thread *thread, ucontext_t* context, std::mutex* mutex)
 		mutex->unlock();
 	}
 
+//	_self->_log.info("setCurentContext <= %p", context);
+
+	auto prevContext = _currentContext;
 	_currentContext = context;
+
+	_currentContextCount++;
+//	_self->_log.info("_currentContextCount++ => %zu", _currentContextCount);
 
 	execute(thread);
 
-	if (_replacedContext)
-	{
-		auto ctx = _replacedContext;
-		_replacedContext = nullptr;
+	_currentContextCount--;
+//	_self->_log.info("_currentContextCount-- => %zu", _currentContextCount);
 
+	ThreadPool::getInstance()._contextsMutex.lock();
+	auto contextForReplace = getContextForReplace();
+	if (contextForReplace)
+	{
 		_obsoletedContext = context;
 
-		_currentContext = nullptr;
+//		_self->_log.info("resetCurentContext =XX %p", _currentContext);
+		_currentContext = prevContext;
 
-		setcontext(ctx);
-	}
-}
+		ThreadPool::getInstance()._contextsMutex.unlock();
 
-ucontext_t*& Thread::replacedContext()
-{
-	return _replacedContext;
-}
-
-void Thread::yield(const std::shared_ptr<Task>& task)
-{
-	if (!task)
-	{
-		return;
+		setcontext(contextForReplace);
 	}
 
+	ThreadPool::getInstance()._contextsMutex.unlock();
+}
+
+void Thread::yield(STask::Func&& func)
+{
 	volatile bool first = true;
 
-	auto orderMutex = new std::mutex{};
-	auto context = new ucontext_t{};
-	auto retContext = new ucontext_t{};
+	ucontext_t* context = nullptr;
+
+	std::mutex orderMutex;
+	ucontext_t retContext{};
 
 	// Получить контекст
-	getcontext(retContext);
+	getcontext(&retContext);
 
 	if (first)
 	{
 		first = false;
 
-		// 1. Сохранить контекст и Получить его номер, чтоб мочь продолжить его
-		uint64_t ctxId = ThreadPool::postponeContext(retContext);
+		// Котнекствозврата в буфер потока, откуда его заберет конструктор задачи
+		Thread::putContext(&retContext);
 
-		// 3. Создать задачу, так, чтоб она знала контекст для возврата
-		task->saveCtx(ctxId);
+		//
+		orderMutex.lock();
 
-		auto taskWrapper = std::make_shared<Task::Func>(
-			[&orderMutex, wp = std::weak_ptr<Task>(task)]
+		// 4. Поместить задачу в очередь
+		TaskManager::enqueue(
+			[mutex = &orderMutex, &func]
 			{
-				{ std::lock_guard<std::mutex> lockGuardInnerCoro(*orderMutex); }
+				// Синхронизируем смену контекста и выполнение задачи: задача только после смены контекста
+				mutex->lock();
+				mutex->unlock();
 
-				auto originalTask = wp.lock();
-				if (!originalTask)
-				{
-					return;
-				}
-
-				(*originalTask)();
-
-				originalTask->restoreCtx();
+				func();
 			}
 		);
 
-		orderMutex->lock();
-
-		// 4. Поместить задачу в очередь
-		ThreadPool::enqueue(taskWrapper);
-
+		context = new ucontext_t{};
 		getcontext(context);
 		context->uc_link = (ucontext_t*)0xDEAD;
 		context->uc_stack.ss_flags = 0;
@@ -190,33 +215,112 @@ void Thread::yield(const std::shared_ptr<Task>& task)
 		{
 			_log.warn("Can't to map memory for stack of context");
 
-			delete orderMutex;
 			delete context;
-			delete retContext;
 
-			return;
+			throw std::runtime_error("Can't to map memory for stack of context");
 		}
 
-		_log.info("Map memory for stack of context (%lld on %p)", context->uc_stack.ss_size, context->uc_stack.ss_sp);
+//		_log.info(
+//			"Map memory for stack of context %p (%zu on %p) => %lld",
+//			context,
+//			context->uc_stack.ss_size,
+//			context->uc_stack.ss_sp,
+//			++_stacksCount
+//		);
 
-		makecontext(context, reinterpret_cast<void (*)()>(coroWrapper), sizeof(void*) * 3 / sizeof(int), this, context, orderMutex);
+		makecontext(context, reinterpret_cast<void (*)()>(coroWrapper), sizeof(void*) * 3 / sizeof(int), this, context, &orderMutex);
 
 		if (setcontext(context))
 		{
 			throw std::runtime_error("Can't change context");
 		}
 	}
+
+	if (_obsoletedContext)
+	{
+//		_log.info(
+//			"UnMap memory for stack of context %p (%zu on %p) <= %lld",
+//			_obsoletedContext,
+//			_obsoletedContext->uc_stack.ss_size,
+//			_obsoletedContext->uc_stack.ss_sp,
+//			--_stacksCount
+//		);
+
+		munmap(_obsoletedContext->uc_stack.ss_sp, _obsoletedContext->uc_stack.ss_size);
+		delete _obsoletedContext;
+		_obsoletedContext = nullptr;
+	}
 	else
 	{
-		if (_obsoletedContext)
-		{
-			_log.info("UnMap memory for stack of context (%lld on %p)", _obsoletedContext->uc_stack.ss_size, _obsoletedContext->uc_stack.ss_sp);
-
-			munmap(_obsoletedContext->uc_stack.ss_sp, _obsoletedContext->uc_stack.ss_size);
-			delete _obsoletedContext;
-			_obsoletedContext = nullptr;
-		}
-		delete orderMutex;
-		delete retContext;
+		_log.info(
+			"End coro :: %zu",
+			--_stacksCount
+		);
 	}
+}
+
+void Thread::setCurrTaskContext(ucontext_t* context)
+{
+	if (_currentTaskContextPtrBuffer && context)
+	{
+		throw;
+	}
+	_currentTaskContextPtrBuffer = context;
+//	_self->_log.info("setCurrTaskContext <= %p", context);
+}
+
+ucontext_t* Thread::getCurrTaskContext()
+{
+	ucontext_t* context = _currentTaskContextPtrBuffer;
+//	_self->_log.info("getCurrTaskContext => %p", context);
+	return context;
+}
+
+void Thread::putContext(ucontext_t* context)
+{
+	_contextPtrBuffer = context;
+//	_self->_log.info("putContext <= %p", context);
+}
+
+// Извлекаем указатель на контекст из буффера потока
+ucontext_t* Thread::getContext()
+{
+	ucontext_t* context = _contextPtrBuffer;
+	_contextPtrBuffer = nullptr;
+//	if (_self)
+//	{
+//		_self->_log.info("getContext => %p", context);
+//	}
+	return context;
+}
+
+void Thread::putContextForReplace(ucontext_t* context)
+{
+//	_replacedContext = context;
+	_replacedContexts.emplace(context);
+//	_self->_log.info("setContextForReplace <= %p (%zu)", context, _replacedContexts.size());
+}
+
+ucontext_t* Thread::getContextForReplace()
+{
+//	ucontext_t* context = _replacedContext;
+//	_replacedContext = nullptr;
+
+	ucontext_t* context = _replacedContexts.front();
+	_replacedContexts.pop();
+
+//	_self->_log.info("getContextForReplace => %p (%zu)", context, _replacedContexts.size());
+	return context;
+}
+
+size_t Thread::sizeContextForReplace()
+{
+	return _replacedContexts.size();
+}
+
+size_t Thread::getCurrContextCount()
+{
+//	_self->_log.info("Thread 'Worker#%zu' CurrContextCount=%zu", _self->_id, _currentContextCount);
+
+	return _currentContextCount;
 }

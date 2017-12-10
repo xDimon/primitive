@@ -24,6 +24,7 @@
 #include "../thread/Task.hpp"
 #include "../thread/ThreadPool.hpp"
 #include "../utils/Daemon.hpp"
+#include "../thread/TaskManager.hpp"
 
 #include <sys/resource.h>
 #include <iomanip>
@@ -60,10 +61,12 @@ void SysInfo::start()
 	instance._involuntaryContextSwitches	= TelemetryManager::metric("core/ipc/invol_cnt_sw", 1);
 	instance._run = true;
 
-	ThreadPool::enqueue(std::make_shared<Task::Func>(SysInfo::collect), std::chrono::seconds(1));
+	TaskManager::enqueue(SysInfo::collect, std::chrono::seconds(1));
 }
 
 void SysInfo::collect()
+{
+try
 {
 	auto& instance = getInstance();
 
@@ -132,6 +135,11 @@ void SysInfo::collect()
 
 	if (!Daemon::shutingdown())
 	{
-		ThreadPool::enqueue(std::make_shared<Task::Func>(SysInfo::collect), std::chrono::seconds(1));
+		TaskManager::enqueue(SysInfo::collect, std::chrono::seconds(1));
 	}
+}
+catch (const std::exception& exception)
+{
+	throw;
+}
 }

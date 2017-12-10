@@ -29,6 +29,7 @@
 #include "../telemetry/SysInfo.hpp"
 #include "../services/Services.hpp"
 #include "../utils/Daemon.hpp"
+#include "../thread/TaskManager.hpp"
 
 Server* Server::_instance = nullptr;
 
@@ -156,10 +157,8 @@ Server::Server(const std::shared_ptr<Config>& configs)
 
 	SysInfo::start();
 
-	ThreadPool::enqueue(
-		std::make_shared<Task::Func>(
-			ConnectionManager::dispatch
-		)
+	TaskManager::enqueue(
+		ConnectionManager::dispatch
 	);
 }
 

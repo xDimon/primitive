@@ -22,6 +22,7 @@
 #include "TimeoutWatcher.hpp"
 #include "Timeout.hpp"
 #include "../thread/ThreadPool.hpp"
+#include "../thread/TaskManager.hpp"
 
 TimeoutWatcher::TimeoutWatcher(const std::shared_ptr<Timeout>& timeout)
 : _wp(timeout)
@@ -64,12 +65,11 @@ void TimeoutWatcher::restart(std::chrono::steady_clock::time_point time)
 
 	++_refCounter;
 
-	ThreadPool::enqueue(
-		std::make_shared<std::function<void()>>(
-			[p = ptr()](){
-				(*p)();
-			}
-		),
+	TaskManager::enqueue(
+		[p = ptr()]
+		{
+			(*p)();
+		},
 		time
 	);
 }

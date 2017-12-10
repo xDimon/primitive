@@ -28,12 +28,13 @@
 #include "../../utils/Base64.hpp"
 #include "../../thread/RollbackStackAndRestoreContext.hpp"
 #include "WsPipe.hpp"
+#include "WsContext.hpp"
 
 WsCommunicator::WsCommunicator(
 	const HttpUri& uri,
 	const std::shared_ptr<Transport::Handler>& handler
 )
-: Task(std::make_shared<Task::Func>([this](){return operator()();}))
+: _savedCtx(nullptr)
 , _log("WsCommunicator")
 , _websocketClient(std::make_shared<WsClient>(handler))
 , _uri(uri)
@@ -48,14 +49,18 @@ WsCommunicator::~WsCommunicator()
 	_log.debug("Destroyed for address %s", _uri.str().c_str());
 }
 
-bool WsCommunicator::operator()()
+void WsCommunicator::operator()()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::INIT)
 	{
-		_log.warn("Bad step: connect");
-		return false;
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + ", but expected "
+			"INIT(" + std::to_string(static_cast<int>(State::INIT)) + ")");
+		return;
 	}
+
+	_savedCtx = Thread::_currentTaskContextPtrBuffer;
+	Thread::_currentTaskContextPtrBuffer = nullptr;
 
 	_error.clear();
 	_log.trace("--------------------------------------------------------------------------------------------------------");
@@ -77,10 +82,10 @@ bool WsCommunicator::operator()()
 		_connector->setTtl(std::chrono::seconds(15));
 
 		_connector->addConnectedHandler(
-			[wp = std::weak_ptr<Task>(ptr())]
+			[wp = std::weak_ptr<WsCommunicator>(ptr())]
 			(const std::shared_ptr<TcpConnection>& connection)
 			{
-				auto iam = std::dynamic_pointer_cast<WsCommunicator>(wp.lock());
+				auto iam = wp.lock();
 				if (iam)
 				{
 					iam->_connector.reset();
@@ -91,10 +96,10 @@ bool WsCommunicator::operator()()
 		);
 
 		_connector->addErrorHandler(
-			[wp = std::weak_ptr<Task>(ptr())]
+			[wp = std::weak_ptr<WsCommunicator>(ptr())]
 			()
 			{
-				auto iam = std::dynamic_pointer_cast<WsCommunicator>(wp.lock());
+				auto iam = wp.lock();
 				if (iam)
 				{
 					iam->_connector.reset();
@@ -112,8 +117,6 @@ bool WsCommunicator::operator()()
 
 		exceptionAtConnect();
 	}
-
-	return true;
 }
 
 void WsCommunicator::failConnect()
@@ -121,13 +124,18 @@ void WsCommunicator::failConnect()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
 	{
-		_log.warn("Bad step: failConnect");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at failConnect(), but expected "
+			"CONNECT (" + std::to_string(static_cast<int>(State::CONNECT)) + ")");
 		return;
 	}
 
 	_log.trace("Fail connect");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Fail connect";
+	}
 
 	done();
 }
@@ -137,13 +145,18 @@ void WsCommunicator::exceptionAtConnect()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
 	{
-		_log.warn("Bad step: exceptionConnect");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at exceptionConnect(), but expected "
+			"CONNECT (" + std::to_string(static_cast<int>(State::CONNECT)) + ")");
 		return;
 	}
 
 	_log.trace("Exception at connect");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Exception at connect";
+	}
 
 	done();
 }
@@ -153,7 +166,8 @@ void WsCommunicator::onConnected()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECT)
 	{
-		_log.warn("Bad step: connected");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at onConnected(), but expected "
+			"CONNECT(" + std::to_string(static_cast<int>(State::CONNECT)) + ")");
 		return;
 	}
 
@@ -172,10 +186,10 @@ void WsCommunicator::onConnected()
 	}
 
 	context->addEstablishedHandler(
-		[wp = std::weak_ptr<Task>(ptr())]
+		[wp = std::weak_ptr<WsCommunicator>(ptr())]
 		(WsContext&)
 		{
-			auto iam = std::dynamic_pointer_cast<WsCommunicator>(wp.lock());
+			auto iam = wp.lock();
 			if (iam)
 			{
 				iam->onComplete();
@@ -184,10 +198,10 @@ void WsCommunicator::onConnected()
 	);
 
 	_connection->addErrorHandler(
-		[wp = std::weak_ptr<Task>(ptr())]
+		[wp = std::weak_ptr<WsCommunicator>(ptr())]
 		(TcpConnection&)
 		{
-			auto iam = std::dynamic_pointer_cast<WsCommunicator>(wp.lock());
+			auto iam = wp.lock();
 			if (iam)
 			{
 				iam->failProcessing();
@@ -203,7 +217,8 @@ void WsCommunicator::submit()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::CONNECTED)
 	{
-		_log.warn("Bad step: submit");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at submit(), but expected "
+			"CONNECTED(" + std::to_string(static_cast<int>(State::CONNECTED)) + ")");
 		return;
 	}
 
@@ -256,13 +271,18 @@ void WsCommunicator::exceptionAtSubmit()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::SUBMIT)
 	{
-		_log.warn("Bad step: exceptionSubmit");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at exceptionAtSubmit(), but expected "
+			"SUBMIT(" + std::to_string(static_cast<int>(State::SUBMIT)) + ")");
 		return;
 	}
 
 	_log.trace("Exception at submit");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Exception at submit";
+	}
 
 	done();
 }
@@ -274,15 +294,22 @@ void WsCommunicator::failProcessing()
 		_state != State::CONNECTED &&
 		_state != State::SUBMIT &&
 		_state != State::SUBMITED
-		)
+	)
 	{
-		_log.warn("Bad step: failProcessing");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at failProcessing(), but expected "
+			"CONNECTED(" + std::to_string(static_cast<int>(State::CONNECTED)) + "), "
+			"SUBMIT(" + std::to_string(static_cast<int>(State::SUBMIT)) + "), "
+			"SUBMITED(" + std::to_string(static_cast<int>(State::SUBMITED)) + ")");
 		return;
 	}
 
 	_log.trace("Error after connected");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Exception after connected";
+	}
 
 	done();
 }
@@ -328,6 +355,26 @@ void WsCommunicator::onError()
 	done();
 }
 
+void WsCommunicator::badStep(const std::string& msg)
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
+	if (_state == State::ERROR || _state == State::ESTABLISHED)
+	{
+		return;
+	}
+
+	_log.warn("Bad step: %s", msg.c_str());
+
+	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Processing order error";
+	}
+
+	done();
+}
+
 void WsCommunicator::done()
 {
 	_log.trace("Cleanup...");
@@ -341,5 +388,5 @@ void WsCommunicator::done()
 
 	_log.trace("Done");
 
-	throw RollbackStackAndRestoreContext(ptr());
+	throw RollbackStackAndRestoreContext(_savedCtx);
 }

@@ -21,25 +21,21 @@
 
 #pragma once
 
-
 #include <exception>
-#include "Task.hpp"
+#include "ThreadPool.hpp"
 
 class RollbackStackAndRestoreContext: public std::exception
 {
 private:
-	std::shared_ptr<Task> _task;
+	ucontext_t* _context;
 
 public:
-	RollbackStackAndRestoreContext(const std::shared_ptr<Task>& task) noexcept
-	: _task(task)
+	RollbackStackAndRestoreContext(ucontext_t* context) noexcept
+	: _context(context)
 	{};
 	~RollbackStackAndRestoreContext() noexcept override
 	{
-		auto& task = *_task;
-		_task.reset();
-
-		task.restoreCtx();
+		ThreadPool::continueContext(_context);
 	};
 
 	// Non-copyable

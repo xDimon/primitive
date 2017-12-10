@@ -25,6 +25,7 @@
 #include "../thread/ThreadPool.hpp"
 #include "../utils/Daemon.hpp"
 #include "../thread/RollbackStackAndRestoreContext.hpp"
+#include "../thread/TaskManager.hpp"
 
 ConnectionManager::ConnectionManager()
 : _log("ConnectionManager")
@@ -354,6 +355,8 @@ void ConnectionManager::release(const std::shared_ptr<Connection>& connection)
 /// Обработка событий
 void ConnectionManager::dispatch()
 {
+try
+{
 	for (;;)
 	{
 		std::shared_ptr<Connection> connection = getInstance().capture();
@@ -364,8 +367,9 @@ void ConnectionManager::dispatch()
 
 		getInstance()._log.debug("Enqueue %s for '%s' events processing", connection->name().c_str(), ConnectionEvent::code(connection->events()).c_str());
 
-		auto task = std::make_shared<Task::Func>(
-			[wp = std::weak_ptr<Connection>(connection)](){
+		TaskManager::enqueue(
+			[wp = std::weak_ptr<Connection>(connection)]
+			{
 				auto connection = wp.lock();
 				if (!connection)
 				{
@@ -396,7 +400,10 @@ void ConnectionManager::dispatch()
 				getInstance()._log.trace("End processing on %s: %s", connection->name().c_str(), status ? "success" : "fail");
 			}
 		);
-
-		ThreadPool::enqueue(task);
 	}
+}
+catch (const std::exception& exception)
+{
+	throw;
+}
 }

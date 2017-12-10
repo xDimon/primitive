@@ -39,6 +39,11 @@ public:
 
 	static bool empty();
 
+	static void wakeup()
+	{
+		getInstance()._workersWakeupCondition.notify_one();
+	}
+
 private:
 	ThreadPool();
 	~ThreadPool() = default;
@@ -54,10 +59,10 @@ public:
 
 	static size_t genThreadId();
 
-	static void enqueue(const std::shared_ptr<Task::Func>& function);
-	static void enqueue(const std::shared_ptr<Task::Func>& function, Task::Duration delay);
-	static void enqueue(const std::shared_ptr<Task::Func>& function, Task::Time time);
-	static void enqueue(const std::shared_ptr<Task>& task);
+//	static void enqueue(const std::shared_ptr<Task::Func>& function);
+//	static void enqueue(const std::shared_ptr<Task::Func>& function, Task::Duration delay);
+//	static void enqueue(const std::shared_ptr<Task::Func>& function, Task::Time time);
+//	static void enqueue(const std::shared_ptr<Task>& task);
 
 	static void wait();
 
@@ -66,13 +71,11 @@ public:
 	static void hold();
 	static void unhold();
 
-private:
+public:// TODO временно
 	std::mutex _contextsMutex;
-	std::map<uint64_t, ucontext_t *> _waitingContexts;
 	std::queue<ucontext_t *> _readyForContinueContexts;
 public:
-	static uint64_t postponeContext(ucontext_t* context);
-	static void continueContext(uint64_t ctxId);
+	static void continueContext(ucontext_t* context);
 
 private:
 	Log _log;
@@ -85,22 +88,9 @@ private:
 	// need to keep track of threads so we can join them
 	std::map<Thread::Id, Thread*> _workers;
 
-	struct TaskComparator
-	{
-		bool operator()(const std::shared_ptr<Task>& left, const std::shared_ptr<Task>& right) const
-		{
-			return *left < *right;
-		}
-	};
-
-	// the task queue
-	std::priority_queue<Task, std::deque<std::shared_ptr<Task>>, TaskComparator> _tasks;
-
 	// synchronization
-	std::mutex _queueMutex;
+	std::mutex _workerMutex;
 	std::condition_variable _workersWakeupCondition;
 
 	void createThread();
-
-	std::tuple<void*, size_t> getStack();
 };

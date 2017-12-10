@@ -20,8 +20,13 @@
 
 
 #include "HttpRequestExecutor.hpp"
-#include "../../thread/RollbackStackAndRestoreContext.hpp"
+#include "../../utils/SslHelper.hpp"
+#include "../../net/SslConnector.hpp"
+#include "../../net/ConnectionManager.hpp"
 #include "HttpContext.hpp"
+#include "../../thread/Thread.hpp"
+#include "../../thread/ThreadPool.hpp"
+#include "../../thread/RollbackStackAndRestoreContext.hpp"
 
 HttpRequestExecutor::HttpRequestExecutor(
 	const HttpUri& uri,
@@ -29,9 +34,8 @@ HttpRequestExecutor::HttpRequestExecutor(
 	const std::string& body,
 	const std::string& contentType
 )
-: Task(std::make_shared<Task::Func>([this](){return operator()();}))
-, _savedCtxId(0)
-, _log("HttpRequestExecutor")
+: _savedCtx(nullptr)
+, _log("HttpRequestExecutor")//, Log::Detail::TRACE)
 , _clientTransport(new HttpClient())
 , _method(method)
 , _uri(uri)
@@ -42,17 +46,32 @@ HttpRequestExecutor::HttpRequestExecutor(
 {
 }
 
-bool HttpRequestExecutor::operator()()
+HttpRequestExecutor::~HttpRequestExecutor()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (_state != State::ERROR && _state != State::COMPLETE)
+	{
+		_log.warn("Destruct when step: %d", static_cast<int>(_state));
+	}
+}
+
+void HttpRequestExecutor::operator()()
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::INIT)
 	{
 		badStep("Step " + std::to_string(static_cast<int>(_state)) + ", but expected "
 			"INIT(" + std::to_string(static_cast<int>(State::INIT)) + ")");
-		return false;
+		return;
 	}
 
-	std::swap(_savedCtxId, _ctxId);
+	if (!Thread::getCurrTaskContext())
+	{
+		_log.trace("Thread::_currentTaskContextPtrBuffer undefined");
+//		throw std::runtime_error("Thread::_currentTaskContextPtrBuffer undefined");
+	}
+	_savedCtx = Thread::getCurrTaskContext();
+	Thread::setCurrTaskContext(nullptr);
 
 	_error.clear();
 	_log.trace("--------------------------------------------------------------------------------------------------------");
@@ -73,17 +92,13 @@ bool HttpRequestExecutor::operator()()
 		}
 		_connector->setTtl(std::chrono::seconds(15));
 
-		uint64_t ctxId = 0;
-		std::swap(ctxId, _ctxId);
-
 		_connector->addConnectedHandler(
-			[ctxId, wp = std::weak_ptr<Task>(ptr())]
+			[wp = std::weak_ptr<HttpRequestExecutor>(ptr())]
 			(const std::shared_ptr<TcpConnection>& connection)
 			{
-				auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+				auto iam = wp.lock();
 				if (iam)
 				{
-					iam->_ctxId = ctxId;
 					iam->_connector.reset();
 					iam->_connection = connection;
 					iam->onConnected();
@@ -92,12 +107,11 @@ bool HttpRequestExecutor::operator()()
 		);
 
 		_connector->addErrorHandler(
-			[ctxId, wp = std::weak_ptr<Task>(ptr())]
+			[wp = std::weak_ptr<HttpRequestExecutor>(ptr())]
 			{
 				auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
 				if (iam)
 				{
-					iam->_ctxId = ctxId;
 					iam->_connector.reset();
 					iam->failConnect();
 				}
@@ -113,8 +127,6 @@ bool HttpRequestExecutor::operator()()
 
 		exceptionAtConnect();
 	}
-
-	return true;
 }
 
 void HttpRequestExecutor::failConnect()
@@ -184,10 +196,10 @@ void HttpRequestExecutor::onConnected()
 	}
 
 	_connection->addCompleteHandler(
-		[wp = std::weak_ptr<Task>(ptr())]
+		[wp = std::weak_ptr<HttpRequestExecutor>(ptr())]
 		(TcpConnection&, const std::shared_ptr<Context>&)
 		{
-			auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+			auto iam = wp.lock();
 			if (iam)
 			{
 				iam->onComplete();
@@ -196,10 +208,10 @@ void HttpRequestExecutor::onConnected()
 	);
 
 	_connection->addErrorHandler(
-		[wp = std::weak_ptr<Task>(ptr())]
+		[wp = std::weak_ptr<HttpRequestExecutor>(ptr())]
 		(TcpConnection&)
 		{
-			auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+			auto iam = wp.lock();
 			if (iam)
 			{
 				iam->failProcessing();
@@ -419,6 +431,8 @@ void HttpRequestExecutor::badStep(const std::string& msg)
 
 void HttpRequestExecutor::done()
 {
+	ucontext_t* ctx = nullptr;
+
 	{
 		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
@@ -427,13 +441,11 @@ void HttpRequestExecutor::done()
 		_connection.reset();
 		_connector.reset();
 
-		_log.trace("Done");
+		ctx = _savedCtx;
+		_savedCtx = nullptr;
 
-		if (_savedCtxId)
-		{
-			std::swap(_savedCtxId, _ctxId);
-		}
+		_log.trace("Done");
 	}
 
-	throw RollbackStackAndRestoreContext(ptr());
+	throw RollbackStackAndRestoreContext(ctx);
 }
