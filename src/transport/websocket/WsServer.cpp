@@ -30,6 +30,7 @@
 #include "WsContext.hpp"
 #include "WsServer.hpp"
 #include "../http/HttpResponse.hpp"
+#include "../../utils/String.hpp"
 
 REGISTER_TRANSPORT(websocket, WsServer);
 
@@ -198,11 +199,34 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 			return true;
 		}
 
+		const auto& origin = request->getHeader("Origin");
+
+		std::string wsProtocol;
+		if (!request->getHeader("Sec-WebSocket-Protocol").empty())
+		{
+			auto values = String::split(request->getHeader("Sec-WebSocket-Protocol"), ',');
+			for (auto value : values)
+			{
+				if (value == "chat")
+				{
+					wsProtocol = value;
+					break;
+				}
+				if (wsProtocol.empty())
+				{
+					wsProtocol = value;
+				}
+			}
+		}
+
 		HttpResponse(101, "Web Socket Protocol Handshake")
 			<< HttpHeader("X-ServerTransport", "websocket", true)
 			<< HttpHeader("Upgrade", "websocket")
 			<< HttpHeader("Connection", "Upgrade")
 			<< HttpHeader("Sec-WebSocket-Accept", acceptKey)
+			<< HttpHeader("Sec-WebSocket-Protocol", wsProtocol)
+			<< HttpHeader("Access-Control-Allow-Origin", origin.empty() ? "*" : origin)
+			<< HttpHeader("Access-Control-Expose-Headers", "Upgrade, Sec-WebSocket-Accept, Sec-WebSocket-Protocol")
 			>> *connection;
 
 		if (!handler)
