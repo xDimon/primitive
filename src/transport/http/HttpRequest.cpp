@@ -164,6 +164,7 @@ const char* HttpRequest::parseProtocol(const char* s)
 const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 {
 	auto s = begin;
+	std::string *prevHeaderValue = nullptr;
 
 	try
 	{
@@ -181,6 +182,31 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 				return s;
 			}
 
+			// Проверка на возможный многострочный заголовок
+			if (prevHeaderValue != nullptr)
+			{
+				if (HttpHelper::isSp(*s) || HttpHelper::isHt(*s))
+				{
+					while (HttpHelper::isSp(*s) || HttpHelper::isHt(*s))
+					{
+						s++;
+					}
+					prevHeaderValue->push_back(' ');
+
+					while (!HttpHelper::isCrlf(s))
+					{
+						prevHeaderValue->push_back(*s++);
+					}
+					s += 2;
+
+					continue;
+				}
+				else
+				{
+					prevHeaderValue = nullptr;
+				}
+			}
+
 			// Имя заголовка
 			std::string name;
 			while (HttpHelper::isToken(*s))
@@ -188,23 +214,28 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 				name.push_back(*s++);
 			}
 
+			// Разделитель
 			if (*s != ':')
 			{
 				throw std::runtime_error("Bad name");
 			}
-
-			s = HttpHelper::skipLws(++s);
+			s++;
 
 			// Значение заголовка
 			std::string value;
+			while (HttpHelper::isSp(*s) || HttpHelper::isHt(*s))
+			{
+				s++;
+			}
 			while (!HttpHelper::isCrlf(s))
 			{
 				value.push_back(*s++);
 			}
-
 			s += 2;
 
-			_headers.emplace(name, value);
+			auto i = _headers.emplace(name, value);
+
+			prevHeaderValue = &i->second;
 
 			if (strcasecmp(name.c_str(), "Content-Length") == 0)
 			{
