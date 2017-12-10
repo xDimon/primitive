@@ -32,7 +32,7 @@ class Session : public Shareable<Session>
 {
 public:
 	typedef int64_t HID;
-	typedef uint64_t SID;
+	typedef std::string SID;
 
 protected:
 	static const char _hidSeed[16];
@@ -83,7 +83,7 @@ public:
 		return _ready;
 	}
 
-	const SID sid() const
+	SID sid() const
 	{
 		return _sid;
 	}

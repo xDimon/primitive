@@ -43,17 +43,20 @@ private:
 		return instance;
 	}
 
-	/// Сопоставление sid => uid
-	std::map<Session::SID, Session::HID> _sid2hid;
-	std::mutex _mutexSid2hid;
+	/// Сопоставление sid => session
+	std::map<Session::SID, const std::weak_ptr<Session>> _sessionsBySid;
+	std::mutex _mutexSessionsBySid;
 
 	/// Пул сессий
 	std::map<Session::HID, const std::shared_ptr<Session>> _sessions;
 	std::recursive_mutex _mutexSessions;
 
 public:
+	/// Зарегистрировать SID
+	static void regSid(const std::shared_ptr<Session>& session);
+
 	/// Получить HID по SID
-	static Session::HID hidBySid(const Session::SID& sid);
+	static std::shared_ptr<Session> sessionBySid(const Session::SID& sid);
 
 	/// Получить сессию по HID
 	static std::shared_ptr<Session> getSession(Session::HID hid);

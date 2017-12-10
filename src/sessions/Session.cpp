@@ -40,7 +40,8 @@ Session::Session(
 
 void Session::setSid(SID sid)
 {
-	_sid = sid;
+	_sid = std::move(sid);
+	SessionManager::regSid(ptr());
 }
 
 void Session::touch()

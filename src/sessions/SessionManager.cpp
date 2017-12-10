@@ -21,11 +21,40 @@
 
 #include "SessionManager.hpp"
 
-Session::HID SessionManager::hidBySid(const Session::SID& sid)
+void SessionManager::regSid(const std::shared_ptr<Session>& session)
 {
-	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSid2hid);
-	auto i = getInstance()._sid2hid.find(sid);
-	return (i != getInstance()._sid2hid.end()) ? i->second : 0;
+	if (session->sid().empty())
+	{
+		return;
+	}
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSessionsBySid);
+	auto i = getInstance()._sessionsBySid.find(session->sid());
+	if (i != getInstance()._sessionsBySid.end())
+	{
+		if (i->first == session->sid())
+		{
+
+		}
+		getInstance()._sessionsBySid.erase(i);
+	}
+	getInstance()._sessionsBySid.emplace(session->sid(), session);
+}
+
+std::shared_ptr<Session> SessionManager::sessionBySid(const Session::SID& sid)
+{
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSessionsBySid);
+	auto i = getInstance()._sessionsBySid.find(sid);
+	if (i == getInstance()._sessionsBySid.end())
+	{
+		return nullptr;
+	}
+	auto session = i->second.lock();
+	if (session->sid() != sid)
+	{
+		getInstance()._sessionsBySid.erase(i);
+		return nullptr;
+	}
+	return std::move(session);
 }
 
 std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Session>& session)
@@ -35,6 +64,7 @@ std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Sessio
 
 	if (i != getInstance()._sessions.end())
 	{
+		regSid(session);
 		i->second->touch();
 		return i->second;
 	}
@@ -45,6 +75,8 @@ std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Sessio
 	}
 
 	getInstance()._sessions.emplace(session->hid, session);
+
+	regSid(session);
 
 	session->touch();
 	return session;
@@ -74,10 +106,10 @@ void SessionManager::closeSession(Session::HID uid)
 	}
 
 	auto sid = i->second->sid();
-	if (sid != 0)
+	if (!sid.empty())
 	{
-		std::lock_guard<std::mutex> lockGuard2(getInstance()._mutexSid2hid);
-		getInstance()._sid2hid.erase(sid);
+		std::lock_guard<std::mutex> lockGuard2(getInstance()._mutexSessionsBySid);
+		getInstance()._sessionsBySid.erase(sid);
 	}
 
 	getInstance()._sessions.erase(i);
