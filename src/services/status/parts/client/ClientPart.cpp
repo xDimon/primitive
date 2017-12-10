@@ -66,10 +66,14 @@ void status::ClientPart::init(const Setting& setting)
 			transport->bindHandler(
 				uri,
 				std::make_shared<ServerTransport::Handler>(
-					[sp = std::dynamic_pointer_cast<ClientPart>(ptr())]
+					[wp = std::weak_ptr<ClientPart>(std::dynamic_pointer_cast<ClientPart>(ptr()))]
 					(const std::shared_ptr<Context>& context)
 					{
-						sp->handle(context);
+						auto iam = wp.lock();
+						if (iam)
+						{
+							iam->handle(context);
+						}
 					}
 				)
 			);
@@ -240,7 +244,7 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 
 		httpContext->transmit(out.c_str(), out.length(), "text/pain; charset=utf-8", true);
 
-		_log.info("OUT %s", out.c_str());
+		_log.info("OUT Send status info (load=%0.03f%%)", SysInfo::getInstance()._cpuUsageOnPercent->avgPerSec(std::chrono::seconds(15)));
 	}
 	catch (const std::exception& exception)
 	{
