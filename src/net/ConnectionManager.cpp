@@ -355,8 +355,6 @@ void ConnectionManager::release(const std::shared_ptr<Connection>& connection)
 /// Обработка событий
 void ConnectionManager::dispatch()
 {
-try
-{
 	for (;;)
 	{
 		std::shared_ptr<Connection> connection = getInstance().capture();
@@ -401,9 +399,4 @@ try
 			}
 		);
 	}
-}
-catch (const std::exception& exception)
-{
-	throw;
-}
 }
