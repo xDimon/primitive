@@ -20,10 +20,8 @@
 
 
 #include <ucontext.h>
-#include <sys/mman.h>
 #include "ThreadPool.hpp"
 #include "../utils/Time.hpp"
-#include "RollbackStackAndRestoreContext.hpp"
 #include "../utils/Daemon.hpp"
 #include "TaskManager.hpp"
 
@@ -79,7 +77,7 @@ void ThreadPool::createThread()
 	std::function<void()> threadLoop =
 	[this]
 	{
-		STask::Time waitUntil = std::chrono::steady_clock::now() + std::chrono::hours(24);
+		Task::Time waitUntil = std::chrono::steady_clock::now() + std::chrono::seconds(1);//std::chrono::hours(24);
 
 		auto continueCondition = [this,&waitUntil](){
 			std::lock_guard<std::mutex> lockGuard(_counterMutex);
@@ -91,7 +89,8 @@ void ThreadPool::createThread()
 			{
 				return _hold == 0;
 			}
-			waitUntil = TaskManager::waitUntil();
+			waitUntil = std::min(TaskManager::waitUntil(), std::chrono::steady_clock::now() + std::chrono::seconds(1));
+
 			return waitUntil <= std::chrono::steady_clock::now();
 		};
 
@@ -105,7 +104,7 @@ void ThreadPool::createThread()
 				// Condition for run thread
 				if (!_workersWakeupCondition.wait_until(lock, waitUntil, continueCondition))
 				{
-					waitUntil = std::chrono::steady_clock::now() + std::chrono::hours(24);
+					waitUntil = std::chrono::steady_clock::now() + std::chrono::seconds(1);//std::chrono::hours(24);
 					continue;
 				}
 			}
@@ -122,12 +121,12 @@ void ThreadPool::createThread()
 
 				Thread::self()->putContextForReplace(context);
 
-//				_log.info("End continueContext => %p", context);
+				_log.info("End continueContext => %p", context);
 			}
 
 			if (Thread::self()->sizeContextForReplace() > 0)
 			{
-//				_log.info("End of secondary task");
+				_log.info("End of secondary task");
 
 				_workersWakeupCondition.notify_one();
 
@@ -222,7 +221,7 @@ void ThreadPool::continueContext(ucontext_t* context)
 
 	std::lock_guard<std::mutex> lockGuard(pool._contextsMutex);
 
-//	pool._log.info("Begin continueContext <= %p", context);
+	pool._log.info("Begin continueContext <= %p", context);
 
 	pool._readyForContinueContexts.emplace(context);
 }

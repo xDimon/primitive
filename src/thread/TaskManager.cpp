@@ -29,20 +29,20 @@ TaskManager::TaskManager()
 {
 }
 
-void TaskManager::enqueue(STask::Func&& func, STask::Time time)
+void TaskManager::enqueue(Task::Func&& func, Task::Time time)
 {
 	auto& instance = getInstance();
 
 	std::lock_guard<std::mutex> lockGuard(instance._mutex);
 
-	instance._queue.emplace(std::forward<STask::Func>(func), time);
+	instance._queue.emplace(std::forward<Task::Func>(func), time);
 
 //	instance._log.info("Task queue length increase to %zu", instance._queue.size());
 
 	ThreadPool::wakeup();
 }
 
-STask::Time TaskManager::waitUntil()
+Task::Time TaskManager::waitUntil()
 {
 	auto& instance = getInstance();
 
@@ -50,7 +50,7 @@ STask::Time TaskManager::waitUntil()
 
 	return
 		instance._queue.empty()
-		? STask::Clock::now() + std::chrono::seconds(1)
+		? Task::Clock::now() + std::chrono::seconds(1)
 		: instance._queue.top().until();
 }
 
@@ -68,12 +68,12 @@ void TaskManager::executeOne()
 		return;
 	}
 
-	STask task{const_cast<STask&&>(instance._queue.top())};
+	Task task{const_cast<Task&&>(instance._queue.top())};
 
 	auto u = task.until();
-	auto n = STask::Clock::now();
+	auto n = Task::Clock::now();
 
-//	if (task.until() > STask::Clock::now() && !Daemon::shutingdown())
+//	if (task.until() > Task::Clock::now() && !Daemon::shutingdown())
 	if (u > n && !Daemon::shutingdown())
 	{
 		instance._log.info("Reenqueue task (wait for %lld µs)", std::chrono::duration_cast<std::chrono::microseconds>(u - n).count());
@@ -84,8 +84,10 @@ void TaskManager::executeOne()
 	instance._queue.pop();
 
 //	instance._log.info("Task queue length decrease to %zu", instance._queue.size());
+//	instance._log.info("Task queue length decrease to %zu", instance._queue.size());
 
-	instance._log.info("Execute task (%zu waits) (late %lld µs)", instance._queue.size(), std::chrono::duration_cast<std::chrono::microseconds>(n - u).count());
+	auto w = instance._queue.size();
+	instance._log.info("Execute task (%zu waits) (late %lld µs)", w, std::chrono::duration_cast<std::chrono::microseconds>(n - u).count());
 
 	instance._mutex.unlock();
 

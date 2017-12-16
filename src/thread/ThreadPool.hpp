@@ -26,7 +26,6 @@
 #include <deque>
 #include <condition_variable>
 #include <queue>
-#include "Task.hpp"
 #include "Thread.hpp"
 
 class ThreadPool final

@@ -348,8 +348,12 @@ void HttpResponse::operator>>(TcpConnection& connection)
 	std::ostringstream oss;
 	oss << "HTTP/1.1 " << _statusCode << " " << _statusMessage << "\r\n"
 		<< "Server: " << Server::httpName() << "\r\n"
-		<< "Date: " << Time::httpDate() << "\r\n"
-		<< "Content-Length: " << _body.str().size() << "\r\n";
+		<< "Date: " << Time::httpDate() << "\r\n";
+
+	if (_body.str().size())
+	{
+		oss << "Content-Length: " << _body.str().size() << "\r\n";
+	}
 
 	connection.write(oss.str().data(), oss.str().size());
 

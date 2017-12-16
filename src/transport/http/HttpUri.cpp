@@ -29,7 +29,6 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
-#include <cstdlib>
 
 HttpUri::HttpUri()
 : _scheme(Scheme::UNDEFINED)

@@ -27,7 +27,7 @@
 #include <queue>
 #include <mutex>
 #include <set>
-#include "STask.hpp"
+#include "Task.hpp"
 #include "../log/Log.hpp"
 
 class TaskManager final
@@ -52,30 +52,30 @@ public:
 private:
 	Log _log;
 	std::mutex _mutex;
-	std::priority_queue<STask, std::deque<STask>> _queue;
-	std::set<STask> _queue2;
+	std::priority_queue<Task, std::deque<Task>> _queue;
+	std::set<Task> _queue2;
 
 public:
-	static void enqueue(STask::Func&& func, STask::Time time);
+	static void enqueue(Task::Func&& func, Task::Time time);
 
-	static void enqueue(STask::Func&& func, STask::Duration delay)
+	static void enqueue(Task::Func&& func, Task::Duration delay)
 	{
-		enqueue(std::forward<STask::Func>(func), STask::Clock::now() + delay);
+		enqueue(std::forward<Task::Func>(func), Task::Clock::now() + delay);
 	}
 
-	static void enqueue(STask::Func&& func)
+	static void enqueue(Task::Func&& func)
 	{
-		enqueue(std::forward<STask::Func>(func), STask::Clock::now());
+		enqueue(std::forward<Task::Func>(func), Task::Clock::now());
 	}
 
 //	template<class F, class... S>
-//	static typename std::enable_if<std::is_convertible<F, STask::Func>::value, void>::type
+//	static typename std::enable_if<std::is_convertible<F, Task::Func>::value, void>::type
 //	enqueue(F&& func, const S&... spec)
 //	{
-//		enqueue(std::forward<STask::Func>(func), spec...);
+//		enqueue(std::forward<Task::Func>(func), spec...);
 //	}
 
-	static STask::Time waitUntil();
+	static Task::Time waitUntil();
 
 	static void executeOne();
 

@@ -83,24 +83,18 @@ void Thread::run(Thread* thread)
 		sigfillset(&sig);
 		sigprocmask(SIG_BLOCK, &sig, nullptr);
 
-		thread->_log.debug("Thread 'Worker#%zu' start", thread->_id);
+		thread->_log.info("Thread 'Worker#%zu' start", thread->_id);
 	}
 
 	do
 	{
 		execute(thread);
-//		thread->_function();
 	}
 	while (thread->getCurrContextCount());
 
-	auto lvl = thread->getCurrContextCount();
-	auto q = thread->sizeContextForReplace();
-
 	thread->_finished = true;
 
-	thread->_log.info("thread->id=%zu _self->id=%zu", thread->_id, _self->_id);
-	thread->_log.info("Thread 'Worker#%zu' exit: %zu %zu", thread->_id, lvl, q);
-	thread->_log.debug("Thread 'Worker#%zu' exit", thread->_id);
+	thread->_log.info("Thread 'Worker#%zu' exit", thread->_id);
 
 	LoggerManager::unregThread();
 }
@@ -109,11 +103,7 @@ void Thread::execute(Thread* thread)
 {
 	try
 	{
-//		do
-//		{
-			thread->_function();
-//		}
-//		while (!thread->getCurrContextCount());
+		thread->_function();
 	}
 	catch (const RollbackStackAndRestoreContext& exception)
 	{
@@ -166,7 +156,7 @@ void Thread::coroWrapper(Thread *thread, ucontext_t* context, std::mutex* mutex)
 	ThreadPool::getInstance()._contextsMutex.unlock();
 }
 
-void Thread::yield(STask::Func&& func)
+void Thread::yield(Task::Func&& func)
 {
 	volatile bool first = true;
 
@@ -323,4 +313,18 @@ size_t Thread::getCurrContextCount()
 //	_self->_log.info("Thread 'Worker#%zu' CurrContextCount=%zu", _self->_id, _currentContextCount);
 
 	return _currentContextCount;
+}
+
+void Thread::postpone(Task::Duration duration)
+{
+	auto ctx = Thread::getCurrTaskContext();
+	Thread::setCurrTaskContext(nullptr);
+
+	TaskManager::enqueue(
+		[ctx]
+		{
+			throw RollbackStackAndRestoreContext(ctx);
+		},
+		duration
+	);
 }

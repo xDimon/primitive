@@ -21,7 +21,6 @@
 
 #include "SysInfo.hpp"
 #include "TelemetryManager.hpp"
-#include "../thread/Task.hpp"
 #include "../thread/ThreadPool.hpp"
 #include "../utils/Daemon.hpp"
 #include "../thread/TaskManager.hpp"
@@ -65,8 +64,6 @@ void SysInfo::start()
 }
 
 void SysInfo::collect()
-{
-try
 {
 	auto& instance = getInstance();
 
@@ -137,9 +134,4 @@ try
 	{
 		TaskManager::enqueue(SysInfo::collect, std::chrono::seconds(1));
 	}
-}
-catch (const std::exception& exception)
-{
-	throw;
-}
 }

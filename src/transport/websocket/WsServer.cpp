@@ -29,7 +29,6 @@
 #include "../../utils/hash/SHA1.hpp"
 #include "WsContext.hpp"
 #include "WsServer.hpp"
-#include "../http/HttpResponse.hpp"
 #include "../../utils/String.hpp"
 
 REGISTER_TRANSPORT(websocket, WsServer);
@@ -168,8 +167,8 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 
 		// Проверка заголовков
 		if (
-			strcasecmp(request->getHeader("Connection").c_str(), "Upgrade") != 0 ||
-			strcasecmp(request->getHeader("Upgrade").c_str(), "websocket") != 0 ||
+			strcasestr(request->getHeader("Connection").c_str(), "Upgrade") == nullptr ||
+			strcasestr(request->getHeader("Upgrade").c_str(), "websocket") == nullptr ||
 			request->getHeader("Sec-WebSocket-Key").empty()
 		)
 		{

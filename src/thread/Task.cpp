@@ -19,86 +19,75 @@
 // Task.cpp
 
 
-#include <ucontext.h>
 #include "Task.hpp"
-#include "../log/Log.hpp"
-#include "ThreadPool.hpp"
 #include "../utils/Daemon.hpp"
-#include "RollbackStackAndRestoreContext.hpp"
+#include "TaskManager.hpp"
+#include "ThreadPool.hpp"
 
-Task::Task(const std::shared_ptr<Func>& function)
-: _function(function)
-, _until(Time::min())
-, _ctxId(0)
-{
-}
-
-Task::Task(const std::shared_ptr<Func>& function, Duration delay)
-: _function(function)
-, _until(Clock::now() + delay)
-, _ctxId(0)
-{
-}
-
-Task::Task(const std::shared_ptr<Func>& function, Time time)
-: _function(function)
-, _until(time)
-, _ctxId(0)
+Task::Task(Func&& function, Time until)
+: _function(std::move(function))
+, _until(until)
+, _parentTaskContext(Thread::getContext())
 {
 }
 
 Task::Task(Task &&that) noexcept
 : _function(std::move(that._function))
 , _until(that._until)
-, _ctxId(that._ctxId)
+, _parentTaskContext(that._parentTaskContext)
 {
+	that._function = static_cast<void(*)()>(nullptr);
 	that._until = Time::min();
-	that._ctxId = 0;
+	that._parentTaskContext = nullptr;
 }
 
 Task& Task::operator=(Task &&that) noexcept
 {
+	if (this == &that)
+	{
+		return *this;
+	}
+
 	_function = std::move(that._function);
 	_until = that._until;
+	_parentTaskContext = that._parentTaskContext;
+	that._function = static_cast<void(*)()>(nullptr);
 	that._until = Time::min();
-	_ctxId = that._ctxId;
-	that._ctxId = 0;
+	that._parentTaskContext = nullptr;
+
 	return *this;
 }
 
-bool Task::operator()()
+// Исполнение
+void Task::execute()
 {
-	if (_until != Time::min() && Clock::now() < _until && !Daemon::shutingdown())
+	auto tmp = Thread::getCurrTaskContext();
+	Thread::setCurrTaskContext(_parentTaskContext);
+
+	std::exception_ptr currentException;
+	try
 	{
-		return false;
+		if (_function)
+		{
+			_function();
+		}
+	}
+	catch (const std::exception& exception)
+	{
+		currentException = std::current_exception();
 	}
 
-	(*_function)();
+	_parentTaskContext = Thread::getCurrTaskContext();
+	Thread::setCurrTaskContext(tmp);
 
-	return true;
-}
+	if (_parentTaskContext)
+	{
+		ThreadPool::continueContext(_parentTaskContext);
+		_parentTaskContext = nullptr;
+	}
 
-bool Task::operator<(const Task& that) const
-{
-	return this->_until > that._until;
-}
-
-void Task::saveCtx(uint64_t ctxId)
-{
-//	if (_ctxId != 0)
-//	{
-//		throw std::runtime_error("Context Id already set");
-//	}
-//	_ctxId = ctxId;
-}
-
-void Task::restoreCtx()
-{
-//	if (_ctxId == 0)
-//	{
-//		return;
-//		throw std::runtime_error("Context Id didn't set");
-//	}
-//	ThreadPool::continueContext(_ctxId);
-//	_ctxId = 0;
+	if (currentException)
+	{
+		std::rethrow_exception(currentException);
+	}
 }

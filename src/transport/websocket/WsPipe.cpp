@@ -21,7 +21,6 @@
 
 #include <cstring>
 #include "WsPipe.hpp"
-#include "../../net/TcpConnection.hpp"
 #include "WsContext.hpp"
 #include "../../net/ConnectionManager.hpp"
 

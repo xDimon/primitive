@@ -24,11 +24,10 @@
 
 #include <functional>
 #include <chrono>
-#include <sys/ucontext.h>
-#include <memory>
+#include <ucontext.h>
 #include "../utils/Shareable.hpp"
 
-class Task: public Shareable<Task>
+class Task
 {
 public:
 	using Func = std::function<void()>;
@@ -36,39 +35,35 @@ public:
 	using Duration = Clock::duration;
 	using Time = Clock::time_point;
 
-protected:
-	std::shared_ptr<Func> _function;
+private:
+	Func _function;
 	Time _until;
-	uint64_t _ctxId;
+	mutable ucontext_t* _parentTaskContext;
 
 public:
-	Task() = delete;
+	explicit Task(Func&& function, Time until);
+	virtual ~Task() = default;
+
+	// Разрешаем перемещение
+	Task(Task&& that) noexcept;
+	Task& operator=(Task&& that) noexcept;
+
+	// Запрещаем любое копирование
 	Task(const Task&) = delete;
 	void operator=(Task const&) = delete;
 
-	explicit Task(const std::shared_ptr<Func>& function);
-	Task(const std::shared_ptr<Func>& function, Duration delay);
-	Task(const std::shared_ptr<Func>& function, Time time);
-	Task(Task &&that) noexcept;
-
-	virtual ~Task() = default;
-
-	Task& operator=(Task &&that) noexcept;
-
-	bool operator<(const Task &that) const;
-
-	virtual bool operator()();
-
-	std::shared_ptr<Func> func() const
-	{
-		return _function;
-	}
-
+	// Планирование времени
 	const Time& until() const
 	{
 		return _until;
 	}
 
-	void saveCtx(uint64_t ctxId);
-	void restoreCtx();
+	// Сравнение по времени
+	bool operator<(const Task &that) const
+	{
+		return this->_until > that._until;
+	}
+
+	// Исполнение
+	void execute();
 };

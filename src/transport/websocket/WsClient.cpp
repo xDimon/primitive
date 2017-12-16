@@ -26,8 +26,6 @@
 #include "WsContext.hpp"
 #include "../../utils/Base64.hpp"
 #include "../../utils/hash/SHA1.hpp"
-#include "../../net/ConnectionManager.hpp"
-#include "WsPipe.hpp"
 
 bool WsClient::processing(const std::shared_ptr<Connection>& connection_)
 {
@@ -112,8 +110,8 @@ bool WsClient::processing(const std::shared_ptr<Connection>& connection_)
 
 	// Проверка заголовков
 	if (
-		strcasecmp(response->getHeader("Connection").c_str(), "Upgrade") != 0 ||
-		strcasecmp(response->getHeader("Upgrade").c_str(), "websocket") != 0 ||
+		strcasestr(response->getHeader("Connection").c_str(), "Upgrade") == nullptr ||
+		strcasestr(response->getHeader("Upgrade").c_str(), "websocket") == nullptr ||
 		response->getHeader("Sec-WebSocket-Accept").empty()
 	)
 	{

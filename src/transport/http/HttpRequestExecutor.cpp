@@ -35,7 +35,7 @@ HttpRequestExecutor::HttpRequestExecutor(
 	const std::string& contentType
 )
 : _savedCtx(nullptr)
-, _log("HttpRequestExecutor")//, Log::Detail::TRACE)
+, _log("HttpRequestExecutor", Log::Detail::TRACE)
 , _clientTransport(new HttpClient())
 , _method(method)
 , _uri(uri)

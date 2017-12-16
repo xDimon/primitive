@@ -25,9 +25,7 @@
 #include "../../net/SslConnector.hpp"
 #include "../../net/ConnectionManager.hpp"
 #include "../../server/Server.hpp"
-#include "../../utils/Base64.hpp"
 #include "../../thread/RollbackStackAndRestoreContext.hpp"
-#include "WsPipe.hpp"
 #include "WsContext.hpp"
 
 WsCommunicator::WsCommunicator(

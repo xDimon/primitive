@@ -27,7 +27,7 @@
 #include <stack>
 #include <queue>
 #include "../log/Log.hpp"
-#include "STask.hpp"
+#include "Task.hpp"
 
 class Thread
 {
@@ -104,13 +104,15 @@ public:
 
 	static size_t getCurrContextCount();
 
-	void yield(STask::Func&& func);
+	void yield(Task::Func&& func);
 
 	template<class F>
 	void yield(F& func)
 	{
 		yield([&func]{ func(); });
 	}
+
+	void postpone(Task::Duration duration);
 
 	static void coroWrapper(Thread* thread, ucontext_t* context, std::mutex* mutex);
 };
