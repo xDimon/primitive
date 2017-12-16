@@ -184,7 +184,8 @@ public:
 		{
 			throw std::runtime_error("Field '" + key + "' isn't integer");
 		}
-		value = (T)dynamic_cast<const SInt *>(element)->value();
+		auto sInt = dynamic_cast<const SInt *>(element);
+		value = (T)(sInt ? sInt->value() : 0);
 	}
 
 	template<typename T>
@@ -200,7 +201,8 @@ public:
 		{
 			throw std::runtime_error("Field '" + key + "' isn't numeric");
 		}
-		value = (T)dynamic_cast<const SFloat *>(element)->value();
+		auto sFloat = dynamic_cast<const SFloat *>(element);
+		value = (T)(sFloat ? sFloat->value() : 0.0);
 	}
 
 	template<typename T, typename _ = void>
