@@ -89,7 +89,7 @@ void ThreadPool::createThread()
 			{
 				return _hold == 0;
 			}
-			waitUntil = std::min(TaskManager::waitUntil(), std::chrono::steady_clock::now() + std::chrono::seconds(1));
+			waitUntil = TaskManager::waitUntil();
 
 			return waitUntil <= std::chrono::steady_clock::now();
 		};
@@ -121,12 +121,12 @@ void ThreadPool::createThread()
 
 				Thread::self()->putContextForReplace(context);
 
-				_log.info("End continueContext => %p", context);
+//				_log.info("End continueContext => %p", context);
 			}
 
 			if (Thread::self()->sizeContextForReplace() > 0)
 			{
-				_log.info("End of secondary task");
+//				_log.info("End of secondary task");
 
 				_workersWakeupCondition.notify_one();
 
@@ -221,7 +221,7 @@ void ThreadPool::continueContext(ucontext_t* context)
 
 	std::lock_guard<std::mutex> lockGuard(pool._contextsMutex);
 
-	pool._log.info("Begin continueContext <= %p", context);
+//	pool._log.info("Begin continueContext <= %p", context);
 
 	pool._readyForContinueContexts.emplace(context);
 }

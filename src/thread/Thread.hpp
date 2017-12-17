@@ -53,7 +53,6 @@ public:// TODO временно
 
 	static thread_local ucontext_t* _contextPtrBuffer;
 	static thread_local ucontext_t* _currentTaskContextPtrBuffer;
-	static size_t _stacksCount;
 
 	static void run(Thread* thread);
 

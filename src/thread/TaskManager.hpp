@@ -53,7 +53,6 @@ private:
 	Log _log;
 	std::mutex _mutex;
 	std::priority_queue<Task, std::deque<Task>> _queue;
-	std::set<Task> _queue2;
 
 public:
 	static void enqueue(Task::Func&& func, Task::Time time);
@@ -74,6 +73,8 @@ public:
 //	{
 //		enqueue(std::forward<Task::Func>(func), spec...);
 //	}
+
+	static size_t queueSize();
 
 	static Task::Time waitUntil();
 

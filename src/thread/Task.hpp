@@ -66,4 +66,10 @@ public:
 
 	// Исполнение
 	void execute();
+
+	// Пустышка (остаток о перемещения)
+	bool isDummy() const
+	{
+		return !_function;
+	}
 };

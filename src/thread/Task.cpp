@@ -37,7 +37,6 @@ Task::Task(Task &&that) noexcept
 , _parentTaskContext(that._parentTaskContext)
 {
 	that._function = static_cast<void(*)()>(nullptr);
-	that._until = Time::min();
 	that._parentTaskContext = nullptr;
 }
 
@@ -52,7 +51,6 @@ Task& Task::operator=(Task &&that) noexcept
 	_until = that._until;
 	_parentTaskContext = that._parentTaskContext;
 	that._function = static_cast<void(*)()>(nullptr);
-	that._until = Time::min();
 	that._parentTaskContext = nullptr;
 
 	return *this;

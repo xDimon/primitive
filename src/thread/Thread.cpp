@@ -44,8 +44,6 @@ thread_local std::queue<ucontext_t*> Thread::_replacedContexts;
 thread_local ucontext_t* Thread::_contextPtrBuffer = nullptr;
 thread_local ucontext_t* Thread::_currentTaskContextPtrBuffer = nullptr;
 
-size_t Thread::_stacksCount = 0;
-
 Thread::Thread(std::function<void()>& function)
 : _thread((
 	_mutex.lock(),
@@ -88,7 +86,8 @@ void Thread::run(Thread* thread)
 
 	do
 	{
-		execute(thread);
+		//execute(thread);
+		coroWrapper(thread, nullptr, nullptr);
 	}
 	while (thread->getCurrContextCount());
 
@@ -152,7 +151,6 @@ void Thread::coroWrapper(Thread *thread, ucontext_t* context, std::mutex* mutex)
 
 		setcontext(contextForReplace);
 	}
-
 	ThreadPool::getInstance()._contextsMutex.unlock();
 }
 
@@ -214,8 +212,7 @@ void Thread::yield(Task::Func&& func)
 //			"Map memory for stack of context %p (%zu on %p) => %lld",
 //			context,
 //			context->uc_stack.ss_size,
-//			context->uc_stack.ss_sp,
-//			++_stacksCount
+//			context->uc_stack.ss_sp
 //		);
 
 		makecontext(context, reinterpret_cast<void (*)()>(coroWrapper), sizeof(void*) * 3 / sizeof(int), this, context, &orderMutex);
@@ -229,23 +226,15 @@ void Thread::yield(Task::Func&& func)
 	if (_obsoletedContext)
 	{
 //		_log.info(
-//			"UnMap memory for stack of context %p (%zu on %p) <= %lld",
+//			"UnMap memory for stack of context %p (%zu on %p)",
 //			_obsoletedContext,
 //			_obsoletedContext->uc_stack.ss_size,
-//			_obsoletedContext->uc_stack.ss_sp,
-//			--_stacksCount
+//			_obsoletedContext->uc_stack.ss_sp
 //		);
 
 		munmap(_obsoletedContext->uc_stack.ss_sp, _obsoletedContext->uc_stack.ss_size);
 		delete _obsoletedContext;
 		_obsoletedContext = nullptr;
-	}
-	else
-	{
-		_log.info(
-			"End coro :: %zu",
-			--_stacksCount
-		);
 	}
 }
 
@@ -286,16 +275,12 @@ ucontext_t* Thread::getContext()
 
 void Thread::putContextForReplace(ucontext_t* context)
 {
-//	_replacedContext = context;
 	_replacedContexts.emplace(context);
 //	_self->_log.info("setContextForReplace <= %p (%zu)", context, _replacedContexts.size());
 }
 
 ucontext_t* Thread::getContextForReplace()
 {
-//	ucontext_t* context = _replacedContext;
-//	_replacedContext = nullptr;
-
 	ucontext_t* context = _replacedContexts.front();
 	_replacedContexts.pop();
 

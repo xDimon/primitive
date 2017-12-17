@@ -60,6 +60,8 @@ void TaskManager::executeOne()
 
 	instance._mutex.lock();
 
+	again:
+
 	if (instance._queue.empty())
 	{
 		instance._log.info("Empty task queue");
@@ -68,26 +70,38 @@ void TaskManager::executeOne()
 		return;
 	}
 
-	Task task{const_cast<Task&&>(instance._queue.top())};
+//	auto u = task.until();
+//	auto n = Task::Clock::now();
+//	auto u = std::chrono::duration_cast<std::chrono::microseconds>(instance._queue.top().until().time_since_epoch()).count();
+//	auto n = std::chrono::duration_cast<std::chrono::microseconds>(Task::Clock::now().time_since_epoch()).count();
 
-	auto u = task.until();
-	auto n = Task::Clock::now();
-
-//	if (task.until() > Task::Clock::now() && !Daemon::shutingdown())
-	if (u > n && !Daemon::shutingdown())
+	if (instance._queue.top().until() > Task::Clock::now() && !Daemon::shutingdown())
+//	if (u > n && !Daemon::shutingdown())
 	{
-		instance._log.info("Reenqueue task (wait for %lld µs)", std::chrono::duration_cast<std::chrono::microseconds>(u - n).count());
+//		instance._log.info("Reenqueue task (wait for %lld µs)", std::chrono::duration_cast<std::chrono::microseconds>(u - n).count());
+//		instance._log.info("Reenqueue task (wait for %lld µs)", u - n);
 		instance._mutex.unlock();
 		return;
 	}
 
+	if (instance._queue.top().isDummy())
+	{
+		instance._queue.pop();
+		goto again;
+	}
+
+	Task task{const_cast<Task&&>(instance._queue.top())};
 	instance._queue.pop();
 
 //	instance._log.info("Task queue length decrease to %zu", instance._queue.size());
-//	instance._log.info("Task queue length decrease to %zu", instance._queue.size());
 
 	auto w = instance._queue.size();
-	instance._log.info("Execute task (%zu waits) (late %lld µs)", w, std::chrono::duration_cast<std::chrono::microseconds>(n - u).count());
+//	instance._log.info("Execute task (%zu waits) (late %lld µs)", w, std::chrono::duration_cast<std::chrono::microseconds>(n - u).count());
+//	instance._log.info("Execute task (%zu waits) (late %lld µs)", w, n - u);
+//	if (n - u > 999999999)
+//	{
+//		instance._log.info("(%lld, %lld)", n, u);
+//	}
 
 	instance._mutex.unlock();
 
@@ -114,4 +128,13 @@ bool TaskManager::empty()
 	std::lock_guard<std::mutex> lockGuard(instance._mutex);
 
 	return instance._queue.empty();
+}
+
+size_t TaskManager::queueSize()
+{
+	auto& instance = getInstance();
+
+	std::lock_guard<std::mutex> lockGuard(instance._mutex);
+
+	return instance._queue.size();
 }
