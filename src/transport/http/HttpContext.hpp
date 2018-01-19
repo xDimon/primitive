@@ -31,12 +31,23 @@ class HttpContext: public TransportContext
 protected:
 	std::shared_ptr<HttpRequest> _request;
 	std::shared_ptr<HttpResponse> _response;
+	bool _http100ContinueSent;
 
 public:
 	HttpContext(const std::shared_ptr<Connection>& connection)
 	: TransportContext(connection)
+	, _http100ContinueSent(false)
 	{};
 	virtual ~HttpContext() = default;
+
+	bool isHttp100ContinueSent() const
+	{
+		return _http100ContinueSent;
+	}
+	void setHttp100ContinueSent()
+	{
+		_http100ContinueSent = true;
+	}
 
 	std::shared_ptr<HttpRequest> getRequest()
 	{

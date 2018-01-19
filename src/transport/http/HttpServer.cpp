@@ -118,6 +118,20 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 				// Читаем запрос
 				auto request = std::make_shared<HttpRequest>(connection->dataPtr(), connection->dataPtr() + headersSize);
 
+				if (!context->isHttp100ContinueSent())
+				{
+					if (strcasestr(request->getHeader("Expect").c_str(), "100-Continue") != nullptr)
+					{
+						HttpResponse(100, "Continue", request->protocol())
+							>> *connection;
+
+						_log.info("HTTP 100-Continue");
+
+						context->setHttp100ContinueSent();
+						connection->setTtl(std::chrono::seconds(10));
+					}
+				}
+
 				context->setRequest(request);
 			}
 			catch (std::runtime_error& exception)
@@ -191,7 +205,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 
 			if (!handler)
 			{
-				HttpResponse(404)
+				HttpResponse(404, "Not Found", context->getRequest()->protocol())
 					<< HttpHeader("Connection", "Close")
 					<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
 					>> *connection;
@@ -260,7 +274,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 			output.insert("status", new SStr("error"));
 			output.insert("error", new SStr(exception.what()));
 
-			HttpResponse(200)
+			HttpResponse(200, "OK", context->getRequest() ? context->getRequest()->protocol() : 100)
 				<< HttpHeader("Connection", "Close")
 //				<< serializer()->encode(&output) << "\r\n"
 				>> *connection;

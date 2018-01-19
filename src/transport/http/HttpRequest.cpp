@@ -23,6 +23,7 @@
 #include "HttpHelper.hpp"
 
 #include <memory.h>
+#include <algorithm>
 
 HttpRequest::HttpRequest(const char* begin, const char* end)
 : _hasContentLength(false)
@@ -233,6 +234,8 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 			}
 			s += 2;
 
+			std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+
 			auto i = _headers.emplace(name, value);
 
 			prevHeaderValue = &i->second;
@@ -255,8 +258,10 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 	}
 }
 
-std::string& HttpRequest::getHeader(std::string name)
+std::string HttpRequest::getHeader(std::string name)
 {
+	std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+
 	auto i = _headers.find(name);
 	if (i == _headers.end())
 	{

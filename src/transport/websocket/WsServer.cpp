@@ -154,13 +154,8 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 			throw;
 		}
 
-		// Пропускаем байты заголовка
-		connection->skip(headersSize);
-
-		context->setRequest(request);
-
 		// Допустим только GET
-		if (context->getRequest()->method() != HttpRequest::Method::GET)
+		if (request->method() != HttpRequest::Method::GET)
 		{
 			throw std::runtime_error("Unsupported method");
 		}
@@ -172,7 +167,7 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 			request->getHeader("Sec-WebSocket-Key").empty()
 		)
 		{
-			_log.info("WS  Bad HTTP headers for '%s'", context->getRequest()->uri().str().c_str());
+			_log.info("WS  Bad HTTP headers for '%s'", request->uri().str().c_str());
 			throw std::runtime_error("Bad headers");
 		}
 
@@ -181,16 +176,16 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 		// (echo -n "$1"; echo -n '258EAFA5-E914-47DA-95CA-C5AB0DC85B11') | sha1sum | xxd -r -p | base64
 		auto acceptKey = Base64::encode(SHA1::encode_bin(wsKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
 
-		auto handler = getHandler(context->getRequest()->uri().path());
+		auto handler = getHandler(request->uri().path());
 		if (!handler)
 		{
 			HttpResponse(404, "WebSocket Upgrade Failure")
 				<< HttpHeader("X-ServerTransport", "websocket", true)
 				<< HttpHeader("Connection", "Close")
-				<< "Not found service-handler for uri " << context->getRequest()->uri().path() << "\r\n"
+				<< "Not found service-handler for uri " << request->uri().path() << "\r\n"
 				>> *connection;
 
-			_log.info("WS  Not found '%s' for '%s'", context->getRequest()->uri().path().c_str(), context->getRequest()->uri().str().c_str());
+			_log.info("WS  Not found '%s' for '%s'", request->uri().path().c_str(), request->uri().str().c_str());
 
 			connection->resetContext();
 			connection->setTtl(std::chrono::milliseconds(50));
@@ -198,12 +193,31 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 			return true;
 		}
 
+		if (!context->isHttp100ContinueSent())
+		{
+			if (strcasestr(request->getHeader("Expect").c_str(), "100-Continue") != nullptr)
+			{
+				HttpResponse(100, "Continue", request->protocol())
+					>> *connection;
+
+				_log.info("WS  Sent 100-Continue");
+
+				context->setHttp100ContinueSent();
+				connection->setTtl(std::chrono::seconds(10));
+			}
+		}
+
+		// Пропускаем байты заголовка
+		connection->skip(headersSize);
+
+		context->setRequest(request);
+
 		const auto& origin = request->getHeader("Origin");
 
 		std::string wsProtocol;
-		if (!request->getHeader("Sec-WebSocket-Protocol").empty())
+		if (!context->getRequest()->getHeader("Sec-WebSocket-Protocol").empty())
 		{
-			auto values = String::split(request->getHeader("Sec-WebSocket-Protocol"), ',');
+			auto values = String::split(context->getRequest()->getHeader("Sec-WebSocket-Protocol"), ',');
 			for (auto value : values)
 			{
 				if (value == "chat")
@@ -218,7 +232,7 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 			}
 		}
 
-		HttpResponse(101, "Web Socket Protocol Handshake")
+		HttpResponse(101, "Web Socket Protocol Handshake", context->getRequest()->protocol())
 			<< HttpHeader("X-ServerTransport", "websocket", true)
 			<< HttpHeader("Upgrade", "websocket")
 			<< HttpHeader("Connection", "Upgrade")
@@ -248,7 +262,7 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 	}
 	catch (std::runtime_error &exception)
 	{
-		HttpResponse(400)
+		HttpResponse(400, "Bad request", context->getRequest() ? context->getRequest()->protocol() : 100)
 			<< HttpHeader("X-ServerTransport", "websocket", true)
 			<< HttpHeader("Connection", "Close")
 			<< exception.what() << "\r\n"

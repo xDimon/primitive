@@ -37,6 +37,7 @@ private:
 	} _type;
 	int _statusCode;
 	std::string _statusMessage;
+	uint8_t _protocolVersion;
 
 	std::string _mainHeader;
 	std::multimap<std::string, std::string> _headers;
@@ -61,7 +62,7 @@ public:
 	HttpResponse(HttpResponse&&) = delete;
 	HttpResponse& operator=(HttpResponse&&) = delete;
 
-	HttpResponse(int status, const std::string& message);
+	HttpResponse(int status, const std::string& message, uint8_t protocolVersion = 101);
 	explicit HttpResponse(int status)
 	: HttpResponse(status, "")
 	{

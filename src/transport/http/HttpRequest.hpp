@@ -105,5 +105,5 @@ public:
 		return _contentLength;
 	}
 
-	std::string& getHeader(std::string name);
+	std::string getHeader(std::string name);
 };

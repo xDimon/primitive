@@ -26,10 +26,11 @@
 #include "../../utils/Time.hpp"
 #include "HttpHelper.hpp"
 
-HttpResponse::HttpResponse(int status, const std::string& message)
+HttpResponse::HttpResponse(int status, const std::string& message, uint8_t protocolVersion)
 : _type(Type::FOR_SENDING)
 , _statusCode(status)
 , _statusMessage(message)
+, _protocolVersion(protocolVersion)
 , _close(false)
 {
 	if (_statusCode < 100 || _statusCode > 599)
@@ -346,8 +347,20 @@ HttpResponse& HttpResponse::removeHeader(const std::string& name)
 void HttpResponse::operator>>(TcpConnection& connection)
 {
 	std::ostringstream oss;
-	oss << "HTTP/1.1 " << _statusCode << " " << _statusMessage << "\r\n"
-		<< "Server: " << Server::httpName() << "\r\n"
+	oss << "HTTP/" << ((_protocolVersion == 100) ? "1.0" : "1.1") << " " << _statusCode << " " << _statusMessage << "\r\n";
+
+	if (_statusCode == 100)
+	{
+		connection.write(oss.str().data(), oss.str().size());
+		connection.write("\r\n", 2);
+		if (_close)
+		{
+			connection.close();
+		}
+		return;
+	}
+
+	oss << "Server: " << Server::httpName() << "\r\n"
 		<< "Date: " << Time::httpDate() << "\r\n";
 
 	if (_body.str().size())
