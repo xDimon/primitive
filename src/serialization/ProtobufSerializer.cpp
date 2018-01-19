@@ -80,14 +80,14 @@ SVal* ProtobufSerializer::decodeMessage(const google::protobuf::Message& msg)
 
 			for (int j = 0; j < count; j++)
 			{
-				arr->insert(decodeField(msg, field, j));
+				arr->emplace_back(decodeField(msg, field, j));
 			}
 
-			root->insert(name.c_str(), arr.release());
+			root->emplace(name.c_str(), arr.release());
 		}
 		else if (ref->HasField(msg, field))
 		{
-			root->insert(name.c_str(), decodeField(msg, field, 0));
+			root->emplace(name.c_str(), decodeField(msg, field, 0));
 		}
 		else
 		{

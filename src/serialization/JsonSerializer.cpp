@@ -199,7 +199,7 @@ SObj* JsonSerializer::decodeObject()
 
 		try
 		{
-			obj->insert(key->value(), decodeValue());
+			obj->emplace(key->value(), decodeValue());
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -248,7 +248,7 @@ SArr* JsonSerializer::decodeArray()
 	{
 		try
 		{
-			arr->insert(decodeValue());
+			arr->emplace_back(decodeValue());
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -747,8 +747,8 @@ void JsonSerializer::encodeArray(const SArr* value)
 	_oss << "[";
 
 	bool empty = true;
-	value->forEach(
-		[this, &empty](const SVal* element){
+	std::for_each(value->cbegin(), value->cend(),
+		[this, &empty](const SVal* element) {
 			if (!empty)
 			{
 				_oss << ",";
@@ -758,7 +758,7 @@ void JsonSerializer::encodeArray(const SArr* value)
 				empty = false;
 			}
 			encodeValue(element);
-   		}
+		}
 	);
 
 	_oss << "]";
@@ -769,20 +769,23 @@ void JsonSerializer::encodeObject(const SObj* value)
 	_oss << "{";
 
 	bool empty = true;
-	value->forEach([this, &empty](const std::string& key, const SVal* val)
-	{
-		if (!empty)
+	std::for_each(value->cbegin(), value->cend(),
+		[this, &empty]
+		(const std::pair<const std::string&, const SVal*>& element)
 		{
-			_oss << ",";
+			if (!empty)
+			{
+				_oss << ",";
+			}
+			else
+			{
+				empty = false;
+			}
+			encodeString(element.first);
+			_oss << ':';
+			encodeValue(element.second);
 		}
-		else
-		{
-			empty = false;
-		}
-		encodeString(key);
-		_oss << ':';
-		encodeValue(val);
-	});
+	);
 
 	_oss << "}";
 }

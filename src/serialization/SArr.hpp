@@ -33,50 +33,38 @@
 #include "SFloat.hpp"
 #include "SNull.hpp"
 
-class SArr: public SVal
+class SArr: public SVal, public std::vector<SVal*>
 {
-private:
-	std::vector<SVal*> _elements;
-
 public:
 	SArr() = default;
 
 	~SArr() override
 	{
-		for (auto element : _elements)
+		for (auto element : *this)
 		{
 			delete element;
 		}
 	};
 
-	SArr* clone() const override
-	{
-		SArr *copy = new SArr();
-		forEach([&](const SVal* value){
-			copy->insert(value->clone());
-		});
-		return copy;
-	}
-
 	SArr(SArr&& tmp)
 	{
-		_elements.swap(tmp._elements);
+		swap(tmp);
 	}
 
 	SArr& operator=(SArr&& tmp)
 	{
-		_elements.swap(tmp._elements);
+		swap(tmp);
 		return *this;
 	}
 
 	void insert(SVal* value)
 	{
-		_elements.emplace_back(value);
+		emplace_back(value);
 	}
 
 	void insert(const SVal* value)
 	{
-		_elements.emplace_back(const_cast<SVal*>(value));
+		emplace_back(const_cast<SVal*>(value));
 	}
 
 	template<typename T>
@@ -93,10 +81,10 @@ public:
 		insert(new SFloat(value));
 	}
 
-	void insert(double value)
-	{
-		insert(new SFloat(value));
-	}
+//	void insert(double value)
+//	{
+//		insert(new SFloat(value));
+//	}
 
 	void insert(bool value)
 	{
@@ -120,46 +108,52 @@ public:
 
 	const SVal* operator[](size_t index) const
 	{
-		return index < _elements.size() ? _elements[index] : nullptr;
+		return index < size() ? std::vector<SVal*>::operator[](index) : nullptr;
 	}
 
 	SVal* operator[](size_t index)
 	{
-		return index < _elements.size() ? _elements[index] : nullptr;
-	}
-
-	void forEach(std::function<void (const SVal*)> handler) const
-	{
-		for (auto const& element : _elements)
-		{
-			handler(element);
-		}
+		return index < size() ? std::vector<SVal*>::operator[](index) : nullptr;
 	}
 
 	template< template<typename, typename> class C, typename E, typename A>
 	void fill(C<E, A> &container) const noexcept
 	{
-		forEach([&](const SVal* value){
-			container.emplace_back(value);
-		});
+		for (auto& element : *this)
+		{
+			container.emplace_back(element);
+		}
 	}
 
 	operator std::string() const override
 	{
 		std::ostringstream oss;
-		oss << "[array#" << this << "(" << _elements.size() << ")]";
+		oss << "[array#" << this << "(" << size() << ")]";
 		return std::move(oss.str());
-	};
+	}
+
 	operator int() const override
 	{
-		return _elements.size();
-	};
+		return size();
+	}
+
 	operator double() const override
 	{
-		return _elements.size();
-	};
+		return size();
+	}
+
 	operator bool() const override
 	{
-		return !_elements.empty();
-	};
+		return !empty();
+	}
+
+	SArr* clone() const override
+	{
+		auto copy = std::make_unique<SArr>();
+		for (const auto& element : *this)
+		{
+			copy->emplace_back(element->clone());
+		}
+		return copy.release();
+	}
 };

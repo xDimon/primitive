@@ -21,7 +21,6 @@
 
 #include <iterator>
 #include <cstring>
-#include <memory>
 #include <iomanip>
 #include "UrlSerializer.hpp"
 #include "../transport/http/HttpUri.hpp"
@@ -272,35 +271,39 @@ void UrlSerializer::encodeNumber(const std::string& keyline, const SNum* value)
 void UrlSerializer::encodeArray(const std::string& keyline, const SArr* value)
 {
 	int index = 0;
-	value->forEach([this,&keyline,&index](const SVal* element)
-	{
-		if (index > 0)
-		{
-			_oss << "&";
+	std::for_each(value->cbegin(), value->cend(),
+		[this, &keyline, &index](const SVal* element) {
+			if (index > 0)
+			{
+				_oss << "&";
+			}
+			std::ostringstream oss;
+			oss << keyline << "[" << index++ << "]";
+			encodeValue(oss.str(), element);
 		}
-		std::ostringstream oss;
-		oss << keyline << "[" << index++ << "]";
-		encodeValue(oss.str(), element);
-	});
+	);
 }
 
 void UrlSerializer::encodeObject(const std::string& keyline, const SObj* value)
 {
 	bool empty = true;
-	value->forEach([&](const std::string& key, const SVal* val)
-	{
-		if (!empty)
+	std::for_each(value->cbegin(), value->cend(),
+		[&]
+		(const std::pair<const std::string&, const SVal*>& element)
 		{
-			_oss << "&";
+			if (!empty)
+			{
+				_oss << "&";
+			}
+			else
+			{
+				empty = false;
+			}
+			std::ostringstream oss;
+			oss << keyline << (keyline.empty() ? "" : "[") << element.first << (keyline.empty() ? "" : "]");
+			encodeValue(oss.str(), element.second);
 		}
-		else
-		{
-			empty = false;
-		}
-		std::ostringstream oss;
-		oss << keyline << (keyline.empty()?"":"[") << key << (keyline.empty()?"":"]");
-		encodeValue(oss.str(), val);
-	});
+	);
 }
 
 void UrlSerializer::encodeValue(const std::string& keyline, const SVal* value)

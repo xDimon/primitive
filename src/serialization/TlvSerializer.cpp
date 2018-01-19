@@ -194,7 +194,7 @@ SObj* TlvSerializer::decodeObject()
 
 		try
 		{
-			obj->insert(key->value(), decodeValue());
+			obj->emplace(key->value(), decodeValue());
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -231,7 +231,7 @@ SArr* TlvSerializer::decodeArray()
 	{
 		try
 		{
-			arr->insert(decodeValue());
+			arr->emplace_back(decodeValue());
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -652,7 +652,7 @@ void TlvSerializer::encodeFloat(const SFloat* value)
 void TlvSerializer::encodeArray(const SArr* value)
 {
 	_oss.put(static_cast<char>(Token::ARRAY));
-	value->forEach(
+	std::for_each(value->cbegin(), value->cend(),
 		[this](const SVal* val) {
 			encodeValue(val);
 		}
@@ -663,10 +663,12 @@ void TlvSerializer::encodeArray(const SArr* value)
 void TlvSerializer::encodeObject(const SObj* value)
 {
 	_oss.put(static_cast<char>(Token::OBJECT));
-	value->forEach(
-		[this](const std::string& key, const SVal* val) {
-			encodeKey(key);
-			encodeValue(val);
+	std::for_each(value->cbegin(), value->cend(),
+		[this]
+		(const std::pair<const std::string&, const SVal*>& element)
+		{
+			encodeKey(element.first);
+			encodeValue(element.second);
 		}
 	);
 	_oss.put(static_cast<char>(Token::OBJECT_END));

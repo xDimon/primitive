@@ -22,6 +22,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <algorithm>
 #include <functional>
 #include <stddef.h>
@@ -33,118 +34,89 @@
 #include "SNull.hpp"
 #include "SArr.hpp"
 
-class SObj : public SVal
+class SObj : public SVal, public std::map<const std::string, SVal*>
 {
-private:
-	std::map<const std::string, SVal*> _elements;
-
 public:
 	SObj() = default;
 
 	virtual ~SObj()
 	{
-		for (auto i : _elements)
+		for (auto i : *this)
 		{
 			delete i.second;
 			i.second = nullptr;
 		}
-		_elements.clear();
+		clear();
 	};
-
-	SObj* clone() const override
-	{
-		SObj *copy = new SObj();
-		forEach([&](const std::string& key, const SVal* value){
-			copy->insert(key, value->clone());
-		});
-		return copy;
-	}
 
 	SObj(SObj&& tmp)
 	{
-		_elements.swap(tmp._elements);
+		swap(tmp);
 	}
 
 	SObj& operator=(SObj&& tmp)
 	{
-		_elements.swap(tmp._elements);
+		swap(tmp);
 		return *this;
 	}
 
-	void insert(const std::string& key, const SVal* value)
+	auto insert(const std::string& key, const SVal* value)
 	{
-		auto i = _elements.find(key);
-		if (i != _elements.end())
-		{
-			delete i->second;
-			i->second = const_cast<SVal*>(value);
-		}
-		else
-		{
-			_elements.emplace(key, const_cast<SVal*>(value));
-		}
+		return std::map<const std::string, SVal*>::emplace(key, const_cast<SVal*>(value));
 	}
 
-	void insert(const std::string& key, SVal& value)
+	auto insert(const std::string& key, SVal& value)
 	{
-		insert(key, &value);
+		return insert(key, &value);
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_integral<T>::value, void>::type
+	typename std::enable_if<std::is_integral<T>::value, std::pair<iterator, bool>>::type
 	insert(const std::string& key, T value)
 	{
-		insert(key, new SInt(value));
+		return insert(key, new SInt(value));
 	}
 
 	template<typename T>
-	typename std::enable_if<std::is_floating_point<T>::value, void>::type
+	typename std::enable_if<std::is_floating_point<T>::value, std::pair<iterator, bool>>::type
 	insert(const std::string& key, SFloat::type value)
 	{
-		insert(key, new SFloat(value));
+		return insert(key, new SFloat(value));
 	}
 
-	void insert(const std::string& key, double value)
+	auto insert(const std::string& key, double value)
 	{
-		insert(key, new SFloat(value));
+		return insert(key, new SFloat(value));
 	}
 
-	void insert(const std::string& key, bool value)
+	auto insert(const std::string& key, bool value)
 	{
-		insert(key, new SBool(value));
+		return insert(key, new SBool(value));
 	}
 
-	void insert(const std::string& key, const char* value)
+	auto insert(const std::string& key, const char* value)
 	{
-		insert(key, new SStr(value));
+		return insert(key, new SStr(value));
 	}
 
-	void insert(const std::string& key, const std::string& value)
+	auto insert(const std::string& key, const std::string& value)
 	{
-		insert(key, new SStr(value));
+		return insert(key, new SStr(value));
 	}
 
-	void insert(const std::string& key, nullptr_t)
+	auto insert(const std::string& key, nullptr_t)
 	{
-		insert(key, new SNull());
+		return insert(key, new SNull());
 	}
 
 	SVal* get(const std::string& key) const
 	{
-		auto i = _elements.find(key);
-		if (i == _elements.end())
+		auto i = find(key);
+		if (i == end())
 		{
 			return nullptr;
 		}
 		return i->second;
-	}
-
-	void forEach(std::function<void(const std::string&, const SVal*)> handler) const
-	{
-		for (auto const& element : _elements)
-		{
-			handler(element.first, element.second);
-		}
 	}
 
 	int64_t getAsInt(const std::string& key, int64_t defaultValue = 0LL) const
@@ -250,17 +222,25 @@ public:
 		auto arr = dynamic_cast<const SArr*>(element);
 		if (arr)
 		{
-			arr->forEach([&value](const SVal* val) {
-				value.emplace_back(*val);
-			});
+			std::for_each(arr->cbegin(), arr->cend(),
+				[&value]
+				(const SVal* val)
+				{
+					value.emplace_back(*val);
+				}
+			);
 			return;
 		}
 		auto obj = dynamic_cast<const SObj*>(element);
 		if (obj)
 		{
-			obj->forEach([&value](const std::string&, const SVal* val) {
-				value.emplace_back(*val);
-			});
+			std::for_each(obj->cbegin(), obj->cend(),
+				[&value]
+				(const std::pair<const std::string&, const SVal*>& element)
+				{
+					value.emplace_back(element.second);
+				}
+			);
 			return;
 		}
 		if (strict)
@@ -315,52 +295,53 @@ public:
 		try	{ lookup(key, value, false); } catch (...) { value = T(); }
 	}
 
-	template< template<typename, typename, typename> class C, typename E, typename Cmp, typename A>
+	template<template<typename, typename, typename> class C, typename E, typename Cmp, typename A>
 	void fill(C<E, Cmp, A> &container) const noexcept
 	{
-		forEach([&](const std::string& key, const SVal* value){
-			container.emplace(key, value);
-		});
+		for (const auto& element : *this)
+		{
+			container.insert(element.first, element.second);
+		}
 	}
 
-	template< template<typename, typename> class C, typename E, typename A>
+	template<template<typename, typename> class C, typename E, typename A>
 	void fill(C<E, A> &container) const noexcept
 	{
-		forEach([&](const std::string&, const SVal* value){
-			container.emplace_back(value);
-		});
+		for (const auto& element : *this)
+		{
+			container.insert_back(element.second);
+		}
 	}
 
 	operator std::string() const override
 	{
 		std::ostringstream oss;
-		oss << "[object#" << this << "(" << _elements.size() << ")]";
+		oss << "[object#" << this << "(" << size() << ")]";
 		return std::move(oss.str());
-	};
+	}
+
 	operator int() const override
 	{
-		return _elements.size();
-	};
+		return size();
+	}
+
 	operator double() const override
 	{
-		return _elements.size();
-	};
+		return size();
+	}
+
 	operator bool() const override
 	{
-		return !_elements.empty();
-	};
+		return !empty();
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+	SObj* clone() const override
+	{
+		auto copy = std::make_unique<SObj>();
+		for (const auto& element : *this)
+		{
+			copy->insert(element.first, element.second->clone());
+		}
+		return copy.release();
+	}
 };
