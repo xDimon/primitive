@@ -64,7 +64,7 @@ void TaskManager::executeOne()
 
 	if (instance._queue.empty())
 	{
-		instance._log.info("Empty task queue");
+//		instance._log.info("Empty task queue");
 		instance._mutex.unlock();
 		std::this_thread::sleep_for(std::chrono::milliseconds(30));
 		return;
@@ -95,7 +95,7 @@ void TaskManager::executeOne()
 
 //	instance._log.info("Task queue length decrease to %zu", instance._queue.size());
 
-	auto w = instance._queue.size();
+//	auto w = instance._queue.size();
 //	instance._log.info("Execute task (%zu waits) (late %lld µs)", w, std::chrono::duration_cast<std::chrono::microseconds>(n - u).count());
 //	instance._log.info("Execute task (%zu waits) (late %lld µs)", w, n - u);
 //	if (n - u > 999999999)

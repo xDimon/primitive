@@ -81,7 +81,7 @@ void Thread::run(Thread* thread)
 		sigfillset(&sig);
 		sigprocmask(SIG_BLOCK, &sig, nullptr);
 
-		thread->_log.info("Thread 'Worker#%zu' start", thread->_id);
+//		thread->_log.info("Thread 'Worker#%zu' start", thread->_id);
 	}
 
 	do
@@ -93,7 +93,7 @@ void Thread::run(Thread* thread)
 
 	thread->_finished = true;
 
-	thread->_log.info("Thread 'Worker#%zu' exit", thread->_id);
+//	thread->_log.info("Thread 'Worker#%zu' exit", thread->_id);
 
 	LoggerManager::unregThread();
 }
