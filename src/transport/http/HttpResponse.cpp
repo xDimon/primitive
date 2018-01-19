@@ -28,9 +28,12 @@
 
 HttpResponse::HttpResponse(int status, const std::string& message, uint8_t protocolVersion)
 : _type(Type::FOR_SENDING)
+, _protocolVersion(protocolVersion)
 , _statusCode(status)
 , _statusMessage(message)
-, _protocolVersion(protocolVersion)
+, _hasContentLength(false)
+, _contentLength(0)
+, _transferEncodings(0)
 , _close(false)
 {
 	if (_statusCode < 100 || _statusCode > 599)
@@ -123,6 +126,13 @@ HttpResponse::HttpResponse(int status, const std::string& message, uint8_t proto
 
 HttpResponse::HttpResponse(const char *begin, const char *end)
 : _type(Type::RECEIVED)
+, _protocolVersion(0)
+, _statusCode(0)
+, _statusMessage()
+, _hasContentLength(false)
+, _contentLength(0)
+, _transferEncodings(0)
+, _close(false)
 {
 	auto s = begin;
 
@@ -401,4 +411,31 @@ HttpResponse& HttpResponse::operator<<(const HttpHeader& header)
 	}
 	addHeader(header.name, header.value, replace);
 	return *this;
+}
+
+bool HttpResponse::ifTransferEncoding(HttpResponse::TransferEncoding transferEncoding)
+{
+	if (_transferEncodings == 0)
+	{
+		_transferEncodings |= static_cast<uint8_t>(TransferEncoding::NONE);
+		auto header = getHeader("Transfer-Encoding");
+		if (!header.empty())
+		{
+			std::istringstream iss(header);
+			std::string s;
+			while (std::getline(iss, s, ','))
+			{
+				if (s == "chunked")
+				{
+					_transferEncodings |= static_cast<uint8_t>(TransferEncoding::CHUNKED);
+				}
+				else if (s == "gzip")
+				{
+					_transferEncodings |= static_cast<uint8_t>(TransferEncoding::GZIP);
+				}
+			}
+		}
+	}
+
+	return _transferEncodings & static_cast<uint8_t>(transferEncoding);
 }

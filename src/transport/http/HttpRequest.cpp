@@ -21,12 +21,18 @@
 
 #include "HttpRequest.hpp"
 #include "HttpHelper.hpp"
+#include "../../utils/String.hpp"
 
 #include <memory.h>
 #include <algorithm>
+#include <sstream>
 
 HttpRequest::HttpRequest(const char* begin, const char* end)
-: _hasContentLength(false)
+: _method(HttpRequest::Method::UNKNOWN)
+, _protocolVersion(100)
+, _hasContentLength(false)
+, _contentLength(0)
+, _transferEncodings(0)
 {
 	auto s = begin;
 
@@ -146,11 +152,11 @@ const char* HttpRequest::parseProtocol(const char* s)
 
 	if (strncasecmp(s, "1.1", 3) == 0)
 	{
-		_version = 101;
+		_protocolVersion = 101;
 	}
 	else if (strncasecmp(s, "1.0", 3) == 0)
 	{
-		_version = 100;
+		_protocolVersion = 100;
 	}
 	else
 	{
@@ -269,4 +275,31 @@ std::string HttpRequest::getHeader(std::string name)
 		return empty;
 	}
 	return i->second;
+}
+
+bool HttpRequest::ifTransferEncoding(HttpRequest::TransferEncoding transferEncoding)
+{
+	if (_transferEncodings == 0)
+	{
+		_transferEncodings |= static_cast<uint8_t>(TransferEncoding::NONE);
+		auto header = getHeader("Transfer-Encoding");
+		if (!header.empty())
+		{
+			std::istringstream iss(header);
+			std::string s;
+			while (std::getline(iss, s, ','))
+			{
+				if (s == "chunked")
+				{
+					_transferEncodings |= static_cast<uint8_t>(TransferEncoding::CHUNKED);
+				}
+				else if (s == "gzip")
+				{
+					_transferEncodings |= static_cast<uint8_t>(TransferEncoding::GZIP);
+				}
+			}
+		}
+	}
+
+	return _transferEncodings & static_cast<uint8_t>(transferEncoding);
 }

@@ -35,14 +35,23 @@ public:
 		GET,
 		POST,
 	};
+	enum class TransferEncoding {
+		NONE,
+		CHUNKED,
+		GZIP,
+	};
 
 private:
 	Method _method;
 	HttpUri _uri;
-	uint8_t _version;
+	uint8_t _protocolVersion;
+
 	std::multimap<std::string, std::string> _headers;
+
 	bool _hasContentLength;
 	size_t _contentLength;
+
+	uint8_t _transferEncodings;
 
 	const char* parseMethod(const char* string);
 	const char* parseProtocol(const char* string);
@@ -84,14 +93,14 @@ public:
 
 	uint8_t protocol() const
 	{
-		return _version;
+		return _protocolVersion;
 	}
 
 	std::string protocol_s() const
 	{
 		return
-			_version == 100 ? "HTTP/1.0" :
-			_version == 101 ? "HTTP/1.1" :
+			_protocolVersion == 100 ? "HTTP/1.0" :
+			_protocolVersion == 101 ? "HTTP/1.1" :
 			"HTTP";
 	}
 
@@ -106,4 +115,6 @@ public:
 	}
 
 	std::string getHeader(std::string name);
+
+	bool ifTransferEncoding(TransferEncoding transferEncoding);
 };

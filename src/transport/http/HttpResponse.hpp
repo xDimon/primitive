@@ -29,21 +29,31 @@
 
 class HttpResponse: public Buffer
 {
+public:
+	enum class TransferEncoding {
+		NONE,
+		CHUNKED,
+		GZIP,
+	};
+
 private:
 	const enum class Type
 	{
 		RECEIVED,
 		FOR_SENDING
 	} _type;
+
+	uint8_t _protocolVersion;
 	int _statusCode;
 	std::string _statusMessage;
-	uint8_t _protocolVersion;
 
 	std::string _mainHeader;
 	std::multimap<std::string, std::string> _headers;
 
 	bool _hasContentLength;
 	size_t _contentLength;
+
+	uint8_t _transferEncodings;
 
 	std::ostringstream _body;
 
@@ -105,4 +115,6 @@ public:
 	{
 		return _contentLength;
 	}
+
+	bool ifTransferEncoding(TransferEncoding transferEncoding);
 };

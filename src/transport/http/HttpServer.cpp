@@ -28,6 +28,7 @@
 #include "HttpContext.hpp"
 #include "HttpServer.hpp"
 #include "../../serialization/SObj.hpp"
+#include "../../utils/String.hpp"
 
 REGISTER_TRANSPORT(http, HttpServer);
 
@@ -173,7 +174,93 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 
 						_log.debug("Not anough data for read request body (%zu < %zu)",
 									context->getRequest()->dataLen(), context->getRequest()->contentLength());
+						return true;
+					}
+				}
+			}
+			else if (context->getRequest()->ifTransferEncoding(HttpRequest::TransferEncoding::CHUNKED))
+			{
+				for (;;)
+				{
+					// Заголовок чанка (размер)
+					auto endHeader = static_cast<const char*>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n", 2));
+					if (endHeader == nullptr)
+					{
+						connection->setTtl(std::chrono::seconds(5));
+						_log.debug("Not anough data for read head of chunk");
+						return true;
+					}
+
+					// Размер чанка
+					uint64_t size = 0;
+					std::string header(connection->dataPtr(), endHeader);
+					try
+					{
+						size = std::stoull(header, nullptr, 16);
+					}
+					catch (...)
+					{
+						HttpResponse(400)
+							<< HttpHeader("Connection", "Close")
+							<< "Wrong head of chunk for chunked Transfer-Encoding" << "\r\n"
+							>> *connection;
+
+						_log.debug("Wrong head of chunk for chunked Transfer-Encoding");
+						connection->setTtl(std::chrono::milliseconds(50));
+						return true;
+					}
+
+					// Слишком большой чанк
+					if (size > 1 << 22) // 4Mb
+					{
+						HttpResponse(500)
+							<< HttpHeader("Connection", "Close")
+							<< "Too large chunk for chunked Transfer-Encoding" << "\r\n"
+							>> *connection;
+
+						_log.debug("Too large chunk for chunked Transfer-Encoding");
+						connection->setTtl(std::chrono::milliseconds(50));
+						return true;
+					}
+
+					// Недостаточно данных для получения чанка целиком
+					if (connection->dataLen() < (endHeader - connection->dataPtr()) + 2 + size + 2)
+					{
+						connection->setTtl(std::chrono::seconds(5));
+						_log.debug("Not anough data for read body of chunk");
+						return true;
+					}
+
+					// Некорректный терминатор чанка
+					if (strcmp(endHeader + 2 + size, "\r\n"))
+					{
+						HttpResponse(400)
+							<< HttpHeader("Connection", "Close")
+							<< "Wrong end of chunk for chunked Transfer-Encoding" << "\r\n"
+							>> *connection;
+
+						_log.debug("Wrong end of chunk for chunked Transfer-Encoding");
+						connection->setTtl(std::chrono::milliseconds(50));
+						return true;
+					}
+
+					context->getRequest()->write(endHeader + 2, size);
+
+					connection->skip(endHeader + 2 + size + 2 - connection->dataPtr());
+
+					// Чанк нулевого размера
+					if (size == 0)
+					{
 						break;
+					}
+
+					// Данных больше не будет
+					if (!connection->noRead())
+					{
+						connection->setTtl(std::chrono::seconds(5));
+
+						_log.debug("Not read all request body yet (read %zu)", context->getRequest()->dataLen());
+						return true;
 					}
 				}
 			}

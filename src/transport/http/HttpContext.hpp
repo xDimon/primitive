@@ -32,6 +32,7 @@ protected:
 	std::shared_ptr<HttpRequest> _request;
 	std::shared_ptr<HttpResponse> _response;
 	bool _http100ContinueSent;
+	bool _httpHeadersSent;
 
 public:
 	HttpContext(const std::shared_ptr<Connection>& connection)
@@ -47,6 +48,15 @@ public:
 	void setHttp100ContinueSent()
 	{
 		_http100ContinueSent = true;
+	}
+
+	bool isHttpHeadersSent() const
+	{
+		return _httpHeadersSent;
+	}
+	void setHttpHeadersSent()
+	{
+		_httpHeadersSent = true;
 	}
 
 	std::shared_ptr<HttpRequest> getRequest()
