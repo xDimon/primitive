@@ -43,7 +43,7 @@ protected:
 
 public:
 	DbConnection(const DbConnection&) = delete;
-	void operator=(DbConnection const&) = delete;
+	DbConnection& operator=(DbConnection const&) = delete;
 	DbConnection(DbConnection&&) = delete;
 	DbConnection& operator=(DbConnection&&) = delete;
 

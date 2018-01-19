@@ -54,7 +54,7 @@ private:
 
 public:
 	LimitManager(const LimitManager&) = delete; // Copy-constructor
-	void operator=(LimitManager const&) = delete; // Copy-assignment
+	LimitManager& operator=(LimitManager const&) = delete; // Copy-assignment
 	LimitManager(LimitManager&&) = delete; // Move-constructor
 	LimitManager& operator=(LimitManager&&) = delete; // Move-assignment
 

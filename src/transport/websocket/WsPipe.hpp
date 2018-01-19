@@ -33,7 +33,7 @@ private:
 
 public:
 	WsPipe(const WsPipe&) = delete; // Copy-constructor
-	void operator=(WsPipe const&) = delete; // Copy-assignment
+	WsPipe& operator=(WsPipe const&) = delete; // Copy-assignment
 	WsPipe(WsPipe&&) = delete; // Move-constructor
 	WsPipe& operator=(WsPipe&&) = delete; // Move-assignment
 

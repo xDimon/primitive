@@ -32,7 +32,7 @@ public:
 
 public:
 	GeneratorConfig(const GeneratorConfig&) = delete; // Copy-constructor
-	void operator=(GeneratorConfig const&) = delete; // Copy-assignment
+	GeneratorConfig& operator=(GeneratorConfig const&) = delete; // Copy-assignment
 	GeneratorConfig(GeneratorConfig&&) = delete; // Move-constructor
 	GeneratorConfig& operator=(GeneratorConfig&&) = delete; // Move-assignment
 

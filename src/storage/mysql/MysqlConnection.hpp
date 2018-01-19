@@ -38,7 +38,7 @@ private:
 public:
 	MysqlConnection() = delete;
 	MysqlConnection(const MysqlConnection&) = delete;
-	void operator=(MysqlConnection const&) = delete;
+	MysqlConnection& operator=(MysqlConnection const&) = delete;
 	MysqlConnection(MysqlConnection&&) = delete;
 	MysqlConnection& operator=(MysqlConnection&&) = delete;
 

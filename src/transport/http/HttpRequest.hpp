@@ -61,7 +61,7 @@ private:
 public:
 	HttpRequest() = delete;
 	HttpRequest(const HttpRequest&) = delete;
-	void operator=(HttpRequest const&) = delete;
+	HttpRequest& operator=(HttpRequest const&) = delete;
 	HttpRequest(HttpRequest&&) = delete;
 	HttpRequest& operator=(HttpRequest&&) = delete;
 

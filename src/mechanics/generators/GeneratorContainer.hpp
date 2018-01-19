@@ -50,7 +50,7 @@ private:
 
 public:
 	GeneratorContainer(const GeneratorContainer&) = delete; // Copy-constructor
-	void operator=(GeneratorContainer const&) = delete; // Copy-assignment
+	GeneratorContainer& operator=(GeneratorContainer const&) = delete; // Copy-assignment
 	GeneratorContainer(GeneratorContainer&&) = delete; // Move-constructor
 	GeneratorContainer& operator=(GeneratorContainer&&) = delete; // Move-assignment
 

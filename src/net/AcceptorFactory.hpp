@@ -36,7 +36,7 @@ public:
 	typedef std::function<std::shared_ptr<Connection>(const std::shared_ptr<ServerTransport>&)> Creator;
 
 	AcceptorFactory(const AcceptorFactory&) = delete;
-	void operator=(AcceptorFactory const&) = delete;
+	AcceptorFactory& operator=(AcceptorFactory const&) = delete;
 	AcceptorFactory(AcceptorFactory&&) = delete;
 	AcceptorFactory& operator=(AcceptorFactory&&) = delete;
 

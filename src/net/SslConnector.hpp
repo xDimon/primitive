@@ -36,7 +36,7 @@ private:
 public:
 	SslConnector() = delete;
 	SslConnector(const SslConnector&) = delete;
-	void operator=(SslConnector const&) = delete;
+	SslConnector& operator=(SslConnector const&) = delete;
 	SslConnector(SslConnector&& tmp) = delete;
 	SslConnector& operator=(SslConnector&& tmp) = delete;
 

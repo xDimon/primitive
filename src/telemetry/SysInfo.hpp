@@ -30,7 +30,7 @@ class SysInfo final
 {
 public:
 	SysInfo(const SysInfo&) = delete; // Copy-constructor
-	void operator=(SysInfo const&) = delete; // Copy-assignment
+	SysInfo& operator=(SysInfo const&) = delete; // Copy-assignment
 	SysInfo(SysInfo&&) = delete; // Move-constructor
 	SysInfo& operator=(SysInfo&&) = delete; // Move-assignment
 

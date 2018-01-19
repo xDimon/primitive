@@ -36,7 +36,7 @@ protected:
 public:
 	TcpAcceptor() = delete;
 	TcpAcceptor(const TcpAcceptor&) = delete;
-	void operator=(TcpAcceptor const&) = delete;
+	TcpAcceptor& operator=(TcpAcceptor const&) = delete;
 	TcpAcceptor(TcpAcceptor&& tmp) = delete;
 	TcpAcceptor& operator=(TcpAcceptor&& tmp) = delete;
 

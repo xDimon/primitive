@@ -62,7 +62,7 @@ public:
 public:
 	Thread() = delete;
 	Thread(const Thread&) = delete; // Copy-constructor
-	void operator=(Thread const&) = delete; // Copy-assignment
+	Thread& operator=(Thread const&) = delete; // Copy-assignment
 	Thread(Thread&&) = delete; // Move-constructor
 	Thread& operator=(Thread&&) = delete; // Move-assignment
 

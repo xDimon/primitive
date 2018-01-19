@@ -53,7 +53,7 @@ private:
 
 public:
 	LimitContainer(const LimitContainer&) = delete; // Copy-constructor
-	void operator=(LimitContainer const&) = delete; // Copy-assignment
+	LimitContainer& operator=(LimitContainer const&) = delete; // Copy-assignment
 	LimitContainer(LimitContainer&&) = delete; // Move-constructor
 	LimitContainer& operator=(LimitContainer&&) = delete; // Move-assignment
 

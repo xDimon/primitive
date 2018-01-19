@@ -33,7 +33,7 @@ private:
 
 public:
 	MysqlResult(const MysqlResult&) = delete;
-	void operator=(MysqlResult const&) = delete;
+	MysqlResult& operator=(MysqlResult const&) = delete;
 	MysqlResult(MysqlResult&&) = delete;
 	MysqlResult& operator=(MysqlResult&&) = delete;
 

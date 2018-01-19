@@ -48,7 +48,7 @@ protected:
 public:
 	DbConnectionPool() = delete;
 	DbConnectionPool(const DbConnectionPool&) = delete;
-	void operator=(DbConnectionPool const&) = delete;
+	DbConnectionPool& operator=(DbConnectionPool const&) = delete;
 	DbConnectionPool(DbConnectionPool&&) = delete;
 	DbConnectionPool& operator=(DbConnectionPool&&) = delete;
 
@@ -84,7 +84,7 @@ public:
 public:                                                                                         \
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
-    void operator=(Class const&) = delete;                                                      \
+    Class& operator=(Class const&) = delete;                                                    \
 	Class(Class&&) = delete;                                                                    \
 	Class& operator=(Class&&) = delete;                                                         \
     ~Class() override = default;                                                                \

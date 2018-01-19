@@ -31,7 +31,7 @@ class ApplicationFactory
 {
 public:
 	ApplicationFactory(const ApplicationFactory&) = delete;
-	void operator=(ApplicationFactory const&) = delete;
+	ApplicationFactory& operator=(ApplicationFactory const&) = delete;
 	ApplicationFactory(ApplicationFactory&&) = delete;
 	ApplicationFactory& operator=(ApplicationFactory&&) = delete;
 

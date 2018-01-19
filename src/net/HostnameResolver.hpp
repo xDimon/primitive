@@ -29,7 +29,7 @@ class HostnameResolver
 {
 public:
 	HostnameResolver(const HostnameResolver&) = delete;
-	void operator=(HostnameResolver const&) = delete;
+	HostnameResolver& operator=(HostnameResolver const&) = delete;
 	HostnameResolver(HostnameResolver&&) = delete;
 	HostnameResolver& operator=(HostnameResolver&&) = delete;
 

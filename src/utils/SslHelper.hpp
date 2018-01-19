@@ -28,7 +28,7 @@ class SslHelper final
 {
 public:
 	SslHelper(const SslHelper&) = delete;
-	void operator=(SslHelper const&) = delete;
+	SslHelper& operator=(SslHelper const&) = delete;
 	SslHelper(SslHelper&&) = delete;
 	SslHelper& operator=(SslHelper&&) = delete;
 

@@ -33,7 +33,7 @@ class ActionFactory final
 {
 public:
 	ActionFactory(const ActionFactory&) = delete;
-	void operator=(ActionFactory const&) = delete;
+	ActionFactory& operator=(ActionFactory const&) = delete;
 	ActionFactory(ActionFactory&&) = delete;
 	ActionFactory& operator=(ActionFactory&&) = delete;
 

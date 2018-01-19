@@ -62,7 +62,7 @@ private:
 public:
 	Log() = delete;
 	Log(const Log&) = delete;
-	void operator=(Log const&) = delete;
+	Log& operator=(Log const&) = delete;
 	Log(Log&& tmp) = delete;
 	Log& operator=(Log&& tmp) = delete;
 

@@ -44,9 +44,10 @@ public:
 		return _value;
 	}
 
-	virtual void operator=(SBool const& tmp)
+	virtual SBool& operator=(SBool const& tmp)
 	{
 		_value = tmp._value;
+		return *this;
 	}
 
 	operator std::string() const override

@@ -40,7 +40,7 @@ public:
 
 	// Non-copyable
 	RollbackStackAndRestoreContext(const RollbackStackAndRestoreContext&) = delete; // Copy-constructor
-	void operator=(RollbackStackAndRestoreContext const&) = delete; // Copy-assignment
+	RollbackStackAndRestoreContext& operator=(RollbackStackAndRestoreContext const&) = delete; // Copy-assignment
 
 	// Non-moveable
 	RollbackStackAndRestoreContext(RollbackStackAndRestoreContext&&) = default; // Move-constructor

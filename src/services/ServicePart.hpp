@@ -38,7 +38,7 @@ protected:
 public:
 	ServicePart() = delete;
 	ServicePart(const ServicePart&) = delete;
-	void operator=(ServicePart const&) = delete;
+	ServicePart& operator=(ServicePart const&) = delete;
 	ServicePart(ServicePart&&) = delete;
 	ServicePart& operator=(ServicePart&&) = delete;
 

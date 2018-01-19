@@ -50,7 +50,7 @@ protected:
 public:
 	TcpConnector() = delete;
 	TcpConnector(const TcpConnector&) = delete;
-	void operator=(TcpConnector const&) = delete;
+	TcpConnector& operator=(TcpConnector const&) = delete;
 	TcpConnector(TcpConnector&& tmp) = delete;
 	TcpConnector& operator=(TcpConnector&& tmp) = delete;
 

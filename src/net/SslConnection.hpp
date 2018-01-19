@@ -49,7 +49,7 @@ private:
 public:
 	SslConnection() = delete;
 	SslConnection(const SslConnection&) = delete;
-	void operator=(SslConnection const&) = delete;
+	SslConnection& operator=(SslConnection const&) = delete;
 	SslConnection(SslConnection&& tmp) = delete;
 	SslConnection& operator=(SslConnection&& tmp) = delete;
 

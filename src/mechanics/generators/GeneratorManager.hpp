@@ -51,7 +51,7 @@ private:
 
 public:
 	GeneratorManager(const GeneratorManager&) = delete; // Copy-constructor
-	void operator=(GeneratorManager const&) = delete; // Copy-assignment
+	GeneratorManager& operator=(GeneratorManager const&) = delete; // Copy-assignment
 	GeneratorManager(GeneratorManager&&) = delete; // Move-constructor
 	GeneratorManager& operator=(GeneratorManager&&) = delete; // Move-assignment
 

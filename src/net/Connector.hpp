@@ -31,7 +31,7 @@ class Connector : public Connection
 public:
 	Connector() = delete;
 	Connector(const Connector&) = delete;
-	void operator=(Connector const&) = delete;
+	Connector& operator=(Connector const&) = delete;
 	Connector(Connector&& tmp) = delete;
 	Connector& operator=(Connector&& tmp) = delete;
 

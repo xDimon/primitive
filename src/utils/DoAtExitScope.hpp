@@ -36,7 +36,7 @@ public:
 
 	DoAtExitScope() = delete; // Copy-constructor
 	DoAtExitScope(const DoAtExitScope&) = delete; // Copy-constructor
-	void operator=(DoAtExitScope const&) = delete; // Copy-assignment
+	DoAtExitScope& operator=(DoAtExitScope const&) = delete; // Copy-assignment
 	DoAtExitScope(DoAtExitScope&&) = delete; // Move-constructor
 	DoAtExitScope& operator=(DoAtExitScope&&) = delete; // Move-assignment
 

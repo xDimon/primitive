@@ -45,7 +45,7 @@ private:
 
 public:
 	Server(const Server&) = delete;
-	void operator=(Server const&) = delete;
+	Server& operator=(Server const&) = delete;
 	Server(Server&&) = delete;
 	Server& operator=(Server&&) = delete;
 

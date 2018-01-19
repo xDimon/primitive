@@ -35,7 +35,7 @@ private:
 
 	EventFactory(EventFactory const&) = delete;
 
-	void operator=(EventFactory const&) = delete;
+	EventFactory& operator=(EventFactory const&) = delete;
 
 	static EventFactory& getInstance()
 	{

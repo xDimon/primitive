@@ -60,9 +60,10 @@ public:
 		_value = tmp._value;
 	}
 
-	virtual void operator=(SStr const& tmp)
+	virtual SStr& operator=(SStr const& tmp)
 	{
 		_value = tmp._value;
+		return *this;
 	}
 
 	void insert(uint32_t symbol)

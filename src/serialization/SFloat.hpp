@@ -47,9 +47,10 @@ public:
 		return _value;
 	}
 
-	void operator=(SFloat const& that)
+	SFloat& operator=(SFloat const& that)
 	{
 		_value = that._value;
+		return *this;
 	}
 
 	operator std::string() const override

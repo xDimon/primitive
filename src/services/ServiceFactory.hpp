@@ -30,7 +30,7 @@ class ServiceFactory final
 {
 public:
 	ServiceFactory(const ServiceFactory&) = delete;
-	void operator=(ServiceFactory const&) = delete;
+	ServiceFactory& operator=(ServiceFactory const&) = delete;
 	ServiceFactory(ServiceFactory&&) = delete;
 	ServiceFactory& operator=(ServiceFactory&&) = delete;
 

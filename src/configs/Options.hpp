@@ -33,7 +33,7 @@ private:
 public:
 	Options() = delete;
 	Options(const Options&) = delete;
-	void operator=(Options const&) = delete;
+	Options& operator=(Options const&) = delete;
 	Options(Options&&) = delete;
 	Options& operator=(Options&&) = delete;
 

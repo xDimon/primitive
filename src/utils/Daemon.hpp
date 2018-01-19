@@ -31,7 +31,7 @@ class Daemon final
 {
 public:
 	Daemon(const Daemon&) = delete;
-	void operator=(Daemon const&) = delete;
+	Daemon& operator=(Daemon const&) = delete;
 	Daemon(Daemon&&) = delete;
 	Daemon& operator=(Daemon&&) = delete;
 

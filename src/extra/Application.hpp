@@ -35,7 +35,7 @@ protected:
 public:
 	Application() = delete;
 	Application(const Application&) = delete;
-    void operator=(Application const&) = delete;
+    Application& operator=(Application const&) = delete;
 	Application(Application&&) = delete;
 	Application& operator=(Application&&) = delete;
 
@@ -67,7 +67,7 @@ public:
 public:                                                                                         \
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
-    void operator=(Class const&) = delete;                                                      \
+    Class& operator=(Class const&) = delete;                                                    \
 	Class(Class&&) = delete;                                                                    \
 	Class& operator=(Class&&) = delete;                                                         \
     ~Class() override = default;                                                                \

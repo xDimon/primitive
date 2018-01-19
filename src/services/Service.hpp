@@ -42,7 +42,7 @@ protected:
 
 public:
 	Service(const Service&) = delete;
-	void operator=(Service const&) = delete;
+	Service& operator=(Service const&) = delete;
 	Service(Service&&) = delete;
 	Service& operator=(Service&&) = delete;
 
@@ -77,7 +77,7 @@ private:                                                                    \
 public:                                                                     \
 	Service() = delete;                                                     \
 	Service(const Service&) = delete;                                       \
-    void operator=(Service const&) = delete;                                \
+    Service& operator=(Service const&) = delete;                            \
 	Service(Service&&) = delete;                                            \
 	Service& operator=(Service&&) = delete;                                 \
                                                                             \

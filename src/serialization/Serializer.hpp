@@ -34,7 +34,7 @@ protected:
 public:
 	Serializer() = delete;
 	Serializer(const Serializer&) = delete;
-	void operator=(Serializer const&) = delete;
+	Serializer& operator=(Serializer const&) = delete;
 	Serializer(Serializer&&) = delete;
 	Serializer& operator=(Serializer&&) = delete;
 
@@ -61,7 +61,7 @@ public:
 public:                                                                                         \
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
-    void operator=(Class const&) = delete;                                                      \
+    Class& operator=(Class const&) = delete;                                                    \
 	Class(Class&&) = delete;                                                                    \
 	Class& operator=(Class&&) = delete;                                                         \
                                                                                                 \

@@ -40,7 +40,7 @@ private:
 
 public:
 	Timeout(const Timeout&) = delete; // Copy-constructor
-	void operator=(Timeout const&) = delete; // Copy-assignment
+	Timeout& operator=(Timeout const&) = delete; // Copy-assignment
 	Timeout(Timeout&&) = delete; // Move-constructor
 	Timeout& operator=(Timeout&&) = delete; // Move-assignment
 

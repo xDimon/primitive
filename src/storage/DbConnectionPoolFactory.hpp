@@ -29,7 +29,7 @@ class DbConnectionPoolFactory
 {
 public:
 	DbConnectionPoolFactory(const DbConnectionPoolFactory&) = delete;
-	void operator=(DbConnectionPoolFactory const&) = delete;
+	DbConnectionPoolFactory& operator=(DbConnectionPoolFactory const&) = delete;
 	DbConnectionPoolFactory(DbConnectionPoolFactory&&) = delete;
 	DbConnectionPoolFactory& operator=(DbConnectionPoolFactory&&) = delete;
 

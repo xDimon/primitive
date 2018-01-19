@@ -26,7 +26,7 @@ class MysqlLibHelper final
 {
 public:
 	MysqlLibHelper(const MysqlLibHelper&) = delete;
-	void operator=(MysqlLibHelper const&) = delete;
+	MysqlLibHelper& operator=(MysqlLibHelper const&) = delete;
 	MysqlLibHelper(MysqlLibHelper&&) = delete;
 	MysqlLibHelper& operator=(MysqlLibHelper&&) = delete;
 

@@ -65,7 +65,7 @@ protected:
 public:
 	Session() = delete;
 	Session(const Session&) = delete;
-	void operator=(Session const&) = delete;
+	Session& operator=(Session const&) = delete;
 	Session(Session&&) = delete;
 	Session& operator=(Session&&) = delete;
 

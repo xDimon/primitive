@@ -44,7 +44,7 @@ private:
 public:
 	ServerTransport() = delete;
 	ServerTransport(const ServerTransport&) = delete;
-    void operator=(ServerTransport const&) = delete;
+    ServerTransport& operator=(ServerTransport const&) = delete;
 	ServerTransport(ServerTransport&&) = delete;
 	ServerTransport& operator=(ServerTransport&&) = delete;
 
@@ -77,7 +77,7 @@ public:
 public:                                                                                         \
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
-    void operator=(Class const&) = delete;                                                      \
+    Class& operator=(Class const&) = delete;                                                    \
 	Class(Class&&) = delete;                                                                    \
 	Class& operator=(Class&&) = delete;                                                         \
                                                                                                 \

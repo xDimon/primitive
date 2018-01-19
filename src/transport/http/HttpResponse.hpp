@@ -68,7 +68,7 @@ private:
 public:
 	HttpResponse() = delete;
 	HttpResponse(const HttpResponse&) = delete;
-	void operator=(HttpResponse const&) = delete;
+	HttpResponse& operator=(HttpResponse const&) = delete;
 	HttpResponse(HttpResponse&&) = delete;
 	HttpResponse& operator=(HttpResponse&&) = delete;
 

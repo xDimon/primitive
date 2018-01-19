@@ -25,7 +25,7 @@ class DbResult
 {
 public:
 	DbResult(const DbResult&) = delete;
-	void operator=(DbResult const&) = delete;
+	DbResult& operator=(DbResult const&) = delete;
 	DbResult(DbResult&&) = delete;
 	DbResult& operator=(DbResult&&) = delete;
 

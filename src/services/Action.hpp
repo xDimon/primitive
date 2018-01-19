@@ -51,7 +51,7 @@ protected:
 public:
 	Action() = delete;
 	Action(const Action&) = delete;
-	void operator=(Action const&) = delete;
+	Action& operator=(Action const&) = delete;
 	Action(Action&&) = delete;
 	Action& operator=(Action&&) = delete;
 
@@ -119,7 +119,7 @@ public:
 public:                                                                                         \
     ActionName() = delete;                                                                      \
 	ActionName(const ActionName&) = delete;                                                     \
-	void operator=(ActionName const&) = delete;                                                 \
+	ActionName& operator=(ActionName const&) = delete;                                          \
 	ActionName(ActionName&&) = delete;                                                          \
 	ActionName& operator=(ActionName&&) = delete;                                               \
                                                                                                 \

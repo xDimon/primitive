@@ -33,7 +33,7 @@ class SerializerFactory final
 {
 public:
 	SerializerFactory(const SerializerFactory&) = delete;
-	void operator=(SerializerFactory const&) = delete;
+	SerializerFactory& operator=(SerializerFactory const&) = delete;
 	SerializerFactory(SerializerFactory&&) = delete;
 	SerializerFactory& operator=(SerializerFactory&&) = delete;
 
