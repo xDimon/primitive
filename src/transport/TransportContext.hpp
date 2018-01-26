@@ -43,6 +43,15 @@ public:
 		_transmitter = transmitter;
 	}
 
+	void setTtl(std::chrono::milliseconds ttl)
+	{
+		auto connection = _connection.lock();
+		if (connection)
+		{
+			connection->setTtl(ttl);
+		}
+	}
+
 	void transmit(const char* data, size_t size, const std::string& contentType, bool close)
 	{
 		if (_transmitter)
