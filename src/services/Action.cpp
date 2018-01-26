@@ -137,8 +137,6 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 
 bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_point beginExecTime)
 {
-	bool throwNope = false;
-
 	TelemetryManager::metric(where + "/" + _actionName + "/count", 1)->addValue();
 	TelemetryManager::metric(where + "/" + _actionName + "/avg_per_sec", std::chrono::seconds(15))->addValue();
 
@@ -164,10 +162,6 @@ bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_poin
 			throw std::runtime_error("Fail execute of action");
 		}
 	}
-	catch (const NopeException& exception)
-	{
-		throwNope = true;
-	}
 	catch (const std::exception& exception)
 	{
 		TelemetryManager::metric(where + "/" + _actionName + "/fail", 1)->addValue();
@@ -182,8 +176,6 @@ bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_poin
 	{
 		TelemetryManager::metric(where + "/" + _actionName + "/avg_exec_time", std::chrono::seconds(15))->addValue(timeSpent, now);
 	}
-
-	if (throwNope) throw NopeException{};
 
 	return true;
 }
