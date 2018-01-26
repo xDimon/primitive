@@ -19,8 +19,10 @@
 // Session.cpp
 
 
+#include <random>
 #include "Session.hpp"
 #include "SessionManager.hpp"
+#include "../utils/Base64.hpp"
 
 const char Session::_hidSeed[16] = {};
 
@@ -38,10 +40,9 @@ Session::Session(
 	}
 }
 
-void Session::setSid(SID sid)
+void Session::setSid(Session::SID sid)
 {
 	_sid = std::move(sid);
-	SessionManager::regSid(ptr());
 }
 
 void Session::touch()

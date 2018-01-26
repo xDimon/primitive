@@ -53,7 +53,7 @@ private:
 
 public:
 	/// Зарегистрировать SID
-	static void regSid(const std::shared_ptr<Session>& session);
+	static bool regSid(const std::shared_ptr<Session>& session, const Session::SID& sid = "");
 
 	/// Получить HID по SID
 	static std::shared_ptr<Session> sessionBySid(const Session::SID& sid);

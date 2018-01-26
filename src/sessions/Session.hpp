@@ -36,6 +36,7 @@ public:
 
 protected:
 	static const char _hidSeed[16];
+	std::recursive_mutex _mutex;
 
 protected:
 	std::shared_ptr<Service> _service;
@@ -91,6 +92,7 @@ public:
 
 	void assignContext(const std::shared_ptr<Context>& context)
 	{
+		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 		_context = context;
 	}
 	std::shared_ptr<Context> getContext() const
@@ -101,4 +103,10 @@ public:
 	virtual bool load();
 	virtual bool save();
 	virtual void close(const std::string& reason);
+
+	void protectedDo(const std::function<void()>& func)
+	{
+		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+		func();
+	}
 };

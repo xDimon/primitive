@@ -21,23 +21,25 @@
 
 #include "SessionManager.hpp"
 
-void SessionManager::regSid(const std::shared_ptr<Session>& session)
+bool SessionManager::regSid(const std::shared_ptr<Session>& session, const Session::SID& sid)
 {
-	if (session->sid().empty())
-	{
-		return;
-	}
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSessionsBySid);
-	auto i = getInstance()._sessionsBySid.find(session->sid());
+	if (!session->sid().empty())
+	{
+		getInstance()._sessionsBySid.erase(session->sid());
+	}
+	if (sid.empty())
+	{
+		return true;
+	}
+	auto i = getInstance()._sessionsBySid.find(sid);
 	if (i != getInstance()._sessionsBySid.end())
 	{
-		if (i->first == session->sid())
-		{
-
-		}
-		getInstance()._sessionsBySid.erase(i);
+		return false;
 	}
+	session->setSid(sid);
 	getInstance()._sessionsBySid.emplace(session->sid(), session);
+	return true;
 }
 
 std::shared_ptr<Session> SessionManager::sessionBySid(const Session::SID& sid)
