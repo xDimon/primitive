@@ -255,11 +255,15 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 					}
 
 					// Данных больше не будет
-					if (!connection->noRead())
+					if (connection->noRead())
 					{
-						connection->setTtl(std::chrono::seconds(5));
+						HttpResponse(400)
+							<< HttpHeader("Connection", "Close")
+							<< "Incomplete chunked body of request" << "\r\n"
+							>> *connection;
 
-						_log.debug("Not read all request body yet (read %zu)", context->getRequest()->dataLen());
+						_log.debug("Incomplete chunked body of request");
+						connection->setTtl(std::chrono::milliseconds(50));
 						return true;
 					}
 				}
@@ -357,13 +361,10 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 		}
 		catch (const std::exception& exception)
 		{
-			SObj output;
-			output.insert("status", new SStr("error"));
-			output.insert("error", new SStr(exception.what()));
-
-			HttpResponse(200, "OK", context->getRequest() ? context->getRequest()->protocol() : 100)
+			HttpResponse(500, "", context->getRequest() ? context->getRequest()->protocol() : 100)
 				<< HttpHeader("Connection", "Close")
-//				<< serializer()->encode(&output) << "\r\n"
+				<< HttpHeader("Content-Type", "text/plain;charset=utf-8")
+				<< "500 Internal Server Error:\n  " << exception.what() << "\r\n"
 				>> *connection;
 
 			connection->setTtl(std::chrono::milliseconds(50));

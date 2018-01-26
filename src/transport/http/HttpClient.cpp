@@ -98,7 +98,6 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 		// Читаем тело ответа
 		if (context->getResponse()->hasContentLength())
 		{
-			_log.debug("has content-length (%zu  %zu)", context->getResponse()->dataLen(), context->getResponse()->contentLength());
 			if (context->getResponse()->contentLength() > context->getResponse()->dataLen())
 			{
 				size_t len = std::min(context->getResponse()->contentLength(), connection->dataLen());
@@ -193,21 +192,13 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 				}
 
 				// Данных больше не будет
-				if (!connection->noRead())
+				if (connection->noRead())
 				{
-					connection->setTtl(std::chrono::seconds(5));
-
-					_log.debug("Not read all request body yet (read %zu)", context->getRequest()->dataLen());
+					_log.debug("Incomplete body of response");
+					connection->setTtl(std::chrono::milliseconds(50));
 					return true;
 				}
 			}
-//
-//			// Данных больше не будет
-//			if (!connection->noRead())
-//			{
-//				_log.debug("Not read all request body yet (read %zu)", context->getResponse()->dataLen());
-//				break;
-//			}
 		}
 		else
 		{
