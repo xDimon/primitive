@@ -32,7 +32,8 @@ HttpRequestExecutor::HttpRequestExecutor(
 	const HttpUri& uri,
 	HttpRequest::Method method,
 	const std::string& body,
-	const std::string& contentType
+	const std::string& contentType,
+	std::chrono::milliseconds timeout
 )
 : _savedCtx(nullptr)
 , _log("HttpRequestExecutor")
@@ -41,6 +42,7 @@ HttpRequestExecutor::HttpRequestExecutor(
 , _uri(uri)
 , _body(body)
 , _contentType(contentType)
+, _timeout(timeout)
 , _error("No run")
 , _state(State::INIT)
 {
@@ -91,7 +93,7 @@ void HttpRequestExecutor::operator()()
 		{
 			_connector = std::make_shared<TcpConnector>(_clientTransport, _uri.host(), _uri.port());
 		}
-		_connector->setTtl(std::chrono::seconds(15));
+		_connector->setTtl(_timeout);
 
 		_connector->addConnectedHandler(
 			[wp = std::weak_ptr<HttpRequestExecutor>(ptr())]
@@ -270,7 +272,7 @@ void HttpRequestExecutor::submit()
 //		_log.debug("REQUEST: %s", _uri.str().c_str());
 
 		_connection->write(oss.str().c_str(), oss.str().length());
-		_connection->setTtl(std::chrono::seconds(60));
+		_connection->setTtl(_timeout);
 
 		_log.trace("Submited");
 

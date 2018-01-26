@@ -38,6 +38,7 @@ private:
 	HttpUri _uri;
 	std::string _body;
 	std::string _contentType;
+	std::chrono::milliseconds _timeout;
 	std::string _answer;
 	std::string _error;
 	std::recursive_mutex _mutex;
@@ -73,7 +74,8 @@ public:
 		const HttpUri& uri,
 		HttpRequest::Method method = HttpRequest::Method::GET,
 		const std::string& body = "",
-		const std::string& contentType = ""
+		const std::string& contentType = "",
+		std::chrono::milliseconds timeout = std::chrono::seconds(60)
 	);
 
 	~HttpRequestExecutor() override;
