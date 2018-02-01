@@ -177,15 +177,12 @@ public:
 		value = (T)(sFloat ? sFloat->value() : 0.0);
 	}
 
-	template<typename T, typename _ = void>
-	struct is_container : std::false_type
-	{
-	};
-
+private:
 	template<typename... Ts>
-	struct is_container_helper
-	{
-	};
+	struct is_container_helper { };
+
+	template<typename T, typename _ = void>
+	struct is_container : std::false_type { };
 
 	template<typename T>
 	struct is_container<
@@ -206,13 +203,38 @@ public:
 			>,
 			void
 		>
-	> : public std::true_type
-	{
-	};
+	> : public std::true_type { };
+
+	template<typename T, typename _ = void>
+	struct is_container2 : std::false_type { };
 
 	template<typename T>
-	typename std::enable_if<is_container<T>::value, void>::type
-	lookup(const std::string& key, T &value, bool strict = false) const
+	struct is_container2<
+		T,
+		std::conditional_t<
+			false,
+			is_container_helper<
+				typename T::key_type,
+				typename T::mapped_type,
+				typename T::value_type,
+				typename T::size_type,
+				typename T::allocator_type,
+				typename T::iterator,
+				typename T::const_iterator,
+				decltype(std::declval<T>().size()),
+				decltype(std::declval<T>().begin()),
+				decltype(std::declval<T>().end()),
+				decltype(std::declval<T>().cbegin()),
+				decltype(std::declval<T>().cend())
+			>,
+			void
+		>
+	> : public std::true_type { };
+
+public:
+	template<typename T>
+	typename std::enable_if<is_container<T>::value && !is_container2<T>::value, void>::type
+	lookup(const std::string& key, T &container, bool strict = false) const
 	{
 		auto element = get(key);
 		if (!element)
@@ -222,23 +244,49 @@ public:
 		auto arr = dynamic_cast<const SArr*>(element);
 		if (arr)
 		{
-			std::for_each(arr->cbegin(), arr->cend(),
-				[&value]
-				(const SVal* val)
-				{
-					value.emplace_back(*val);
-				}
+			std::transform(
+				arr->begin(),
+				arr->end(),
+				container.end(),
+				[](const auto& one)->typename T::value_type { return *one; }
 			);
 			return;
 		}
 		auto obj = dynamic_cast<const SObj*>(element);
 		if (obj)
 		{
-			std::for_each(obj->cbegin(), obj->cend(),
-				[&value]
-				(const std::pair<const std::string&, const SVal*>& element)
+			std::transform(
+				obj->begin(),
+				obj->end(),
+				container.end(),
+				[](const auto& one)->typename T::value_type { return *one.second; }
+			);
+			return;
+		}
+		if (strict)
+		{
+			throw std::runtime_error("Field '" + key + "' isn't appropriate container");
+		}
+	}
+
+	template<typename T>
+	typename std::enable_if<is_container<T>::value && is_container2<T>::value, void>::type
+	lookup(const std::string& key, T &container, bool strict = false) const
+	{
+		auto element = get(key);
+		if (!element)
+		{
+			throw std::runtime_error("Field '" + key + "' not found");
+		}
+		auto obj = dynamic_cast<const SObj*>(element);
+		if (obj)
+		{
+			std::for_each(
+				obj->begin(),
+				obj->end(),
+				[&container](const auto& one)
 				{
-					value.emplace_back(element.second);
+					container.emplace(one.first, *one.second);
 				}
 			);
 			return;
@@ -293,6 +341,11 @@ public:
 	inline void trylookup(const std::string& key, T &value) const noexcept
 	{
 		try	{ lookup(key, value, false); } catch (...) { value = T(); }
+	}
+
+	inline void trylookup(const std::string& key, std::vector<std::string>& value) const noexcept
+	{
+		try	{ lookup(key, value, false); } catch (...) { value = std::vector<std::string>(); }
 	}
 
 	template<template<typename, typename, typename> class C, typename E, typename Cmp, typename A>
