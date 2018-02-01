@@ -246,7 +246,16 @@ void WsPipe::transmit(
 		throw std::runtime_error("Incomplete websocket communication");
 	}
 
-	auto opcode = (contentType == "text") ? WsFrame::Opcode::Text : WsFrame::Opcode::Binary;
+	auto opcode = WsFrame::Opcode::Binary;
+
+	if (
+		contentType.find("text") != std::string::npos ||
+		contentType.find("json") != std::string::npos ||
+		contentType.find("xml") != std::string::npos
+	)
+	{
+		opcode = WsFrame::Opcode::Text;
+	}
 
 	WsFrame::send(connection, opcode, data, size);
 	if (close)
