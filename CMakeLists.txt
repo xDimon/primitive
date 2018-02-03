@@ -122,6 +122,7 @@ endforeach()
 #endforeach()
 
 add_subdirectory(src)
+add_subdirectory(impl)
 
 add_library(${CODENAME}_object OBJECT ${SOURCE_FILES})
 set_target_properties(${CODENAME}_object PROPERTIES COMPILE_FLAGS "-fPIC")
@@ -136,7 +137,7 @@ target_link_libraries(${CODENAME}_static ${${CODENAME}_LIBRARIES})
 set_target_properties(${CODENAME}_static PROPERTIES OUTPUT_NAME ${CODENAME})
 add_dependencies(${CODENAME}_static ${CODENAME}_object)
 
-add_executable(${CODENAME}_executable $<TARGET_OBJECTS:${CODENAME}_object> test/main.cpp)
+add_executable(${CODENAME}_executable $<TARGET_OBJECTS:${CODENAME}_object>)
 target_link_libraries(${CODENAME}_executable ${${CODENAME}_LIBRARIES})
 set_target_properties(${CODENAME}_executable PROPERTIES OUTPUT_NAME ${CODENAME})
 add_dependencies(${CODENAME}_executable ${CODENAME}_object)

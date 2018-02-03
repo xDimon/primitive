@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../Service.hpp"
+#include "../../src/services/Service.hpp"
 
 #include <set>
 

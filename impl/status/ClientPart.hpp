@@ -22,11 +22,11 @@
 #pragma once
 
 
-#include "../../../../configs/Setting.hpp"
-#include "../../../../server/Server.hpp"
-#include "../../../../serialization/SObj.hpp"
-#include "../../../Action.hpp"
-#include "../../../ServicePart.hpp"
+#include "../../src/configs/Setting.hpp"
+#include "../../src/server/Server.hpp"
+#include "../../src/serialization/SObj.hpp"
+#include "../../src/services/Action.hpp"
+#include "../../src/services/ServicePart.hpp"
 
 namespace status
 {

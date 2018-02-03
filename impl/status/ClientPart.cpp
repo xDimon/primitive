@@ -20,14 +20,14 @@
 
 
 #include "ClientPart.hpp"
-#include "../../../../transport/http/HttpRequestExecutor.hpp"
-#include "../../Service.hpp"
-#include "../../../../transport/Transports.hpp"
-#include "../../../../telemetry/SysInfo.hpp"
-#include "../../../../utils/Time.hpp"
-#include "../../../../storage/DbManager.hpp"
-#include "../../../../transport/http/HttpContext.hpp"
-#include "../../../../telemetry/TelemetryManager.hpp"
+#include "../../src/transport/http/HttpRequestExecutor.hpp"
+#include "Service.hpp"
+#include "../../src/transport/Transports.hpp"
+#include "../../src/telemetry/SysInfo.hpp"
+#include "../../src/utils/Time.hpp"
+#include "../../src/storage/DbManager.hpp"
+#include "../../src/transport/http/HttpContext.hpp"
+#include "../../src/telemetry/TelemetryManager.hpp"
 
 #include <iomanip>
 

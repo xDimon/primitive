@@ -20,7 +20,7 @@
 
 
 #include "Service.hpp"
-#include "parts/client/ClientPart.hpp"
+#include "ClientPart.hpp"
 
 REGISTER_SERVICE(status)
 
