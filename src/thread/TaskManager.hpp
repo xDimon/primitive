@@ -67,13 +67,6 @@ public:
 		enqueue(std::forward<Task::Func>(func), Task::Clock::now());
 	}
 
-//	template<class F, class... S>
-//	static typename std::enable_if<std::is_convertible<F, Task::Func>::value, void>::type
-//	enqueue(F&& func, const S&... spec)
-//	{
-//		enqueue(std::forward<Task::Func>(func), spec...);
-//	}
-
 	static size_t queueSize();
 
 	static Task::Time waitUntil();

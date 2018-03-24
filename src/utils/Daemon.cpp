@@ -247,7 +247,7 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 	actions:
 
 	// Выгрузка стека
-	if (false && needBacktrace)
+	if (needBacktrace)
 	{
 		void *bt[128];
 		int n = backtrace(bt, 128);

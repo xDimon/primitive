@@ -28,7 +28,7 @@ class Base64 final
 public:
 	static std::string encode(const void *data, size_t length);
 
-	static inline std::string encode(const std::string data)
+	static inline std::string encode(const std::string& data)
 	{
 		return encode(data.data(), data.size());
 	}

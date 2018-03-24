@@ -95,7 +95,7 @@ public:
 		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 		_context = context;
 	}
-	std::shared_ptr<Context> getContext() const
+	virtual std::shared_ptr<Context> getContext()
 	{
 		return _context.lock();
 	}
