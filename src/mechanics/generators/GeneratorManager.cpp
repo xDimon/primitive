@@ -26,12 +26,12 @@ void GeneratorManager::push(
 	Generator::Period period
 )
 {
-	auto& lm = getInstance();
+	auto& gm = getInstance();
 
-	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+	std::lock_guard<std::mutex> lockGuard(gm._mutex);
 
-	lm._configs.erase(id);
-	lm._configs.emplace(
+	gm._configs.erase(id);
+	gm._configs.emplace(
 		id,
 		std::make_shared<GeneratorConfig>(
 			id,
@@ -42,10 +42,10 @@ void GeneratorManager::push(
 
 std::shared_ptr<const GeneratorConfig> GeneratorManager::get(const Generator::Id& id)
 {
-	auto& lm = getInstance();
+	auto& gm = getInstance();
 
-	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+	std::lock_guard<std::mutex> lockGuard(gm._mutex);
 
-	auto i = lm._configs.find(id);
-	return (i != lm._configs.end()) ? i->second : nullptr;
+	auto i = gm._configs.find(id);
+	return (i != gm._configs.end()) ? i->second : nullptr;
 }

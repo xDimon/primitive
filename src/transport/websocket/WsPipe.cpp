@@ -46,7 +46,7 @@ bool WsPipe::processing(const std::shared_ptr<Connection>& connection_)
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
 	{
-		throw std::runtime_error("Bad connection-type for this transport");
+		throw std::runtime_error("Bad connection-type for WsPipe at processing");
 	}
 
 	auto context = std::dynamic_pointer_cast<WsContext>(connection->getContext());
@@ -232,7 +232,7 @@ void WsPipe::transmit(
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
 	{
-		throw std::runtime_error("Bad connection-type for this transport");
+		throw std::runtime_error("Bad connection-type for WsPipe at transmit");
 	}
 
 	auto context = std::dynamic_pointer_cast<WsContext>(connection->getContext());

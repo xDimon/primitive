@@ -29,7 +29,7 @@ bool HttpClient::processing(const std::shared_ptr<Connection>& connection_)
 	auto connection = std::dynamic_pointer_cast<TcpConnection>(connection_);
 	if (!connection)
 	{
-		throw std::runtime_error("Bad connection-type for this transport");
+		throw std::runtime_error("Bad connection-type for HttpClient");
 	}
 
 	int n = 0;

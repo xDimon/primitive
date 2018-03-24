@@ -23,12 +23,12 @@
 
 void CounterManager::push(const Counter::Id& id)
 {
-	auto& lm = getInstance();
+	auto& cm = getInstance();
 
-	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+	std::lock_guard<std::mutex> lockGuard(cm._mutex);
 
-	lm._configs.erase(id);
-	lm._configs.emplace(
+	cm._configs.erase(id);
+	cm._configs.emplace(
 		id,
 		std::make_shared<CounterConfig>(
 			id
@@ -38,10 +38,10 @@ void CounterManager::push(const Counter::Id& id)
 
 std::shared_ptr<const CounterConfig> CounterManager::get(const Counter::Id& id)
 {
-	auto& lm = getInstance();
+	auto& cm = getInstance();
 
-	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+	std::lock_guard<std::mutex> lockGuard(cm._mutex);
 
-	auto i = lm._configs.find(id);
-	return (i != lm._configs.end()) ? i->second : nullptr;
+	auto i = cm._configs.find(id);
+	return (i != cm._configs.end()) ? i->second : nullptr;
 }
