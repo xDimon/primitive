@@ -75,27 +75,42 @@ void LpsContext::out(const SVal* value, bool close)
 {
 	_output.push(value);
 
-	if (close && !!std::dynamic_pointer_cast<WsContext>(_context))
+	if (std::dynamic_pointer_cast<WsContext>(_context))
+	{
+		if (close)
+		{
+			auto session = getSession();
+			if (session)
+			{
+				session->assignContext(nullptr);
+			}
+		}
+		send(close);
+	}
+	else // if (close || !!std::dynamic_pointer_cast<WsContext>(_context))
 	{
 		if (!_timeout)
 		{
 			_timeout = std::make_shared<Timeout>(
-				[wp = std::weak_ptr<LpsContext>(std::dynamic_pointer_cast<LpsContext>(ptr()))]
+				[wp = std::weak_ptr<LpsContext>(std::dynamic_pointer_cast<LpsContext>(ptr())), close]
 				{
 					auto iam = wp.lock();
 					if (iam)
 					{
-						auto session = iam->getSession();
-						if (session)
+						if (close)
 						{
-							session->assignContext(nullptr);
+							auto session = iam->getSession();
+							if (session)
+							{
+								session->assignContext(nullptr);
+							}
 						}
-						iam->send(true);
+						iam->send(close);
 					}
 				}
 			);
 		}
-		_timeout->restart(std::chrono::milliseconds(std::dynamic_pointer_cast<WsContext>(_context) ? 0 : 100));
+		_timeout->restart(std::chrono::milliseconds(100));
 	}
 }
 

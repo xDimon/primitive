@@ -21,6 +21,7 @@
 
 #include "SslConnection.hpp"
 
+#include <cstring>
 #include <openssl/err.h>
 #include <sstream>
 

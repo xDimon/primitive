@@ -97,7 +97,7 @@ const SObj* Action::response(const SVal* data) const
 
 	if (_answerSent)
 	{
-		throw std::runtime_error("Internal error ← Answer already sent");
+		throw std::runtime_error("Internal error ← Answer already sent (try to send response)");
 	}
 
 	_answerSent = true;
@@ -127,7 +127,7 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 
 	if (_answerSent)
 	{
-		throw std::runtime_error("Internal error ← Answer already sent");
+		throw std::runtime_error("Internal error ← Answer already sent ← Try to send error '" + message + "'");
 	}
 
 	_answerSent = true;
@@ -161,6 +161,10 @@ bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_poin
 		{
 			throw std::runtime_error("Fail execute of action");
 		}
+	}
+	catch (const NopeException& exception)
+	{
+		throw;
 	}
 	catch (const std::exception& exception)
 	{

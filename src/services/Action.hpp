@@ -96,7 +96,7 @@ public:
 		return _requestId;
 	}
 
-	inline auto lastConfirmedMessage() const
+	inline auto lastConfirmedEvent() const
 	{
 		return _lastConfirmedEvent;
 	}

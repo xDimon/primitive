@@ -33,7 +33,7 @@ Generator::Generator(
 {
 	if (!_config)
 	{
-		throw std::runtime_error("Not found config for limit '" + id + "'");
+		throw std::runtime_error("Not found config for generator '" + id + "'");
 	}
 }
 
