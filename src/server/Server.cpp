@@ -51,11 +51,19 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	{
 		const auto& settings = _configs->getRoot()["core"];
 
+		std::string timeZone;
+		if (settings.lookupValue("timeZone", timeZone) && !timeZone.empty())
+		{
+			setenv("TZ", timeZone.c_str(), 1);
+			tzset();
+		}
+
 		std::string processName;
 		if (settings.lookupValue("processName", processName) && !processName.empty())
 		{
 			Daemon::SetProcessName(processName);
 		}
+
 		if (!settings.lookupValue("workers", _workerCount))
 		{
 			_workerCount = std::thread::hardware_concurrency();
