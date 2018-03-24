@@ -30,6 +30,8 @@ private:
 	std::shared_ptr<DbConnection> _conn;
 
 public:
+	Db() = default;
+
 	explicit Db(const std::shared_ptr<DbConnectionPool>& dbPool)
 	: _conn(dbPool ? dbPool->captureDbConnection() : nullptr)
 	{
@@ -38,6 +40,7 @@ public:
 			throw std::runtime_error("Can't database connect");
 		}
 	}
+
 	// Copy
 	Db(const Db& that)
 	: _conn(that._conn)
@@ -48,6 +51,7 @@ public:
 		}
 		_conn->capture();
 	}
+
 	// Move
 	Db(Db&& that) noexcept
 	: _conn(std::move(that._conn))
@@ -69,6 +73,7 @@ public:
 		_conn->capture();
 		return *this;
 	}
+
 	// Move assignment operator.
 	Db& operator=(Db&& that) noexcept
 	{
@@ -78,11 +83,18 @@ public:
 
 	~Db()
 	{
-		_conn->release();
+		if (_conn)
+		{
+			_conn->release();
+		}
 	}
 
 	DbConnection* operator->()
 	{
+		if (!_conn)
+		{
+			throw std::runtime_error("Can't database connect");
+		}
 		return _conn.get();
 	}
 };
