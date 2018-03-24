@@ -60,7 +60,7 @@ public:
 
 protected:
 	SID _sid;
-	std::weak_ptr<Context> _context;
+	std::shared_ptr<Context> _context;
 	bool _ready;
 
 public:
@@ -97,7 +97,8 @@ public:
 	}
 	virtual std::shared_ptr<Context> getContext()
 	{
-		return _context.lock();
+//		return _context.lock();
+		return _context;
 	}
 
 	virtual bool load();
