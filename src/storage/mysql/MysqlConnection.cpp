@@ -205,6 +205,11 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 		if (pool) pool->metricAvgExecutionTime->addValue(timeSpent, now);
 	}
 
+	if (timeSpent >= 0.5)
+	{
+		Log("mysql").warn("MySQL query too long: %0.03f sec\n\t\tFor query:\n\t\t%s", timeSpent, sql.c_str());
+	}
+
 	if (!success)
 	{
 		if (pool) pool->metricFailQueryCount->addValue();
