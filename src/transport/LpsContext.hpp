@@ -35,6 +35,8 @@ private:
 	std::weak_ptr<Session> _session;
 	std::queue<const SVal*> _output;
 	std::shared_ptr<Timeout> _timeout;
+	bool _close;
+	bool _closed;
 
 public:
 	LpsContext() = delete; // Default-constructor
@@ -45,15 +47,7 @@ public:
 
 	LpsContext(const std::shared_ptr<ServicePart>& servicePart, const std::shared_ptr<TransportContext>& context, const std::string& data);
 
-	virtual ~LpsContext() override
-	{
-		while (!_output.empty())
-		{
-			auto element = const_cast<SVal*>(_output.front());
-			_output.pop();
-			delete element;
-		}
-	};
+	virtual ~LpsContext() override;
 
 	void assignContext(const std::shared_ptr<TransportContext>& context)
 	{
@@ -70,5 +64,5 @@ public:
 
 	void out(const SVal* value, bool close = false);
 
-	void send(bool disconnect = false);
+	void send();
 };

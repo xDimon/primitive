@@ -26,6 +26,8 @@
 LpsContext::LpsContext(const std::shared_ptr<ServicePart>& servicePart, const std::shared_ptr<TransportContext>& context, const std::string& data)
 : _log("LpsContext")
 , _context(context)
+, _close(false)
+, _closed(false)
 {
 	if (data.empty())
 	{
@@ -42,6 +44,14 @@ LpsContext::LpsContext(const std::shared_ptr<ServicePart>& servicePart, const st
 	else
 	{
 		_log.info("?\?\?-IN  %s", data.c_str());
+	}
+}
+
+LpsContext::~LpsContext()
+{
+	if (!_closed)
+	{
+		try { send(); } catch (...) {}
 	}
 }
 
@@ -77,40 +87,30 @@ void LpsContext::resetSession()
 
 void LpsContext::out(const SVal* value, bool close)
 {
+	if (_closed)
+	{
+		return;
+	}
+
 	_output.push(value);
+	if (close)
+	{
+		_close = true;
+	}
 
 	if (std::dynamic_pointer_cast<WsContext>(_context))
 	{
-		if (close)
-		{
-			auto session = getSession();
-			if (session)
-			{
-				session->assignContext(nullptr);
-			}
-		}
-		send(close);
+		try { send(); } catch (...) {}
 	}
 	else // if (close || !!std::dynamic_pointer_cast<WsContext>(_context))
 	{
 		if (!_timeout)
 		{
 			_timeout = std::make_shared<Timeout>(
-				[wp = std::weak_ptr<LpsContext>(std::dynamic_pointer_cast<LpsContext>(ptr())), close]
+				[wp = std::weak_ptr<LpsContext>(std::dynamic_pointer_cast<LpsContext>(ptr()))]
 				{
 					auto iam = wp.lock();
-					if (iam)
-					{
-						if (close)
-						{
-							auto session = iam->getSession();
-							if (session)
-							{
-								session->assignContext(nullptr);
-							}
-						}
-						iam->send(close);
-					}
+					if (iam) try { iam->send(); } catch (...) {}
 				}
 			);
 		}
@@ -118,10 +118,17 @@ void LpsContext::out(const SVal* value, bool close)
 	}
 }
 
-void LpsContext::send(bool disconnect)
+void LpsContext::send()
 {
+	if (_closed)
+	{
+		return;
+	}
+
 	if (std::dynamic_pointer_cast<WsContext>(_context))
 	{
+		_closed = _closed || _close;
+
 		while (!_output.empty())
 		{
 			auto element = const_cast<SVal*>(_output.front());
@@ -129,13 +136,15 @@ void LpsContext::send(bool disconnect)
 
 			auto out = SerializerFactory::create("json")->encode(element);
 
-			_context->transmit(out, "text", disconnect && _output.empty());
+			_context->transmit(out, "text", _close && _output.empty());
 
 			_log.info("WS-OUT %s", out.c_str());
 		}
 	}
 	else if (std::dynamic_pointer_cast<HttpContext>(_context))
 	{
+		_closed = true;
+
 		auto output = std::make_unique<SArr>();
 
 		while (!_output.empty())
@@ -147,7 +156,7 @@ void LpsContext::send(bool disconnect)
 
 		auto out = SerializerFactory::create("json")->encode(output.get());
 
-		_context->transmit(out, "application/json; charset=utf-8", disconnect);
+		_context->transmit(out, "application/json; charset=utf-8", true);
 
 		_log.info("HTTP-OUT %s", out.c_str());
 	}
