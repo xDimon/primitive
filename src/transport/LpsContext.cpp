@@ -24,20 +24,24 @@
 #include "websocket/WsContext.hpp"
 
 LpsContext::LpsContext(const std::shared_ptr<ServicePart>& servicePart, const std::shared_ptr<TransportContext>& context, const std::string& data)
-: _servicePart(servicePart)
+: _log("LpsContext")
 , _context(context)
 {
-	if (std::dynamic_pointer_cast<WsContext>(_context))
+	if (data.empty())
 	{
-		_servicePart->log().info("WS-IN  %s", data.c_str());
+		return;
+	}
+	else if (std::dynamic_pointer_cast<WsContext>(_context))
+	{
+		_log.info("WS-IN  %s", data.c_str());
 	}
 	else if (std::dynamic_pointer_cast<HttpContext>(_context))
 	{
-		_servicePart->log().info("HTTP-IN  %s", data.c_str());
+		_log.info("HTTP-IN  %s", data.c_str());
 	}
 	else
 	{
-		_servicePart->log().info("?\?\?-IN  %s", data.c_str());
+		_log.info("?\?\?-IN  %s", data.c_str());
 	}
 }
 
@@ -127,7 +131,7 @@ void LpsContext::send(bool disconnect)
 
 			_context->transmit(out, "text", disconnect && _output.empty());
 
-			_servicePart->log().info("WS-OUT %s", out.c_str());
+			_log.info("WS-OUT %s", out.c_str());
 		}
 	}
 	else if (std::dynamic_pointer_cast<HttpContext>(_context))
@@ -145,11 +149,11 @@ void LpsContext::send(bool disconnect)
 
 		_context->transmit(out, "application/json; charset=utf-8", disconnect);
 
-		_servicePart->log().info("HTTP-OUT %s", out.c_str());
+		_log.info("HTTP-OUT %s", out.c_str());
 	}
 	else
 	{
-		_servicePart->log().info("?\?\?-OUT ?\?\?");
+		_log.info("?\?\?-OUT ?\?\?");
 		throw std::runtime_error("Internal error: unsupported transport context");
 	}
 }

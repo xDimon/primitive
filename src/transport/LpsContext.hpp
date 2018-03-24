@@ -30,7 +30,7 @@
 class LpsContext: public Context
 {
 private:
-	std::shared_ptr<ServicePart> _servicePart;
+	Log _log;
 	std::shared_ptr<TransportContext> _context;
 	std::weak_ptr<Session> _session;
 	std::queue<const SVal*> _output;
