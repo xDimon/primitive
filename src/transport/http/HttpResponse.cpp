@@ -409,7 +409,10 @@ HttpResponse& HttpResponse::operator<<(const HttpHeader& header)
 			_close = true;
 		}
 	}
-	addHeader(header.name, header.value, replace);
+	if (!header.name.empty() && !header.value.empty())
+	{
+		addHeader(header.name, header.value, replace);
+	}
 	return *this;
 }
 
