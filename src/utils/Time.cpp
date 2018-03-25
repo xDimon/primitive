@@ -152,4 +152,14 @@ Timestamp trim(Timestamp timestamp, Interval quant)
 	return ts2;
 }
 
+long gmtOffset()
+{
+	std::time_t ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	std::tm tm{};
+
+	localtime_r(&ts, &tm);
+
+	return tm.tm_gmtoff;
+}
+
 }
