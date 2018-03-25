@@ -45,7 +45,7 @@ public: // temporary public
 		return instance;
 	}
 
-	std::chrono::steady_clock::time_point _prevTime;
+	timeval _prevTime;
 	timeval _prevUTime;
 	timeval _prevSTime;
 

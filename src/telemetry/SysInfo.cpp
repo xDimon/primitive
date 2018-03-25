@@ -24,6 +24,7 @@
 #include "../thread/ThreadPool.hpp"
 #include "../utils/Daemon.hpp"
 #include "../thread/TaskManager.hpp"
+#include "../utils/Time.hpp"
 
 #include <sys/resource.h>
 #include <iomanip>
@@ -35,7 +36,7 @@ SysInfo::SysInfo()
 	rusage ru{};
 	getrusage(RUSAGE_SELF,&ru);
 
-	_prevTime = std::chrono::steady_clock::now();
+	gettimeofday(&_prevTime, nullptr);
 	_prevUTime = ru.ru_utime;
 	_prevSTime = ru.ru_stime;
 	_run = false;
@@ -69,25 +70,30 @@ void SysInfo::collect()
 
 	rusage ru{};
 
-	getrusage(RUSAGE_SELF,&ru);
-
-	auto now = std::chrono::steady_clock::now();
+	timeval nTime;
+	timeval dTime;
 
 	timeval uTimeSpent{};
 	timeval sTimeSpent{};
 	timeval aTimeSpent{};
 
+	gettimeofday(&nTime, nullptr);
+	getrusage(RUSAGE_SELF,&ru);
+
 	timersub(&ru.ru_utime, &instance._prevUTime, &uTimeSpent);
 	timersub(&ru.ru_stime, &instance._prevSTime, &sTimeSpent);
 	timeradd(&uTimeSpent, &sTimeSpent, &aTimeSpent);
+	timersub(&nTime, &instance._prevTime, &dTime);
 
 	auto timeUse = (static_cast<double>(aTimeSpent.tv_sec) + static_cast<double>(aTimeSpent.tv_usec)/1000000);
 
-	auto timeSpent = static_cast<double>((now - instance._prevTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+	auto timePass = (static_cast<double>(dTime.tv_sec) + static_cast<double>(dTime.tv_usec)/1000000);
 
-	if (timeSpent > 0)
+	auto now = std::chrono::steady_clock::now();
+
+	if (timePass > 0)
 	{
-		instance._cpuUsageOnPercent->addValue(timeUse / timeSpent * 100, now);
+		instance._cpuUsageOnPercent->addValue(timeUse * 100 / timePass / std::thread::hardware_concurrency(), now);
 	}
 
 	instance._cpuUsageByUserOnTime->setValue((static_cast<double>(ru.ru_utime.tv_sec) + static_cast<double>(ru.ru_utime.tv_usec)/1000000), now);
@@ -99,7 +105,6 @@ void SysInfo::collect()
 	instance._blockOutputOperations->setValue(ru.ru_oublock, now);
 	instance._voluntaryContextSwitches->setValue(ru.ru_nvcsw, now);
 	instance._involuntaryContextSwitches->setValue(ru.ru_nivcsw, now);
-
 
     FILE* file = fopen("/proc/self/status", "r");
     ssize_t rss = -1;
@@ -126,7 +131,7 @@ void SysInfo::collect()
 
 	instance._memoryUsage->setValue(rss, now);
 
-	instance._prevTime = now;
+	gettimeofday(&instance._prevTime, nullptr);
 	instance._prevUTime = ru.ru_utime;
 	instance._prevSTime = ru.ru_stime;
 
