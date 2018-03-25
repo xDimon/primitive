@@ -20,15 +20,18 @@
 
 
 #include "Limit.hpp"
+#include "LimitContainer.hpp"
 #include "LimitConfig.hpp"
 #include "LimitManager.hpp"
 
 Limit::Limit(
+	const std::shared_ptr<LimitContainer>& container,
 	const Id& id,
 	const Clarifier& clarifier
 )
 : id(id)
 , clarifier(clarifier)
+, _container(container)
 , _config(LimitManager::get(id))
 {
 	if (!_config)
@@ -43,12 +46,13 @@ Limit::Limit(
 }
 
 Limit::Limit(
+	const std::shared_ptr<LimitContainer>& container,
 	const Id& id,
 	const Clarifier& clarifier,
 	Value count,
 	Time::Timestamp expire
 )
-: Limit(id, clarifier)
+: Limit(container, id, clarifier)
 {
 	_value = count;
 	_expire = expire;
@@ -69,6 +73,15 @@ void Limit::setChanged(bool isChanged)
 	}
 
 	_changed = isChanged;
+
+	if (isChanged)
+	{
+		auto container = _container.lock();
+		if (container)
+		{
+			container->setChanged();
+		}
+	}
 }
 
 bool Limit::change(int32_t delta, Time::Timestamp expire)

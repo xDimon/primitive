@@ -33,12 +33,13 @@ void LimitContainer::push(
 	Time::Timestamp expire
 )
 {
-	auto i = _limits.find(std::make_tuple(id, clarifier));
-	if (i == _limits.end())
+	auto i = find(std::make_tuple(id, clarifier));
+	if (i == end())
 	{
-		auto limit = _limits.emplace(
+		auto limit = emplace(
 			std::make_tuple(id, clarifier),
 			std::make_shared<Limit>(
+				ptr(),
 				id,
 				clarifier,
 				count,
@@ -58,12 +59,12 @@ std::shared_ptr<Limit> LimitContainer::get(
 )
 {
 	std::shared_ptr<Limit> limit;
-	auto i = _limits.find(std::make_tuple(id, clarifier));
-	if (i == _limits.end())
+	auto i = find(std::make_tuple(id, clarifier));
+	if (i == end())
 	{
-		limit = _limits.emplace(
+		limit = emplace(
 			std::make_tuple(id, clarifier),
-			std::make_shared<Limit>(id, clarifier)
+			std::make_shared<Limit>(ptr(), id, clarifier)
 		).first->second;
 	}
 	else
@@ -75,12 +76,4 @@ std::shared_ptr<Limit> LimitContainer::get(
 		limit->reset();
 	}
 	return limit;
-}
-
-void LimitContainer::forEach(const std::function<void(const std::shared_ptr<Limit>&)>& handler)
-{
-	for (auto i : _limits)
-	{
-		handler(i.second);
-	}
 }

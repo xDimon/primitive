@@ -25,7 +25,9 @@
 #include <string>
 #include "../../utils/Time.hpp"
 #include "../../serialization/SObj.hpp"
+#include "../../utils/hash/SipHash.hpp"
 
+class LimitContainer;
 class LimitConfig;
 
 class Limit
@@ -45,11 +47,23 @@ public:
 		Always,		// Сразу достигнут. Вырожденный лимит-блокер
 		Never 		// Никогда недостижим. Вырожденный пропускающий лимит
 	};
+	struct KeyHash
+	{
+		size_t operator()(const std::tuple<Limit::Id, Limit::Clarifier>& key) const noexcept
+		{
+			static const char hidSeed[16]{};
+			SipHash hash(hidSeed);
+			hash(std::get<0>(key));
+			hash(std::get<1>(key));
+			return hash.computeHash();
+		}
+	};
 
 	const Id id; // Id лимита
 	const Clarifier clarifier; // Уточнение
 
 private:
+	std::weak_ptr<LimitContainer> _container;
 	std::shared_ptr<const LimitConfig> _config;
 
 	Value _value; // Текущее значение
@@ -63,8 +77,18 @@ public:
 	Limit(Limit&&) = delete; // Move-constructor
 	Limit& operator=(Limit&&) = delete; // Move-assignment
 
-	Limit(const Id& id, const Clarifier& clarifier);
-	Limit(const Id& id, const Clarifier& clarifier, Value value, Time::Timestamp expire);
+	Limit(
+		const std::shared_ptr<LimitContainer>& container,
+		const Id& id,
+		const Clarifier& clarifier
+	);
+	Limit(
+		const std::shared_ptr<LimitContainer>& container,
+		const Id& id,
+		const Clarifier& clarifier,
+		Value value,
+		Time::Timestamp expire
+	);
 	virtual ~Limit() = default;
 
 	std::shared_ptr<const LimitConfig> config() const

@@ -27,28 +27,13 @@
 #include <functional>
 #include "Limit.hpp"
 #include "../../utils/hash/SipHash.hpp"
+#include "../../utils/Shareable.hpp"
 
 class LimitContainer
+: public Shareable<LimitContainer>
+, public std::unordered_map<std::tuple<Limit::Id, Limit::Clarifier>, std::shared_ptr<Limit>, Limit::KeyHash>
 {
 private:
-	struct KeyHash
-	{
-		size_t operator()(const std::tuple<Limit::Id, Limit::Clarifier>& key) const noexcept
-		{
-			static const char hidSeed[16]{};
-			SipHash hash(hidSeed);
-			hash(std::get<0>(key));
-			hash(std::get<1>(key));
-			return hash.computeHash();
-		}
-	};
-
-	std::unordered_map<
-		std::tuple<Limit::Id, Limit::Clarifier>,
-		std::shared_ptr<Limit>,
-		LimitContainer::KeyHash
-	> _limits;
-
 	bool _changed;
 
 public:
@@ -71,13 +56,6 @@ public:
 		const Limit::Id& id,
 		const Limit::Clarifier& clarifier
 	);
-
-	void forEach(const std::function<void(const std::shared_ptr<Limit>&)>& handler);
-
-	auto& operator*()
-	{
-		return _limits;
-	}
 
 	void setChanged(bool isChanged = true)
 	{
