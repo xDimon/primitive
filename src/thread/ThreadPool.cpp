@@ -28,7 +28,7 @@
 // the constructor just launches some amount of _workers
 ThreadPool::ThreadPool()
 : _log("ThreadPool")
-, _workerCounter(0)
+, _lastWorkerId(0)
 {
 }
 
@@ -69,7 +69,7 @@ size_t ThreadPool::genThreadId()
 	auto& pool = getInstance();
 
 	std::lock_guard<std::mutex> lockGuard(pool._counterMutex);
-	return ++pool._workerCounter;
+	return ++pool._lastWorkerId;
 }
 
 void ThreadPool::createThread()
@@ -146,6 +146,12 @@ void ThreadPool::createThread()
 	auto thread = new Thread(threadLoop);
 
 	thread->waitStart();
+
+	if (thread->id() == 0)
+	{
+		int i = 1;
+		(void)i;
+	}
 
 	_workers.emplace(thread->id(), thread);
 

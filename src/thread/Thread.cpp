@@ -29,10 +29,8 @@
 #include <csignal>
 #include <sys/mman.h>
 
-thread_local Thread::Id Thread::_id;
 thread_local Log Thread::_log("Thread");
 thread_local std::function<void()> Thread::_function;
-thread_local bool Thread::_finished;
 
 thread_local Thread* Thread::_self = nullptr;
 thread_local ucontext_t* Thread::_currentContext = nullptr;
@@ -56,6 +54,7 @@ Thread::Thread(std::function<void()>& function)
 	}
 ))
 {
+	std::lock_guard<std::mutex> lockGuard(_mutex);
 	_thread.detach();
 	_log.debug("Thread 'Worker#%zu' created", _id);
 }
@@ -72,7 +71,7 @@ void Thread::run(Thread* thread)
 
 	{
 		char buff[32];
-		snprintf(buff, sizeof(buff), "Worker#%zu", thread->_id);
+		snprintf(buff, sizeof(buff), "Worker#%zu", thread->id());
 
 		LoggerManager::regThread(buff);
 
@@ -91,11 +90,12 @@ void Thread::run(Thread* thread)
 	}
 	while (thread->getCurrContextCount());
 
-	thread->_finished = true;
 
 //	thread->_log.info("Thread 'Worker#%zu' exit", thread->_id);
 
 	LoggerManager::unregThread();
+
+	thread->_finished = true;
 }
 
 void Thread::execute(Thread* thread)

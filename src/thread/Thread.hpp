@@ -36,11 +36,11 @@ public:
 
 private:
 	std::mutex _mutex;
+	Id _id;
 
-	static thread_local Id _id;
 	static thread_local Log _log;
 	static thread_local std::function<void()> _function;
-	static thread_local bool _finished;
+	bool _finished;
 	std::thread _thread;
 
 public:// TODO временно
