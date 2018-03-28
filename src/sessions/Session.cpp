@@ -23,6 +23,7 @@
 #include "Session.hpp"
 #include "SessionManager.hpp"
 #include "../utils/Base64.hpp"
+#include "../utils/Daemon.hpp"
 
 const char Session::_hidSeed[16] = {};
 
@@ -54,7 +55,7 @@ void Session::touch()
 				auto session = wp.lock();
 				if (session)
 				{
-					session->close("timeout");
+					session->close(Daemon::shutingdown()?"shuting down":"timeout");
 				}
 			}
 		);
