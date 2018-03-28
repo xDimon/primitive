@@ -42,6 +42,9 @@ thread_local std::queue<ucontext_t*> Thread::_replacedContexts;
 thread_local ucontext_t* Thread::_contextPtrBuffer = nullptr;
 thread_local ucontext_t* Thread::_currentTaskContextPtrBuffer = nullptr;
 
+std::mutex Thread::_atCloseMutex;
+std::deque<std::function<void ()>> Thread::_atCloseHandlers;
+
 Thread::Thread(std::function<void()>& function)
 : _thread((
 	_mutex.lock(),
@@ -62,6 +65,8 @@ Thread::Thread(std::function<void()>& function)
 Thread::~Thread()
 {
 	_log.debug("Thread 'Worker#%zu' destroyed", _id);
+
+
 }
 
 void Thread::run(Thread* thread)
@@ -90,6 +95,13 @@ void Thread::run(Thread* thread)
 	}
 	while (thread->getCurrContextCount());
 
+	{
+		std::lock_guard<std::mutex> lockGuard(_atCloseMutex);
+		for (const auto& handler : _atCloseHandlers)
+		{
+			handler();
+		}
+	}
 
 //	thread->_log.info("Thread 'Worker#%zu' exit", thread->_id);
 
@@ -312,4 +324,11 @@ void Thread::postpone(Task::Duration duration)
 		},
 		duration
 	);
+}
+
+void Thread::doAtShutdown(std::function<void()>&& func)
+{
+	std::lock_guard<std::mutex> lockGuard(_atCloseMutex);
+
+	_atCloseHandlers.emplace_back(std::forward<std::function<void()>>(func));
 }

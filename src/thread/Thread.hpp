@@ -114,4 +114,10 @@ public:
 	void postpone(Task::Duration duration);
 
 	static void coroWrapper(Thread* thread, ucontext_t* context, std::mutex* mutex);
+
+private:
+	static std::mutex _atCloseMutex;
+	static std::deque<std::function<void ()>> _atCloseHandlers;
+public:
+	static void doAtShutdown(std::function<void ()>&& handler);
 };
