@@ -120,6 +120,25 @@ MysqlConnection::~MysqlConnection()
 	mysql_close(_mysql);
 }
 
+std::string MysqlConnection::escape(const std::string& str)
+{
+	size_t size = str.length() * 4 + 1;
+	if (size > 1024)
+	{
+		auto buff = new char[size];
+		mysql_escape_string(buff, str.c_str(), str.length());
+		std::string result(buff);
+		free(buff);
+		return std::move(result);
+	}
+	else
+	{
+		char buff[size];
+		mysql_escape_string(buff, str.c_str(), str.length());
+		return std::forward<std::string>(buff);
+	}
+}
+
 bool MysqlConnection::startTransaction()
 {
 	if (_transaction > 0)

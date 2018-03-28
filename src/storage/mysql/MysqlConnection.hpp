@@ -61,12 +61,7 @@ public:
 
 	~MysqlConnection() override;
 
-	std::string escape(const std::string& str) override
-	{
-		auto buff = new char[str.length() * 4 + 1];
-		mysql_escape_string(buff, str.c_str(), str.length());
-		return std::string(buff);
-	}
+	std::string escape(const std::string& str) override;
 
 	bool alive() override
 	{
