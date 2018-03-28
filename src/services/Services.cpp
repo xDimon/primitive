@@ -41,6 +41,7 @@ std::shared_ptr<Service> Services::add(const Setting& setting, bool replace)
 	auto entity = ServiceFactory::create(setting);
 
 	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
+
 	if (!replace)
 	{
 		auto i = getInstance()._registry.find(entity->name());
@@ -87,6 +88,8 @@ void Services::del(const std::string& name)
 
 void Services::activateAll()
 {
+	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
+
 	for (const auto& i : getInstance()._registry)
 	{
 		i.second->activate();
@@ -95,6 +98,8 @@ void Services::activateAll()
 
 void Services::deactivateAll()
 {
+	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
+
 	for (const auto& i : getInstance()._registry)
 	{
 		i.second->deactivate();
