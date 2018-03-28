@@ -27,7 +27,7 @@ struct Dummy final
 	Dummy() noexcept = default; // Trivial-constructor
 	Dummy(const Dummy&) = delete; // Copy-constructor
 	Dummy& operator=(Dummy const&) = delete; // Copy-assignment
-	Dummy(Dummy&&) = default; // Move-constructor
-	Dummy& operator=(Dummy&&) = delete; // Move-assignment
+	Dummy(Dummy&&) noexcept = default; // Move-constructor
+	Dummy& operator=(Dummy&&) noexcept = delete; // Move-assignment
 	~Dummy() noexcept = default; // Destructor
 };

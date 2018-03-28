@@ -50,8 +50,8 @@ public:
 	SslConnection() = delete;
 	SslConnection(const SslConnection&) = delete;
 	SslConnection& operator=(SslConnection const&) = delete;
-	SslConnection(SslConnection&& tmp) = delete;
-	SslConnection& operator=(SslConnection&& tmp) = delete;
+	SslConnection(SslConnection&& tmp) noexcept = delete;
+	SslConnection& operator=(SslConnection&& tmp) noexcept = delete;
 
 	SslConnection(
 		const std::shared_ptr<Transport>& transport,

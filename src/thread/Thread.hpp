@@ -63,8 +63,8 @@ public:
 	Thread() = delete;
 	Thread(const Thread&) = delete; // Copy-constructor
 	Thread& operator=(Thread const&) = delete; // Copy-assignment
-	Thread(Thread&&) = delete; // Move-constructor
-	Thread& operator=(Thread&&) = delete; // Move-assignment
+	Thread(Thread&&) noexcept = delete; // Move-constructor
+	Thread& operator=(Thread&&) noexcept = delete; // Move-assignment
 
 	explicit Thread(std::function<void()>& threadLoop);
 	virtual ~Thread();

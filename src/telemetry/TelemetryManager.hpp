@@ -32,8 +32,8 @@ class TelemetryManager final
 public:
 	TelemetryManager(TelemetryManager const&) = delete;
 	void operator= (TelemetryManager const&) = delete;
-	TelemetryManager(TelemetryManager&&) = delete;
-	TelemetryManager& operator=(TelemetryManager&&) = delete;
+	TelemetryManager(TelemetryManager&&) noexcept = delete;
+	TelemetryManager& operator=(TelemetryManager&&) noexcept = delete;
 
 private:
 	TelemetryManager() = default;

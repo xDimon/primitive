@@ -51,8 +51,8 @@ public:
 	Metric() = delete;
 	Metric(const Metric&) = delete;
 	Metric& operator=(Metric const&) = delete;
-	Metric(Metric&&) = delete;
-	Metric& operator=(Metric&&) = delete;
+	Metric(Metric&&) noexcept = delete;
+	Metric& operator=(Metric&&) noexcept = delete;
 
 	Metric(
 		std::string name,

@@ -33,8 +33,8 @@ class ThreadPool final
 public:
 	ThreadPool(const ThreadPool&) = delete;
 	ThreadPool& operator=(ThreadPool const&) = delete;
-	ThreadPool(ThreadPool&&) = delete;
-	ThreadPool& operator=(ThreadPool&&) = delete;
+	ThreadPool(ThreadPool&&) noexcept = delete;
+	ThreadPool& operator=(ThreadPool&&) noexcept = delete;
 
 	static bool empty();
 

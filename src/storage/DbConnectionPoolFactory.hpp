@@ -30,8 +30,8 @@ class DbConnectionPoolFactory
 public:
 	DbConnectionPoolFactory(const DbConnectionPoolFactory&) = delete;
 	DbConnectionPoolFactory& operator=(DbConnectionPoolFactory const&) = delete;
-	DbConnectionPoolFactory(DbConnectionPoolFactory&&) = delete;
-	DbConnectionPoolFactory& operator=(DbConnectionPoolFactory&&) = delete;
+	DbConnectionPoolFactory(DbConnectionPoolFactory&&) noexcept = delete;
+	DbConnectionPoolFactory& operator=(DbConnectionPoolFactory&&) noexcept = delete;
 
 private:
 	DbConnectionPoolFactory() = default;

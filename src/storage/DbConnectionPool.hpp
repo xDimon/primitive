@@ -49,8 +49,8 @@ public:
 	DbConnectionPool() = delete;
 	DbConnectionPool(const DbConnectionPool&) = delete;
 	DbConnectionPool& operator=(DbConnectionPool const&) = delete;
-	DbConnectionPool(DbConnectionPool&&) = delete;
-	DbConnectionPool& operator=(DbConnectionPool&&) = delete;
+	DbConnectionPool(DbConnectionPool&&) noexcept = delete;
+	DbConnectionPool& operator=(DbConnectionPool&&) noexcept = delete;
 
 	explicit DbConnectionPool(const Setting& setting);
 	~DbConnectionPool() override = default;
@@ -85,8 +85,8 @@ public:                                                                         
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
     Class& operator=(Class const&) = delete;                                                    \
-	Class(Class&&) = delete;                                                                    \
-	Class& operator=(Class&&) = delete;                                                         \
+	Class(Class&&) noexcept = delete;                                                           \
+	Class& operator=(Class&&) noexcept = delete;                                                \
     ~Class() override = default;                                                                \
                                                                                                 \
 private:                                                                                        \

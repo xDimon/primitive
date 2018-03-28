@@ -30,8 +30,8 @@ class Services final
 public:
 	Services(const Services&) = delete; // Copy-constructor
 	Services& operator=(Services const&) = delete; // Copy-assignment
-	Services(Services&&) = delete; // Move-constructor
-	Services& operator=(Services&&) = delete; // Move-assignment
+	Services(Services&&) noexcept = delete; // Move-constructor
+	Services& operator=(Services&&) noexcept = delete; // Move-assignment
 
 private:
 	Services() = default;

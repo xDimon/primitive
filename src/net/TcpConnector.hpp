@@ -51,8 +51,8 @@ public:
 	TcpConnector() = delete;
 	TcpConnector(const TcpConnector&) = delete;
 	TcpConnector& operator=(TcpConnector const&) = delete;
-	TcpConnector(TcpConnector&& tmp) = delete;
-	TcpConnector& operator=(TcpConnector&& tmp) = delete;
+	TcpConnector(TcpConnector&& tmp) noexcept = delete;
+	TcpConnector& operator=(TcpConnector&& tmp) noexcept = delete;
 
 	TcpConnector(
 		const std::shared_ptr<ClientTransport>& transport,

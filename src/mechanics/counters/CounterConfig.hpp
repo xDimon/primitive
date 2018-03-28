@@ -32,8 +32,8 @@ public:
 public:
 	CounterConfig(const CounterConfig&) = delete; // Copy-constructor
 	CounterConfig& operator=(CounterConfig const&) = delete; // Copy-assignment
-	CounterConfig(CounterConfig&&) = delete; // Move-constructor
-	CounterConfig& operator=(CounterConfig&&) = delete; // Move-assignment
+	CounterConfig(CounterConfig&&) noexcept = delete; // Move-constructor
+	CounterConfig& operator=(CounterConfig&&) noexcept = delete; // Move-assignment
 
 	CounterConfig(Counter::Id id);
 

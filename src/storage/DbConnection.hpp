@@ -44,8 +44,8 @@ protected:
 public:
 	DbConnection(const DbConnection&) = delete;
 	DbConnection& operator=(DbConnection const&) = delete;
-	DbConnection(DbConnection&&) = delete;
-	DbConnection& operator=(DbConnection&&) = delete;
+	DbConnection(DbConnection&&) noexcept = delete;
+	DbConnection& operator=(DbConnection&&) noexcept = delete;
 
 	explicit DbConnection(const std::shared_ptr<DbConnectionPool>& pool)
 	: id(++_lastId)

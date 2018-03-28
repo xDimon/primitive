@@ -34,8 +34,8 @@ private:
 public:
 	MysqlResult(const MysqlResult&) = delete;
 	MysqlResult& operator=(MysqlResult const&) = delete;
-	MysqlResult(MysqlResult&&) = delete;
-	MysqlResult& operator=(MysqlResult&&) = delete;
+	MysqlResult(MysqlResult&&) noexcept = delete;
+	MysqlResult& operator=(MysqlResult&&) noexcept = delete;
 
 	MysqlResult()
 	: _data(nullptr)

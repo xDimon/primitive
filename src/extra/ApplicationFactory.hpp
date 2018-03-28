@@ -32,8 +32,8 @@ class ApplicationFactory
 public:
 	ApplicationFactory(const ApplicationFactory&) = delete;
 	ApplicationFactory& operator=(ApplicationFactory const&) = delete;
-	ApplicationFactory(ApplicationFactory&&) = delete;
-	ApplicationFactory& operator=(ApplicationFactory&&) = delete;
+	ApplicationFactory(ApplicationFactory&&) noexcept = delete;
+	ApplicationFactory& operator=(ApplicationFactory&&) noexcept = delete;
 
 private:
 	ApplicationFactory() = default;

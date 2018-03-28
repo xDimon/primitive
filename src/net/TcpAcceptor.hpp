@@ -37,8 +37,8 @@ public:
 	TcpAcceptor() = delete;
 	TcpAcceptor(const TcpAcceptor&) = delete;
 	TcpAcceptor& operator=(TcpAcceptor const&) = delete;
-	TcpAcceptor(TcpAcceptor&& tmp) = delete;
-	TcpAcceptor& operator=(TcpAcceptor&& tmp) = delete;
+	TcpAcceptor(TcpAcceptor&& tmp) noexcept = delete;
+	TcpAcceptor& operator=(TcpAcceptor&& tmp) noexcept = delete;
 
 	TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port);
 	~TcpAcceptor() override;

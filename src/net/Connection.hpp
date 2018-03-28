@@ -66,8 +66,8 @@ public:
 	Connection() = delete;
 	Connection(const Connection&) = delete;
 	Connection& operator=(Connection const&) = delete;
-	Connection(Connection&& tmp) = delete;
-	Connection& operator=(Connection&& tmp) = delete;
+	Connection(Connection&& tmp) noexcept = delete;
+	Connection& operator=(Connection&& tmp) noexcept = delete;
 
 	explicit Connection(std::shared_ptr<Transport> transport);
 	~Connection() override;

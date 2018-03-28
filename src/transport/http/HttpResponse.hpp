@@ -69,8 +69,8 @@ public:
 	HttpResponse() = delete;
 	HttpResponse(const HttpResponse&) = delete;
 	HttpResponse& operator=(HttpResponse const&) = delete;
-	HttpResponse(HttpResponse&&) = delete;
-	HttpResponse& operator=(HttpResponse&&) = delete;
+	HttpResponse(HttpResponse&&) noexcept = delete;
+	HttpResponse& operator=(HttpResponse&&) noexcept = delete;
 
 	HttpResponse(int status, const std::string& message, uint8_t protocolVersion = 101);
 	explicit HttpResponse(int status)

@@ -62,8 +62,8 @@ public:
 	HttpRequest() = delete;
 	HttpRequest(const HttpRequest&) = delete;
 	HttpRequest& operator=(HttpRequest const&) = delete;
-	HttpRequest(HttpRequest&&) = delete;
-	HttpRequest& operator=(HttpRequest&&) = delete;
+	HttpRequest(HttpRequest&&) noexcept = delete;
+	HttpRequest& operator=(HttpRequest&&) noexcept = delete;
 
 	HttpRequest(const char *begin, const char *end);
 	~HttpRequest() override = default;

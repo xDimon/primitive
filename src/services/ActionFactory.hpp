@@ -34,8 +34,8 @@ class ActionFactory final
 public:
 	ActionFactory(const ActionFactory&) = delete;
 	ActionFactory& operator=(ActionFactory const&) = delete;
-	ActionFactory(ActionFactory&&) = delete;
-	ActionFactory& operator=(ActionFactory&&) = delete;
+	ActionFactory(ActionFactory&&) noexcept = delete;
+	ActionFactory& operator=(ActionFactory&&) noexcept = delete;
 
 private:
 	ActionFactory() = default;

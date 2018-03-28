@@ -63,8 +63,8 @@ public:
 	Log() = delete;
 	Log(const Log&) = delete;
 	Log& operator=(Log const&) = delete;
-	Log(Log&& tmp) = delete;
-	Log& operator=(Log&& tmp) = delete;
+	Log(Log&& tmp) noexcept = delete;
+	Log& operator=(Log&& tmp) noexcept = delete;
 
 	explicit Log(const std::string& name, Detail detail = Detail::UNDEFINED, const std::string& sink = "");
 

@@ -37,8 +37,8 @@ public:
 
 	AcceptorFactory(const AcceptorFactory&) = delete;
 	AcceptorFactory& operator=(AcceptorFactory const&) = delete;
-	AcceptorFactory(AcceptorFactory&&) = delete;
-	AcceptorFactory& operator=(AcceptorFactory&&) = delete;
+	AcceptorFactory(AcceptorFactory&&) noexcept = delete;
+	AcceptorFactory& operator=(AcceptorFactory&&) noexcept = delete;
 
 private:
 	AcceptorFactory() = default;

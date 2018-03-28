@@ -46,8 +46,8 @@ private:
 public:
 	Server(const Server&) = delete;
 	Server& operator=(Server const&) = delete;
-	Server(Server&&) = delete;
-	Server& operator=(Server&&) = delete;
+	Server(Server&&) noexcept = delete;
+	Server& operator=(Server&&) noexcept = delete;
 
 	explicit Server(const std::shared_ptr<Config> &configs);
 	~Server();

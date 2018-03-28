@@ -45,8 +45,8 @@ public:
 	Event() = delete;
 	Event(const Event&) = delete;
 	Event& operator=(Event const&) = delete;
-	Event(Event&&) = delete;
-	Event& operator=(Event&&) = delete;
+	Event(Event&&) noexcept = delete;
+	Event& operator=(Event&&) noexcept = delete;
 
 	Event(
 		const std::shared_ptr<Context>& context,

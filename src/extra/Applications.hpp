@@ -31,8 +31,8 @@ class Applications final
 public:
 	Applications(const Applications&) = delete;
     Applications& operator=(Applications const&) = delete;
-	Applications(Applications&&) = delete;
-	Applications& operator=(Applications&&) = delete;
+	Applications(Applications&&) noexcept = delete;
+	Applications& operator=(Applications&&) noexcept = delete;
 
 private:
 	Applications() = default;

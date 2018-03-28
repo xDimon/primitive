@@ -34,8 +34,8 @@ public:
 	SslAcceptor() = delete;
 	SslAcceptor(const SslAcceptor&) = delete;
 	SslAcceptor& operator=(SslAcceptor const&) = delete;
-	SslAcceptor(SslAcceptor&& tmp) = delete;
-	SslAcceptor& operator=(SslAcceptor&& tmp) = delete;
+	SslAcceptor(SslAcceptor&& tmp) noexcept = delete;
+	SslAcceptor& operator=(SslAcceptor&& tmp) noexcept = delete;
 
 	SslAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext);
 	~SslAcceptor() override = default;

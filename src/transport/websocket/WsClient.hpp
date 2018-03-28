@@ -32,8 +32,8 @@ private:
 public:
 	WsClient(const WsClient&) = delete;
 	WsClient& operator=(WsClient const&) = delete;
-	WsClient(WsClient&&) = delete;
-	WsClient& operator=(WsClient&&) = delete;
+	WsClient(WsClient&&) noexcept = delete;
+	WsClient& operator=(WsClient&&) noexcept = delete;
 
 	WsClient(const std::shared_ptr<Handler>& handler)
 	: _handler(handler)

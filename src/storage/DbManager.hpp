@@ -31,8 +31,8 @@ class DbManager final
 public:
 	DbManager(const DbManager&) = delete;
 	DbManager& operator=(DbManager const&) = delete;
-	DbManager(DbManager&&) = delete;
-	DbManager& operator=(DbManager&&) = delete;
+	DbManager(DbManager&&) noexcept = delete;
+	DbManager& operator=(DbManager&&) noexcept = delete;
 
 private:
 	DbManager() = default;

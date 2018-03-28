@@ -36,8 +36,8 @@ private:
 public:
 	Sink(const Sink&) = delete; // Copy-constructor
 	Sink& operator=(Sink const&) = delete; // Copy-assignment
-	Sink(Sink&&) = delete; // Move-constructor
-	Sink& operator=(Sink&&) = delete; // Move-assignment
+	Sink(Sink&&) noexcept = delete; // Move-constructor
+	Sink& operator=(Sink&&) noexcept = delete; // Move-assignment
 
 	Sink();
 	explicit Sink(const Setting& setting);

@@ -31,7 +31,7 @@ Task::Task(Func&& function, Time until)
 {
 }
 
-Task::Task(Task &&that) noexcept
+Task::Task(Task&& that) noexcept
 : _function(std::move(that._function))
 , _until(that._until)
 , _parentTaskContext(that._parentTaskContext)
@@ -40,7 +40,7 @@ Task::Task(Task &&that) noexcept
 	that._parentTaskContext = nullptr;
 }
 
-Task& Task::operator=(Task &&that) noexcept
+Task& Task::operator=(Task&& that) noexcept
 {
 	if (this == &that)
 	{

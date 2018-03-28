@@ -33,8 +33,8 @@ class Transports final
 public:
 	Transports(Transports const&) = delete;
 	Transports& operator=(Transports const&) = delete;
-	Transports(Transports&&) = delete;
-	Transports& operator=(Transports&&) = delete;
+	Transports(Transports&&) noexcept = delete;
+	Transports& operator=(Transports&&) noexcept = delete;
 
 private:
 	Transports() = default;

@@ -30,8 +30,8 @@ class HostnameResolver
 public:
 	HostnameResolver(const HostnameResolver&) = delete;
 	HostnameResolver& operator=(HostnameResolver const&) = delete;
-	HostnameResolver(HostnameResolver&&) = delete;
-	HostnameResolver& operator=(HostnameResolver&&) = delete;
+	HostnameResolver(HostnameResolver&&) noexcept = delete;
+	HostnameResolver& operator=(HostnameResolver&&) noexcept = delete;
 
 private:
 	HostnameResolver() = default;

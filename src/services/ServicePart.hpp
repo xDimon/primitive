@@ -39,8 +39,8 @@ public:
 	ServicePart() = delete;
 	ServicePart(const ServicePart&) = delete;
 	ServicePart& operator=(ServicePart const&) = delete;
-	ServicePart(ServicePart&&) = delete;
-	ServicePart& operator=(ServicePart&&) = delete;
+	ServicePart(ServicePart&&) noexcept = delete;
+	ServicePart& operator=(ServicePart&&) noexcept = delete;
 
 	explicit ServicePart(const std::shared_ptr<Service>& service);
 	~ServicePart() override = default;

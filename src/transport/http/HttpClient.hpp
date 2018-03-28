@@ -30,8 +30,8 @@ class HttpClient : public ClientTransport
 public:
 	HttpClient(const HttpClient&) = delete;
 	HttpClient& operator=(HttpClient const&) = delete;
-	HttpClient(HttpClient&&) = delete;
-	HttpClient& operator=(HttpClient&&) = delete;
+	HttpClient(HttpClient&&) noexcept = delete;
+	HttpClient& operator=(HttpClient&&) noexcept = delete;
 
 	HttpClient()
 	{

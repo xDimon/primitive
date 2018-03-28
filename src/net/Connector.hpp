@@ -32,8 +32,8 @@ public:
 	Connector() = delete;
 	Connector(const Connector&) = delete;
 	Connector& operator=(Connector const&) = delete;
-	Connector(Connector&& tmp) = delete;
-	Connector& operator=(Connector&& tmp) = delete;
+	Connector(Connector&& tmp) noexcept = delete;
+	Connector& operator=(Connector&& tmp) noexcept = delete;
 
 	explicit Connector(const std::shared_ptr<ClientTransport>& transport);
 	~Connector() override = default;

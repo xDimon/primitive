@@ -45,8 +45,8 @@ public:
 	ServerTransport() = delete;
 	ServerTransport(const ServerTransport&) = delete;
     ServerTransport& operator=(ServerTransport const&) = delete;
-	ServerTransport(ServerTransport&&) = delete;
-	ServerTransport& operator=(ServerTransport&&) = delete;
+	ServerTransport(ServerTransport&&) noexcept = delete;
+	ServerTransport& operator=(ServerTransport&&) noexcept = delete;
 
 	explicit ServerTransport(const Setting& setting);
 	~ServerTransport() override = default;
@@ -78,8 +78,8 @@ public:                                                                         
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
     Class& operator=(Class const&) = delete;                                                    \
-	Class(Class&&) = delete;                                                                    \
-	Class& operator=(Class&&) = delete;                                                         \
+	Class(Class&&) noexcept = delete;                                                           \
+	Class& operator=(Class&&) noexcept = delete;                                                \
                                                                                                 \
 private:                                                                                        \
     explicit Class(const Setting& setting)                                                      \

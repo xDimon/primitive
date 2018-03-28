@@ -43,8 +43,8 @@ public:
 	RollbackStackAndRestoreContext& operator=(RollbackStackAndRestoreContext const&) = delete; // Copy-assignment
 
 	// Non-moveable
-	RollbackStackAndRestoreContext(RollbackStackAndRestoreContext&&) = default; // Move-constructor
-	RollbackStackAndRestoreContext& operator=(RollbackStackAndRestoreContext&&) = delete; // Move-assignment
+	RollbackStackAndRestoreContext(RollbackStackAndRestoreContext&&) noexcept = default; // Move-constructor
+	RollbackStackAndRestoreContext& operator=(RollbackStackAndRestoreContext&&) noexcept = delete; // Move-assignment
 
 	const char* what() const noexcept override
 	{

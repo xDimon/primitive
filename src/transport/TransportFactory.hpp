@@ -33,8 +33,8 @@ class TransportFactory final
 public:
 	TransportFactory(const TransportFactory&) = delete;
 	TransportFactory& operator=(TransportFactory const&) = delete;
-	TransportFactory(TransportFactory&&) = delete;
-	TransportFactory& operator=(TransportFactory&&) = delete;
+	TransportFactory(TransportFactory&&) noexcept = delete;
+	TransportFactory& operator=(TransportFactory&&) noexcept = delete;
 
 private:
 	TransportFactory() = default;

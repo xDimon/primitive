@@ -33,8 +33,8 @@ public:
 	Acceptor() = delete;
 	Acceptor(const Acceptor&) = delete;
 	Acceptor& operator=(Acceptor const&) = delete;
-	Acceptor(Acceptor&& tmp) = delete;
-	Acceptor& operator=(Acceptor&& tmp) = delete;
+	Acceptor(Acceptor&& tmp) noexcept = delete;
+	Acceptor& operator=(Acceptor&& tmp) noexcept = delete;
 
 	explicit Acceptor(const std::shared_ptr<ServerTransport>& transport);
 	~Acceptor() override = default;

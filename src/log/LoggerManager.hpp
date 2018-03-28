@@ -33,8 +33,8 @@ class LoggerManager final
 public:
 	LoggerManager(const LoggerManager&) = delete;
 	LoggerManager& operator=(LoggerManager const&) = delete;
-	LoggerManager(LoggerManager&& tmp) = delete;
-	LoggerManager& operator=(LoggerManager&& tmp) = delete;
+	LoggerManager(LoggerManager&& tmp) noexcept = delete;
+	LoggerManager& operator=(LoggerManager&& tmp) noexcept = delete;
 
 private:
 	LoggerManager() = default;

@@ -26,8 +26,8 @@ class DbResult
 public:
 	DbResult(const DbResult&) = delete;
 	DbResult& operator=(DbResult const&) = delete;
-	DbResult(DbResult&&) = delete;
-	DbResult& operator=(DbResult&&) = delete;
+	DbResult(DbResult&&) noexcept = delete;
+	DbResult& operator=(DbResult&&) noexcept = delete;
 
 	DbResult() = default;
 	virtual ~DbResult() = default;

@@ -36,8 +36,8 @@ public:
 	Application() = delete;
 	Application(const Application&) = delete;
     Application& operator=(Application const&) = delete;
-	Application(Application&&) = delete;
-	Application& operator=(Application&&) = delete;
+	Application(Application&&) noexcept = delete;
+	Application& operator=(Application&&) noexcept = delete;
 
 	explicit Application(const Setting& setting);
 	~Application() override = default;
@@ -68,8 +68,8 @@ public:                                                                         
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
     Class& operator=(Class const&) = delete;                                                    \
-	Class(Class&&) = delete;                                                                    \
-	Class& operator=(Class&&) = delete;                                                         \
+	Class(Class&&) noexcept = delete;                                                           \
+	Class& operator=(Class&&) noexcept = delete;                                                \
     ~Class() override = default;                                                                \
                                                                                                 \
 private:                                                                                        \

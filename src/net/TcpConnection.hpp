@@ -52,8 +52,8 @@ public:
 	TcpConnection() = delete;
 	TcpConnection(const TcpConnection&) = delete;
 	TcpConnection& operator=(TcpConnection const&) = delete;
-	TcpConnection(TcpConnection&& tmp) = delete;
-	TcpConnection& operator=(TcpConnection&& tmp) = delete;
+	TcpConnection(TcpConnection&& tmp) noexcept = delete;
+	TcpConnection& operator=(TcpConnection&& tmp) noexcept = delete;
 
 	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, bool outgoing);
 	~TcpConnection() override;

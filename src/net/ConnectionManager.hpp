@@ -33,8 +33,8 @@ class ConnectionManager final
 public:
 	ConnectionManager(const ConnectionManager&) = delete;
 	ConnectionManager& operator=(ConnectionManager const&) = delete;
-	ConnectionManager(ConnectionManager&& tmp) = delete;
-	ConnectionManager& operator=(ConnectionManager&& tmp) = delete;
+	ConnectionManager(ConnectionManager&& tmp) noexcept = delete;
+	ConnectionManager& operator=(ConnectionManager&& tmp) noexcept = delete;
 
 private:
 	ConnectionManager();

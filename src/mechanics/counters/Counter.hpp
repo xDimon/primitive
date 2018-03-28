@@ -47,8 +47,8 @@ public:
 
 	Counter(const Counter&) = delete; // Copy-constructor
 	Counter& operator=(Counter const&) = delete; // Copy-assignment
-	Counter(Counter&&) = delete; // Move-constructor
-	Counter& operator=(Counter&&) = delete; // Move-assignment
+	Counter(Counter&&) noexcept = delete; // Move-constructor
+	Counter& operator=(Counter&&) noexcept = delete; // Move-assignment
 
 	explicit Counter(const Id& id);
 

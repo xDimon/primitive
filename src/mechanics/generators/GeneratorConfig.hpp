@@ -33,8 +33,8 @@ public:
 public:
 	GeneratorConfig(const GeneratorConfig&) = delete; // Copy-constructor
 	GeneratorConfig& operator=(GeneratorConfig const&) = delete; // Copy-assignment
-	GeneratorConfig(GeneratorConfig&&) = delete; // Move-constructor
-	GeneratorConfig& operator=(GeneratorConfig&&) = delete; // Move-assignment
+	GeneratorConfig(GeneratorConfig&&) noexcept = delete; // Move-constructor
+	GeneratorConfig& operator=(GeneratorConfig&&) noexcept = delete; // Move-assignment
 
 	GeneratorConfig(Generator::Id id, Generator::Period period);
 

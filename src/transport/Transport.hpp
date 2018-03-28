@@ -42,8 +42,8 @@ public:
 public:
 	Transport(const Transport&) = delete;
 	Transport& operator=(Transport const&) = delete;
-	Transport(Transport&& tmp) = delete;
-	Transport& operator=(Transport&& tmp) = delete;
+	Transport(Transport&& tmp) noexcept = delete;
+	Transport& operator=(Transport&& tmp) noexcept = delete;
 
 	Transport();
 	virtual ~Transport() = default;

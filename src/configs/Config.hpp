@@ -33,8 +33,8 @@ private:
 public:
 	Config(const Config&) = delete;
 	Config& operator=(Config const&) = delete;
-	Config(Config&&) = delete;
-	Config& operator=(Config&&) = delete;
+	Config(Config&&) noexcept = delete;
+	Config& operator=(Config&&) noexcept = delete;
 
 	explicit Config(const std::shared_ptr<Options>& options);
 	~Config() override = default;

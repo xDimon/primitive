@@ -39,8 +39,8 @@ public:
 	MysqlConnection() = delete;
 	MysqlConnection(const MysqlConnection&) = delete;
 	MysqlConnection& operator=(MysqlConnection const&) = delete;
-	MysqlConnection(MysqlConnection&&) = delete;
-	MysqlConnection& operator=(MysqlConnection&&) = delete;
+	MysqlConnection(MysqlConnection&&) noexcept = delete;
+	MysqlConnection& operator=(MysqlConnection&&) noexcept = delete;
 
 	MysqlConnection(
 		const std::shared_ptr<DbConnectionPool>& pool,

@@ -34,8 +34,8 @@ private:
 public:
 	WsPipe(const WsPipe&) = delete; // Copy-constructor
 	WsPipe& operator=(WsPipe const&) = delete; // Copy-assignment
-	WsPipe(WsPipe&&) = delete; // Move-constructor
-	WsPipe& operator=(WsPipe&&) = delete; // Move-assignment
+	WsPipe(WsPipe&&) noexcept = delete; // Move-constructor
+	WsPipe& operator=(WsPipe&&) noexcept = delete; // Move-assignment
 
 	WsPipe(
 		const std::shared_ptr<Handler>& handler

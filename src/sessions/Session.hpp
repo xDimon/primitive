@@ -67,8 +67,8 @@ public:
 	Session() = delete;
 	Session(const Session&) = delete;
 	Session& operator=(Session const&) = delete;
-	Session(Session&&) = delete;
-	Session& operator=(Session&&) = delete;
+	Session(Session&&) noexcept = delete;
+	Session& operator=(Session&&) noexcept = delete;
 
 	Session(
 		const std::shared_ptr<Service>& service,

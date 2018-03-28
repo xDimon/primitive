@@ -30,8 +30,8 @@ class SessionManager final
 public:
 	SessionManager(SessionManager const&) = delete;
 	void operator= (SessionManager const&) = delete;
-	SessionManager(SessionManager&&) = delete;
-	SessionManager& operator=(SessionManager&&) = delete;
+	SessionManager(SessionManager&&) noexcept = delete;
+	SessionManager& operator=(SessionManager&&) noexcept = delete;
 
 private:
 	SessionManager() = default;

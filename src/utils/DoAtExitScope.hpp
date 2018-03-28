@@ -37,8 +37,8 @@ public:
 	DoAtExitScope() = delete; // Copy-constructor
 	DoAtExitScope(const DoAtExitScope&) = delete; // Copy-constructor
 	DoAtExitScope& operator=(DoAtExitScope const&) = delete; // Copy-assignment
-	DoAtExitScope(DoAtExitScope&&) = delete; // Move-constructor
-	DoAtExitScope& operator=(DoAtExitScope&&) = delete; // Move-assignment
+	DoAtExitScope(DoAtExitScope&&) noexcept = delete; // Move-constructor
+	DoAtExitScope& operator=(DoAtExitScope&&) noexcept = delete; // Move-assignment
 
 	~DoAtExitScope()
 	{

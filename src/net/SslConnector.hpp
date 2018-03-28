@@ -37,8 +37,8 @@ public:
 	SslConnector() = delete;
 	SslConnector(const SslConnector&) = delete;
 	SslConnector& operator=(SslConnector const&) = delete;
-	SslConnector(SslConnector&& tmp) = delete;
-	SslConnector& operator=(SslConnector&& tmp) = delete;
+	SslConnector(SslConnector&& tmp) noexcept = delete;
+	SslConnector& operator=(SslConnector&& tmp) noexcept = delete;
 
 	SslConnector(const std::shared_ptr<ClientTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext);
 	~SslConnector() override = default;

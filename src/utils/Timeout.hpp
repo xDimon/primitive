@@ -41,8 +41,8 @@ private:
 public:
 	Timeout(const Timeout&) = delete; // Copy-constructor
 	Timeout& operator=(Timeout const&) = delete; // Copy-assignment
-	Timeout(Timeout&&) = delete; // Move-constructor
-	Timeout& operator=(Timeout&&) = delete; // Move-assignment
+	Timeout(Timeout&&) noexcept = delete; // Move-constructor
+	Timeout& operator=(Timeout&&) noexcept = delete; // Move-assignment
 
 	explicit Timeout(std::function<void()> handler);
 	~Timeout() override = default;

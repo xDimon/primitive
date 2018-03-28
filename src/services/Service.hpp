@@ -43,8 +43,8 @@ protected:
 public:
 	Service(const Service&) = delete;
 	Service& operator=(Service const&) = delete;
-	Service(Service&&) = delete;
-	Service& operator=(Service&&) = delete;
+	Service(Service&&) noexcept = delete;
+	Service& operator=(Service&&) noexcept = delete;
 
 	virtual ~Service();
 
@@ -78,8 +78,8 @@ public:                                                                     \
 	Service() = delete;                                                     \
 	Service(const Service&) = delete;                                       \
     Service& operator=(Service const&) = delete;                            \
-	Service(Service&&) = delete;                                            \
-	Service& operator=(Service&&) = delete;                                 \
+	Service(Service&&) noexcept = delete;                                   \
+	Service& operator=(Service&&) noexcept = delete;                        \
                                                                             \
 private:                                                                    \
     explicit Service(const Setting& setting);                               \

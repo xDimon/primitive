@@ -74,8 +74,8 @@ public:
 	Limit() = delete;
 	Limit(const Limit&) = delete; // Copy-constructor
 	Limit& operator=(Limit const&) = delete; // Copy-assignment
-	Limit(Limit&&) = delete; // Move-constructor
-	Limit& operator=(Limit&&) = delete; // Move-assignment
+	Limit(Limit&&) noexcept = delete; // Move-constructor
+	Limit& operator=(Limit&&) noexcept = delete; // Move-assignment
 
 	Limit(
 		const std::shared_ptr<LimitContainer>& container,

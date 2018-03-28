@@ -30,8 +30,8 @@ class ClientTransport : public Shareable<ClientTransport>, public Transport
 public:
 	ClientTransport(const ClientTransport&) = delete;
 	ClientTransport& operator=(ClientTransport const&) = delete;
-	ClientTransport(ClientTransport&&) = delete;
-	ClientTransport& operator=(ClientTransport&&) = delete;
+	ClientTransport(ClientTransport&&) noexcept = delete;
+	ClientTransport& operator=(ClientTransport&&) noexcept = delete;
 
 	ClientTransport();
 	~ClientTransport() override = default;
