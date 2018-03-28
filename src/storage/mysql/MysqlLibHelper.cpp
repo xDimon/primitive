@@ -20,6 +20,7 @@
 
 
 #include "MysqlLibHelper.hpp"
+#include "../../thread/Thread.hpp"
 
 #include <mysql.h>
 #include <stdexcept>
@@ -32,6 +33,8 @@ MysqlLibHelper::MysqlLibHelper()
 		throw std::runtime_error("Could not initialize MySQL library");
 	}
 	_ready = true;
+
+	Thread::doAtShutdown(mysql_thread_end);
 }
 
 MysqlLibHelper::~MysqlLibHelper()
