@@ -24,7 +24,6 @@
 #include "../../utils/String.hpp"
 
 #include <memory.h>
-#include <algorithm>
 #include <sstream>
 
 HttpRequest::HttpRequest(const char* begin, const char* end)

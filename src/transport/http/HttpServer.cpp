@@ -27,8 +27,6 @@
 #include "../../server/Server.hpp"
 #include "HttpContext.hpp"
 #include "HttpServer.hpp"
-#include "../../serialization/SObj.hpp"
-#include "../../utils/String.hpp"
 
 REGISTER_TRANSPORT(http, HttpServer);
 

@@ -22,7 +22,6 @@
 #include <random>
 #include "Session.hpp"
 #include "SessionManager.hpp"
-#include "../utils/Base64.hpp"
 #include "../utils/Daemon.hpp"
 
 const char Session::_hidSeed[16] = {};

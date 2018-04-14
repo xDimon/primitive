@@ -23,7 +23,6 @@
 #include "../../thread/Thread.hpp"
 
 #include <mysql.h>
-#include <stdexcept>
 
 MysqlLibHelper::MysqlLibHelper()
 {
