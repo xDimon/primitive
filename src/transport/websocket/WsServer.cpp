@@ -260,7 +260,7 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 
 		context->setEstablished();
 	}
-	catch (std::runtime_error &exception)
+	catch (std::exception &exception)
 	{
 		HttpResponse(400, "Bad request", context->getRequest() ? context->getRequest()->protocol() : 100)
 			<< HttpHeader("X-ServerTransport", "websocket", true)

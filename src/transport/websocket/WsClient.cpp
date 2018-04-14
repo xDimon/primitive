@@ -88,7 +88,7 @@ bool WsClient::processing(const std::shared_ptr<Connection>& connection_)
 
 			context->setResponse(response);
 		}
-		catch (std::runtime_error& exception)
+		catch (std::exception& exception)
 		{
 			connection->setTtl(std::chrono::milliseconds(50));
 			return true;

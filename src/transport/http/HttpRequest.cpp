@@ -42,7 +42,7 @@ HttpRequest::HttpRequest(const char* begin, const char* end)
 
 		parseHeaders(s, end);
 	}
-	catch (std::runtime_error& exception)
+	catch (std::exception& exception)
 	{
 		throw std::runtime_error(std::string("Bad request ← ") + exception.what());
 	}
@@ -64,7 +64,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		{
 			s = parseMethod(s);
 		}
-		catch (std::runtime_error &exception)
+		catch (std::exception &exception)
 		{
 			throw std::runtime_error(std::string("Bad method ← ") + exception.what());
 		}
@@ -83,7 +83,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		{
 			_uri.parse(uri, s - uri);
 		}
-		catch (std::runtime_error &exception)
+		catch (std::exception &exception)
 		{
 			throw std::runtime_error(std::string("Bad uri ← ") + exception.what());
 		}
@@ -95,7 +95,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		{
 			s = parseProtocol(s);
 		}
-		catch (std::runtime_error &exception)
+		catch (std::exception &exception)
 		{
 			throw std::runtime_error(std::string("Bad protocol ← ") + exception.what());
 		}
@@ -106,7 +106,7 @@ const char* HttpRequest::parseRequestLine(const char *string, const char *end)
 		}
 		s += 2;
 	}
-	catch (std::runtime_error &exception)
+	catch (std::exception &exception)
 	{
 		throw std::runtime_error(std::string("Bad request line ← ") + exception.what());
 	}
@@ -258,7 +258,7 @@ const char* HttpRequest::parseHeaders(const char *begin, const char *end)
 			}
 		}
 	}
-	catch (std::runtime_error &exception)
+	catch (std::exception &exception)
 	{
 		throw std::runtime_error(std::string("Bad headers ← ") + exception.what());
 	}

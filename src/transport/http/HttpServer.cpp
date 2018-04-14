@@ -135,7 +135,7 @@ bool HttpServer::processing(const std::shared_ptr<Connection>& connection_)
 
 				context->setRequest(request);
 			}
-			catch (std::runtime_error& exception)
+			catch (std::exception& exception)
 			{
 				HttpResponse(400)
 					<< HttpHeader("Connection", "Close")
