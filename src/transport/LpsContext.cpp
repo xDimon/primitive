@@ -100,7 +100,7 @@ void LpsContext::out(SVal value, bool close)
 		return;
 	}
 
-	_output.push(value);
+	_output.push(std::move(value));
 	if (close)
 	{
 		_close = true;

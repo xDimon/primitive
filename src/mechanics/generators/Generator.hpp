@@ -76,5 +76,5 @@ public:
 		return _changed;
 	}
 
-	SObj* serialize() const;
+	SObj serialize() const;
 };

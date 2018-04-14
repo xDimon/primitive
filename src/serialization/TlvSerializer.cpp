@@ -211,7 +211,7 @@ SVal TlvSerializer::decodeObject()
 
 SVal TlvSerializer::decodeArray()
 {
-	auto arr = std::make_unique<SArr>();
+	SArr arr;
 
 	auto c = static_cast<Token>(_iss.get());
 	if (c != Token::ARRAY)
@@ -222,14 +222,14 @@ SVal TlvSerializer::decodeArray()
 	if (static_cast<Token>(_iss.peek()) == Token::ARRAY_END)
 	{
 		_iss.ignore();
-		return arr.release();
+		return std::move(arr);
 	}
 
 	while (!_iss.eof())
 	{
 		try
 		{
-			arr->emplace_back(decodeValue());
+			arr.emplace_back(decodeValue());
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -239,7 +239,7 @@ SVal TlvSerializer::decodeArray()
 		if (static_cast<Token>(_iss.peek()) == Token::ARRAY_END)
 		{
 			_iss.ignore();
-			return arr.release();
+			return std::move(arr);
 		}
 	}
 
@@ -248,7 +248,7 @@ SVal TlvSerializer::decodeArray()
 
 SVal TlvSerializer::decodeString()
 {
-	auto str = std::make_unique<SStr>();
+	SStr str;
 
 	if (static_cast<Token>(_iss.get()) != Token::STRING)
 	{
@@ -262,7 +262,7 @@ SVal TlvSerializer::decodeString()
 		if (static_cast<Token>(c) == Token::END)
 		{
 			_iss.ignore();
-			return str.release();
+			return std::move(str);
 		}
 
 		// Управляющий символ
@@ -281,7 +281,7 @@ SVal TlvSerializer::decodeString()
 		if (c < 0b1000'0000)
 		{
 			_iss.ignore();
-			str->insert(static_cast<uint8_t>(c));
+			str.insert(static_cast<uint8_t>(c));
 		}
 		else
 		{
@@ -330,7 +330,7 @@ SVal TlvSerializer::decodeString()
 				}
 				chr = (chr << 6) | (c & 0b0011'1111);
 			}
-			putUtf8Symbol(*str, chr);
+			putUtf8Symbol(str, chr);
 		}
 	}
 

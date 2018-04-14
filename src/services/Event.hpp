@@ -38,7 +38,7 @@ protected:
 
 	static Id _eventCount;
 	std::shared_ptr<Context> _context;
-	const SVal* _data;
+	const SVal _data;
 	Id _eventId;
 
 public:
@@ -50,13 +50,13 @@ public:
 
 	Event(
 		const std::shared_ptr<Context>& context,
-		const SVal* input
+		SVal input
 	);
 	virtual ~Event() = default;
 
 	const char* getName() const;
 
-	virtual const SObj* event();
+	virtual SObj event();
 };
 
 #include "EventFactory.hpp"
@@ -70,9 +70,9 @@ private:                                                                        
                                                                                                 \
     EventName(                                                                                  \
 		const std::shared_ptr<Context>& context,                                                \
-		const SVal* input                                                                       \
+		SVal input                                                                              \
 	)                                                                                           \
-    : Event(context, input)                                                                     \
+    : Event(context, std::move(input))                                                          \
     {};                                                                                         \
                                                                                                 \
 public:                                                                                         \
@@ -81,9 +81,9 @@ public:                                                                         
 private:                                                                                        \
     static auto create(                                                                         \
 		const std::shared_ptr<Context>& context,                                                \
-		const SVal* input                                                                       \
+		SVal input                                                                              \
 	)                                                                                           \
     {                                                                                           \
-        return std::shared_ptr<Event>(new EventName(context, input));                           \
+        return std::shared_ptr<Event>(new EventName(context, std::move(input)));                \
     }                                                                                           \
     static const bool __dummy_for_reg_call;

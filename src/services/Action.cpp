@@ -27,11 +27,10 @@
 Action::Action(
 	const std::shared_ptr<ServicePart>& servicePart,
 	const std::shared_ptr<Context>& context,
-	const SVal* input_
+	const SVal& input_
 )
 : _servicePart(servicePart)
 , _context(context)
-, _data(nullptr)
 , _requestId(0)
 , _lastConfirmedEvent(0)
 , _lastConfirmedResponse(0)
@@ -48,17 +47,15 @@ Action::Action(
 		throw std::runtime_error("Internal error ← Bad service");
 	}
 
-	auto input = dynamic_cast<const SObj *>(input_);
-
-	if (input == nullptr)
+	if (!input_.is<SObj>())
 	{
 		throw std::runtime_error("Input data isn't object");
 	}
+	auto input = input_.as<SObj>();
 
-	auto reqName = dynamic_cast<const SStr*>(&input->get("request"));
-	if (reqName != nullptr)
+	if (input.get("request").is<SStr>())
 	{
-		_actionName = reqName->value();
+		_actionName = input.get("request").as<SStr>().value();
 	}
 	else
 	{
@@ -66,33 +63,34 @@ Action::Action(
 		_actionName = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
 	}
 
-	auto aux = dynamic_cast<const SObj*>(&input->get("_"));
-	if (aux != nullptr)
+	if (input.get("_").is<SObj>())
 	{
-		_requestId = (int)aux->get("ri");
-		_lastConfirmedResponse = aux->get("cr");
-		_lastConfirmedEvent = aux->get("ce");
+		auto& aux = input.get("_").as<SObj>();
+
+		aux.trylookup("ri", _requestId);
+		aux.trylookup("cr", _lastConfirmedResponse);
+		aux.trylookup("ce", _lastConfirmedEvent);
 	}
 
-	_data = dynamic_cast<const SVal*>(&input->get("data"));
+	_data = input.get("data");
 }
 
-const SObj* Action::response(const SVal* data) const
+SObj Action::response(SVal&& data) const
 {
-	auto response = std::make_unique<SObj>();
+	SObj response;
 
 	if (_requestId != 0)
 	{
-		auto aux = std::make_unique<SObj>();
-		aux->emplace("ri", _requestId);
-		response->emplace("_", aux.release());
+		SObj aux;
+		aux.emplace("ri", _requestId);
+		response.emplace("_", std::move(aux));
 	}
 
-	response->emplace("response", _actionName);
+	response.emplace("response", _actionName);
 
-	if (data != nullptr)
+	if (!data.isUndefined())
 	{
-		response->emplace("data", data);
+		response.emplace("data", std::move(data));
 	}
 
 	if (_answerSent)
@@ -102,27 +100,27 @@ const SObj* Action::response(const SVal* data) const
 
 	_answerSent = true;
 
-	return response.release();
+	return std::move(response);
 }
 
-const SObj* Action::error(const std::string& message, const SVal* data) const
+SObj Action::error(const std::string& message, SVal&& data) const
 {
-	auto error = std::make_unique<SObj>();
+	SObj error;
 
 	if (_requestId != 0)
 	{
-		auto aux = std::make_unique<SObj>();
-		aux->emplace("ri", _requestId);
-		error->emplace("_", aux.release());
+		SObj aux;
+		aux.emplace("ri", _requestId);
+		error.emplace("_", std::move(aux));
 	}
 
-	error->emplace("error", _actionName);
+	error.emplace("error", _actionName);
 
-	error->emplace("message", message);
+	error.emplace("message", message);
 
-	if (data != nullptr)
+	if (!data.isUndefined())
 	{
-		error->emplace("data", data);
+		error.emplace("data", std::move(data));
 	}
 
 	if (_answerSent)
@@ -132,7 +130,7 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 
 	_answerSent = true;
 
-	return error.release();
+	return std::move(error);
 }
 
 bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_point beginExecTime)

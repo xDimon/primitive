@@ -25,32 +25,32 @@
 
 Event::Id Event::_eventCount = 0;
 
-Event::Event(const std::shared_ptr<Context>& context, const SVal* data)
+Event::Event(const std::shared_ptr<Context>& context, SVal data)
 : _context(context)
-, _data(data)
+, _data(std::move(data))
 , _eventId(0)
 {
 	_name = nullptr;
 }
 
-const SObj* Event::event()
+SObj Event::event()
 {
-	auto event = std::make_unique<SObj>();
+	SObj event;
 
 	_eventId = ++_eventCount;
 
-	auto aux = std::make_unique<SObj>();
-	aux->emplace("ei", static_cast<SInt::type>(_eventId));
-	event->emplace("_", aux.release());
+	SObj aux;
+	aux.emplace("ei", static_cast<SInt::type>(_eventId));
+	event.emplace("_", std::move(aux));
 
-	event->emplace("event", getName());
+	event.emplace("event", getName());
 
-	if (_data != nullptr)
+	if (!_data.isUndefined())
 	{
-		event->emplace("data", _data);
+		event.emplace("data", _data);
 	}
 
-	return event.release();
+	return std::move(event);
 }
 
 const char* Event::getName() const

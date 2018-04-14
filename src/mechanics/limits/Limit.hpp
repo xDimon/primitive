@@ -128,7 +128,7 @@ public:
 		return _changed;
 	}
 
-	SObj* serialize() const;
+	SObj serialize() const;
 
 	static std::string typeToString(Type type);
 };

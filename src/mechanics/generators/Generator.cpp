@@ -127,13 +127,13 @@ bool Generator::tick()
 	return true;
 }
 
-SObj* Generator::serialize() const
+SObj Generator::serialize() const
 {
-	auto data = std::make_unique<SObj>();
+	SObj data;
 
-	data->emplace("id", id); // Id генератора
-	data->emplace("nextTick", _nextTick); // Следующее срабатывание
-	data->emplace("period", _config->period); // Периодичность срабатывания
+	data.emplace("id", id); // Id генератора
+	data.emplace("nextTick", _nextTick); // Следующее срабатывание
+	data.emplace("period", _config->period); // Периодичность срабатывания
 
-	return data.release();
+	return std::move(data);
 }

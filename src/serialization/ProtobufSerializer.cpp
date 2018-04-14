@@ -56,7 +56,7 @@ SVal ProtobufSerializer::decodeMessage(const google::protobuf::Message& msg)
 		return 0; // TODO exception
 	}
 
-	auto root = std::make_unique<SObj>();
+	SObj root;
 
 	std::vector<const google::protobuf::FieldDescriptor *> fields;
 	ref->ListFields(msg, &fields);
@@ -75,18 +75,18 @@ SVal ProtobufSerializer::decodeMessage(const google::protobuf::Message& msg)
 				continue;
 			}
 
-			auto arr = std::make_unique<SArr>();
+			SArr arr;
 
 			for (int j = 0; j < count; j++)
 			{
-				arr->emplace_back(decodeField(msg, field, j));
+				arr.emplace_back(decodeField(msg, field, j));
 			}
 
-			root->emplace(name.c_str(), arr.release());
+			root.emplace(name.c_str(), std::move(arr));
 		}
 		else if (ref->HasField(msg, field))
 		{
-			root->emplace(name.c_str(), decodeField(msg, field, 0));
+			root.emplace(name.c_str(), decodeField(msg, field, 0));
 		}
 		else
 		{
@@ -94,7 +94,7 @@ SVal ProtobufSerializer::decodeMessage(const google::protobuf::Message& msg)
 		}
 	}
 
-	return root.release();
+	return std::move(root);
 }
 
 SVal ProtobufSerializer::decodeField(const google::protobuf::Message& msg, const google::protobuf::FieldDescriptor *field, int index)

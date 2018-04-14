@@ -52,7 +52,7 @@ private:
 		std::shared_ptr<Action>(*)(
 			const std::shared_ptr<ServicePart>&,
 			const std::shared_ptr<Context>&,
-			const SVal*
+			const SVal&
 		)
 	> _creators;
 
@@ -62,13 +62,13 @@ public:
 		std::shared_ptr<Action>(* creator)(
 			const std::shared_ptr<ServicePart>&,
 			const std::shared_ptr<Context>&,
-			const SVal*
+			const SVal&
 		)
 	) noexcept;
 	static std::shared_ptr<Action> create(
 		const std::string& name,
 		const std::shared_ptr<ServicePart>& servicePart,
 		const std::shared_ptr<Context>& context,
-		const SVal* input
+		const SVal& input
 	);
 };

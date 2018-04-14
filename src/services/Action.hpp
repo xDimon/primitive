@@ -39,7 +39,7 @@ protected:
 	std::shared_ptr<Service> _service;
 	std::shared_ptr<ServicePart> _servicePart;
 	std::shared_ptr<Context> _context;
-	const SVal* _data;
+	SVal _data;
 	Id _requestId;
 	Id _lastConfirmedEvent;
 	Id _lastConfirmedResponse;
@@ -58,7 +58,7 @@ public:
 	Action(
 		const std::shared_ptr<ServicePart>& servicePart,
 		const std::shared_ptr<Context>& context,
-		const SVal* input
+		const SVal& input
 	);
 	virtual ~Action() = default;
 
@@ -79,16 +79,16 @@ public:
 		return _service;
 	}
 
-	virtual const SObj* response(const SVal* data) const;
-	inline const SObj* response() const
+	virtual SObj response(SVal&& data) const;
+	inline SObj response() const
 	{
-		return response(nullptr);
+		return response(SVal());
 	}
 
-	virtual const SObj* error(const std::string& message, const SVal* data) const;
-	virtual const SObj* error(const std::string& message) const
+	virtual SObj error(const std::string& message, SVal&& data) const;
+	virtual SObj error(const std::string& message) const
 	{
-		return error(message, nullptr);
+		return error(message, SVal());
 	}
 
 	inline auto requestId() const
@@ -127,7 +127,7 @@ private:                                                                        
     ActionName(                                                                                 \
 		const std::shared_ptr<::ServicePart>& servicePart,                                      \
 		const std::shared_ptr<Context>& context,                                                \
-		const SVal* input                                                                       \
+		const SVal& input                                                                       \
 	)                                                                                           \
     : Action(servicePart, context, input)                                                       \
     {};                                                                                         \
@@ -142,7 +142,7 @@ private:                                                                        
     static auto create(                                                                         \
 		const std::shared_ptr<::ServicePart>& servicePart,                                      \
 		const std::shared_ptr<Context>& context,                                                \
-		const SVal* input                                                                       \
+		const SVal& input                                                                       \
 	)                                                                                           \
     {                                                                                           \
         return std::shared_ptr<Action>(new ActionName(servicePart, context, input));            \

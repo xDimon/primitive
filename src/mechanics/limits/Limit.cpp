@@ -260,22 +260,22 @@ bool Limit::available() const
 	}
 }
 
-SObj* Limit::serialize() const
+SObj Limit::serialize() const
 {
-	auto data = std::make_unique<SObj>();
+	SObj data;
 
-	data->emplace("id", id); // Id лимита
+	data.emplace("id", id); // Id лимита
 	if (!clarifier.empty())
 	{
-		data->emplace("clarifier", clarifier); // Уточнение
+		data.emplace("clarifier", clarifier); // Уточнение
 	}
-	data->emplace("value", _value); // Текущее значение
+	data.emplace("value", _value); // Текущее значение
 	if (_expire)
 	{
-		data->emplace("expire", _expire);
+		data.emplace("expire", _expire);
 	}
 
-	return data.release();
+	return std::move(data);
 }
 
 std::string Limit::typeToString(Limit::Type type)

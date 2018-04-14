@@ -26,7 +26,7 @@ Dummy ActionFactory::reg(
 	std::shared_ptr<Action>(* creator)(
 		const std::shared_ptr<ServicePart>&,
 		const std::shared_ptr<Context>&,
-		const SVal*
+		const SVal&
 	)
 ) noexcept
 {
@@ -45,7 +45,7 @@ std::shared_ptr<Action> ActionFactory::create(
 	const std::string& name,
 	const std::shared_ptr<ServicePart>& servicePart,
 	const std::shared_ptr<Context>& context,
-	const SVal* input
+	const SVal& input
 )
 {
 	auto& factory = getInstance();
