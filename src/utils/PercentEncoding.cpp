@@ -21,8 +21,6 @@
 
 #include "PercentEncoding.hpp"
 
-#include "../utils/literals.hpp"
-
 #include <stdexcept>
 #include <sstream>
 #include <iomanip>
@@ -130,31 +128,31 @@ static uint32_t decodePercentEscaped(std::istringstream& iss, bool& isUtf8)
 	if ((c & 0b11111100) == 0b11111100)
 	{
 		bytes = 6;
-		symbol = static_cast<uint8_t>(c) & 0b1_u8;
+		symbol = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b1);
 	}
 	else if ((c & 0b11111000) == 0b11111000)
 	{
 		bytes = 5;
-		symbol = static_cast<uint8_t>(c) & 0b11_u8;
+		symbol = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b11);
 	}
 	else if ((c & 0b11110000) == 0b11110000)
 	{
 		bytes = 4;
-		symbol = static_cast<uint8_t>(c) & 0b111_u8;
+		symbol = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b111);
 	}
 	else if ((c & 0b11100000) == 0b11100000)
 	{
 		bytes = 3;
-		symbol = static_cast<uint8_t>(c) & 0b1111_u8;
+		symbol = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b1111);
 	}
 	else if ((c & 0b11000000) == 0b11000000)
 	{
 		bytes = 2;
-		symbol = static_cast<uint8_t>(c) & 0b11111_u8;
+		symbol = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b11111);
 	}
 	else if ((c & 0b10000000) == 0b00000000)
 	{
-		return static_cast<uint8_t>(c) & 0b1111111_u8;
+		return static_cast<uint8_t>(c) & static_cast<uint8_t>(0b1111111);
 	}
 	else
 	{

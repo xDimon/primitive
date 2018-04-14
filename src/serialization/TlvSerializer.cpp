@@ -21,8 +21,6 @@
 
 #include "TlvSerializer.hpp"
 
-#include "../utils/literals.hpp"
-
 #include <cstring>
 
 #ifdef NAN
@@ -293,27 +291,27 @@ SStr* TlvSerializer::decodeString()
 			if ((c & 0b11111100) == 0b11111100)
 			{
 				bytes = 6;
-				chr = static_cast<uint8_t>(c) & 0b1_u8;
+				chr = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b1);
 			}
 			else if ((c & 0b11111000) == 0b11111000)
 			{
 				bytes = 5;
-				chr = static_cast<uint8_t>(c) & 0b11_u8;
+				chr = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b11);
 			}
 			else if ((c & 0b11110000) == 0b11110000)
 			{
 				bytes = 4;
-				chr = static_cast<uint8_t>(c) & 0b111_u8;
+				chr = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b111);
 			}
 			else if ((c & 0b11100000) == 0b11100000)
 			{
 				bytes = 3;
-				chr = static_cast<uint8_t>(c) & 0b1111_u8;
+				chr = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b1111);
 			}
 			else if ((c & 0b11000000) == 0b11000000)
 			{
 				bytes = 2;
-				chr = static_cast<uint8_t>(c) & 0b11111_u8;
+				chr = static_cast<uint8_t>(c) & static_cast<uint8_t>(0b11111);
 			}
 			else
 			{

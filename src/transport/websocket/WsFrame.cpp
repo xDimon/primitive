@@ -22,12 +22,10 @@
 #include <cstring>
 #include "WsFrame.hpp"
 
-#include "../../utils/literals.hpp"
-
 size_t WsFrame::calcHeaderSize(const char data[2])
 {
-	uint8_t prelen = (static_cast<uint8_t>(data[1]) >> 0) & 0x7F_u8;
-	uint8_t masked = (static_cast<uint8_t>(data[1]) >> 7) & 0x01_u8;
+	uint8_t prelen = (static_cast<uint8_t>(data[1]) >> 0) & static_cast<uint8_t>(0x7F);
+	uint8_t masked = (static_cast<uint8_t>(data[1]) >> 7) & static_cast<uint8_t>(0x01);
 
 	return 2												// Стартовые байты
 		+ ((prelen <= 125) ? 0 : (prelen == 126) ? 2 : 8)	// Байты расширенной длины
@@ -43,7 +41,7 @@ WsFrame::WsFrame(const char *begin, const char *end)
 	_opcode = static_cast<Opcode>((s[0] >> 0) & 0x0F);
 	_masked = static_cast<bool>((s[1] >> 7) & 0x01);
 
-	uint8_t prelen = (static_cast<uint8_t>(s[1]) >> 0) & 0x7F_u8;
+	uint8_t prelen = (static_cast<uint8_t>(s[1]) >> 0) & static_cast<uint8_t>(0x7F);
 	if ((s + 2) > end)
 	{
 		throw std::runtime_error("Not anough data");
@@ -124,7 +122,7 @@ void WsFrame::send(const std::shared_ptr<Writer>& writer, Opcode code, const cha
 //	bool masked = false;
 	uint8_t byte;
 
-	byte = (1_u8 << 7) | static_cast<uint8_t>(code);
+	byte = (static_cast<uint8_t>(1) << 7) | static_cast<uint8_t>(code);
 	writer->write(&byte, sizeof(byte));
 
 	byte = static_cast<uint8_t>((size > 65535) ? 127 : (size > 125) ? 126 : size);
