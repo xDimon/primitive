@@ -107,7 +107,7 @@ public:
 	}
 	inline bool isExpired() const
 	{
-		return _expire > 0 && _expire != Time::interval(Time::Interval::ETERNITY) && _expire < Time::now();
+		return (_expire != 0) && (_expire != Time::interval(Time::Interval::ETERNITY)) && (_expire < Time::now());
 	}
 
 	Value remain() const;

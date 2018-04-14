@@ -62,7 +62,7 @@ Limit::Limit(
 
 bool Limit::inDefaultState() const
 {
-	return _value == _config->start && (_expire == 0 || _expire == Time::interval(Time::Interval::ETERNITY));
+	return (_value == _config->start) && ((_expire == 0) || (_expire == Time::interval(Time::Interval::ETERNITY)));
 }
 
 void Limit::setChanged(bool isChanged)

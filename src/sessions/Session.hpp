@@ -36,7 +36,7 @@ public:
 
 protected:
 	static const char _hidSeed[16];
-	std::recursive_mutex _mutex;
+	mutable std::recursive_mutex _mutex;
 
 protected:
 	std::shared_ptr<Service> _service;
