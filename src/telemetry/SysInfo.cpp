@@ -27,6 +27,7 @@
 #include "../utils/Time.hpp"
 
 #include <sys/resource.h>
+#include <iomanip>
 #include <sys/time.h>
 #include <cstring>
 
@@ -106,29 +107,38 @@ void SysInfo::collect()
 	instance._involuntaryContextSwitches->setValue(ru.ru_nivcsw, now);
 
     FILE* file = fopen("/proc/self/status", "r");
-    ssize_t rss = -1;
-    char line[128];
-    while (fgets(line, 128, file) != nullptr)
+    if (!file)
 	{
-        if (strncmp(line, "VmRSS:", 6) == 0)
-		{
-            rss =
-				[](char* oneLine)
-				{
-					// This assumes that a digit will be found and the line ends in " Kb".
-					ssize_t i = strlen(oneLine);
-					const char* p = oneLine;
-					while (*p <'0' || *p > '9') p++;
-					oneLine[i-3] = '\0';
-					i = atoi(p);
-					return i;
-				}(line);
-            break;
-        }
-    }
-    fclose(file);
+		Log("Sysinfo").error("Can't open /proc/self/status: %s", strerror(errno));
+	}
+	else
+	{
+		ssize_t rss = -1;
 
-	instance._memoryUsage->setValue(rss, now);
+		char line[128];
+		while (fgets(line, 128, file) != nullptr)
+		{
+			if (strncmp(line, "VmRSS:", 6) == 0)
+			{
+				rss =
+					[]
+					(char* oneLine)
+					{
+						// This assumes that a digit will be found and the line ends in " Kb".
+						ssize_t i = strlen(oneLine);
+						const char* p = oneLine;
+						while (*p < '0' || *p > '9') p++;
+						oneLine[i - 3] = '\0';
+						i = atoi(p);
+						return i;
+					} (line);
+				break;
+			}
+		}
+		fclose(file);
+
+		instance._memoryUsage->setValue(rss, now);
+	}
 
 	gettimeofday(&instance._prevTime, nullptr);
 	instance._prevUTime = ru.ru_utime;
