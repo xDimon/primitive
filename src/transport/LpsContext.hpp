@@ -30,6 +30,7 @@
 class LpsContext: public Context
 {
 private:
+	std::recursive_mutex _mutex;
 	Log _log;
 	std::shared_ptr<TransportContext> _context;
 	std::weak_ptr<Session> _session;

@@ -57,6 +57,8 @@ LpsContext::~LpsContext()
 
 void LpsContext::assignSession(const std::shared_ptr<Session>& session)
 {
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
 	auto wsContext = std::dynamic_pointer_cast<WsContext>(_context);
 	if (wsContext)
 	{
@@ -67,6 +69,8 @@ void LpsContext::assignSession(const std::shared_ptr<Session>& session)
 
 std::shared_ptr<Session> LpsContext::getSession()
 {
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
 	auto wsContext = std::dynamic_pointer_cast<WsContext>(_context);
 	if (wsContext)
 	{
@@ -77,6 +81,8 @@ std::shared_ptr<Session> LpsContext::getSession()
 
 void LpsContext::resetSession()
 {
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
 	auto wsContext = std::dynamic_pointer_cast<WsContext>(_context);
 	if (wsContext)
 	{
@@ -87,6 +93,8 @@ void LpsContext::resetSession()
 
 void LpsContext::out(SVal value, bool close)
 {
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
 	if (_closed)
 	{
 		return;
@@ -120,6 +128,8 @@ void LpsContext::out(SVal value, bool close)
 
 void LpsContext::send()
 {
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
 	if (_closed)
 	{
 		return;
