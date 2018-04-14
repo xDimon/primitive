@@ -85,7 +85,7 @@ void LpsContext::resetSession()
 	_session.reset();
 }
 
-void LpsContext::out(const SVal* value, bool close)
+void LpsContext::out(SVal value, bool close)
 {
 	if (_closed)
 	{
@@ -131,10 +131,10 @@ void LpsContext::send()
 
 		while (!_output.empty())
 		{
-			auto element = const_cast<SVal*>(_output.front());
+			auto output = std::move(_output.front());
 			_output.pop();
 
-			auto out = SerializerFactory::create("json")->encode(element);
+			auto out = SerializerFactory::create("json")->encode(output);
 
 			_context->transmit(out, "text", _close && _output.empty());
 
@@ -145,16 +145,15 @@ void LpsContext::send()
 	{
 		_closed = true;
 
-		auto output = std::make_unique<SArr>();
+		SArr output;
 
 		while (!_output.empty())
 		{
-			auto element = const_cast<SVal*>(_output.front());
+			output.emplace_back(std::move(_output.front()));
 			_output.pop();
-			output->insert(element);
 		}
 
-		auto out = SerializerFactory::create("json")->encode(output.get());
+		auto out = SerializerFactory::create("json")->encode(output);
 
 		_context->transmit(out, "application/json; charset=utf-8", true);
 

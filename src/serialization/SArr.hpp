@@ -21,139 +21,55 @@
 
 #pragma once
 
+#include <cassert>
 #include <sstream>
 #include <vector>
 #include <functional>
 #include <algorithm>
 #include <stddef.h>
-#include "SStr.hpp"
-#include "SVal.hpp"
-#include "SBool.hpp"
-#include "SInt.hpp"
-#include "SFloat.hpp"
-#include "SNull.hpp"
 
-class SArr: public SVal, public std::vector<SVal*>
+class SArr final: public SBase, public std::vector<SVal>
 {
 public:
+	// Default-constructor
 	SArr() = default;
 
-	~SArr() override
+	// Copy-constructor
+	SArr(const SArr& that)
+	: std::vector<SVal>(static_cast<const std::vector<SVal>&>(that))
 	{
-		for (auto element : *this)
-		{
-			delete element;
-		}
-	};
-
-	SArr(SArr&& tmp)
-	{
-		swap(tmp);
 	}
 
-	SArr& operator=(SArr&& tmp)
+	// Move-constructor
+	SArr(SArr&& that) noexcept
+	: std::vector<SVal>(std::move(static_cast<std::vector<SVal>&>(that)))
 	{
-		swap(tmp);
+	}
+
+	// Copy-assignment
+	SArr& operator=(const SArr& that)
+	{
+		static_cast<std::vector<SVal>&>(*this) = static_cast<const std::vector<SVal>&>(that);
 		return *this;
 	}
 
-	void insert(SVal* value)
+	// Move-assignment
+	SArr& operator=(SArr&& that) noexcept
 	{
-		emplace_back(value);
+		static_cast<std::vector<SVal>&>(*this) = std::move(static_cast<std::vector<SVal>&>(that));
+		return *this;
 	}
 
-	void insert(const SVal* value)
+	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
+	operator T() const
 	{
-		emplace_back(const_cast<SVal*>(value));
+		return size();
 	}
 
-	template<typename T>
-	typename std::enable_if<std::is_integral<T>::value, void>::type
-	insert(T value)
-	{
-		insert(new SInt(value));
-	}
-
-	template<typename T>
-	typename std::enable_if<std::is_floating_point<T>::value, void>::type
-	insert(T value)
-	{
-		insert(new SFloat(value));
-	}
-
-//	void insert(double value)
-//	{
-//		insert(new SFloat(value));
-//	}
-
-	void insert(bool value)
-	{
-		insert(new SBool(value));
-	}
-
-	void insert(const char* value)
-	{
-		insert(new SStr(value));
-	}
-
-	void insert(const std::string& value)
-	{
-		insert(new SStr(value));
-	}
-
-	void insert(nullptr_t)
-	{
-		insert(new SNull());
-	}
-
-	const SVal* operator[](size_t index) const
-	{
-		return index < size() ? std::vector<SVal*>::operator[](index) : nullptr;
-	}
-
-	SVal* operator[](size_t index)
-	{
-		return index < size() ? std::vector<SVal*>::operator[](index) : nullptr;
-	}
-
-	template< template<typename, typename> class C, typename E, typename A>
-	void fill(C<E, A> &container) const noexcept
-	{
-		for (auto& element : *this)
-		{
-			container.emplace_back(element);
-		}
-	}
-
-	operator std::string() const override
+	operator std::string() const
 	{
 		std::ostringstream oss;
 		oss << "[array#" << this << "(" << size() << ")]";
 		return std::move(oss.str());
-	}
-
-	operator int() const override
-	{
-		return size();
-	}
-
-	operator double() const override
-	{
-		return size();
-	}
-
-	operator bool() const override
-	{
-		return !empty();
-	}
-
-	SArr* clone() const override
-	{
-		auto copy = std::make_unique<SArr>();
-		for (const auto& element : *this)
-		{
-			copy->emplace_back(element->clone());
-		}
-		return copy.release();
 	}
 };

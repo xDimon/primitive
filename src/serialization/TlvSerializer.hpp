@@ -44,35 +44,34 @@ private:
 	std::istringstream _iss;
 	std::ostringstream _oss;
 
-	SNull* decodeNull();
-	SBool* decodeBool();
+	SVal decodeNull();
+	SVal decodeBool();
 
 	void putUtf8Symbol(SStr &str, uint32_t symbol);
-	SStr* decodeString();
-	SBinary* decodeBinary();
+	SVal decodeString();
+	SVal decodeBinary();
 
-	SNum* decodeInteger();
-	SNum* decodeFloat();
+	SVal decodeInteger();
+	SVal decodeFloat();
 
-	SArr* decodeArray();
-	SObj* decodeObject();
+	SVal decodeArray();
+	SVal decodeObject();
 
-	SVal* decodeValue();
+	SVal decodeValue();
 
-	void encodeNull(const SNull* value);
-	void encodeBool(const SBool* value);
+	void encodeNull(const SVal& value);
+	void encodeBool(const SVal& value);
 
-	void encodeString(const SStr* value);
-	void encodeBinary(const SBinary* value);
+	void encodeString(const SVal& value);
+	void encodeBinary(const SVal& value);
 
-	void encodeInteger(const SInt* value);
-	void encodeFloat(const SFloat* value);
+	void encodeNumber(const SVal& value);
 
-	void encodeArray(const SArr* value);
+	void encodeArray(const SVal& value);
 	void encodeKey(const std::string& key);
-	void encodeObject(const SObj* value);
+	void encodeObject(const SVal& value);
 
-	void encodeValue(const SVal* value);
+	void encodeValue(const SVal& value);
 
 DECLARE_SERIALIZER(TlvSerializer);
 };

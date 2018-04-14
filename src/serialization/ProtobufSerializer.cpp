@@ -21,14 +21,13 @@
 
 #include "ProtobufSerializer.hpp"
 #include "SObj.hpp"
-#include "SBinary.hpp"
 
 #include <iomanip>
 
 REGISTER_SERIALIZER(protobuf, ProtobufSerializer);
 
 template <class T>
-typename std::enable_if<std::is_base_of<T, google::protobuf::Message>::value, SVal*>::type
+typename std::enable_if<std::is_base_of<T, google::protobuf::Message>::value, SVal>::type
 ProtobufSerializer::decode(const std::string& data)
 {
 	try
@@ -43,12 +42,12 @@ ProtobufSerializer::decode(const std::string& data)
 	}
 }
 
-SVal* ProtobufSerializer::decode(const std::string& data)
+SVal ProtobufSerializer::decode(const std::string& data)
 {
 	throw std::runtime_error("Can't decode from Protobuf-string ← Not implemented");
 }
 
-SVal* ProtobufSerializer::decodeMessage(const google::protobuf::Message& msg)
+SVal ProtobufSerializer::decodeMessage(const google::protobuf::Message& msg)
 {
 	const google::protobuf::Descriptor *d = msg.GetDescriptor();
 	const google::protobuf::Reflection *ref = msg.GetReflection();
@@ -98,7 +97,7 @@ SVal* ProtobufSerializer::decodeMessage(const google::protobuf::Message& msg)
 	return root.release();
 }
 
-SVal* ProtobufSerializer::decodeField(const google::protobuf::Message& msg, const google::protobuf::FieldDescriptor *field, int index)
+SVal ProtobufSerializer::decodeField(const google::protobuf::Message& msg, const google::protobuf::FieldDescriptor *field, int index)
 {
 	const google::protobuf::Reflection* ref = msg.GetReflection();
 	const bool repeated = field->is_repeated();
@@ -169,7 +168,7 @@ SVal* ProtobufSerializer::decodeField(const google::protobuf::Message& msg, cons
 	}
 }
 
-std::string ProtobufSerializer::encode(const SVal* value)
+std::string ProtobufSerializer::encode(const SVal& value)
 {
 	throw std::runtime_error("Can't encode into Protobuf ← Not implemented");
 }

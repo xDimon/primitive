@@ -16,13 +16,15 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.04.08
 
-// SNum.hpp
+// SBase.hpp
 
 
 #pragma once
 
-#include "SBase.hpp"
+#include <utility>
+#include <iostream>
+#include <typeinfo>
 
-class SNum: public SBase
+class SBase
 {
 };

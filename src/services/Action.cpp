@@ -55,7 +55,7 @@ Action::Action(
 		throw std::runtime_error("Input data isn't object");
 	}
 
-	auto reqName = dynamic_cast<const SStr*>(input->get("request"));
+	auto reqName = dynamic_cast<const SStr*>(&input->get("request"));
 	if (reqName != nullptr)
 	{
 		_actionName = reqName->value();
@@ -66,15 +66,15 @@ Action::Action(
 		_actionName = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
 	}
 
-	auto aux = dynamic_cast<const SObj*>(input->get("_"));
+	auto aux = dynamic_cast<const SObj*>(&input->get("_"));
 	if (aux != nullptr)
 	{
-		_requestId = aux->getAsInt("ri");
-		_lastConfirmedResponse = aux->getAsInt("cr");
-		_lastConfirmedEvent = aux->getAsInt("ce");
+		_requestId = (int)aux->get("ri");
+		_lastConfirmedResponse = aux->get("cr");
+		_lastConfirmedEvent = aux->get("ce");
 	}
 
-	_data = dynamic_cast<const SVal*>(input->get("data"));
+	_data = dynamic_cast<const SVal*>(&input->get("data"));
 }
 
 const SObj* Action::response(const SVal* data) const
@@ -84,15 +84,15 @@ const SObj* Action::response(const SVal* data) const
 	if (_requestId != 0)
 	{
 		auto aux = std::make_unique<SObj>();
-		aux->insert("ri", _requestId);
-		response->insert("_", aux.release());
+		aux->emplace("ri", _requestId);
+		response->emplace("_", aux.release());
 	}
 
-	response->insert("response", _actionName);
+	response->emplace("response", _actionName);
 
 	if (data != nullptr)
 	{
-		response->insert("data", data);
+		response->emplace("data", data);
 	}
 
 	if (_answerSent)
@@ -112,17 +112,17 @@ const SObj* Action::error(const std::string& message, const SVal* data) const
 	if (_requestId != 0)
 	{
 		auto aux = std::make_unique<SObj>();
-		aux->insert("ri", _requestId);
-		error->insert("_", aux.release());
+		aux->emplace("ri", _requestId);
+		error->emplace("_", aux.release());
 	}
 
-	error->insert("error", _actionName);
+	error->emplace("error", _actionName);
 
-	error->insert("message", message);
+	error->emplace("message", message);
 
 	if (data != nullptr)
 	{
-		error->insert("data", data);
+		error->emplace("data", data);
 	}
 
 	if (_answerSent)

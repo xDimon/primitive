@@ -34,8 +34,8 @@ class SerializerFactory final
 public:
 	SerializerFactory(const SerializerFactory&) = delete;
 	SerializerFactory& operator=(SerializerFactory const&) = delete;
-	SerializerFactory(SerializerFactory&&) = delete;
-	SerializerFactory& operator=(SerializerFactory&&) = delete;
+	SerializerFactory(SerializerFactory&&) noexcept = delete;
+	SerializerFactory& operator=(SerializerFactory&&) noexcept = delete;
 
 private:
 	SerializerFactory() = default;

@@ -35,11 +35,7 @@ private:
 public:
 	SFloat(type value)
 	: _value(value)
-	{}
-
-	SFloat* clone() const override
 	{
-		return new SFloat(_value);
 	}
 
 	type value() const
@@ -47,28 +43,22 @@ public:
 		return _value;
 	}
 
-	SFloat& operator=(SFloat const& that)
+//	SFloat& operator=(SFloat const& that)
+//	{
+//		_value = that._value;
+//		return *this;
+//	}
+
+	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
+	operator T() const
 	{
-		_value = that._value;
-		return *this;
+		return _value;
 	}
 
-	operator std::string() const override
+	operator std::string() const
 	{
 		std::ostringstream oss;
 		oss << _value;
 		return std::move(oss.str());
-	};
-	operator int() const override
-	{
-		return _value;
-	};
-	operator double() const override
-	{
-		return _value;
-	};
-	operator bool() const override
-	{
-		return _value != 0;
-	};
+	}
 };

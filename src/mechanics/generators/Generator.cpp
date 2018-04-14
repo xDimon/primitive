@@ -131,9 +131,9 @@ SObj* Generator::serialize() const
 {
 	auto data = std::make_unique<SObj>();
 
-	data->insert("id", id); // Id генератора
-	data->insert("nextTick", _nextTick); // Следующее срабатывание
-	data->insert("period", _config->period); // Периодичность срабатывания
+	data->emplace("id", id); // Id генератора
+	data->emplace("nextTick", _nextTick); // Следующее срабатывание
+	data->emplace("period", _config->period); // Периодичность срабатывания
 
 	return data.release();
 }

@@ -27,23 +27,23 @@
 
 REGISTER_SERIALIZER(json, JsonSerializer);
 
-SVal* JsonSerializer::decode(const std::string& data)
+SVal JsonSerializer::decode(const std::string& data)
 {
 	_iss.str(data);
 	_iss.clear();
-
-	SVal* value = nullptr;
 
 	if (_iss.eof() || _iss.peek() == -1)
 	{
 		throw std::runtime_error("No data for parsing");
 	}
 
+	SVal value;
+
 	try
 	{
 		value = decodeValue();
 	}
-	catch (std::runtime_error& exception)
+	catch (std::exception& exception)
 	{
 		throw std::runtime_error(std::string("Can't decode JSON ← ") + exception.what());
 	}
@@ -58,7 +58,7 @@ SVal* JsonSerializer::decode(const std::string& data)
 	return value;
 }
 
-std::string JsonSerializer::encode(const SVal* value)
+std::string JsonSerializer::encode(const SVal& value)
 {
 	_oss.str("");
 	_oss.clear();
@@ -67,7 +67,7 @@ std::string JsonSerializer::encode(const SVal* value)
 	{
 		encodeValue(value);
 	}
-	catch (std::runtime_error& exception)
+	catch (std::exception& exception)
 	{
 		throw std::runtime_error(std::string("Can't encode into JSON ← ") + exception.what());
 	}
@@ -88,7 +88,7 @@ void JsonSerializer::skipSpaces()
 	}
 }
 
-SVal* JsonSerializer::decodeValue()
+SVal JsonSerializer::decodeValue()
 {
 	skipSpaces();
 
@@ -110,7 +110,9 @@ SVal* JsonSerializer::decodeValue()
 		case '7':
 		case '8':
 		case '9':
+		{
 			return decodeNumber();
+		}
 
 		case '"':
 		{
@@ -127,7 +129,7 @@ SVal* JsonSerializer::decodeValue()
 							{
 								_iss.clear(_iss.goodbit);
 								_iss.seekg(p);
-								return decodeBinary();;
+								return decodeBinary();
 							}
 						}
 					}
@@ -140,26 +142,32 @@ SVal* JsonSerializer::decodeValue()
 
 		case 't':
 		case 'f':
+		{
 			return decodeBool();
+		}
 
 		case '{':
+		{
 			return decodeObject();
+		}
 
 		case '[':
+		{
 			return decodeArray();
+		}
 
 		case 'n':
+		{
 			return decodeNull();
+		}
 
 		default:
 			throw std::runtime_error("Unknown token at parse value");
 	}
 }
 
-SObj* JsonSerializer::decodeObject()
+SVal JsonSerializer::decodeObject()
 {
-	auto obj = std::make_unique<SObj>();
-
 	auto c = _iss.get();
 	if (c != '{')
 	{
@@ -168,18 +176,20 @@ SObj* JsonSerializer::decodeObject()
 
 	skipSpaces();
 
+	SObj obj;
+
 	if (_iss.peek() == '}')
 	{
 		_iss.ignore();
-		return obj.release();
+		return std::move(obj);
 	}
 
 	while (!_iss.eof())
 	{
-		std::unique_ptr<SStr> key;
+		SStr key;
 		try
 		{
-			key.reset(decodeString());
+			key = decodeString().as<SStr>();
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -198,7 +208,7 @@ SObj* JsonSerializer::decodeObject()
 
 		try
 		{
-			obj->emplace(key->value(), decodeValue());
+			obj.emplace(key.value(), std::move(decodeValue()));
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -216,7 +226,7 @@ SObj* JsonSerializer::decodeObject()
 
 		if (c == '}')
 		{
-			return obj.release();
+			return std::move(obj);
 		}
 
 		throw std::runtime_error("Wrong token after field-value of object");
@@ -225,10 +235,8 @@ SObj* JsonSerializer::decodeObject()
 	throw std::runtime_error("Unexpect out of data during parse object");
 }
 
-SArr* JsonSerializer::decodeArray()
+SVal JsonSerializer::decodeArray()
 {
-	auto arr = std::make_unique<SArr>();
-
 	auto c = _iss.get();
 	if (c != '[')
 	{
@@ -237,17 +245,19 @@ SArr* JsonSerializer::decodeArray()
 
 	skipSpaces();
 
+	SArr arr;
+
 	if (_iss.peek() == ']')
 	{
 		_iss.ignore();
-		return arr.release();
+		return std::move(arr);
 	}
 
 	while (!_iss.eof())
 	{
 		try
 		{
-			arr->emplace_back(decodeValue());
+			arr.emplace_back(std::move(decodeValue()));
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -265,7 +275,7 @@ SArr* JsonSerializer::decodeArray()
 
 		if (c == ']')
 		{
-			return arr.release();
+			return std::move(arr);
 		}
 
 		throw std::runtime_error("Wrong token after element of array");
@@ -274,15 +284,15 @@ SArr* JsonSerializer::decodeArray()
 	throw std::runtime_error("Unexpect out of data during parse array");
 }
 
-SStr* JsonSerializer::decodeString()
+SVal JsonSerializer::decodeString()
 {
-	auto str = std::make_unique<SStr>();
-
 	auto c = _iss.get();
 	if (c != '"')
 	{
 		throw std::runtime_error("Wrong token for open string");
 	}
+
+	SStr str;
 
 	while (_iss.peek() != -1)
 	{
@@ -291,7 +301,7 @@ SStr* JsonSerializer::decodeString()
 		if (c == '"')
 		{
 			_iss.ignore();
-			return str.release();
+			return std::move(str);
 		}
 
 		// Экранированный сивол
@@ -314,7 +324,7 @@ SStr* JsonSerializer::decodeString()
 						 (symbol2 & 0b0011'1111'1111);
 			}
 
-			putUtf8Symbol(*str, symbol);
+			putUtf8Symbol(str, symbol);
 		}
 		// Управляющий символ
 		else if (c < ' ' && c != '\t' && c != '\r' && c != '\n')
@@ -330,7 +340,7 @@ SStr* JsonSerializer::decodeString()
 		else if (c < 0b1000'0000)
 		{
 			_iss.ignore();
-			str->insert(static_cast<uint8_t>(c));
+			str.insert(static_cast<uint8_t>(c));
 		}
 		else
 		{
@@ -379,14 +389,14 @@ SStr* JsonSerializer::decodeString()
 				}
 				chr = (chr << 6) | (c & 0b0011'1111);
 			}
-			putUtf8Symbol(*str, chr);
+			putUtf8Symbol(str, chr);
 		}
 	}
 
 	throw std::runtime_error("Unexpect out of data during parse string value");
 }
 
-SBinary* JsonSerializer::decodeBinary()
+SVal JsonSerializer::decodeBinary()
 {
 	bool ok = false;
 
@@ -419,8 +429,7 @@ SBinary* JsonSerializer::decodeBinary()
 		auto c = _iss.get();
 		if (c == '"')
 		{
-			std::string decoded = Base64::decode(b64);
-			return new SBinary(decoded);
+			return std::forward<SBinary>(Base64::decode(b64));
 		}
 
 		if (c == -1)
@@ -433,7 +442,7 @@ SBinary* JsonSerializer::decodeBinary()
 	throw std::runtime_error("Unexpect out of data during parse base64-encoded binary string");
 }
 
-SBool* JsonSerializer::decodeBool()
+SVal JsonSerializer::decodeBool()
 {
 	auto c = _iss.get();
 	if (c == 't')
@@ -444,7 +453,7 @@ SBool* JsonSerializer::decodeBool()
 			{
 				if (!_iss.eof() && _iss.get() == 'e')
 				{
-					return new SBool(true);
+					return true;
 				}
 			}
 		}
@@ -459,7 +468,7 @@ SBool* JsonSerializer::decodeBool()
 				{
 					if (!_iss.eof() && _iss.get() == 'e')
 					{
-						return new SBool(false);
+						return false;
 					}
 				}
 			}
@@ -473,7 +482,7 @@ SBool* JsonSerializer::decodeBool()
 	throw std::runtime_error("Wrong token for boolean value");
 }
 
-SNull* JsonSerializer::decodeNull()
+SVal JsonSerializer::decodeNull()
 {
 	if (!_iss.eof() && _iss.get() == 'n')
 	{
@@ -483,7 +492,7 @@ SNull* JsonSerializer::decodeNull()
 			{
 				if (!_iss.eof() && _iss.get() == 'l')
 				{
-					return new SNull();
+					return nullptr;
 				}
 			}
 		}
@@ -560,7 +569,7 @@ uint32_t JsonSerializer::decodeEscaped()
 	return val;
 }
 
-SNum* JsonSerializer::decodeNumber()
+SVal JsonSerializer::decodeNumber()
 {
 	auto p = _iss.tellg();
 
@@ -575,7 +584,7 @@ SNum* JsonSerializer::decodeNumber()
 			_iss.seekg(p);
 			_iss >> value;
 
-			return new SFloat(value);
+			return value;
 		}
 
 		if (isdigit(c) == 0 && c != '-')
@@ -590,21 +599,23 @@ SNum* JsonSerializer::decodeNumber()
 	_iss.seekg(p);
 	_iss >> value;
 
-	return new SInt(value);
+	return value;
 }
 
-void JsonSerializer::encodeNull(const SNull* value)
+void JsonSerializer::encodeNull(const SVal&)
 {
 	_oss << "null";
 }
 
-void JsonSerializer::encodeBool(const SBool* value)
+void JsonSerializer::encodeBool(const SVal& value)
 {
-	_oss << (value->value() ? "true" : "false");
+	_oss << ((bool)value ? "true" : "false");
 }
 
-void JsonSerializer::encodeString(const std::string& string)
+void JsonSerializer::encodeString(const SVal& value)
 {
+	const auto& string = value.as<std::string>();
+
 	_oss.put('"');
 	for (size_t i = 0; i < string.length(); i++)
 	{
@@ -715,62 +726,35 @@ void JsonSerializer::encodeString(const std::string& string)
 	_oss.put('"');
 }
 
-void JsonSerializer::encodeString(const SStr* value)
+void JsonSerializer::encodeBinary(const SVal& value)
 {
-	encodeString(value->value());
+//	_oss << "\"=?B?" << Base64::encode(value.value().data(), value.value().size()) << "?=\"";
 }
 
-void JsonSerializer::encodeBinary(const SBinary* value)
+void JsonSerializer::encodeNumber(const SVal& value)
 {
-	_oss << "\"=?B?" << Base64::encode(value->value().data(), value->value().size()) << "?=\"";
-}
-
-void JsonSerializer::encodeNumber(const SNum* value)
-{
-	auto intVal = dynamic_cast<const SInt*>(value);
-	if (intVal != nullptr)
+	if (value.is<SInt>())
 	{
-		_oss << intVal->value();
+		_oss << (SInt::type)value;
 		return;
 	}
-	auto floatVal = dynamic_cast<const SFloat*>(value);
-	if (floatVal != nullptr)
+	if (value.is<SFloat>())
 	{
-		_oss << std::setprecision(15) << floatVal->value();
+		_oss << std::setprecision(15) << (SFloat::type)value;
 		return;
 	}
 }
 
-void JsonSerializer::encodeArray(const SArr* value)
+void JsonSerializer::encodeArray(const SVal& value)
 {
+	const auto& array = value.as<SArr>();
+
 	_oss << "[";
 
 	bool empty = true;
-	std::for_each(value->cbegin(), value->cend(),
-		[this, &empty](const SVal* element) {
-			if (!empty)
-			{
-				_oss << ",";
-			}
-			else
-			{
-				empty = false;
-			}
-			encodeValue(element);
-		}
-	);
-
-	_oss << "]";
-}
-
-void JsonSerializer::encodeObject(const SObj* value)
-{
-	_oss << "{";
-
-	bool empty = true;
-	std::for_each(value->cbegin(), value->cend(),
+	std::for_each(array.begin(), array.end(),
 		[this, &empty]
-		(const std::pair<const std::string&, const SVal*>& element)
+		(const auto& element)
 		{
 			if (!empty)
 			{
@@ -780,44 +764,74 @@ void JsonSerializer::encodeObject(const SObj* value)
 			{
 				empty = false;
 			}
-			encodeString(element.first);
+			this->encodeValue(element);
+		}
+	);
+
+	_oss << "]";
+}
+
+void JsonSerializer::encodeObject(const SVal& value)
+{
+	const auto& object = value.as<SObj>();
+
+	_oss << "{";
+
+	bool empty = true;
+	std::for_each(object.begin(), object.end(),
+		[this, &empty]
+		(const auto& element)
+		{
+			if (!empty)
+			{
+				_oss << ",";
+			}
+			else
+			{
+				empty = false;
+			}
+			this->encodeString(element.first);
 			_oss << ':';
-			encodeValue(element.second);
+			this->encodeValue(element.second);
 		}
 	);
 
 	_oss << "}";
 }
 
-void JsonSerializer::encodeValue(const SVal* value)
+void JsonSerializer::encodeValue(const SVal& value)
 {
-	if (auto pStr = dynamic_cast<const SStr*>(value))
+	if (value.is<SStr>())
 	{
-		encodeString(pStr);
+		encodeString(value);
 	}
-	else if (auto pNum = dynamic_cast<const SNum*>(value))
+	else if (value.is<SInt>())
 	{
-		encodeNumber(pNum);
+		encodeNumber(value);
 	}
-	else if (auto pObj = dynamic_cast<const SObj*>(value))
+	else if (value.is<SFloat>())
 	{
-		encodeObject(pObj);
+		encodeNumber(value);
 	}
-	else if (auto pArr = dynamic_cast<const SArr*>(value))
+	else if (value.is<SObj>())
 	{
-		encodeArray(pArr);
+		encodeObject(value);
 	}
-	else if (auto pBool = dynamic_cast<const SBool*>(value))
+	else if (value.is<SArr>())
 	{
-		encodeBool(pBool);
+		encodeArray(value);
 	}
-	else if (auto pNull = dynamic_cast<const SNull*>(value))
+	else if (value.is<SBool>())
 	{
-		encodeNull(pNull);
+		encodeBool(value);
 	}
-	else if (auto pBin = dynamic_cast<const SBinary*>(value))
+	else if (value.is<SNull>())
 	{
-		encodeBinary(pBin);
+		encodeNull(value);
+	}
+	else if (value.is<SBinary>())
+	{
+		encodeBinary(value);
 	}
 	else
 	{

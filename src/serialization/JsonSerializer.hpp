@@ -30,7 +30,7 @@
 #include "SBinary.hpp"
 #include "SObj.hpp"
 #include "SArr.hpp"
-#include "SVal.hpp"
+#include "SBase.hpp"
 
 #include <sstream>
 #include <string>
@@ -41,41 +41,40 @@ public:
 	static const uint32_t ESCAPED_UNICODE = 1u<<31;
 	static const uint32_t ESCAPED_SLASH = 1u<<30;
 
+private:
 	std::istringstream _iss;
 	std::ostringstream _oss;
 
 	void skipSpaces();
 
-	SNull* decodeNull();
-	SBool* decodeBool();
+	SVal decodeNull();
+	SVal decodeBool();
 
 	uint32_t decodeEscaped();
 	void putUtf8Symbol(SStr &str, uint32_t symbol);
-	SStr* decodeString();
+	SVal decodeString();
 
-	SBinary* decodeBinary();
+	SVal decodeBinary();
 
-	SNum* decodeNumber();
+	SVal decodeNumber();
 
-	SArr* decodeArray();
-	SObj* decodeObject();
+	SVal decodeArray();
+	SVal decodeObject();
 
-	SVal* decodeValue();
+	SVal decodeValue();
 
+	void encodeValue(const SVal& value);
 
-	void encodeNull(const SNull* value);
-	void encodeBool(const SBool* value);
+	void encodeNull(const SVal& value);
+	void encodeBool(const SVal& value);
 
-	void encodeString(const std::string& string);
-	void encodeString(const SStr* value);
-	void encodeBinary(const SBinary* value);
+	void encodeString(const SVal& value);
+	void encodeBinary(const SVal& value);
 
-	void encodeNumber(const SNum* value);
+	void encodeNumber(const SVal& value);
 
-	void encodeArray(const SArr* value);
-	void encodeValue(const SVal* value);
-
-	void encodeObject(const SObj* value);
+	void encodeArray(const SVal& value);
+	void encodeObject(const SVal& value);
 
 DECLARE_SERIALIZER(JsonSerializer);
 };

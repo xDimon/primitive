@@ -264,15 +264,15 @@ SObj* Limit::serialize() const
 {
 	auto data = std::make_unique<SObj>();
 
-	data->insert("id", id); // Id лимита
+	data->emplace("id", id); // Id лимита
 	if (!clarifier.empty())
 	{
-		data->insert("clarifier", clarifier); // Уточнение
+		data->emplace("clarifier", clarifier); // Уточнение
 	}
-	data->insert("value", _value); // Текущее значение
+	data->emplace("value", _value); // Текущее значение
 	if (_expire)
 	{
-		data->insert("expire", _expire);
+		data->emplace("expire", _expire);
 	}
 
 	return data.release();

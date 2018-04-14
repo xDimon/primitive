@@ -24,7 +24,7 @@
 
 #include <cstdint>
 #include "../utils/Context.hpp"
-#include "../serialization/SVal.hpp"
+#include "../serialization/SBase.hpp"
 #include "../serialization/SObj.hpp"
 #include "../transport/ServerTransport.hpp"
 #include "Service.hpp"

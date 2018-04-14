@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "SVal.hpp"
+#include "SBase.hpp"
 
-class SBool: public SVal
+class SBool: public SBase
 {
 public:
 	typedef bool type;
@@ -32,11 +32,9 @@ private:
 	bool _value;
 
 public:
-	SBool(bool value): _value(value) {};
-
-	SBool* clone() const override
+	SBool(bool value)
+	: _value(value)
 	{
-		return new SBool(_value);
 	}
 
 	bool value() const
@@ -44,26 +42,20 @@ public:
 		return _value;
 	}
 
-	virtual SBool& operator=(SBool const& tmp)
-	{
-		_value = tmp._value;
-		return *this;
-	}
+//	SBool& operator=(SBool const& tmp)
+//	{
+//		_value = tmp._value;
+//		return *this;
+//	}
 
-	operator std::string() const override
-	{
-		return std::string(_value ? "true" : "false");
-	};
-	operator int() const override
-	{
-		return _value ? 1 : 0;
-	};
-	operator double() const override
-	{
-		return _value ? 1 : 0;
-	};
-	operator bool() const override
+	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
+	operator T() const
 	{
 		return _value;
-	};
+	}
+
+	operator std::string() const
+	{
+		return _value ? "true" : "false";
+	}
 };

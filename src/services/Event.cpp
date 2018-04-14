@@ -40,14 +40,14 @@ const SObj* Event::event()
 	_eventId = ++_eventCount;
 
 	auto aux = std::make_unique<SObj>();
-	aux->insert("ei", static_cast<SInt::type>(_eventId));
-	event->insert("_", aux.release());
+	aux->emplace("ei", static_cast<SInt::type>(_eventId));
+	event->emplace("_", aux.release());
 
-	event->insert("event", getName());
+	event->emplace("event", getName());
 
 	if (_data != nullptr)
 	{
-		event->insert("data", _data);
+		event->emplace("data", _data);
 	}
 
 	return event.release();

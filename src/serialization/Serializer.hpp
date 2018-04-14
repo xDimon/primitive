@@ -35,16 +35,16 @@ public:
 	Serializer() = delete;
 	Serializer(const Serializer&) = delete;
 	Serializer& operator=(Serializer const&) = delete;
-	Serializer(Serializer&&) = delete;
-	Serializer& operator=(Serializer&&) = delete;
+	Serializer(Serializer&&) noexcept = delete;
+	Serializer& operator=(Serializer&&) noexcept = delete;
 
 	explicit Serializer(uint32_t flags)
 	: _flags(flags)
 	{}
 	virtual ~Serializer() = default;
 
-	virtual SVal* decode(const std::string &data) = 0;
-	virtual std::string encode(const SVal* value) = 0;
+	virtual SVal decode(const std::string &data) = 0;
+	virtual std::string encode(const SVal& value) = 0;
 };
 
 #include "SerializerFactory.hpp"
@@ -62,8 +62,8 @@ public:                                                                         
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
     Class& operator=(Class const&) = delete;                                                    \
-	Class(Class&&) = delete;                                                                    \
-	Class& operator=(Class&&) = delete;                                                         \
+	Class(Class&&) noexcept = delete;                                                           \
+	Class& operator=(Class&&) noexcept = delete;                                                \
                                                                                                 \
 private:                                                                                        \
     explicit Class(uint32_t flags): Serializer(flags) {}                                        \
@@ -71,8 +71,8 @@ private:                                                                        
 public:                                                                                         \
     ~Class() override = default;                                                                \
                                                                                                 \
-	SVal* decode(const std::string &data) override;                                             \
-	std::string encode(const SVal* value) override;                                             \
+	SVal decode(const std::string &data) override;                                              \
+	std::string encode(const SVal& value) override;                                             \
                                                                                                 \
 private:                                                                                        \
     static const Dummy __dummy;

@@ -30,11 +30,11 @@ class ProtobufSerializer : public Serializer
 
 public:
 	template <class T>
-	typename std::enable_if<std::is_base_of<T, google::protobuf::Message>::value, SVal*>::type
+	typename std::enable_if<std::is_base_of<T, google::protobuf::Message>::value, SVal>::type
 	decode(const std::string& data);
 
-	SVal* decodeMessage(const google::protobuf::Message& msg);
+	SVal decodeMessage(const google::protobuf::Message& msg);
 
 private:
-	SVal* decodeField(const google::protobuf::Message& msg, const google::protobuf::FieldDescriptor* field, int index);
+	SVal decodeField(const google::protobuf::Message& msg, const google::protobuf::FieldDescriptor* field, int index);
 };

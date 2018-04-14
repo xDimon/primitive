@@ -78,12 +78,12 @@ void Counter::setChanged(bool isChanged)
 	_changed = isChanged;
 }
 
-SObj* Counter::serialize() const
+SObj Counter::serialize() const
 {
-	auto data = std::make_unique<SObj>();
+	SObj data;
 
-	data->insert("id", id); // Id
-	data->insert("value", _value); // значение
+	data.emplace("id", id); // Id
+	data.emplace("value", _value); // значение
 
-	return data.release();
+	return data;
 }

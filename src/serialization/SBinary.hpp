@@ -22,20 +22,25 @@
 #pragma once
 
 
-class SBinary : public SVal
+class SBinary : public SBase
 {
 private:
 	std::string _value;
 
 public:
+	// Default-constructor
 	SBinary() = default;
-	~SBinary() override = default;
 
-	SBinary* clone() const override
+	SBinary(const void* data_, size_t size)
 	{
-		auto copy = new SBinary();
-		copy->_value = _value;
-		return copy;
+		auto data = reinterpret_cast<const char*>(data_);
+		_value.reserve(size + 1);
+		std::copy(data, data + size, _value.begin());
+	}
+
+	SBinary(std::string&& value)
+	: _value(std::move(value))
+	{
 	}
 
 	SBinary(const std::string& value)
@@ -43,19 +48,29 @@ public:
 	{
 	}
 
-	SBinary(std::string& value)
-	: _value(std::move(value))
+	// Copy-constructor
+	SBinary(const SBinary& that)
+	: _value(that._value)
 	{
 	}
 
-	SBinary(SBinary&& tmp)
+	// Move-constructor
+	SBinary(SBinary&& that) noexcept
+	: _value(std::move(that._value))
 	{
-		_value.swap(tmp._value);
 	}
 
-	SBinary& operator=(SBinary&& tmp)
+	// Copy-assignment
+	virtual SBinary& operator=(SBinary const& that)
 	{
-		_value.swap(tmp._value);
+		_value = that._value;
+		return *this;
+	}
+
+	// Move-assignment
+	SBinary& operator=(SBinary&& that) noexcept
+	{
+		_value = std::move(that._value);
 		return *this;
 	}
 
@@ -64,7 +79,13 @@ public:
 		return _value;
 	}
 
-	operator std::string() const override
+	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
+	operator T() const
+	{
+		return _value.size();
+	}
+
+	operator std::string() const
 	{
 		std::ostringstream oss;
 		oss << "[";
@@ -74,17 +95,5 @@ public:
 		}
 		oss << "]";
 		return std::move(oss.str());
-	};
-	operator int() const override
-	{
-		return _value.size();
-	};
-	operator double() const override
-	{
-		return _value.size();
-	};
-	operator bool() const override
-	{
-		return !_value.empty();
-	};
+	}
 };

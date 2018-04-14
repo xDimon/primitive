@@ -98,23 +98,16 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 		throw std::runtime_error("Bad context-type for this service");
 	}
 
-	std::unique_ptr<const SObj> input;
+	SObj input;
 	try
 	{
 		_log.info("IN  %s", httpContext->getRequest()->uri().query().c_str());
 
-		input = std::unique_ptr<const SObj>(
-			dynamic_cast<const SObj*>(
-				SerializerFactory::create("uri")->decode(
-					httpContext->getRequest()->uri().query()
-				)
-			)
+		auto&& rawInput = SerializerFactory::create("uri")->decode(
+			httpContext->getRequest()->uri().query()
 		);
 
-//		auto response = std::make_unique<SObj>();
-//		response->insert("status", new SBool(true));
-//
-//		auto out = SerializerFactory::create("json")->encode(response.get());
+		input = rawInput.is<SObj>() ? dynamic_cast<SObj&>(rawInput) : SObj();
 
 		std::ostringstream oss;
 
@@ -250,14 +243,14 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 	{
 		auto serializer = SerializerFactory::create("json");
 
-		auto output = std::make_shared<SObj>();
-		output->insert("status", new SBool(false));
-		output->insert("message", new SStr(exception.what()));
-		if (input)
+		SObj output;
+		output.emplace("status", false);
+		output.emplace("message", exception.what());
+		if (!input.empty())
 		{
-			output->insert("receivedData", new SStr(serializer->encode(input.get())));
+			output.emplace("receivedData", serializer->encode(input));
 		}
-		std::string out(serializer->encode(output.get()));
+		std::string out(serializer->encode(output));
 
 		httpContext->transmit(out.c_str(), out.length(), "text/plain; charset=utf-8", true);
 

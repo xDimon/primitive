@@ -33,7 +33,7 @@ private:
 	Log _log;
 	std::shared_ptr<TransportContext> _context;
 	std::weak_ptr<Session> _session;
-	std::queue<const SVal*> _output;
+	std::queue<SVal> _output;
 	std::shared_ptr<Timeout> _timeout;
 	bool _close;
 	bool _closed;
@@ -62,7 +62,7 @@ public:
 	std::shared_ptr<Session> getSession();
 	void resetSession();
 
-	void out(const SVal* value, bool close = false);
+	void out(SVal value, bool close = false);
 
 	void send();
 };

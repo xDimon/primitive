@@ -21,29 +21,27 @@
 
 #pragma once
 
-#include "SVal.hpp"
+#include "SBase.hpp"
+#include <cstddef>
 
-class SNull: public SVal
+class SNull: public SBase
 {
-	SNull* clone() const override
+public:
+	// Default-constructor
+	SNull() = default;
+
+	SNull(nullptr_t)
 	{
-		return new SNull();
 	}
 
-	operator std::string() const override
-	{
-		return std::string("null");
-	};
-	operator int() const override
+	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
+	operator T() const
 	{
 		return 0;
-	};
-	operator double() const override
+	}
+
+	operator std::string() const
 	{
-		return 0.0;
-	};
-	operator bool() const override
-	{
-		return false;
-	};
+		return "null";
+	}
 };

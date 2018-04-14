@@ -65,7 +65,7 @@ enum class Token {
 	UNKNOWN		= 255
 };
 
-SVal* TlvSerializer::decode(const std::string& data)
+SVal TlvSerializer::decode(const std::string& data)
 {
 	_iss.str(data);
 	_iss.clear(_iss.goodbit);
@@ -75,27 +75,27 @@ SVal* TlvSerializer::decode(const std::string& data)
 		throw std::runtime_error("No data for parsing");
 	}
 
-	SVal* value = nullptr;
+	SVal value;
 
 	try
 	{
 		value = decodeValue();
+
+		// Проверяем лишние данные в конце
+		if (!_iss.eof() && (_flags & Serializer::STRICT) != 0)
+		{
+			throw std::runtime_error("Redundant bytes after parsed data");
+		}
 	}
 	catch (std::runtime_error& exception)
 	{
 		throw std::runtime_error(std::string("Can't decode TLV ← ") + exception.what());
 	}
 
-	// Проверяем лишние данные в конце
-	if (!_iss.eof() && (_flags & Serializer::STRICT) != 0)
-	{
-		throw std::runtime_error("Redundant bytes after parsed data");
-	}
-
 	return value;
 }
 
-std::string TlvSerializer::encode(const SVal* value)
+std::string TlvSerializer::encode(const SVal& value)
 {
 	try
 	{
@@ -109,7 +109,7 @@ std::string TlvSerializer::encode(const SVal* value)
 	return std::move(_oss.str());
 }
 
-SVal* TlvSerializer::decodeValue()
+SVal TlvSerializer::decodeValue()
 {
 	if (_iss.eof())
 	{
@@ -162,9 +162,9 @@ SVal* TlvSerializer::decodeValue()
 	}
 }
 
-SObj* TlvSerializer::decodeObject()
+SVal TlvSerializer::decodeObject()
 {
-	auto obj = std::make_unique<SObj>();
+	SObj obj;
 
 	auto c = static_cast<Token>(_iss.get());
 	if (c != Token::OBJECT)
@@ -175,15 +175,15 @@ SObj* TlvSerializer::decodeObject()
 	if (static_cast<Token>(_iss.peek()) == Token::OBJECT_END)
 	{
 		_iss.ignore();
-		return obj.release();
+		return obj;
 	}
 
 	while (!_iss.eof())
 	{
-		std::unique_ptr<SStr> key;
+		SStr key;
 		try
 		{
-			key.reset(decodeString());
+			key = decodeString().as<SStr>();
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -192,7 +192,7 @@ SObj* TlvSerializer::decodeObject()
 
 		try
 		{
-			obj->emplace(key->value(), decodeValue());
+			obj.emplace(key.value(), decodeValue());
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -202,14 +202,14 @@ SObj* TlvSerializer::decodeObject()
 		if (static_cast<Token>(_iss.peek()) == Token::OBJECT_END)
 		{
 			_iss.ignore();
-			return obj.release();
+			return obj;
 		}
 	}
 
 	throw std::runtime_error("Unexpect out of data during parse object");
 }
 
-SArr* TlvSerializer::decodeArray()
+SVal TlvSerializer::decodeArray()
 {
 	auto arr = std::make_unique<SArr>();
 
@@ -246,7 +246,7 @@ SArr* TlvSerializer::decodeArray()
 	throw std::runtime_error("Unexpect out of data during parse array");
 }
 
-SStr* TlvSerializer::decodeString()
+SVal TlvSerializer::decodeString()
 {
 	auto str = std::make_unique<SStr>();
 
@@ -337,7 +337,7 @@ SStr* TlvSerializer::decodeString()
 	throw std::runtime_error("Unexpect out of data during parse string value");
 }
 
-SBinary* TlvSerializer::decodeBinary()
+SVal TlvSerializer::decodeBinary()
 {
 	auto token = static_cast<Token>(_iss.get());
 
@@ -378,7 +378,7 @@ SBinary* TlvSerializer::decodeBinary()
 	return new SBinary(bin);
 }
 
-SBool* TlvSerializer::decodeBool()
+SVal TlvSerializer::decodeBool()
 {
 	auto c = static_cast<Token>(_iss.get());
 	switch (c)
@@ -391,7 +391,7 @@ SBool* TlvSerializer::decodeBool()
 	}
 }
 
-SNull* TlvSerializer::decodeNull()
+SVal TlvSerializer::decodeNull()
 {
 	if (static_cast<Token>(_iss.get()) != Token::NULL)
 	{
@@ -401,7 +401,7 @@ SNull* TlvSerializer::decodeNull()
 	return new SNull();
 }
 
-SNum* TlvSerializer::decodeInteger()
+SVal TlvSerializer::decodeInteger()
 {
 	int bytes = 0;
 	bool negative = false;
@@ -445,7 +445,7 @@ SNum* TlvSerializer::decodeInteger()
 	return new SInt((negative ? -1 : 1) * le64toh(data.i));
 }
 
-SNum* TlvSerializer::decodeFloat()
+SVal TlvSerializer::decodeFloat()
 {
 	auto token = static_cast<Token>(_iss.get());
 	switch (token)
@@ -494,20 +494,20 @@ SNum* TlvSerializer::decodeFloat()
 	}
 }
 
-void TlvSerializer::encodeNull(const SNull* value)
+void TlvSerializer::encodeNull(const SVal& value)
 {
 	_oss.put(static_cast<char>(Token::NULL));
 }
 
-void TlvSerializer::encodeBool(const SBool* value)
+void TlvSerializer::encodeBool(const SVal& value)
 {
-	_oss.put(static_cast<char>(value->value() ? Token::TRUE : Token::FALSE));
+	_oss.put(static_cast<char>(value.as<SBool>() ? Token::TRUE : Token::FALSE));
 }
 
-void TlvSerializer::encodeString(const SStr* value)
+void TlvSerializer::encodeString(const SVal& value)
 {
 	_oss.put(static_cast<char>(Token::STRING));
-	_oss << value->value();
+	_oss << value.as<SStr>().value();
 	_oss.put(static_cast<char>(Token::END));
 }
 
@@ -518,26 +518,28 @@ void TlvSerializer::encodeKey(const std::string& key)
 	_oss.put(static_cast<char>(Token::END));
 }
 
-void TlvSerializer::encodeBinary(const SBinary* value)
+void TlvSerializer::encodeBinary(const SVal& value)
 {
-	if (value->value().size() <= std::numeric_limits<uint8_t>::max())
+	const auto& bin = value.as<SBinary>();
+
+	if (bin.value().size() <= std::numeric_limits<uint8_t>::max())
 	{
 		_oss.put(static_cast<char>(Token::BINARY_255));
-		_oss.put(static_cast<uint8_t>(value->value().size()));
+		_oss.put(static_cast<uint8_t>(bin.value().size()));
 	}
-	else if (value->value().size() <= std::numeric_limits<uint16_t>::max())
+	else if (bin.value().size() <= std::numeric_limits<uint16_t>::max())
 	{
 		_oss.put(static_cast<char>(Token::BINARY_64K));
-		auto size_le = htole16(static_cast<uint16_t>(value->value().size()));
+		auto size_le = htole16(static_cast<uint16_t>(bin.value().size()));
 		for (size_t i = 0; i < sizeof(size_le); i++)
 		{
 			_oss.put(reinterpret_cast<uint8_t*>(&size_le)[i]);
 		}
 	}
-	else if (value->value().size() <= std::numeric_limits<uint32_t>::max())
+	else if (bin.value().size() <= std::numeric_limits<uint32_t>::max())
 	{
 		_oss.put(static_cast<char>(Token::BINARY_4G));
-		auto size_le = htole32(static_cast<uint32_t>(value->value().size()));
+		auto size_le = htole32(static_cast<uint32_t>(bin.value().size()));
 		for (size_t i = 0; i < sizeof(size_le); i++)
 		{
 			_oss.put(reinterpret_cast<uint8_t*>(&size_le)[i]);
@@ -548,122 +550,130 @@ void TlvSerializer::encodeBinary(const SBinary* value)
 		throw std::runtime_error("Too long binary data");
 	}
 
-	_oss.write(value->value().data(), value->value().size());
+	_oss.write(bin.value().data(), bin.value().size());
 }
 
-void TlvSerializer::encodeInteger(const SInt* value)
+void TlvSerializer::encodeNumber(const SVal& value)
 {
-	if (value->value() == 0)
+	if (value.is<SInt>())
 	{
-		_oss.put(static_cast<char>(Token::ZERO));
+		if (value.as<SInt>().value() == 0)
+		{
+			_oss.put(static_cast<char>(Token::ZERO));
+			return;
+		}
+
+		int bytes = 0;
+
+		bool negative = value.as<SInt>().value() < 0;
+
+		auto absValue = static_cast<uint64_t>(llabs(value.as<SInt>().value()));
+
+		if (absValue == 0)
+		{
+			_oss.put(static_cast<char>(Token::ZERO));
+			bytes = 0;
+		}
+		else if (absValue <= UINT8_MAX)
+		{
+			_oss.put(static_cast<char>(negative ? Token::NEG_INT_8 : Token::POS_INT_8));
+			bytes = 1;
+		}
+		else if (absValue <= UINT16_MAX)
+		{
+			_oss.put(static_cast<char>(negative ? Token::NEG_INT_16 : Token::POS_INT_16));
+			bytes = 2;
+		}
+		else if (absValue <= UINT32_MAX)
+		{
+			_oss.put(static_cast<char>(negative ? Token::NEG_INT_32 : Token::POS_INT_32));
+			bytes = 4;
+		}
+		else if (absValue <= UINT64_MAX)
+		{
+			_oss.put(static_cast<char>(negative ? Token::NEG_INT_64 : Token::POS_INT_64));
+			bytes = 8;
+		}
+		else
+		{
+			throw std::runtime_error("Bad numeric value");
+		}
+
+		union
+		{
+			uint64_t i;
+			char c[8];
+		} data = {htole64(absValue)};
+
+		for (auto i = 0; i < bytes; i++)
+		{
+			_oss.put(data.c[i]);
+		}
 		return;
 	}
-
-	int bytes = 0;
-
-	bool negative = value->value() < 0;
-
-	auto absValue = static_cast<uint64_t>(llabs(value->value()));
-
-	if (absValue == 0)
+	if (value.is<SFloat>())
 	{
-		_oss.put(static_cast<char>(Token::ZERO));
-		bytes = 0;
-	}
-	else if (absValue <= UINT8_MAX)
-	{
-		_oss.put(static_cast<char>(negative ? Token::NEG_INT_8 : Token::POS_INT_8));
-		bytes = 1;
-	}
-	else if (absValue <= UINT16_MAX)
-	{
-		_oss.put(static_cast<char>(negative ? Token::NEG_INT_16 : Token::POS_INT_16));
-		bytes = 2;
-	}
-	else if (absValue <= UINT32_MAX)
-	{
-		_oss.put(static_cast<char>(negative ? Token::NEG_INT_32 : Token::POS_INT_32));
-		bytes = 4;
-	}
-	else if (absValue <= UINT64_MAX)
-	{
-		_oss.put(static_cast<char>(negative ? Token::NEG_INT_64 : Token::POS_INT_64));
-		bytes = 8;
-	}
-	else
-	{
-		throw std::runtime_error("Bad numeric value");
-	}
+		auto i64 = static_cast<int64_t>(value.as<SFloat>().value());
+		if (static_cast<decltype(value.as<SFloat>().value())>(i64) == value.as<SFloat>().value())
+		{
+			encodeNumber(i64);
+			return;
+		}
 
-	union
-	{
-		uint64_t i;
-		char c[8];
-	} data = {htole64(absValue)};
+		auto f32 = static_cast<float_t>(value.as<SFloat>().value());
+		if (static_cast<decltype(value.as<SFloat>().value())>(f32) == value.as<SFloat>().value())
+		{
+			char data[4];
 
-	for (auto i = 0; i < bytes; i++)
-	{
-		_oss.put(data.c[i]);
-	}
-}
+			f32 = htole32(f32);
+			memcpy(data, &f32, sizeof(data));
 
-void TlvSerializer::encodeFloat(const SFloat* value)
-{
-	auto i64 = static_cast<int64_t>(value->value());
-	if (static_cast<decltype(value->value())>(i64) == value->value())
-	{
-		SInt intVal(i64);
-		encodeInteger(&intVal);
-		return;
-	}
+			_oss.put(static_cast<char>(Token::FLOAT_32));
+			for (char i : data)
+			{
+				_oss.put(i);
+			}
+			return;
+		}
 
-	auto f32 = static_cast<float_t>(value->value());
-	if (static_cast<decltype(value->value())>(f32) == value->value())
-	{
-		char data[4];
+		auto f64 = static_cast<double_t>(value.as<SFloat>().value());
 
-		f32 = htole32(f32);
-		memcpy(data, &f32, sizeof(data));
+		char data[8];
 
-		_oss.put(static_cast<char>(Token::FLOAT_32));
+		f64 = htole64(f64);
+		memcpy(data, &f64, sizeof(data));
+
+		_oss.put(static_cast<char>(Token::FLOAT_64));
 		for (char i : data)
 		{
 			_oss.put(i);
 		}
-		return;
-	}
-
-	auto f64 = static_cast<double_t>(value->value());
-
-	char data[8];
-
-	f64 = htole64(f64);
-	memcpy(data, &f64, sizeof(data));
-
-	_oss.put(static_cast<char>(Token::FLOAT_64));
-	for (char i : data)
-	{
-		_oss.put(i);
 	}
 }
 
-void TlvSerializer::encodeArray(const SArr* value)
+void TlvSerializer::encodeArray(const SVal& value)
 {
+	const auto& array = value.as<SArr>();
+
 	_oss.put(static_cast<char>(Token::ARRAY));
-	std::for_each(value->cbegin(), value->cend(),
-		[this](const SVal* val) {
+	std::for_each(array.cbegin(), array.cend(),
+		[this]
+		(const SVal& val)
+		{
 			encodeValue(val);
 		}
 	);
 	_oss.put(static_cast<char>(Token::ARRAY_END));
 }
 
-void TlvSerializer::encodeObject(const SObj* value)
+void TlvSerializer::encodeObject(const SVal& value)
 {
+	const auto& object = value.as<SObj>();
+
 	_oss.put(static_cast<char>(Token::OBJECT));
-	std::for_each(value->cbegin(), value->cend(),
+	std::for_each(object.cbegin(), object.cend(),
 		[this]
-		(const std::pair<const std::string&, const SVal*>& element)
+		(const std::pair<std::string, SVal>& element)
 		{
 			encodeKey(element.first);
 			encodeValue(element.second);
@@ -672,39 +682,39 @@ void TlvSerializer::encodeObject(const SObj* value)
 	_oss.put(static_cast<char>(Token::OBJECT_END));
 }
 
-void TlvSerializer::encodeValue(const SVal* value)
+void TlvSerializer::encodeValue(const SVal& value)
 {
-	if (auto pStr = dynamic_cast<const SStr*>(value))
+	if (value.is<SStr>())
 	{
-		encodeString(pStr);
+		encodeString(value);
 	}
-	else if (auto pInteger = dynamic_cast<const SInt*>(value))
+	else if (value.is<SInt>())
 	{
-		encodeInteger(pInteger);
+		encodeNumber(value);
 	}
-	else if (auto pFloat = dynamic_cast<const SFloat*>(value))
+	else if (value.is<SFloat>())
 	{
-		encodeFloat(pFloat);
+		encodeNumber(value);
 	}
-	else if (auto pObj = dynamic_cast<const SObj*>(value))
+	else if (value.is<SObj>())
 	{
-		encodeObject(pObj);
+		encodeObject(value);
 	}
-	else if (auto pArr = dynamic_cast<const SArr*>(value))
+	else if (value.is<SArr>())
 	{
-		encodeArray(pArr);
+		encodeArray(value);
 	}
-	else if (auto pBool = dynamic_cast<const SBool*>(value))
+	else if (value.is<SBool>())
 	{
-		encodeBool(pBool);
+		encodeBool(value);
 	}
-	else if (auto pNull = dynamic_cast<const SNull*>(value))
+	else if (value.is<SNull>())
 	{
-		encodeNull(pNull);
+		encodeNull(value);
 	}
-	else if (auto pBin = dynamic_cast<const SBinary*>(value))
+	else if (value.is<SBinary>())
 	{
-		encodeBinary(pBin);
+		encodeBinary(value);
 	}
 	else
 	{

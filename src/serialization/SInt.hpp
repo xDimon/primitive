@@ -37,40 +37,30 @@ private:
 public:
 	SInt(type value)
 	: _value(value)
-	{}
-
-	SInt* clone() const override
 	{
-		return new SInt(_value);
 	}
 
-	virtual SInt& operator=(SInt const& that)
-	{
-		_value = that._value;
-		return *this;
-	}
+//	SInt& operator=(SInt const& that)
+//	{
+//		_value = that._value;
+//		return *this;
+//	}
 
 	type value() const
 	{
 		return _value;
 	}
 
-	operator std::string() const override
+	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
+	operator T() const
+	{
+		return _value;
+	}
+
+	operator std::string() const
 	{
 		std::ostringstream oss;
 		oss << _value;
 		return std::move(oss.str());
-	};
-	operator int() const override
-	{
-		return _value;
-	};
-	operator double() const override
-	{
-		return _value;
-	};
-	operator bool() const override
-	{
-		return _value != 0;
-	};
+	}
 };

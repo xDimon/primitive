@@ -21,49 +21,63 @@
 
 #pragma once
 
-#include "SVal.hpp"
+#include "SBase.hpp"
 
+#include <string>
 #include <sstream>
 
-class SStr : public SVal
+class SStr : public SBase
 {
+public:
+	typedef std::string type;
+
 private:
-	std::string _value;
+	type _value;
 
 public:
+	// Default-constructor
 	SStr() = default;
 
-	SStr(std::string value)
+	SStr(const std::string& value)
+	: _value(value)
+	{
+	}
+
+	SStr(std::string&& value)
 	: _value(std::move(value))
-	{}
-
-	SStr* clone() const override
 	{
-		auto copy = new SStr();
-		copy->_value = _value;
-		return copy;
 	}
 
-	SStr(SStr&& tmp)
+	// Copy-constructor
+	SStr(const SStr& that)
+	: _value(that._value)
 	{
-		_value.swap(tmp._value);
 	}
 
-	SStr& operator=(SStr&& tmp)
+	// Move-constructor
+	SStr(SStr&& that) noexcept
+	: _value(std::move(that._value))
 	{
-		_value.swap(tmp._value);
+	}
+
+	// Copy-assignment
+	virtual SStr& operator=(SStr const& that)
+	{
+		_value = that._value;
 		return *this;
 	}
 
-	SStr(const SStr& tmp) // Copy-constructor
+	// Move-assignment
+	SStr& operator=(SStr&& that) noexcept
 	{
-		_value = tmp._value;
+		_value = std::move(that._value);
+		return *this;
 	}
 
-	virtual SStr& operator=(SStr const& tmp)
+	// Compare
+	bool operator<(const SStr& other)
 	{
-		_value = tmp._value;
-		return *this;
+		return _value < other._value;
 	}
 
 	void insert(uint32_t symbol)
@@ -76,61 +90,16 @@ public:
 		return _value;
 	}
 
-	struct Cmp
+	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
+	operator T() const
 	{
-		bool operator()(const SStr* left, const SStr* right)
-		{
-			return left->value() < right->value();
-		}
-	};
+		T ret = 0;
+		std::istringstream(_value).operator>>(ret);
+		return ret;
+	}
 
-	operator std::string() const override
+	operator std::string() const
 	{
 		return _value;
-	};
-	operator int() const override
-	{
-		int64_t intVal = 0;
-		std::istringstream iss(_value);
-		iss >> intVal;
-		return intVal;
-	};
-	operator double() const override
-	{
-		double fltVal = 0;
-		std::istringstream iss(_value);
-		iss >> fltVal;
-		return fltVal;
-	};
-	operator bool() const override
-	{
-		if (_value.empty())
-		{
-			return false;
-		}
-		{
-			double fltVal = 0;
-			std::istringstream iss(_value);
-			iss >> fltVal;
-			if (fltVal)
-			{
-				return true;
-			}
-		}
-		{
-			std::istringstream iss(_value);
-			for (;;)
-			{
-				auto c = iss.get();
-				if (c == -1)
-				{
-					return false;
-				}
-				if (c > ' ')
-				{
-					return true;
-				}
-			}
-		}
-	};
+	}
 };
