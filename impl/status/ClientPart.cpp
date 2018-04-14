@@ -235,7 +235,7 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 
 		auto out = oss.str();
 
-		httpContext->transmit(out.c_str(), out.length(), "text/pain; charset=utf-8", true);
+		httpContext->transmit(out, "text/pain; charset=utf-8", true);
 
 		_log.info("OUT Send status info (load=%0.03f%%)", SysInfo::getInstance()._cpuUsageOnPercent->avgPerSec(std::chrono::seconds(15)));
 	}
@@ -252,7 +252,7 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 		}
 		std::string out(serializer->encode(output));
 
-		httpContext->transmit(out.c_str(), out.length(), "text/plain; charset=utf-8", true);
+		httpContext->transmit(out, "text/plain; charset=utf-8", true);
 
 		_log.info("OUT %s", out.c_str());
 
