@@ -144,7 +144,7 @@ void LpsContext::send()
 			auto output = std::move(_output.front());
 			_output.pop();
 
-			auto out = SerializerFactory::create("json")->encode(output);
+			auto out = SerializerFactory::create("json")->encode(std::move(output));
 
 			_context->transmit(out, "text", _close && _output.empty());
 
