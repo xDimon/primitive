@@ -192,15 +192,15 @@ void ConnectionManager::wait()
 				return;
 			}
 
-			std::vector<std::shared_ptr<Connection>> connections;
-			for (auto& i : _allConnections)
-			{
-				connections.emplace_back(i.second);
-			}
-			for (auto& connection : connections)
-			{
-				remove(connection);
-			}
+//			std::vector<std::shared_ptr<Connection>> connections;
+//			for (auto& i : _allConnections)
+//			{
+//				connections.emplace_back(i.second);
+//			}
+//			for (auto& connection : connections)
+//			{
+//				remove(connection);
+//			}
 
 			_mutex.unlock();
 

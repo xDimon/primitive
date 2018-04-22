@@ -53,6 +53,7 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 TcpConnection::~TcpConnection()
 {
 	shutdown(_sock, SHUT_RD);
+	writeToSocket();
 	_log.debug("%s destroyed", name().c_str());
 }
 

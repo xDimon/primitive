@@ -30,13 +30,15 @@ private:
 	ucontext_t* _context;
 
 public:
+	RollbackStackAndRestoreContext() = delete;
 	RollbackStackAndRestoreContext(ucontext_t* context) noexcept
 	: _context(context)
-	{};
+	{
+	};
 	~RollbackStackAndRestoreContext() noexcept override
 	{
 		ThreadPool::continueContext(_context);
-	};
+	}
 
 	// Non-copyable
 	RollbackStackAndRestoreContext(const RollbackStackAndRestoreContext&) = delete; // Copy-constructor
