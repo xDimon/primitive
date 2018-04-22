@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception& exception)
 	{
-		printf("Fail get opptions ← %s", exception.what());
+		printf("Fail get opptions ← %s\n", exception.what());
 		return EXIT_FAILURE;
 	}
 
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception& exception)
 	{
-		printf("Fail get configuration ← %s", exception.what());
+		printf("Fail get configuration ← %s\n", exception.what());
 		return EXIT_FAILURE;
 	}
 
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception& exception)
 	{
-		printf("Fail logging initialize ← %s", exception.what());
+		printf("Fail logging initialize ← %s\n", exception.what());
 		return EXIT_FAILURE;
 	}
 
