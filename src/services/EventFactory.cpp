@@ -28,7 +28,8 @@ bool EventFactory::reg(const std::string& name, std::shared_ptr<Event>(* creator
 	auto i = factory._creators.find(name);
 	if (i != factory._creators.end())
 	{
-		throw std::runtime_error("Attepmt to register event with the same name (" + name + ")");
+		std::cerr << "Internal error: Attepmt to register event with the same name (" << name << ")" << std::endl;
+		exit(EXIT_FAILURE);
 	}
 	factory._creators.emplace(name, creator);
 	return true;

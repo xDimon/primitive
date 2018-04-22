@@ -48,7 +48,7 @@ private:
 
 public:
 	static Dummy reg(
-		const std::string& name,
+		const std::string& type,
 		std::shared_ptr<Service>(*)(const Setting &setting)
 	) noexcept;
 	static std::shared_ptr<Service> create(const Setting& setting);

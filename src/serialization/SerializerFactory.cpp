@@ -21,16 +21,17 @@
 
 #include "SerializerFactory.hpp"
 
-Dummy SerializerFactory::reg(const std::string& name, std::shared_ptr<Serializer> (* creator)(uint32_t flags)) noexcept
+Dummy SerializerFactory::reg(const std::string& type, std::shared_ptr<Serializer> (* creator)(uint32_t flags)) noexcept
 {
 	auto& factory = getInstance();
 
-	auto i = factory._creators.find(name);
+	auto i = factory._creators.find(type);
 	if (i != factory._creators.end())
 	{
-		throw std::runtime_error("Attepmt to register serializer with the same name (" + name + ")");
+		std::cerr << "Internal error: Attepmt to register serializer with the same type (" << type << ")" << std::endl;
+		exit(EXIT_FAILURE);
 	}
-	factory._creators.emplace(name, creator);
+	factory._creators.emplace(type, creator);
 	return Dummy{};
 }
 

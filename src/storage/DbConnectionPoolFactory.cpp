@@ -19,6 +19,7 @@
 // DbConnectionPoolFactory.cpp
 
 
+#include <iostream>
 #include "DbConnectionPoolFactory.hpp"
 
 Dummy DbConnectionPoolFactory::reg(const std::string& type, std::shared_ptr<DbConnectionPool>(* creator)(const Setting&)) noexcept
@@ -28,7 +29,8 @@ Dummy DbConnectionPoolFactory::reg(const std::string& type, std::shared_ptr<DbCo
 	auto i = factory._creators.find(type);
 	if (i != factory._creators.end())
 	{
-		throw std::runtime_error("Attepmt to register database connection pool with the same type (" + type + ")");
+		std::cerr << "Internal error: Attepmt to register database connection pool with the same type (" << type << ")" << std::endl;
+		exit(EXIT_FAILURE);
 	}
 
 	factory._creators.emplace(type, creator);
