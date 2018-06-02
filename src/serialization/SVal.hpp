@@ -452,7 +452,7 @@ public:
 		{
 			return *reinterpret_cast<const T*>(&_storage);
 		}
-		throw std::runtime_error("Unsuitable type");
+		throw std::runtime_error("Value has other type");
 	}
 
 	template<typename T, typename std::enable_if<
@@ -473,7 +473,7 @@ public:
 		{
 			return _storage.vStr.value();
 		}
-		throw std::runtime_error("Unsuitable type");
+		throw std::runtime_error("Value has other type");
 	}
 
 	// Representation
@@ -484,7 +484,7 @@ public:
 		{
 			return *reinterpret_cast<T*>(&_storage);
 		}
-		throw std::runtime_error("Unsuitable type");
+		throw std::runtime_error("Value has other type");
 	}
 
 	template<typename T, typename std::enable_if<
@@ -505,7 +505,7 @@ public:
 		{
 			return _storage.vStr.value();
 		}
-		throw std::runtime_error("Unsuitable type");
+		throw std::runtime_error("Value has other type");
 	}
 
 

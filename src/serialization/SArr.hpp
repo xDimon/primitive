@@ -27,6 +27,7 @@
 #include <functional>
 #include <algorithm>
 #include <stddef.h>
+#include "SVal.hpp"
 
 class SArr final: public SBase, public std::vector<SVal>
 {

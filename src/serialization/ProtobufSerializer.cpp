@@ -20,9 +20,10 @@
 
 
 #include "ProtobufSerializer.hpp"
-#include "SObj.hpp"
 
 #include <iomanip>
+#include "SObj.hpp"
+#include "SArr.hpp"
 
 REGISTER_SERIALIZER(protobuf, ProtobufSerializer);
 
@@ -104,17 +105,17 @@ SVal ProtobufSerializer::decodeField(const google::protobuf::Message& msg, const
 
 	switch (field->cpp_type())
 	{
-#define _CONVERT(type, ctype, sfunc, afunc)                          \
-        case google::protobuf::FieldDescriptor::type:                \
-            if (repeated)                                            \
-            {                                                        \
-                return new ctype(ref->afunc(msg, field, index));     \
-            }                                                        \
-            else                                                     \
-            {                                                        \
-                return new ctype(ref->sfunc(msg, field));            \
-            }                                                        \
-            break;                                                   \
+#define _CONVERT(type, ctype, sfunc, afunc)						\
+		case google::protobuf::FieldDescriptor::type:			\
+			if (repeated)										\
+			{													\
+                return ctype(ref->afunc(msg, field, index));    \
+            }													\
+			else												\
+			{													\
+                return ctype(ref->sfunc(msg, field));           \
+            }													\
+			break;												\
 
 		_CONVERT(CPPTYPE_DOUBLE, SFloat, GetDouble, GetRepeatedDouble);
 		_CONVERT(CPPTYPE_FLOAT, SFloat, GetFloat, GetRepeatedFloat);
@@ -135,11 +136,11 @@ SVal ProtobufSerializer::decodeField(const google::protobuf::Message& msg, const
 
 			if (field->type() == google::protobuf::FieldDescriptor::TYPE_BYTES)
 			{
-				return new SBinary(value);
+				return SBinary(value);
 			}
 			else
 			{
-				return new SStr(value);
+				return SStr(value);
 			}
 		}
 
@@ -156,11 +157,11 @@ SVal ProtobufSerializer::decodeField(const google::protobuf::Message& msg, const
 		case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
 			if (repeated)
 			{
-				return new SInt(ref->GetRepeatedEnum(msg, field, index)->number());
+				return ref->GetRepeatedEnum(msg, field, index)->name();
 			}
 			else
 			{
-				return new SInt(ref->GetEnum(msg, field)->number());
+				return ref->GetEnum(msg, field)->name();
 			}
 
 		default:

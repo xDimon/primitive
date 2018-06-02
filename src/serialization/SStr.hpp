@@ -94,7 +94,8 @@ public:
 	operator T() const
 	{
 		T ret = 0;
-		std::istringstream(_value).operator>>(ret);
+		std::istringstream iss(_value);
+		iss >> ret;
 		return ret;
 	}
 

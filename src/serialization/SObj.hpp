@@ -27,7 +27,6 @@
 #include <functional>
 #include <cstddef>
 #include "SVal.hpp"
-#include "SArr.hpp"
 
 class SObj final : public SBase, public std::map<std::string, SVal>
 {
@@ -61,19 +60,74 @@ public:
 		return *this;
 	}
 
-	const SVal& get(const std::string& key, bool strict = false) const
+	bool has(const std::string& key) const
+	{
+		return find(key) != end();
+	}
+
+	template <typename T>
+	bool hasOf(const std::string& key) const
+	{
+		auto i = find(key);
+		return i != end() && i->second.is<T>();
+	}
+
+	const SVal& get(const std::string& key) const
 	{
 		auto i = find(key);
 		if (i == end())
 		{
-			if (strict)
-			{
-				throw std::runtime_error("Field '" + key + "' not found");
-			}
-			static const SVal undefined;
-			return undefined;
+			throw std::runtime_error("Field '" + key + "' not found");
 		}
 		return i->second;
+	}
+
+	SVal& get(const std::string& key)
+	{
+		auto i = find(key);
+		if (i == end())
+		{
+			throw std::runtime_error("Field '" + key + "' not found");
+		}
+		return i->second;
+	}
+
+	template <typename T>
+	T& getAs(const std::string& key)
+	{
+		auto i = find(key);
+		if (i == end())
+		{
+			throw std::runtime_error("Field '" + key + "' not found");
+		}
+		if (!i->second.is<T>())
+		{
+			if (i->second.isUndefined())
+			{
+				throw std::runtime_error("Field '" + key + "' undefined");
+			}
+			throw std::runtime_error("Field '" + key + "' has other type");
+		}
+		return i->second.as<T>();
+	}
+
+	template <typename T>
+	const T& getAs(const std::string& key) const
+	{
+		auto i = find(key);
+		if (i == end())
+		{
+			throw std::runtime_error("Field '" + key + "' not found");
+		}
+		if (!i->second.is<T>())
+		{
+			if (i->second.isUndefined())
+			{
+				throw std::runtime_error("Field '" + key + "' undefined");
+			}
+			throw std::runtime_error("Field '" + key + "' has other type");
+		}
+		return i->second.as<T>();
 	}
 
 	SVal extract(const std::string& key)
@@ -82,28 +136,44 @@ public:
 		auto i = find(key);
 		if (i == end())
 		{
-			return SVal();
+			throw std::runtime_error("Field '" + key + "' undefined");
 		}
 		ret = std::move(i->second);
 		erase(i);
-		return ret;
+		return std::move(ret);
+	}
+
+	template <typename T>
+	T extractAs(const std::string& key)
+	{
+		auto i = find(key);
+		if (i == end())
+		{
+			throw std::runtime_error("Field '" + key + "' undefined");
+		}
+		if (!i->second.is<T>())
+		{
+			if (i->second.isUndefined())
+			{
+				throw std::runtime_error("Field '" + key + "' undefined");
+			}
+			throw std::runtime_error("Field '" + key + "' has other type");
+		}
+		auto ret = std::move(i->second);
+		erase(i);
+		return std::move(ret.as<T>());
 	}
 
 	template<typename T>
-	void lookup(const std::string& key, T &value, bool strict = false) const
+	void lookup(const std::string& key, T &value) const
 	{
-		const auto& element = get(key);
-		if (element.isUndefined())
-		{
-			throw std::runtime_error("Field '" + key + "' not found");
-		}
-		value = (T)(element);
+		value = (T)get(key);
 	}
 
 	template <typename T>
 	inline void trylookup(const std::string& key, T &value) const noexcept
 	{
-		try	{ lookup(key, value, false); } catch (...) { value = T(); }
+		try	{ lookup(key, value); } catch (...) { value = T(); }
 	}
 
 	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>

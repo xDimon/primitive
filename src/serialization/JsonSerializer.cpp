@@ -186,10 +186,10 @@ SVal JsonSerializer::decodeObject()
 
 	while (!_iss.eof())
 	{
-		SStr key;
+		std::string key;
 		try
 		{
-			key = decodeString().as<SStr>();
+			key = std::move(decodeString().as<SStr>().value());
 		}
 		catch (const std::runtime_error& exception)
 		{
@@ -208,7 +208,7 @@ SVal JsonSerializer::decodeObject()
 
 		try
 		{
-			obj.emplace(key.value(), std::move(decodeValue()));
+			obj.emplace(std::move(key), std::move(decodeValue()));
 		}
 		catch (const std::runtime_error& exception)
 		{
