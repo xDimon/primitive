@@ -27,5 +27,5 @@
 class Context: public Shareable<Context>
 {
 public:
-	virtual ~Context() {};
+	virtual ~Context() = default;
 };

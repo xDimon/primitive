@@ -84,10 +84,10 @@ std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Sessio
 	return session;
 }
 
-std::shared_ptr<Session> SessionManager::getSession(Session::HID uid)
+std::shared_ptr<Session> SessionManager::getSession(Session::HID hid)
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
-	auto i = getInstance()._sessions.find(uid);
+	auto i = getInstance()._sessions.find(hid);
 
 	if (i != getInstance()._sessions.end())
 	{

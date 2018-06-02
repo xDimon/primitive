@@ -65,8 +65,6 @@ Thread::Thread(std::function<void()>& function)
 Thread::~Thread()
 {
 	_log.debug("Thread 'Worker#%zu' destroyed", _id);
-
-
 }
 
 void Thread::run(Thread* thread)

@@ -36,7 +36,7 @@ public:
 		_data.resize(length);
 		memcpy(_data.data(), data, length);
 	}
-	virtual ~Packet() {};
+	virtual ~Packet() = default;
 
 	inline const char *data() const
 	{
