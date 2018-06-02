@@ -47,10 +47,20 @@ public:
 		mysql_free_result(_data);
 	}
 
+	void free()
+	{
+		set(nullptr);
+	}
+
 	void set(MYSQL_RES* value)
 	{
+		if (_data != nullptr)
+		{
+			mysql_free_result(_data);
+		}
 		_data = value;
 	}
+
 	MYSQL_RES* get()
 	{
 		return _data;

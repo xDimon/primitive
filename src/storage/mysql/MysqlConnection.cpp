@@ -47,7 +47,8 @@ MysqlConnection::MysqlConnection(
 
 	mysql_options(_mysql, MYSQL_OPT_RECONNECT, &on);
 	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
-	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8mb4");
+//	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8mb4");
+	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8");
 	mysql_options(_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+00:00';\n");
 
 	if (mysql_real_connect(
@@ -224,7 +225,7 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 		if (pool) pool->metricAvgExecutionTime->addValue(timeSpent, now);
 	}
 
-	if (timeSpent >= 0.5)
+	if (timeSpent >= 5)
 	{
 		Log("mysql").warn("MySQL query too long: %0.03f sec\n\t\tFor query:\n\t\t%s", timeSpent, sql.c_str());
 	}
@@ -232,7 +233,10 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 	if (!success)
 	{
 		if (pool) pool->metricFailQueryCount->addValue();
-		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
+		if (!deadlockDetected())
+		{
+			Log("mysql").warn("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
+		}
 		return false;
 	}
 

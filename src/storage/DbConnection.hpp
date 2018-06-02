@@ -94,7 +94,7 @@ public:
 
 	virtual bool alive() = 0;
 
-	virtual bool startTransaction() = 0;
+	virtual bool startTransaction() __attribute_warn_unused_result__ = 0;
 	virtual bool deadlockDetected() = 0;
 	virtual bool inTransaction() = 0;
 
