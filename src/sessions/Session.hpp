@@ -27,8 +27,9 @@
 #include "../utils/Context.hpp"
 #include "../services/Service.hpp"
 #include "../utils/Timeout.hpp"
+#include "Communicate.hpp"
 
-class Session : public Shareable<Session>
+class Session : public Shareable<Session>, public Communicate
 {
 public:
 	typedef int64_t HID;
@@ -60,7 +61,6 @@ public:
 
 protected:
 	SID _sid;
-	std::shared_ptr<Context> _context;
 	bool _ready;
 
 public:
@@ -89,17 +89,6 @@ public:
 		return _sid;
 	}
 	void setSid(SID sid);
-
-	void assignContext(const std::shared_ptr<Context>& context)
-	{
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-		_context = context;
-	}
-	virtual std::shared_ptr<Context> getContext()
-	{
-//		return _context.lock();
-		return _context;
-	}
 
 	virtual bool load();
 	virtual bool save();
