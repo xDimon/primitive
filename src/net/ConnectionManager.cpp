@@ -192,6 +192,11 @@ void ConnectionManager::wait()
 				return;
 			}
 
+			for (auto& i : _allConnections)
+			{
+				i.second->setTtl(std::chrono::seconds(1));
+			}
+
 //			std::vector<std::shared_ptr<Connection>> connections;
 //			for (auto& i : _allConnections)
 //			{
