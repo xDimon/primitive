@@ -71,7 +71,7 @@ public:
 	bool inDefaultState() const;
 
 	void setChanged(bool isChanged = true);
-	inline bool isChanged() const
+	bool isChanged() const
 	{
 		return _changed;
 	}

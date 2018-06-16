@@ -61,7 +61,7 @@ public:
 	{
 		_changed = isChanged;
 	}
-	inline bool isChanged() const
+	bool isChanged() const
 	{
 		return _changed;
 	}
