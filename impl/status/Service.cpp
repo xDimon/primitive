@@ -38,14 +38,8 @@ void status::Service::activate()
 			throw std::runtime_error("Not found parts' configs");
 		}
 
-//		for (const auto& config : _setting["parts"])
-//		{
-
-		const auto& settings =  _setting["parts"];
-		for (auto i = 0; i < settings.getLength(); i++)
+		for (const auto& config : _setting["parts"])
 		{
-			const auto& config = settings[i];
-
 			std::string type;
 			if (!config.lookupValue("type", type) || type.empty())
 			{
