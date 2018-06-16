@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception& exception)
 	{
-		printf("Fail get opptions ← %s\n", exception.what());
+		std::cerr << "Fail get opptions ← " << exception.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception& exception)
 	{
-		printf("Fail get configuration ← %s\n", exception.what());
+		std::cerr << "Fail get configuration ← " << exception.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	}
 	catch (const std::exception& exception)
 	{
-		printf("Fail logging initialize ← %s\n", exception.what());
+		std::cerr << "Fail logging initialize ← " << exception.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
 	catch (const std::exception& exception)
 	{
 		log.error("Fail init server ← %s", exception.what());
+		std::cerr << "Fail init server ← " << exception.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 
