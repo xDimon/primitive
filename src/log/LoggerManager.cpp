@@ -49,11 +49,8 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 		{
 			const auto& settings = (*loggingSetting)["sinks"];
 
-			for (auto i = 0; i < settings.getLength(); i++)
+			for (const auto& setting : settings)
 			{
-				const auto& setting = settings[i];
-//			for (const auto& setting : settings)
-//			{
 				auto sink = std::make_shared<Sink>(setting);
 
 				if (lm._sinks.find(sink->name()) != lm._sinks.end())
@@ -76,11 +73,8 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 		{
 			const auto& settings = (*loggingSetting)["loggers"];
 
-			for (auto i = 0; i < settings.getLength(); i++)
+			for (const auto& setting : settings)
 			{
-				const auto& setting = settings[i];
-//			for (const auto& setting : settings)
-//			{
 				std::string name;
 				if (!setting.lookupValue("name", name))
 				{

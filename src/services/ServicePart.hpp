@@ -33,7 +33,7 @@ class ServicePart : public Shareable<ServicePart>, public Named
 {
 protected:
 	std::weak_ptr<Service> _service;
-	Log _log;
+	mutable Log _log;
 
 public:
 	ServicePart() = delete;
