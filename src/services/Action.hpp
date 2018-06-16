@@ -45,8 +45,9 @@ protected:
 	Id _lastConfirmedResponse;
 	mutable bool _answerSent;
 
-	virtual bool validate() = 0;
-	virtual bool execute() = 0;
+	virtual void prepare() {};
+	virtual void validate() = 0;
+	virtual void execute() = 0;
 
 public:
 	Action() = delete;
@@ -115,13 +116,13 @@ public:
 		ActionName::create                                                                      \
 	);
 
-#define DECLARE_ACTION(ActionName) \
+#define DECLARE_ACTION_WITH_BASE(ActionName, Base) \
 public:                                                                                         \
     ActionName() = delete;                                                                      \
-	ActionName(const ActionName&) = delete;                                                     \
-	ActionName& operator=(ActionName const&) = delete;                                          \
 	ActionName(ActionName&&) noexcept = delete;                                                 \
+	ActionName(const ActionName&) = delete;                                                     \
 	ActionName& operator=(ActionName&&) noexcept = delete;                                      \
+	ActionName& operator=(ActionName const&) = delete;                                          \
                                                                                                 \
 private:                                                                                        \
     ActionName(                                                                                 \
@@ -129,15 +130,15 @@ private:                                                                        
 		const std::shared_ptr<Context>& context,                                                \
 		const SVal& input                                                                       \
 	)                                                                                           \
-    : Action(servicePart, context, input)                                                       \
-    {};                                                                                         \
+    : Base(servicePart, context, input)                                                         \
+    {}                                                                                          \
                                                                                                 \
 public:                                                                                         \
     ~ActionName() override = default;                                                           \
                                                                                                 \
 private:                                                                                        \
-    bool validate() override;                                                                   \
-    bool execute() override;                                                                    \
+    void validate() override;                                                                   \
+    void execute() override;                                                                    \
                                                                                                 \
     static auto create(                                                                         \
 		const std::shared_ptr<::ServicePart>& servicePart,                                      \
@@ -148,3 +149,5 @@ private:                                                                        
         return std::shared_ptr<Action>(new ActionName(servicePart, context, input));            \
     }                                                                                           \
     static const Dummy __dummy;
+
+#define DECLARE_ACTION(ActionName) DECLARE_ACTION_WITH_BASE(ActionName, Action)

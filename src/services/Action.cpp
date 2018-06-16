@@ -55,24 +55,22 @@ Action::Action(
 
 	if (input.get("request").is<SStr>())
 	{
-		_actionName = input.get("request").as<SStr>().value();
-	}
-	else
-	{
-		int status;
-		_actionName = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
+		_actionName = input.getAs<SStr>("request").value();
 	}
 
-	if (input.get("_").is<SObj>())
+	if (input.has("_"))
 	{
-		auto& aux = input.get("_").as<SObj>();
+		auto& aux = input.getAs<SObj>("_");
 
 		aux.trylookup("ri", _requestId);
 		aux.trylookup("cr", _lastConfirmedResponse);
 		aux.trylookup("ce", _lastConfirmedEvent);
 	}
 
-	_data = input.get("data");
+	if (input.has("data"))
+	{
+		_data = std::move(input.extract("data"));
+	}
 }
 
 SObj Action::response(SVal&& data) const
@@ -138,13 +136,21 @@ bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_poin
 	TelemetryManager::metric(where + "/" + _actionName + "/count", 1)->addValue();
 	TelemetryManager::metric(where + "/" + _actionName + "/avg_per_sec", std::chrono::seconds(15))->addValue();
 
+	// Подготовка
+	try
+	{
+		prepare();
+	}
+	catch (const std::exception& exception)
+	{
+		TelemetryManager::metric(where + "/" + _actionName + "/invalid", 1)->addValue();
+		throw std::runtime_error(std::string() + "Fail preparing action for doing ← " + exception.what());
+	}
+
 	// Валидация
 	try
 	{
-		if (!validate())
-		{
-			throw std::runtime_error("Data isn't valid");
-		}
+		validate();
 	}
 	catch (const std::exception& exception)
 	{
@@ -155,10 +161,7 @@ bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_poin
 	// Выполнение
 	try
 	{
-		if (!execute())
-		{
-			throw std::runtime_error("Fail execute of action");
-		}
+		execute();
 	}
 	catch (const NopeException& exception)
 	{
