@@ -41,5 +41,11 @@ private:
 
 	std::shared_ptr<DbConnection> create() override;
 
-	DECLARE_DBCONNECTIONPOOL(MysqlConnectionPool)
+public:
+	const auto& dbname() const
+	{
+		return _dbname;
+	}
+
+DECLARE_DBCONNECTIONPOOL(MysqlConnectionPool)
 };

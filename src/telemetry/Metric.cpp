@@ -191,7 +191,9 @@ Metric::type Metric::avgPerSec(std::chrono::steady_clock::duration interval)
 		sum += std::get<2>(point);
 	}
 
-	auto timeSpent = static_cast<double>((endTime - beginTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+	auto timeSpent =
+		static_cast<double>(std::chrono::steady_clock::duration(endTime - beginTime).count()) /
+		static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
 
 	return (timeSpent > 0) ? (sum / timeSpent) : 0;
 }

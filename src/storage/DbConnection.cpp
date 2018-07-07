@@ -22,3 +22,28 @@
 #include "DbConnection.hpp"
 
 size_t DbConnection::_lastId = 0;
+
+DbConnection::DbConnection(const std::shared_ptr<DbConnectionPool>& pool)
+: id(++_lastId)
+, _captured(0)
+, _pool(pool)
+{
+	if (_pool.expired())
+	{
+		throw std::runtime_error("Attempt create DbConnection with wrong pool");
+	}
+
+	pool->metricSumConnections->addValue();
+	pool->metricCurrenConnections->addValue();
+}
+
+DbConnection::~DbConnection() //override
+{
+	if (_captured > 0)
+	{
+//		throw std::runtime_error("Destroy of captured connection ");
+	}
+
+	auto pool = _pool.lock();
+	if (pool) pool->metricCurrenConnections->addValue(-1);
+}

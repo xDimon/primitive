@@ -67,8 +67,6 @@ MysqlConnection::MysqlConnection(
 
 	timeout = 900;
 	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
-
-	pool->metricConnectCount->addValue();
 }
 
 MysqlConnection::MysqlConnection(
@@ -112,8 +110,6 @@ MysqlConnection::MysqlConnection(
 
 	timeout = 900;
 	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
-
-	pool->metricConnectCount->addValue();
 }
 
 MysqlConnection::~MysqlConnection()
@@ -219,7 +215,9 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 	auto success = mysql_query(_mysql, sql.c_str()) == 0;
 
 	auto now = std::chrono::steady_clock::now();
-	auto timeSpent = static_cast<double>((now - beginTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+	auto timeSpent =
+		static_cast<double>(std::chrono::steady_clock::duration(now - beginTime).count()) /
+		static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
 	if (timeSpent > 0)
 	{
 		if (pool) pool->metricAvgExecutionTime->addValue(timeSpent, now);
@@ -278,7 +276,9 @@ bool MysqlConnection::multiQuery(const std::string& sql)
 	auto success = mysql_query(_mysql, sql.c_str()) == 0;
 
 	auto now = std::chrono::steady_clock::now();
-	auto timeSpent = static_cast<double>((now - beginTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+	auto timeSpent =
+		static_cast<double>(std::chrono::steady_clock::duration(now - beginTime).count()) /
+		static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
 	if (timeSpent > 0)
 	{
 		if (pool) pool->metricAvgExecutionTime->addValue(timeSpent, now);

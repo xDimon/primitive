@@ -40,7 +40,8 @@ DbConnectionPool::DbConnectionPool(const Setting& setting)
 
 	_name = std::move(name);
 
-	metricConnectCount = TelemetryManager::metric("db/" + _name + "/connections", 1);
+	metricSumConnections = TelemetryManager::metric("db/" + _name + "/connections/count", 1);
+	metricCurrenConnections = TelemetryManager::metric("db/" + _name + "/connections/sum", 1);
 	metricSuccessQueryCount = TelemetryManager::metric("db/" + _name + "/queries", 1);
 	metricFailQueryCount = TelemetryManager::metric("db/" + _name + "/errors", 1);
 	metricAvgQueryPerSec = TelemetryManager::metric("db/" + _name + "/queries_per_second", std::chrono::seconds(15));

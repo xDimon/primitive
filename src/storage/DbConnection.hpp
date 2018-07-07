@@ -42,29 +42,15 @@ protected:
 	std::weak_ptr<DbConnectionPool> _pool;
 
 public:
+	DbConnection() = delete;
 	DbConnection(const DbConnection&) = delete;
-	DbConnection& operator=(DbConnection const&) = delete;
 	DbConnection(DbConnection&&) noexcept = delete;
+	DbConnection& operator=(DbConnection const&) = delete;
 	DbConnection& operator=(DbConnection&&) noexcept = delete;
 
-	explicit DbConnection(const std::shared_ptr<DbConnectionPool>& pool)
-	: id(++_lastId)
-	, _captured(0)
-	, _pool(pool)
-	{
-		if (_pool.expired())
-		{
-			throw std::runtime_error("Attempt create DbConnection with wrong pool");
-		}
-	}
+	explicit DbConnection(const std::shared_ptr<DbConnectionPool>& pool);
 
-	~DbConnection() //override
-	{
-		if (_captured > 0)
-		{
-//			throw std::runtime_error("Destroy of captured connection ");
-		}
-	}
+	~DbConnection() override;
 
 	size_t captured() const
 	{
@@ -88,6 +74,11 @@ public:
 			}
 		}
 		return _captured;
+	}
+
+	auto pool()
+	{
+		return _pool.lock();
 	}
 
 	virtual std::string escape(const std::string& str) = 0;

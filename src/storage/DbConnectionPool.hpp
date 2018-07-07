@@ -55,7 +55,8 @@ public:
 	explicit DbConnectionPool(const Setting& setting);
 	~DbConnectionPool() override = default;
 
-	std::shared_ptr<Metric> metricConnectCount;
+	std::shared_ptr<Metric> metricSumConnections;
+	std::shared_ptr<Metric> metricCurrenConnections;
 	std::shared_ptr<Metric> metricSuccessQueryCount;
 	std::shared_ptr<Metric> metricFailQueryCount;
 	std::shared_ptr<Metric> metricAvgQueryPerSec;

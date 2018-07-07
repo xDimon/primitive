@@ -139,7 +139,9 @@ bool WsPipe::processing(const std::shared_ptr<Connection>& connection_)
 				context->handle();
 
 				auto now = std::chrono::steady_clock::now();
-				auto timeSpent = static_cast<double>((now - beginTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+				auto timeSpent =
+					static_cast<double>(std::chrono::steady_clock::duration(now - beginTime).count()) /
+					static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
 				if (timeSpent > 0)
 				{
 					if (metricAvgExecutionTime) metricAvgExecutionTime->addValue(timeSpent, now);
@@ -163,7 +165,9 @@ bool WsPipe::processing(const std::shared_ptr<Connection>& connection_)
 				context->handle();
 
 				auto now = std::chrono::steady_clock::now();
-				auto timeSpent = static_cast<double>((now - beginTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+				auto timeSpent =
+					static_cast<double>(std::chrono::steady_clock::duration(now - beginTime).count()) /
+					static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
 				if (timeSpent > 0)
 				{
 					if (metricAvgExecutionTime) metricAvgExecutionTime->addValue(timeSpent, now);

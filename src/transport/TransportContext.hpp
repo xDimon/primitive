@@ -63,6 +63,10 @@ public:
 	{
 		transmit(data.c_str(), data.length(), contentType, close);
 	}
+	void transmit(const std::vector<char>& data, const std::string& contentType, bool close)
+	{
+		transmit(data.data(), data.size(), contentType, close);
+	}
 
 	void setHandler(const std::shared_ptr<Transport::Handler>& handler)
 	{

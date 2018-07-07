@@ -176,7 +176,9 @@ bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_poin
 	TelemetryManager::metric(where + "/" + _actionName + "/success", 1)->addValue();
 
 	auto now = std::chrono::steady_clock::now();
-	auto timeSpent = static_cast<double>((now - beginExecTime).count()) / static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
+	auto timeSpent =
+		static_cast<double>(std::chrono::steady_clock::duration(now - beginExecTime).count()) /
+		static_cast<double>(std::chrono::steady_clock::duration(std::chrono::seconds(1)).count());
 	if (timeSpent > 0)
 	{
 		TelemetryManager::metric(where + "/" + _actionName + "/avg_exec_time", std::chrono::seconds(15))->addValue(timeSpent, now);
