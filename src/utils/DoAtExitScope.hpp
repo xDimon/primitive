@@ -23,7 +23,7 @@
 
 #include <functional>
 
-class DoAtExitScope
+class DoAtExitScope final
 {
 private:
 	std::function<void()> _func;

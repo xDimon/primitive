@@ -24,7 +24,7 @@
 
 #include <string>
 
-class PercentEncoding
+class PercentEncoding final
 {
 public:
 	static std::string encode(const std::string& input);

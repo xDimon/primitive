@@ -21,7 +21,6 @@
 
 #pragma once
 
-
 struct Dummy final
 {
 	Dummy() noexcept = default; // Trivial-constructor

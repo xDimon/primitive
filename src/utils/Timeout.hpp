@@ -25,7 +25,7 @@
 #include <mutex>
 #include "TimeoutWatcher.hpp"
 
-class Timeout: public Shareable<Timeout>
+class Timeout final: public Shareable<Timeout>
 {
 private:
 	friend class TimeoutWatcher;

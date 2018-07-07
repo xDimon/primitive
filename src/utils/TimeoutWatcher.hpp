@@ -27,7 +27,7 @@
 
 class Timeout;
 
-class TimeoutWatcher: public Shareable<TimeoutWatcher>
+class TimeoutWatcher final: public Shareable<TimeoutWatcher>
 {
 private:
 	std::weak_ptr<Timeout> _wp;

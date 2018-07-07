@@ -23,7 +23,7 @@
 
 #include "../ServerTransport.hpp"
 
-class HttpServer : public ServerTransport
+class HttpServer final : public ServerTransport
 {
 	DECLARE_TRANSPORT(HttpServer);
 

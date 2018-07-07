@@ -25,7 +25,7 @@
 #include "WsFrame.hpp"
 #include "../../sessions/Session.hpp"
 
-class WsContext : public HttpContext
+class WsContext final : public HttpContext
 {
 protected:
 	bool _established;

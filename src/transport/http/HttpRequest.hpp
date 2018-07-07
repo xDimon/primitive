@@ -27,7 +27,7 @@
 #include "../../utils/Buffer.hpp"
 #include "HttpUri.hpp"
 
-class HttpRequest: public Buffer
+class HttpRequest final : public Buffer
 {
 public:
 	enum class Method {

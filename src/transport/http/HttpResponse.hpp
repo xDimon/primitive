@@ -27,7 +27,7 @@
 #include <sstream>
 #include <map>
 
-class HttpResponse: public Buffer
+class HttpResponse final: public Buffer
 {
 public:
 	enum class TransferEncoding {

@@ -24,7 +24,7 @@
 #include <exception>
 #include "ThreadPool.hpp"
 
-class RollbackStackAndRestoreContext: public std::exception
+class RollbackStackAndRestoreContext final: public std::exception
 {
 private:
 	ucontext_t* _context;

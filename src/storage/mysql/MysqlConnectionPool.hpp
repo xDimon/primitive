@@ -29,7 +29,7 @@
 #include <map>
 #include <deque>
 
-class MysqlConnectionPool : public DbConnectionPool
+class MysqlConnectionPool final : public DbConnectionPool
 {
 private:
 	std::string _dbname;

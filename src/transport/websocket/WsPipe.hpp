@@ -26,7 +26,7 @@
 #include "../../net/TcpConnection.hpp"
 #include "../../telemetry/Metric.hpp"
 
-class WsPipe : public Transport
+class WsPipe final : public Transport
 {
 private:
 	std::shared_ptr<Handler> _handler;

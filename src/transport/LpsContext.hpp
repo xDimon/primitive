@@ -27,7 +27,7 @@
 #include "../serialization/SArr.hpp"
 #include "TransportContext.hpp"
 
-class LpsContext: public Context
+class LpsContext final: public Context
 {
 private:
 	std::recursive_mutex _mutex;

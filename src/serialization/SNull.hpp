@@ -24,7 +24,7 @@
 #include "SBase.hpp"
 #include <cstddef>
 
-class SNull: public SBase
+class SNull final: public SBase
 {
 public:
 	// Default-constructor

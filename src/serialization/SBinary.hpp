@@ -21,8 +21,7 @@
 
 #pragma once
 
-
-class SBinary : public SBase
+class SBinary final: public SBase
 {
 private:
 	std::string _value;

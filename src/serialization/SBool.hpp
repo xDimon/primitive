@@ -23,7 +23,7 @@
 
 #include "SBase.hpp"
 
-class SBool: public SBase
+class SBool final : public SBase
 {
 public:
 	typedef bool type;

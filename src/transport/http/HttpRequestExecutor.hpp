@@ -28,7 +28,7 @@
 #include "HttpRequest.hpp"
 #include "../../net/TcpConnector.hpp"
 
-class HttpRequestExecutor: public Shareable<HttpRequestExecutor>
+class HttpRequestExecutor final: public Shareable<HttpRequestExecutor>
 {
 private:
 	ucontext_t* _savedCtx;

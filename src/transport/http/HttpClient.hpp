@@ -25,7 +25,7 @@
 #include "../ClientTransport.hpp"
 #include "../ServerTransport.hpp"
 
-class HttpClient : public ClientTransport
+class HttpClient final : public ClientTransport
 {
 public:
 	HttpClient(const HttpClient&) = delete;

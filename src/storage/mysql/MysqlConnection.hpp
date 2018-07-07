@@ -28,7 +28,7 @@
 
 class MysqlConnectionPool;
 
-class MysqlConnection : public DbConnection
+class MysqlConnection final : public DbConnection
 {
 private:
 	mutable	MYSQL* _mysql;
@@ -61,7 +61,7 @@ public:
 
 	~MysqlConnection() override;
 
-	std::string escape(const std::string& str) override;
+	std::string escape(const std::string& str) override final;
 
 	bool alive() override
 	{

@@ -23,7 +23,7 @@
 
 #include "../ServerTransport.hpp"
 
-class WsServer : public ServerTransport
+class WsServer final : public ServerTransport
 {
 	DECLARE_TRANSPORT(WsServer);
 

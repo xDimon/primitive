@@ -27,7 +27,7 @@
 #include <ucontext.h>
 #include "../utils/Shareable.hpp"
 
-class Task
+class Task final
 {
 public:
 	using Func = std::function<void()>;

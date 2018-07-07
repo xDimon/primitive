@@ -35,7 +35,7 @@
 #include <sstream>
 #include <string>
 
-class JsonSerializer : public Serializer
+class JsonSerializer final: public Serializer
 {
 public:
 	static const uint32_t ESCAPED_UNICODE = 1u<<31;

@@ -24,7 +24,7 @@
 #include "SNum.hpp"
 #include <cmath>
 
-class SFloat : public SNum
+class SFloat final: public SNum
 {
 public:
 	typedef double_t type;

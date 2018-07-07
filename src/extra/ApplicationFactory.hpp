@@ -27,7 +27,7 @@
 #include <map>
 #include "../utils/Dummy.hpp"
 
-class ApplicationFactory
+class ApplicationFactory final
 {
 public:
 	ApplicationFactory(const ApplicationFactory&) = delete;

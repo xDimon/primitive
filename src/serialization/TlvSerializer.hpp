@@ -38,7 +38,7 @@
 #include <sstream>
 #include <string>
 
-class TlvSerializer : public Serializer
+class TlvSerializer final: public Serializer
 {
 private:
 	std::istringstream _iss;

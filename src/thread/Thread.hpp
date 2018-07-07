@@ -29,7 +29,7 @@
 #include "../log/Log.hpp"
 #include "Task.hpp"
 
-class Thread
+class Thread final
 {
 public:
 	typedef size_t Id;

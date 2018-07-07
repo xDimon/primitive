@@ -23,7 +23,7 @@
 
 #include <string>
 
-class HttpUri
+class HttpUri final
 {
 public:
 	enum class Scheme {

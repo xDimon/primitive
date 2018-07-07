@@ -34,7 +34,7 @@
 class SArr;
 class SObj;
 
-class SVal
+class SVal final
 {
 public:
 	enum class Type

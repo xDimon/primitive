@@ -26,7 +26,7 @@
 #include <string>
 #include <sstream>
 
-class SStr : public SBase
+class SStr final: public SBase
 {
 public:
 	typedef std::string type;

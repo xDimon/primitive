@@ -21,6 +21,6 @@
 
 #pragma once
 
-class NopeException : public std::exception
+class NopeException final: public std::exception
 {
 };

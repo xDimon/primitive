@@ -28,7 +28,7 @@
 
 #include <netinet/in.h>
 
-class TcpConnection: public Connection, public ReaderConnection, public WriterConnection
+class TcpConnection : public Connection, public ReaderConnection, public WriterConnection
 {
 protected:
 	bool _outgoing;

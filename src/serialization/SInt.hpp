@@ -26,7 +26,7 @@
 
 #include <sstream>
 
-class SInt : public SNum
+class SInt final: public SNum
 {
 public:
 	typedef int64_t type;

@@ -26,7 +26,7 @@
 #include "../TransportContext.hpp"
 #include <memory>
 
-class HttpContext: public TransportContext
+class HttpContext : public TransportContext
 {
 protected:
 	std::shared_ptr<HttpRequest> _request;

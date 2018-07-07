@@ -27,7 +27,7 @@
 
 #include <memory>
 
-class WsFrame: public Buffer
+class WsFrame final : public Buffer
 {
 public:
 	enum class Opcode {

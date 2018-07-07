@@ -24,7 +24,7 @@
 
 #include "../ClientTransport.hpp"
 
-class WsClient : public ClientTransport
+class WsClient final : public ClientTransport
 {
 private:
 	std::shared_ptr<Transport::Handler> _handler;

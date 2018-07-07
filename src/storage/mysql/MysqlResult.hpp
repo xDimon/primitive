@@ -26,7 +26,7 @@
 
 #include <mysql.h>
 
-class MysqlResult : public DbResult
+class MysqlResult final : public DbResult
 {
 private:
 	MYSQL_RES* _data;

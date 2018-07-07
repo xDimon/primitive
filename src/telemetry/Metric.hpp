@@ -29,7 +29,7 @@
 #include <deque>
 #include <mutex>
 
-class Metric
+class Metric final
 {
 public:
 	typedef double type;

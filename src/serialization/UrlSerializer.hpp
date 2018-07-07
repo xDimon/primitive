@@ -36,7 +36,7 @@
 
 #include <sstream>
 
-class UrlSerializer : public Serializer
+class UrlSerializer final: public Serializer
 {
 	std::istringstream _iss;
 	std::ostringstream _oss;
