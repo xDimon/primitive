@@ -60,6 +60,9 @@ set(${CODENAME}_LIBRARIES)
 # Подключаем динамическую линковку
 list(APPEND "${CODENAME}_LIBRARIES" dl)
 
+# Подключаем библиотеку сжатия
+list(APPEND "${CODENAME}_LIBRARIES" z)
+
 # Подключаем многопоточность
 find_package(Threads REQUIRED)
 if (NOT THREADS_FOUND)
