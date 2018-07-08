@@ -22,28 +22,30 @@
 #include "LpsContext.hpp"
 #include "http/HttpContext.hpp"
 #include "websocket/WsContext.hpp"
+#include "../compression/CompressorFactory.hpp"
 
-LpsContext::LpsContext(const std::shared_ptr<ServicePart>& servicePart, const std::shared_ptr<TransportContext>& context, const std::string& data)
-: _log("LpsContext")
+LpsContext::LpsContext(
+	const std::shared_ptr<ServicePart>& servicePart,
+	const std::shared_ptr<TransportContext>& context,
+	bool aggregation,
+	bool compression
+)
+: _service(servicePart)
 , _context(context)
+, _aggregation(aggregation)
+, _compression(compression)
 , _close(false)
 , _closed(false)
 {
-	if (data.empty())
+	if (dynamic_cast<WsContext*>(_context.get()))
 	{
-		return;
 	}
-	else if (std::dynamic_pointer_cast<WsContext>(_context))
+	else if (dynamic_cast<HttpContext*>(_context.get()))
 	{
-		_log.info("WS-IN  %s", data.c_str());
-	}
-	else if (std::dynamic_pointer_cast<HttpContext>(_context))
-	{
-		_log.info("HTTP-IN  %s", data.c_str());
 	}
 	else
 	{
-		_log.info("?\?\?-IN  %s", data.c_str());
+		throw std::runtime_error("Unsupported transport context");
 	}
 }
 
@@ -62,7 +64,7 @@ void LpsContext::assignSession(const std::shared_ptr<Session>& session)
 	auto wsContext = std::dynamic_pointer_cast<WsContext>(_context);
 	if (wsContext)
 	{
-		return std::dynamic_pointer_cast<WsContext>(_context)->assignSession(session);
+		return wsContext->assignSession(session);
 	}
 	_session = session;
 }
@@ -74,7 +76,7 @@ std::shared_ptr<Session> LpsContext::getSession()
 	auto wsContext = std::dynamic_pointer_cast<WsContext>(_context);
 	if (wsContext)
 	{
-		return std::dynamic_pointer_cast<WsContext>(_context)->getSession();
+		return wsContext->getSession();
 	}
 	return _session.lock();
 }
@@ -89,6 +91,63 @@ void LpsContext::resetSession()
 		return std::dynamic_pointer_cast<WsContext>(_context)->resetSession();
 	}
 	_session.reset();
+}
+
+SVal LpsContext::recv()
+{
+	std::string inString;
+
+	char context_ = '?';
+	if (auto wsContext = std::dynamic_pointer_cast<WsContext>(_context))
+	{
+		context_ = 'W';
+		inString.assign(wsContext->getFrame()->dataPtr(), wsContext->getFrame()->dataLen());
+	}
+	else if (auto httpContext = std::dynamic_pointer_cast<HttpContext>(_context))
+	{
+		context_ = 'H';
+		inString.assign(httpContext->getRequest()->dataPtr(), httpContext->getRequest()->dataLen());
+	}
+
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
+	char compress_ = '?';
+	if (_compression)
+	{
+		if (inString[0] == 0 || inString[0] == 1)
+		{
+			compress_ = inString[0] ? 'C' : 'N';
+
+			std::vector<char> out1(inString.begin(), inString.end());
+			std::vector<char> out2;
+
+			CompressorFactory::create("gzip")->inflate(out1, out2);
+
+			inString.assign(out2.begin(), out2.end());
+		}
+		else
+		{
+			compress_ = 'E';
+			_compression = false;
+		}
+	}
+	else
+	{
+		compress_ = 'R';
+	}
+
+	if (auto service = _service.lock())
+	{
+		service->log().info("%c%c << %s", context_, compress_, inString.c_str());
+	}
+	else
+	{
+		Log("_lpsContext").info("%c%c << %s", context_, compress_, inString.c_str());
+	}
+
+	auto&& input = SerializerFactory::create("json", Serializer::STRICT)->decode(inString);
+
+	return std::move(input);
 }
 
 void LpsContext::out(SVal value, bool close)
@@ -106,11 +165,11 @@ void LpsContext::out(SVal value, bool close)
 		_close = true;
 	}
 
-	if (std::dynamic_pointer_cast<WsContext>(_context))
+	if (!_aggregation && std::dynamic_pointer_cast<WsContext>(_context))
 	{
 		try { send(); } catch (...) {}
 	}
-	else // if (close || !!std::dynamic_pointer_cast<WsContext>(_context))
+	else
 	{
 		if (!_timeout)
 		{
@@ -122,7 +181,15 @@ void LpsContext::out(SVal value, bool close)
 				}
 			);
 		}
-		_timeout->restart(std::chrono::milliseconds(100));
+
+		if (dynamic_cast<WsContext*>(_context.get()))
+		{
+			_timeout->restart(std::chrono::milliseconds(50));
+		}
+		else
+		{
+			_timeout->restart(std::chrono::milliseconds(500));
+		}
 	}
 }
 
@@ -135,24 +202,76 @@ void LpsContext::send()
 		return;
 	}
 
-	if (std::dynamic_pointer_cast<WsContext>(_context))
+	char context_ = '?';
+	char compress_ = '?';
+	std::string out;
+
+	if (dynamic_cast<WsContext*>(_context.get()))
 	{
+		context_ = 'W';
+
 		_closed = _closed || _close;
 
-		while (!_output.empty())
+		if (_output.size() == 1)
 		{
 			auto output = std::move(_output.front());
 			_output.pop();
 
-			auto out = SerializerFactory::create("json")->encode(std::move(output));
+			out = SerializerFactory::create("json")->encode(std::move(output));
 
-			_context->transmit(out, "text", _close && _output.empty());
+			if (_compression)
+			{
+				std::vector<char> out1(out.begin(), out.end());
+				std::vector<char> out2;
 
-			_log.info("WS-OUT %s", out.c_str());
+				CompressorFactory::create("gzip")->deflate(out1, out2);
+
+				compress_ = out2[0] ? 'C' : 'N';
+				_context->transmit(out2, "bin", _close);
+			}
+			else
+			{
+				compress_ = 'R';
+				_context->transmit(out, "json", _close);
+			}
+		}
+		else if (!_output.empty())
+		{
+			SArr output;
+
+			while (!_output.empty())
+			{
+				output.emplace_back(std::move(_output.front()));
+				_output.pop();
+			}
+
+			out = SerializerFactory::create("json")->encode(std::move(output));
+
+			if (_compression)
+			{
+				std::vector<char> out1(out.begin(), out.end());
+				std::vector<char> out2;
+
+				CompressorFactory::create("gzip")->deflate(out1, out2);
+
+				compress_ = out2[0] ? 'C' : 'N';
+				_context->transmit(out2, "bin", _close);
+			}
+			else
+			{
+				compress_ = 'R';
+				_context->transmit(out, "json", _close);
+			}
+		}
+		else
+		{
+			return;
 		}
 	}
-	else if (std::dynamic_pointer_cast<HttpContext>(_context))
+	else if (dynamic_cast<HttpContext*>(_context.get()))
 	{
+		context_ = 'H';
+
 		_closed = true;
 
 		SArr output;
@@ -163,15 +282,31 @@ void LpsContext::send()
 			_output.pop();
 		}
 
-		auto out = SerializerFactory::create("json")->encode(output);
+		out = SerializerFactory::create("json")->encode(output);
 
-		_context->transmit(out, "application/json; charset=utf-8", true);
+		if (_compression)
+		{
+			std::vector<char> out1(out.begin(), out.end());
+			std::vector<char> out2;
 
-		_log.info("HTTP-OUT %s", out.c_str());
+			CompressorFactory::create("gzip")->deflate(out1, out2);
+
+			compress_ = out[0] ? 'C' : 'N';
+			_context->transmit(out2, "application/octet-stream; charset=utf-8", true);
+		}
+		else
+		{
+			compress_ = 'R';
+			_context->transmit(out, "application/json; charset=utf-8", true);
+		}
+	}
+
+	if (auto service = _service.lock())
+	{
+		service->log().info("%c%c >> %s", context_, compress_, out.c_str());
 	}
 	else
 	{
-		_log.info("?\?\?-OUT ?\?\?");
-		throw std::runtime_error("Internal error: unsupported transport context");
+		Log("_lpsContext").info("%c%c >> %s", context_, compress_, out.c_str());
 	}
 }

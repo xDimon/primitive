@@ -31,11 +31,13 @@ class LpsContext final: public Context
 {
 private:
 	std::recursive_mutex _mutex;
-	Log _log;
+	std::weak_ptr<ServicePart> _service;
 	std::shared_ptr<TransportContext> _context;
 	std::weak_ptr<Session> _session;
 	std::queue<SVal> _output;
 	std::shared_ptr<Timeout> _timeout;
+	bool _aggregation;
+	bool _compression;
 	bool _close;
 	bool _closed;
 
@@ -46,7 +48,12 @@ public:
 	LpsContext(LpsContext&&) noexcept = delete; // Move-constructor
 	LpsContext& operator=(LpsContext&&) noexcept = delete; // Move-assignment
 
-	LpsContext(const std::shared_ptr<ServicePart>& servicePart, const std::shared_ptr<TransportContext>& context, const std::string& data);
+	LpsContext(
+		const std::shared_ptr<ServicePart>& servicePart,
+		const std::shared_ptr<TransportContext>& context,
+		bool aggregation = false,
+		bool compression = false
+	);
 
 	virtual ~LpsContext() override;
 
@@ -63,7 +70,9 @@ public:
 	std::shared_ptr<Session> getSession();
 	void resetSession();
 
-	void out(SVal value, bool close = false);
+	SVal recv();
 
 	void send();
+
+	void out(SVal value, bool close = false);
 };
