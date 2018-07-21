@@ -32,6 +32,8 @@ private:
 	bool _value;
 
 public:
+	SBool(): _value(false) {};
+
 	SBool(bool value)
 	: _value(value)
 	{

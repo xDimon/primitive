@@ -33,6 +33,8 @@ private:
 	type _value;
 
 public:
+	SFloat(): _value(0) {};
+
 	SFloat(type value)
 	: _value(value)
 	{

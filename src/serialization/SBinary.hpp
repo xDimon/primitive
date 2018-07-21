@@ -23,8 +23,11 @@
 
 class SBinary final: public SBase
 {
+public:
+	typedef std::vector<char> type;
+
 private:
-	std::string _value;
+	type _value;
 
 public:
 	// Default-constructor
@@ -34,17 +37,28 @@ public:
 	{
 		auto data = reinterpret_cast<const char*>(data_);
 		_value.reserve(size + 1);
-		std::copy(data, data + size, _value.begin());
+		for (size_t i = 0; i < size; i++)
+		{
+			_value.push_back(data[i]);
+		}
 	}
 
 	SBinary(std::string&& value)
-	: _value(std::move(value))
 	{
+		_value.reserve(value.length());
+		for (size_t i = 0; i < value.length(); i++)
+		{
+			_value.push_back(value[i]);
+		}
 	}
 
 	SBinary(const std::string& value)
-	: _value(value)
 	{
+		_value.reserve(value.length());
+		for (size_t i = 0; i < value.length(); i++)
+		{
+			_value.push_back(value[i]);
+		}
 	}
 
 	// Copy-constructor
@@ -73,7 +87,7 @@ public:
 		return *this;
 	}
 
-	const std::string& value() const
+	const auto& value() const
 	{
 		return _value;
 	}

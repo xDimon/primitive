@@ -729,6 +729,8 @@ void JsonSerializer::encodeString(const SVal& value)
 void JsonSerializer::encodeBinary(const SVal& value)
 {
 //	_oss << "\"=?B?" << Base64::encode(value.value().data(), value.value().size()) << "?=\"";
+	const auto& binary = value.as<SBinary>();
+	_oss << "\"=?B?" << Base64::encode(binary.value().data(), binary.value().size()) << "?=\"";
 }
 
 void JsonSerializer::encodeNumber(const SVal& value)

@@ -35,6 +35,8 @@ private:
 	type _value;
 
 public:
+	SInt(): _value(0) {};
+
 	SInt(type value)
 	: _value(value)
 	{
