@@ -23,7 +23,7 @@
 
 struct ConnectionEvent
 {
-	enum {
+	enum class Type : uint32_t {
 		READ	= 1<<0,
 		WRITE	= 1<<1,
 		HUP		= 1<<2,
@@ -35,12 +35,12 @@ struct ConnectionEvent
 	static std::string code(uint32_t events)
 	{
 		std::string result;
-		if (events&READ) result.push_back('R');
-		if (events&WRITE) result.push_back('W');
-		if (events&HUP) result.push_back('C');
-		if (events&HALFHUP) result.push_back('H');
-		if (events&TIMEOUT) result.push_back('T');
-		if (events&ERROR) result.push_back('E');
+		if (events & static_cast<uint32_t>(Type::READ))		result.push_back('R');
+		if (events & static_cast<uint32_t>(Type::WRITE))	result.push_back('W');
+		if (events & static_cast<uint32_t>(Type::HUP))		result.push_back('C');
+		if (events & static_cast<uint32_t>(Type::HALFHUP))	result.push_back('H');
+		if (events & static_cast<uint32_t>(Type::TIMEOUT))	result.push_back('T');
+		if (events & static_cast<uint32_t>(Type::ERROR))	result.push_back('E');
 		return std::move(result);
 	}
 };

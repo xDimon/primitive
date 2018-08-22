@@ -108,7 +108,7 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 	// Проверка готовности заголовков
 	auto endHeaders = static_cast<const char *>(memmem(connection->dataPtr(), connection->dataLen(), "\r\n\r\n", 4));
 
-	if (endHeaders == nullptr && connection->dataLen() < (1 << 12))
+	if (endHeaders == nullptr && connection->dataLen() < (1ull << 12))
 	{
 		connection->setTtl(std::chrono::seconds(5));
 
@@ -116,7 +116,7 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 		return true;
 	}
 
-	if (endHeaders == nullptr || (endHeaders - connection->dataPtr()) > (1 << 12))
+	if (endHeaders == nullptr || (endHeaders - connection->dataPtr()) > (1ll << 12))
 	{
 		connection->skip(endHeaders - connection->dataPtr());
 

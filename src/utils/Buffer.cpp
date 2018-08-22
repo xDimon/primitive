@@ -156,7 +156,7 @@ bool Buffer::prepare(size_t length)
 	// Все еще недостаточно места в конце буффера
 	if (_putPosition + length > _data.size())
 	{
-		_data.resize(((_putPosition + length) / (1<<12) + 1) * (1<<12));
+		_data.resize(((_putPosition + length) / (1ull<<12) + 1) * (1ull<<12));
 	}
 	return true;
 }

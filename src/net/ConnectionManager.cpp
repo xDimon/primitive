@@ -232,23 +232,23 @@ void ConnectionManager::wait()
 
 		if (fdEvent & (EPOLLIN | EPOLLRDNORM))
 		{
-			events |= static_cast<uint32_t>(ConnectionEvent::READ);
+			events |= static_cast<uint32_t>(ConnectionEvent::Type::READ);
 		}
 		if (fdEvent & (EPOLLOUT | EPOLLWRNORM))
 		{
-			events |= static_cast<uint32_t>(ConnectionEvent::WRITE);
+			events |= static_cast<uint32_t>(ConnectionEvent::Type::WRITE);
 		}
 		if (fdEvent & EPOLLHUP)
 		{
-			events |= static_cast<uint32_t>(ConnectionEvent::HUP);
+			events |= static_cast<uint32_t>(ConnectionEvent::Type::HUP);
 		}
 		if (fdEvent & EPOLLRDHUP)
 		{
-			events |= static_cast<uint32_t>(ConnectionEvent::HALFHUP);
+			events |= static_cast<uint32_t>(ConnectionEvent::Type::HALFHUP);
 		}
 		if (fdEvent & EPOLLERR)
 		{
-			events |= static_cast<uint32_t>(ConnectionEvent::ERROR);
+			events |= static_cast<uint32_t>(ConnectionEvent::Type::ERROR);
 		}
 
 		_log.trace("Catch events `%s` (%04x) on %s", ConnectionEvent::code(events).c_str(), fdEvent, connection->name().c_str());
@@ -283,7 +283,7 @@ void ConnectionManager::timeout(const std::shared_ptr<Connection>& connection)
 		return;
 	}
 
-	connection->appendEvents(static_cast<uint32_t>(ConnectionEvent::TIMEOUT));
+	connection->appendEvents(static_cast<uint32_t>(ConnectionEvent::Type::TIMEOUT));
 
 	instance._log.trace("Catch event `T` on %s", connection->name().c_str());
 

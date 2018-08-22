@@ -256,7 +256,7 @@ bool SslConnection::sslHandshake()
 			return false;
 		}
 
-		char err[1<<7];
+		char err[1ull<<7];
 		ERR_error_string_n(ERR_get_error(), err, sizeof(err));
 
 		_log.trace("Fail SSH handshake on %s: %s", name().c_str(), err);
@@ -295,7 +295,7 @@ bool SslConnection::writeToSocket()
 			break;
 		}
 
-		int n = SSL_write(_sslConnect, _outBuff.dataPtr(), (_outBuff.dataLen() > 1<<12) ? (1<<12) : static_cast<int>(_outBuff.dataLen()));
+		int n = SSL_write(_sslConnect, _outBuff.dataPtr(), (_outBuff.dataLen() > 1ull<<12) ? (1ull<<12) : static_cast<int>(_outBuff.dataLen()));
 		if (n > 0)
 		{
 			_outBuff.skip(static_cast<size_t>(n));
@@ -366,9 +366,9 @@ bool SslConnection::readFromSocket()
 	{
 		std::lock_guard<std::recursive_mutex> guard(_inBuff.mutex());
 
-		_inBuff.prepare(1<<12);
+		_inBuff.prepare(1ull<<12);
 
-		int n = SSL_read(_sslConnect, _inBuff.spacePtr(), (_inBuff.spaceLen() > 1<<12) ? (1<<12) : static_cast<int>(_inBuff.spaceLen()));
+		int n = SSL_read(_sslConnect, _inBuff.spacePtr(), (_inBuff.spaceLen() > 1ull<<12) ? (1ull<<12) : static_cast<int>(_inBuff.spaceLen()));
 		if (n > 0)
 		{
 			_inBuff.forward(static_cast<size_t>(n));

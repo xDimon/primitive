@@ -46,7 +46,7 @@ private:
 		return instance;
 	}
 
-	static const int poolSize = 1<<17;
+	static const int poolSize = 1u<<17;
 
 	Log _log;
 

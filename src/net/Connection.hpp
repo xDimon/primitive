@@ -145,32 +145,32 @@ public:
 
 	inline bool isReadyForRead() const
 	{
-		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::READ));
+		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::Type::READ));
 	}
 
 	inline bool isReadyForWrite() const
 	{
-		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::WRITE));
+		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::Type::WRITE));
 	}
 
 	inline bool isHalfHup() const
 	{
-		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::HALFHUP));
+		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::Type::HALFHUP));
 	}
 
 	inline bool isHup() const
 	{
-		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::HUP));
+		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::Type::HUP));
 	}
 
 	inline bool wasFailure() const
 	{
-		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::ERROR));
+		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::Type::ERROR));
 	}
 
 	inline bool timeIsOut() const
 	{
-		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::TIMEOUT));
+		return static_cast<bool>(_events & static_cast<uint32_t>(ConnectionEvent::Type::TIMEOUT));
 	}
 
 	virtual void watch(epoll_event &ev) = 0;

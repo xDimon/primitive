@@ -202,7 +202,7 @@ void Thread::yield(Task::Func&& func)
 		getcontext(context);
 		context->uc_link = (ucontext_t*)0xDEAD;
 		context->uc_stack.ss_flags = 0;
-		context->uc_stack.ss_size = 1<<20; // PTHREAD_STACK_MIN;
+		context->uc_stack.ss_size = 1ull<<20; // PTHREAD_STACK_MIN;
 		context->uc_stack.ss_sp = mmap(
 			nullptr, context->uc_stack.ss_size,
 			PROT_READ | PROT_WRITE | PROT_EXEC,
