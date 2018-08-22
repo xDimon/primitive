@@ -31,6 +31,7 @@
 #include <cstring>
 
 SysInfo::SysInfo()
+: _log("Sysinfo")
 {
 	rusage ru{};
 	getrusage(RUSAGE_SELF,&ru);
@@ -108,7 +109,7 @@ void SysInfo::collect()
     FILE* file = fopen("/proc/self/status", "r");
     if (!file)
 	{
-		Log("Sysinfo").error("Can't open /proc/self/status: %s", strerror(errno));
+		instance._log.error("Can't open /proc/self/status: %s", strerror(errno));
 	}
 	else
 	{

@@ -5,6 +5,8 @@ project("primitive")
 
 set(CODENAME "primitive")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS On)
+
 string(TOUPPER ${CODENAME} CODENAMEUC)
 
 # Запрещаем сборку не на линукс

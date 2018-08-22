@@ -37,7 +37,7 @@ class DbConnection;
 class DbConnectionPool : public Shareable<DbConnectionPool>, public Named
 {
 protected:
-	Log _log;
+	mutable Log _log;
 	std::recursive_mutex _mutex;
 
 	std::map<std::thread::id, std::shared_ptr<DbConnection>> _captured;
@@ -54,6 +54,11 @@ public:
 
 	explicit DbConnectionPool(const Setting& setting);
 	~DbConnectionPool() override = default;
+
+	Log& log() const
+	{
+		return _log;
+	}
 
 	std::shared_ptr<Metric> metricSumConnections;
 	std::shared_ptr<Metric> metricCurrenConnections;

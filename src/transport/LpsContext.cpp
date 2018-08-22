@@ -142,7 +142,8 @@ SVal LpsContext::recv()
 	}
 	else
 	{
-		Log("_lpsContext").info("%c%c << %s", context_, compress_, inString.c_str());
+		static Log log("_lpsContext");
+		log.info("%c%c << %s", context_, compress_, inString.c_str());
 	}
 
 	auto&& input = SerializerFactory::create("json", Serializer::STRICT)->decode(inString);
@@ -307,6 +308,7 @@ void LpsContext::send()
 	}
 	else
 	{
-		Log("_lpsContext").info("%c%c >> %s", context_, compress_, out.c_str());
+		static Log log("_lpsContext");
+		log.info("%c%c >> %s", context_, compress_, out.c_str());
 	}
 }

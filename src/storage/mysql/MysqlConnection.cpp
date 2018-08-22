@@ -167,7 +167,10 @@ bool MysqlConnection::commit()
 	}
 	if (_transaction == 0)
 	{
-		Log("mysql").warn("Internal error: commit when counter of transaction is zero");
+		if (auto pool = _pool.lock())
+		{
+			pool->log().warn("Internal error: commit when counter of transaction is zero");
+		}
 		return false;
 	}
 	if (DbConnection::query("COMMIT;"))
@@ -188,7 +191,10 @@ bool MysqlConnection::rollback()
 	}
 	if (_transaction == 0)
 	{
-		Log("mysql").warn("Internal error: rollback when counter of transaction is zero");
+		if (auto pool = _pool.lock())
+		{
+			pool->log().warn("Internal error: rollback when counter of transaction is zero");
+		}
 		return false;
 	}
 	if (DbConnection::query("ROLLBACK;"))
@@ -209,7 +215,7 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 	auto beginTime = std::chrono::steady_clock::now();
 	if (pool) pool->metricAvgQueryPerSec->addValue();
 
-	Log("mysql").debug("MySQL query: %s", sql.c_str());
+	if (pool) pool->log().debug("MySQL query: %s", sql.c_str());
 
 	// Выполнение запроса
 	auto success = mysql_query(_mysql, sql.c_str()) == 0;
@@ -225,7 +231,7 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 
 	if (timeSpent >= 5)
 	{
-		Log("mysql").warn("MySQL query too long: %0.03f sec\n\t\tFor query:\n\t\t%s", timeSpent, sql.c_str());
+		if (pool) pool->log().warn("MySQL query too long: %0.03f sec\n\t\tFor query:\n\t\t%s", timeSpent, sql.c_str());
 	}
 
 	if (!success)
@@ -233,7 +239,7 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 		if (pool) pool->metricFailQueryCount->addValue();
 		if (!deadlockDetected())
 		{
-			Log("mysql").warn("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
+			if (pool) pool->log().warn("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 		}
 		return false;
 	}
@@ -254,7 +260,7 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 		if (result->get() == nullptr && mysql_errno(_mysql) != 0)
 		{
 			if (pool) pool->metricFailQueryCount->addValue();
-			Log("mysql").error("MySQL store result error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
+			if (pool) pool->log().error("MySQL store result error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 			return false;
 		}
 	}
@@ -286,7 +292,7 @@ bool MysqlConnection::multiQuery(const std::string& sql)
 
 	if (!success)
 	{
-		Log("mysql").error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
+		if (pool) pool->log().error("MySQL query error: [%u] %s\n\t\tFor query:\n\t\t%s", mysql_errno(_mysql), mysql_error(_mysql), sql.c_str());
 
 		mysql_set_server_option(_mysql, MYSQL_OPTION_MULTI_STATEMENTS_OFF);
 		if (pool) pool->metricFailQueryCount->addValue();

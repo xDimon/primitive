@@ -25,9 +25,13 @@
 #include <set>
 #include <memory>
 #include "Metric.hpp"
+#include "../log/Log.hpp"
 
 class SysInfo final
 {
+private:
+	Log _log;
+
 public:
 	SysInfo(const SysInfo&) = delete; // Copy-constructor
 	SysInfo& operator=(SysInfo const&) = delete; // Copy-assignment
