@@ -25,7 +25,7 @@
 
 Sink::Sink(const Setting& setting)
 {
-	std::ostringstream cfgline("/P7.Pool=32768");
+	std::string cfgline = "/P7.Pool=32768";
 
 	if (!setting.lookupValue("name", _name))
 	{
@@ -39,15 +39,15 @@ Sink::Sink(const Setting& setting)
 	}
 	if (type == "console")
 	{
-		cfgline << " /P7.Sink=Console";
+		cfgline += " /P7.Sink=Console";
 	}
 	else if (type == "file")
 	{
-		cfgline << " /P7.Sink=FileTxt";
+		cfgline += " /P7.Sink=FileTxt";
 	}
 	else if (type == "syslog")
 	{
-		cfgline << " /P7.Sink=Syslog";
+		cfgline += " /P7.Sink=Syslog";
 	}
 	else
 	{
@@ -59,7 +59,7 @@ Sink::Sink(const Setting& setting)
 	{
 		format = "%tm\t%tn\t%mn\t%lv\t%ms";
 	}
-	cfgline << " /P7.Format=" << format;
+	cfgline += " /P7.Format=" + format;
 
 	if (type == "file")
 	{
@@ -68,24 +68,24 @@ Sink::Sink(const Setting& setting)
 		{
 			throw std::runtime_error("Undefined directory for sink '" + _name + "'");
 		}
-		cfgline << " /P7.Dir=" << directory;
+		cfgline += " /P7.Dir=" + directory;
 
 		std::string rolling;
 		if (!setting.lookupValue("rolling", rolling))
 		{
 			throw std::runtime_error("Undefined setting of rolling for sink '" + _name + "'");
 		}
-		cfgline << " /P7.Roll=" << rolling;
+		cfgline += " /P7.Roll=" + rolling;
 
 		uint32_t maxcount;
 		if (!setting.lookupValue("maxcount", maxcount))
 		{
 			throw std::runtime_error("Undefined maxcount of rolling for sink '" + _name + "'");
 		}
-		cfgline << " /P7.Files=" << maxcount;
+		cfgline += " /P7.Files=" + maxcount;
 	}
 
-	_p7client = P7_Create_Client(cfgline.str().c_str());
+	_p7client = P7_Create_Client(cfgline.c_str());
 	if (_p7client == nullptr)
 	{
 		throw std::runtime_error("Can't create p7-client for sink '" + _name + "'");
