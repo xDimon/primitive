@@ -166,7 +166,8 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	SysInfo::start();
 
 	TaskManager::enqueue(
-		ConnectionManager::dispatch
+		ConnectionManager::dispatch,
+		"Start ConnectionManager dispatcher"
 	);
 }
 

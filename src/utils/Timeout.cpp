@@ -22,10 +22,11 @@
 #include "Timeout.hpp"
 #include "Daemon.hpp"
 
-Timeout::Timeout(std::function<void()> handler)
+Timeout::Timeout(std::function<void()> handler, const char* label)
 : realExpireTime(std::chrono::steady_clock::now())
 , nextExpireTime(std::chrono::time_point<std::chrono::steady_clock>::max())
 , _alarmHandler(std::move(handler))
+, _label(label)
 {
 }
 

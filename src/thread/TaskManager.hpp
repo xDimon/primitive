@@ -55,16 +55,16 @@ private:
 	std::priority_queue<Task, std::deque<Task>> _queue;
 
 public:
-	static void enqueue(Task::Func&& func, Task::Time time);
+	static void enqueue(Task::Func&& func, Task::Time time, const char* label = "-");
 
-	static void enqueue(Task::Func&& func, Task::Duration delay)
+	static void enqueue(Task::Func&& func, Task::Duration delay, const char* label = "-")
 	{
-		enqueue(std::forward<Task::Func>(func), Task::Clock::now() + delay);
+		enqueue(std::forward<Task::Func>(func), Task::Clock::now() + delay, label);
 	}
 
-	static void enqueue(Task::Func&& func)
+	static void enqueue(Task::Func&& func, const char* label = "-")
 	{
-		enqueue(std::forward<Task::Func>(func), Task::Clock::now());
+		enqueue(std::forward<Task::Func>(func), Task::Clock::now(), label);
 	}
 
 	static size_t queueSize();

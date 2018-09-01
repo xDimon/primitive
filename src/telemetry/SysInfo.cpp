@@ -61,7 +61,11 @@ void SysInfo::start()
 	instance._involuntaryContextSwitches	= TelemetryManager::metric("core/ipc/invol_cnt_sw", 1);
 	instance._run = true;
 
-	TaskManager::enqueue(SysInfo::collect, std::chrono::seconds(1));
+	TaskManager::enqueue(
+		SysInfo::collect,
+		std::chrono::seconds(1),
+		"Collect system metrics (first time)"
+	);
 }
 
 void SysInfo::collect()
@@ -146,6 +150,10 @@ void SysInfo::collect()
 
 	if (!Daemon::shutingdown())
 	{
-		TaskManager::enqueue(SysInfo::collect, std::chrono::seconds(1));
+		TaskManager::enqueue(
+			SysInfo::collect,
+			std::chrono::seconds(1),
+			"Collect system metrics"
+		);
 	}
 }

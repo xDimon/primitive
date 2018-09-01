@@ -24,9 +24,10 @@
 #include "TaskManager.hpp"
 #include "ThreadPool.hpp"
 
-Task::Task(Func&& function, Time until)
+Task::Task(Func&& function, Time until, const char* label)
 : _function(std::move(function))
 , _until(until)
+, _label(label)
 , _parentTaskContext(Thread::getContext())
 {
 }
@@ -34,6 +35,7 @@ Task::Task(Func&& function, Time until)
 Task::Task(Task&& that) noexcept
 : _function(std::move(that._function))
 , _until(that._until)
+, _label(that._label)
 , _parentTaskContext(that._parentTaskContext)
 {
 	that._function = static_cast<void(*)()>(nullptr);
@@ -49,6 +51,7 @@ Task& Task::operator=(Task&& that) noexcept
 
 	_function = std::move(that._function);
 	_until = that._until;
+	_label = that._label;
 	_parentTaskContext = that._parentTaskContext;
 	that._function = static_cast<void(*)()>(nullptr);
 	that._parentTaskContext = nullptr;

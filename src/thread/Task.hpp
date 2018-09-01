@@ -38,10 +38,11 @@ public:
 private:
 	Func _function;
 	Time _until;
+	const char* _label;
 	mutable ucontext_t* _parentTaskContext;
 
 public:
-	explicit Task(Func&& function, Time until);
+	explicit Task(Func&& function, Time until, const char* label = "-");
 	virtual ~Task() = default;
 
 	// Разрешаем перемещение
@@ -56,6 +57,12 @@ public:
 	const Time& until() const
 	{
 		return _until;
+	}
+
+	// Метка задачи (иня, название и т.п., для отладки)
+	const char* label() const
+	{
+		return _label;
 	}
 
 	// Сравнение по времени

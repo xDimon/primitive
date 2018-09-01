@@ -401,7 +401,8 @@ void ConnectionManager::dispatch()
 				getInstance().release(connection);
 
 				getInstance()._log.trace("End processing on %s: %s", connection->name().c_str(), status ? "success" : "fail");
-			}
+			},
+			"Dispatch event on Connection"
 		);
 	}
 }

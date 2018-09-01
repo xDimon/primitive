@@ -56,7 +56,8 @@ void Session::touch()
 				{
 					session->close(Daemon::shutingdown()?"shuting down":"timeout");
 				}
-			}
+			},
+			"Timeout to close session"
 		);
 	}
 
@@ -74,7 +75,8 @@ void Session::changed()
 				{
 					session->save();
 				}
-			}
+			},
+			"Timeout to save session"
 		);
 	}
 

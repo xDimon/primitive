@@ -35,6 +35,7 @@ private:
 	std::chrono::steady_clock::time_point realExpireTime;
 	std::chrono::steady_clock::time_point nextExpireTime;
 	std::function<void()> _alarmHandler;
+	const char *_label;
 
 	std::shared_ptr<TimeoutWatcher> _timeoutWatcher;
 
@@ -44,8 +45,14 @@ public:
 	Timeout(Timeout&&) noexcept = delete; // Move-constructor
 	Timeout& operator=(Timeout&&) noexcept = delete; // Move-assignment
 
-	explicit Timeout(std::function<void()> handler);
+	explicit Timeout(std::function<void()> handler, const char* label/* = "Timeout"*/);
 	~Timeout() override = default;
+
+	// Метка задачи (иня, название и т.п., для отладки)
+ 	const char* label() const
+	{
+		return _label;
+	}
 
 	bool operator()();
 

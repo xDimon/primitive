@@ -25,19 +25,19 @@
 #include "RollbackStackAndRestoreContext.hpp"
 
 TaskManager::TaskManager()
-: _log("TaskManager")
+: _log("TaskManager")//, Log::Detail::TRACE)
 {
 }
 
-void TaskManager::enqueue(Task::Func&& func, Task::Time time)
+void TaskManager::enqueue(Task::Func&& func, Task::Time time, const char* label)
 {
 	auto& instance = getInstance();
 
 	std::lock_guard<std::mutex> lockGuard(instance._mutex);
 
-	instance._queue.emplace(std::forward<Task::Func>(func), time);
+	instance._queue.emplace(std::forward<Task::Func>(func), time, label);
 
-//	instance._log.info("Task queue length increase to %zu", instance._queue.size());
+	instance._log.trace("Task queue length increase to %zu: %s", instance._queue.size(), label);
 
 	ThreadPool::wakeup();
 }
@@ -64,22 +64,20 @@ void TaskManager::executeOne()
 
 	if (instance._queue.empty())
 	{
-//		instance._log.info("Empty task queue");
+		instance._log.trace("Empty task queue");
 		instance._mutex.unlock();
 		std::this_thread::sleep_for(std::chrono::milliseconds(30));
 		return;
 	}
 
-//	auto u = task.until();
-//	auto n = Task::Clock::now();
-//	auto u = std::chrono::duration_cast<std::chrono::microseconds>(instance._queue.top().until().time_since_epoch()).count();
-//	auto n = std::chrono::duration_cast<std::chrono::microseconds>(Task::Clock::now().time_since_epoch()).count();
+	auto u = std::chrono::duration_cast<std::chrono::microseconds>(instance._queue.top().until().time_since_epoch()).count();
+	auto n = std::chrono::duration_cast<std::chrono::microseconds>(Task::Clock::now().time_since_epoch()).count();
 
-	if (instance._queue.top().until() > Task::Clock::now() && !Daemon::shutingdown())
-//	if (u > n && !Daemon::shutingdown())
+//	if (instance._queue.top().until() > Task::Clock::now() && !Daemon::shutingdown())
+	if (u > n && !Daemon::shutingdown())
 	{
-//		instance._log.info("Reenqueue task (wait for %lld µs)", std::chrono::duration_cast<std::chrono::microseconds>(u - n).count());
-//		instance._log.info("Reenqueue task (wait for %lld µs)", u - n);
+//		instance._log.trace("Reenqueue task (wait for %lld µs)", std::chrono::duration_cast<std::chrono::microseconds>(u - n).count());
+		instance._log.trace("Reenqueue task (wait for %lld µs): %s", u - n, instance._queue.top().label());
 		instance._mutex.unlock();
 		return;
 	}
@@ -93,15 +91,15 @@ void TaskManager::executeOne()
 	Task task{const_cast<Task&&>(instance._queue.top())};
 	instance._queue.pop();
 
-//	instance._log.info("Task queue length decrease to %zu", instance._queue.size());
+	instance._log.trace("Task queue length decrease to %zu: %s", instance._queue.size(), task.label());
 
-//	auto w = instance._queue.size();
-//	instance._log.info("Execute task (%zu waits) (late %lld µs)", w, std::chrono::duration_cast<std::chrono::microseconds>(n - u).count());
-//	instance._log.info("Execute task (%zu waits) (late %lld µs)", w, n - u);
-//	if (n - u > 999999999)
-//	{
-//		instance._log.info("(%lld, %lld)", n, u);
-//	}
+	auto w = instance._queue.size();
+//	instance._log.trace("Execute task (%zu waits) (late %lld µs)", w, std::chrono::duration_cast<std::chrono::microseconds>(n - u).count());
+	instance._log.trace("Execute task (%zu waits) (late %lld µs)", w, n - u);
+	if (n - u > 999999999)
+	{
+		instance._log.trace("(%lld, %lld)", n, u);
+	}
 
 	instance._mutex.unlock();
 

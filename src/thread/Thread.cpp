@@ -195,7 +195,8 @@ void Thread::yield(Task::Func&& func)
 				mutex->unlock();
 
 				func();
-			}
+			},
+			"yield"
 		);
 
 		context = new ucontext_t{};
@@ -320,7 +321,8 @@ void Thread::postpone(Task::Duration duration)
 		{
 			throw RollbackStackAndRestoreContext(ctx);
 		},
-		duration
+		duration,
+		"Postpone some thing"
 	);
 }
 

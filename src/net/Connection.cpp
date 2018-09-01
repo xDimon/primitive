@@ -63,7 +63,8 @@ void Connection::setTtl(std::chrono::milliseconds ttl)
 				{
 					ConnectionManager::timeout(connection);
 				}
-			}
+			},
+			"Timeout to close connection"
 		);
 	}
 

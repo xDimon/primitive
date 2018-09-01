@@ -179,7 +179,8 @@ void LpsContext::out(SVal value, bool close)
 				{
 					auto iam = wp.lock();
 					if (iam) try { iam->send(); } catch (...) {}
-				}
+				},
+				"Timeout to end long polling"
 			);
 		}
 

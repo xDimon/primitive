@@ -70,6 +70,7 @@ void TimeoutWatcher::restart(std::chrono::steady_clock::time_point time)
 		{
 			(*p)();
 		},
-		time
+		time,
+		timeout->label()
 	);
 }
