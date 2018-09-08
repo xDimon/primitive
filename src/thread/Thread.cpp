@@ -76,6 +76,7 @@ void Thread::run(Thread* thread)
 		char buff[32];
 		snprintf(buff, sizeof(buff), "Worker#%zu", thread->id());
 
+		thread->_name = buff;
 		LoggerManager::regThread(buff);
 
 		// Блокируем реакцию на все сигналы

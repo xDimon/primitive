@@ -37,6 +37,7 @@ public:
 private:
 	std::mutex _mutex;
 	Id _id;
+	std::string _name;
 
 	static thread_local Log _log;
 	static thread_local std::function<void()> _function;
@@ -87,6 +88,11 @@ public:
 	inline auto id() const
 	{
 		return _id;
+	}
+
+	inline auto name() const
+	{
+		return (this != nullptr) ? _name : std::string("MainThread");
 	}
 
 	// Кладем указатель на контекст в буффер потока
