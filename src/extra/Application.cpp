@@ -22,6 +22,7 @@
 #include "Application.hpp"
 
 Application::Application(const Setting& setting)
+: _isProduction(false)
 {
 	std::string type;
 	if (setting.exists("type"))
@@ -44,4 +45,9 @@ Application::Application(const Setting& setting)
 		throw std::runtime_error("Undefined appId");
 	}
 	_appId = std::move(appId);
+
+	if (setting.exists("isProduction"))
+	{
+		setting.lookupValue("isProduction", _isProduction);
+	}
 }

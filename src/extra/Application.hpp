@@ -31,6 +31,7 @@ class Application : public Shareable<Application>
 protected:
 	std::string _type;
 	std::string _appId;
+	bool _isProduction;
 
 public:
 	Application() = delete;
@@ -50,6 +51,11 @@ public:
 	const std::string& appId() const
 	{
 		return _appId;
+	}
+
+	bool isProduction() const
+	{
+		return _isProduction;
 	}
 };
 
