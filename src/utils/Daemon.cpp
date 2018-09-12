@@ -21,6 +21,7 @@
 
 #include "Daemon.hpp"
 #include "../thread/ThreadPool.hpp"
+#include "../log/LoggerManager.hpp"
 
 #include <cxxabi.h>
 #include <climits>
@@ -174,11 +175,11 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGSEGV:
 				if (fatalError)
 				{
-					Log::finalFlush();
+					LoggerManager::finalFlush();
 					raise(sig);
 				}
 				fatalError = true;
-				log.info("Sigmentation fail. Terminate daemon!");
+				log.critical("Sigmentation fail. Terminate daemon!");
 				log.flush();
 				needBacktrace = true;
 				needAbort = true;
@@ -187,11 +188,11 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGBUS:
 				if (fatalError)
 				{
-					Log::finalFlush();
+					LoggerManager::finalFlush();
 					raise(sig);
 				}
 				fatalError = true;
-				log.info("Bus fail. Terminate daemon!");
+				log.critical("Bus fail. Terminate daemon!");
 				log.flush();
 				needBacktrace = true;
 				needAbort = true;
@@ -200,11 +201,11 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGABRT:
 				if (fatalError)
 				{
-					Log::finalFlush();
+					LoggerManager::finalFlush();
 					raise(sig);
 				}
 				fatalError = true;
-				log.info("Abort. Terminate daemon!");
+				log.warn("Abort. Terminate daemon!");
 				log.flush();
 
 				needBacktrace = true;
@@ -214,11 +215,11 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 			case SIGFPE:
 				if (fatalError)
 				{
-					Log::finalFlush();
+					LoggerManager::finalFlush();
 					raise(sig);
 				}
 				fatalError = true;
-				log.info("Floating point exception. Terminate daemon!");
+				log.critical("Floating point exception. Terminate daemon!");
 				log.flush();
 
 				needBacktrace = true;
@@ -226,9 +227,9 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 				goto actions;
 
 			case SIGUSR1:
-				log.info("Received signal USR1. Reconfigure");
+				log.info("Log rotation.");
 				log.flush();
-				// TODO реализовать переконфигурацию
+				LoggerManager::rotate();
 				return;
 
 			case SIGUSR2:
@@ -238,7 +239,7 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 				goto actions;
 
 			default:
-				log.info("Received signal `%s`", sys_siglist[sig]);
+				log.debug("Received signal `%s`", sys_siglist[sig]);
 				log.flush();
 		}
 	}
@@ -289,7 +290,7 @@ void Daemon::SignalsHandler(int sig, siginfo_t* info, void* context)
 
 	if (needAbort)
 	{
-		Log::finalFlush();;
+		LoggerManager::finalFlush();
 
 		exit(EXIT_FAILURE);
 	}

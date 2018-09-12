@@ -21,17 +21,35 @@
 
 #pragma once
 
-
-#include <P7_Client.h>
-#include <P7_Trace.h>
+#include <mutex>
 #include "../configs/Setting.hpp"
+#include "Log.hpp"
+#include "../utils/Timeout.hpp"
 
-class Sink final
+#define PRE_ACCUMULATE_LOG
+
+class Sink final: public Shareable<Sink>
 {
+public:
+	enum class Type : uint8_t {
+		BLACKHOLE = 0,
+		CONSOLE,
+		FILE
+	};
+
 private:
+	std::recursive_mutex _mutex;
 	std::string _name;
-	IP7_Client *_p7client;
-	IP7_Trace *_p7trace;
+	Type _type;
+
+#ifdef	PRE_ACCUMULATE_LOG
+	std::string _accum;
+	std::shared_ptr<Timeout> _flushTimeout;
+#endif
+
+	FILE* _f;
+	std::string _path;
+	std::string _preInitBuff;
 
 public:
 	Sink(const Sink&) = delete; // Copy-constructor
@@ -48,8 +66,9 @@ public:
 		return _name;
 	}
 
-	IP7_Trace& trace()
-	{
-		return *_p7trace;
-	}
+	void push(Log::Detail level, const std::string& name, const std::string& message);
+	void push(Log::Detail level, const std::string& name, const std::string& format, va_list ap);
+
+	void flush();
+	void rotate();
 };

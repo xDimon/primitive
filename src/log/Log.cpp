@@ -20,6 +20,7 @@
 
 
 #include "Log.hpp"
+#include <cstdarg>
 #include "LoggerManager.hpp"
 
 Log::Log(const std::string& name, Detail detail, const std::string& sink)
@@ -42,7 +43,7 @@ Log::Log(const std::string& name, Detail detail, const std::string& sink)
 		_detail = detail;
 	}
 
-	module = nullptr;
+//	module = nullptr;
 
 	setName(name);
 }
@@ -52,10 +53,136 @@ void Log::setDetail(Detail detail)
 	_detail = detail;
 }
 
-void Log::setName(const std::string& name_)
+void Log::setName(const std::string& name)
 {
-	auto name = name_;
-	name.resize(18, ' ');
+	_name = name;
+	_name.resize(18, ' ');
 
-	_sink->trace().Register_Module(name.c_str(), &module);
+//	_sink->trace().Register_Module(name.c_str(), &module);
+}
+
+void Log::trace(const std::string& message)
+{
+#if defined(LOG_TRACE_ON)
+	if (_detail == Detail::TRACE)
+	{
+		_sink->push(Detail::TRACE, _name, message);
+	}
+#endif // defined(LOG_TRACE_ON)
+}
+
+void Log::trace(const char* fmt, ...)
+{
+#if defined(LOG_TRACE_ON)
+	if (_detail == Detail::TRACE)
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		_sink->push(Detail::TRACE, _name, fmt, ap);
+	}
+#endif // defined(LOG_TRACE_ON)
+}
+
+void Log::debug(const std::string& message)
+{
+#if defined(LOG_DEBUG_ON)
+	if (_detail == Detail::DEBUG)
+	{
+		_sink->push(Detail::DEBUG, _name, message);
+	}
+#endif // defined(LOG_DEBUG_ON)
+}
+
+void Log::debug(const char* fmt, ...)
+{
+#if defined(LOG_DEBUG_ON)
+	if (_detail == Detail::DEBUG)
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		_sink->push(Detail::DEBUG, _name, fmt, ap);
+		va_end(ap);
+	}
+#endif // defined(LOG_DEBUG_ON)
+}
+
+void Log::info(const std::string& message)
+{
+	if (_detail <= Detail::INFO)
+	{
+		_sink->push(Detail::INFO, _name, message);
+	}
+}
+
+void Log::info(const char* fmt, ...)
+{
+	if (_detail <= Detail::INFO)
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		_sink->push(Detail::INFO, _name, fmt, ap);
+		va_end(ap);
+	}
+}
+
+void Log::warn(const std::string& message)
+{
+	if (_detail <= Detail::WARN)
+	{
+		_sink->push(Detail::WARN, _name, message);
+	}
+}
+
+void Log::warn(const char* fmt, ...)
+{
+	if (_detail <= Detail::WARN)
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		_sink->push(Detail::WARN, _name, fmt, ap);
+		va_end(ap);
+	}
+}
+
+void Log::error(const std::string& message)
+{
+	if (_detail <= Detail::ERROR)
+	{
+		_sink->push(Detail::ERROR, _name, message);
+	}
+}
+
+void Log::error(const char* fmt, ...)
+{
+	if (_detail <= Detail::ERROR)
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		_sink->push(Detail::ERROR, _name, fmt, ap);
+		va_end(ap);
+	}
+}
+
+void Log::critical(const std::string& message)
+{
+	if (_detail <= Detail::CRITICAL)
+	{
+		_sink->push(Detail::CRITICAL, _name, message);
+	}
+}
+
+void Log::critical(const char* fmt, ...)
+{
+	if (_detail <= Detail::CRITICAL)
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		_sink->push(Detail::CRITICAL, _name, fmt, ap);
+		va_end(ap);
+	}
+}
+
+void Log::flush()
+{
+	_sink->flush();
 }

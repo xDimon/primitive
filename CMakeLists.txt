@@ -83,14 +83,6 @@ endif ()
 list(APPEND "${CODENAME}_INCLUDES" ${LIBCONFIG++_INCLUDE_DIR})
 list(APPEND "${CODENAME}_LIBRARIES" ${LIBCONFIG++_LIBRARIES})
 
-# Подключаем p7
-find_package(P7)
-if (NOT P7_FOUND)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/p7)
-endif ()
-list(APPEND "${CODENAME}_INCLUDES" ${P7_INCLUDE_DIR})
-list(APPEND "${CODENAME}_LIBRARIES" ${P7_LIBRARIES})
-
 # Подключаем openssl
 find_package(OpenSSL)
 if (NOT OPENSSL_FOUND)

@@ -30,12 +30,13 @@
 #include "../services/Services.hpp"
 #include "../utils/Daemon.hpp"
 #include "../thread/TaskManager.hpp"
+#include "../log/LoggerManager.hpp"
 
 Server* Server::_instance = nullptr;
 
 Server::Server(const std::shared_ptr<Config>& configs)
 : _log("Server")
-, _workerCount(0)
+, _workerCount(std::thread::hardware_concurrency())
 , _configs(configs)
 {
 	if (_instance != nullptr)
@@ -64,10 +65,7 @@ Server::Server(const std::shared_ptr<Config>& configs)
 			Daemon::SetProcessName(processName);
 		}
 
-		if (!settings.lookupValue("workers", _workerCount))
-		{
-			_workerCount = std::thread::hardware_concurrency();
-		}
+		settings.lookupValue("workers", _workerCount);
 		if (_workerCount < 2)
 		{
 			throw std::runtime_error("Count of workers too few. Programm won't be work correctly");
@@ -79,7 +77,9 @@ Server::Server(const std::shared_ptr<Config>& configs)
 	}
 	catch (const std::exception& exception)
 	{
-		_log.error("Can't configure of core ← %s", exception.what());
+		_log.critical("Can't configure of core ← %s", exception.what());
+		LoggerManager::finalFlush();
+		exit(EXIT_FAILURE);
 	}
 
 	try

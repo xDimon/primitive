@@ -90,11 +90,12 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 				{
 					throw std::runtime_error("Undefined sink for logger '" + name + "'");
 				}
-				if (lm._sinks.find(sinkname) == lm._sinks.end())
+				auto i = lm._sinks.find(sinkname);
+				if (i == lm._sinks.end())
 				{
 					throw std::runtime_error("Not found sink '" + sinkname + "' for logger '" + name + "'");
 				}
-				auto& sink = lm._sinks[sinkname];
+				auto sink = i->second;
 
 				std::string level;
 				if (!setting.lookupValue("level", level))
@@ -164,32 +165,32 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 
 void LoggerManager::regThread(const std::string& threadName)
 {
-	auto& lm = getInstance();
-
-	std::lock_guard<std::mutex> lockGuard(lm._mutex);
-
-	for (auto& i : lm._sinks)
-	{
-		auto& sink = i.second;
-
-		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
-		sink->trace().Register_Thread(threadName.c_str(), tid);
-	}
+//	auto& lm = getInstance();
+//
+//	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+//
+//	for (auto& i : lm._sinks)
+//	{
+//		auto& sink = i.second;
+//
+//		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
+//		sink->trace().Register_Thread(threadName.c_str(), tid);
+//	}
 }
 
 void LoggerManager::unregThread()
 {
-	auto& lm = getInstance();
-
-	std::lock_guard<std::mutex> lockGuard(lm._mutex);
-
-	for (auto& i : lm._sinks)
-	{
-		auto& sink = i.second;
-
-		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
-		sink->trace().Unregister_Thread(tid);
-	}
+//	auto& lm = getInstance();
+//
+//	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+//
+//	for (auto& i : lm._sinks)
+//	{
+//		auto& sink = i.second;
+//
+//		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
+//		sink->trace().Unregister_Thread(tid);
+//	}
 }
 
 const std::tuple<std::shared_ptr<Sink>, Log::Detail>& LoggerManager::getSinkAndLevel(const std::string& name)
@@ -230,4 +231,28 @@ std::shared_ptr<Sink> LoggerManager::getSink(const std::string& name)
 	}
 
 	return i->second;
+}
+
+void LoggerManager::finalFlush()
+{
+	auto& lm = getInstance();
+
+	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+
+	for (auto i : lm._sinks)
+	{
+		i.second->flush();
+	}
+}
+
+void LoggerManager::rotate()
+{
+	auto& lm = getInstance();
+
+	std::lock_guard<std::mutex> lockGuard(lm._mutex);
+
+	for (auto i : lm._sinks)
+	{
+		i.second->rotate();
+	}
 }

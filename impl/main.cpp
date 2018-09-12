@@ -64,8 +64,6 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	P7_Set_Crash_Handler();
-
 	Log log("Main");
 	log.info("Start daemon");
 
@@ -93,7 +91,7 @@ int main(int argc, char *argv[])
 
 	log.info("Stop daemon");
 
-	Log::finalFlush();
+	LoggerManager::finalFlush();
 
 	return EXIT_SUCCESS;
 }

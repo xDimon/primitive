@@ -26,17 +26,8 @@
 
 #include <string>
 #include <thread>
-#include <P7_Client.h>
-#include <P7_Trace.h>
-#include "Sink.hpp"
 
-struct IP7_Trace_Deleter
-{
-	void operator()(IP7_Trace* logTrace)
-	{
-		logTrace->Release();
-	}
-};
+class Sink;
 
 class Log final
 {
@@ -54,8 +45,7 @@ public:
 	};
 
 private:
-	IP7_Trace::hModule module;
-
+	std::string _name;
 	std::shared_ptr<Sink> _sink;
 	Detail _detail;
 
@@ -78,70 +68,23 @@ public:
 	}
 	void setDetail(Detail detail);
 
-	template<typename... Args>
-	void trace(const char* fmt, const Args& ... args)
-	{
-#if defined(LOG_TRACE_ON)
-		if (_detail == Detail::TRACE)
-		{
-			_sink->trace().P7_TRACE(module, fmt, args...);
-		}
-#endif // defined(LOG_TRACE_ON)
-	}
+	void trace(const std::string& message);
+	void trace(const char* fmt, ...);
 
-	template<typename... Args>
-	void debug(const char* fmt, const Args& ... args)
-	{
-#if defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
-		if (_detail <= Detail::DEBUG)
-		{
-			_sink->trace().P7_DEBUG(module, fmt, args...);
-		}
-#endif // defined(LOG_DEBUG_ON) || defined(LOG_TRACE_ON)
-	}
+	void debug(const std::string& message);
+	void debug(const char* fmt, ...);
 
-	template<typename... Args>
-	void info(const char* fmt, const Args& ... args)
-	{
-		if (_detail <= Detail::INFO)
-		{
-			_sink->trace().P7_INFO(module, fmt, args...);
-		}
-	}
+	void info(const std::string& message);
+	void info(const char* fmt, ...);
 
-	template<typename... Args>
-	void warn(const char* fmt, const Args& ... args)
-	{
-		if (_detail <= Detail::WARN)
-		{
-			_sink->trace().P7_WARNING(module, fmt, args...);
-		}
-	}
+	void warn(const std::string& message);
+	void warn(const char* fmt, ...);
 
-	template<typename... Args>
-	void error(const char* fmt, const Args& ... args)
-	{
-		if (_detail <= Detail::ERROR)
-		{
-			_sink->trace().P7_ERROR(module, fmt, args...);
-		}
-	}
+	void error(const std::string& message);
+	void error(const char* fmt, ...);
 
-	template<typename... Args>
-	void critical(const char* fmt, const Args& ... args)
-	{
-		if (_detail <= Detail::CRITICAL)
-		{
-			_sink->trace().P7_CRITICAL(module, fmt, args...);
-		}
-	}
+	void critical(const std::string& message);
+	void critical(const char* fmt, ...);
 
-	void flush()
-	{
-	}
-
-	static void finalFlush()
-	{
-		P7_Exceptional_Flush();
-	}
+	void flush();
 };

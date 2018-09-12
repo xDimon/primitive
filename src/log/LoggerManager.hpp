@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include <P7_Client.h>
-#include <P7_Trace.h>
 #include <mutex>
 #include "Log.hpp"
 #include "../configs/Config.hpp"
@@ -59,4 +57,8 @@ public:
 
 	static const std::tuple<std::shared_ptr<Sink>, Log::Detail>& getSinkAndLevel(const std::string& loggerName);
 	static std::shared_ptr<Sink> getSink(const std::string& sinkName);
+
+	static void finalFlush();
+
+	static void rotate();
 };
