@@ -429,6 +429,20 @@ SVal JsonSerializer::decodeBinary()
 		auto c = _iss.get();
 		if (c == '"')
 		{
+			throw std::runtime_error("Wrong token for close base64-encoded binary string");
+		}
+		if (c == '?')
+		{
+			auto c1 = _iss.get();
+			if (c1 != '=')
+			{
+				throw std::runtime_error("Wrong token for close base64-encoded binary string");
+			}
+			auto c2 = _iss.get();
+			if (c2 != '"')
+			{
+				throw std::runtime_error("Wrong token for close base64-encoded binary string");
+			}
 			return std::forward<SBinary>(Base64::decode(b64));
 		}
 
