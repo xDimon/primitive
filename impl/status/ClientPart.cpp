@@ -182,7 +182,7 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 			oss
 			<< "---------------------------------------------\n"
 			<< "[" << pool->name() << "]\n"
-			<< "All connections:               " << std::setw(7) << std::setfill(' ') << std::fixed << std::setprecision(0) << pool->metricConnectCount->sum(1) << "\n"
+			<< "All connections:               " << std::setw(7) << std::setfill(' ') << std::fixed << std::setprecision(0) << pool->metricSumConnections->sum(1) << "\n"
 			<< "Successful queries:            " << std::setw(7) << std::setfill(' ') << std::fixed << std::setprecision(0) << pool->metricSuccessQueryCount->sum(1) << "\n"
 			<< "Fail queries:                  " << std::setw(7) << std::setfill(' ') << std::fixed << std::setprecision(0) << pool->metricFailQueryCount->sum(1) << "\n"
 			<< "Current avg execution speed:   " << std::setw(7) << std::setfill(' ') << std::fixed << std::setprecision(3) << (queryCount/15) << " qps\n"
@@ -206,29 +206,32 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 			<< "\n";
 		});
 
-		oss << "=============================================\n"
-			<< "RAW METRICS\n"
-			<< "\n";
-
-		oss
-			<< std::setw(51) << std::left  << std::setfill(' ') << "NAME"
-			<< std::setw(11) << std::right << std::setfill(' ') << "Sum"
-			<< std::setw(11) << std::right << std::setfill(' ') << "Sum 15s"
-			<< std::setw(11) << std::right << std::setfill(' ') << "Average"
-			<< std::setw(11) << std::right << std::setfill(' ') << "Avg 15s"
-			<< std::setw(11) << std::right << std::setfill(' ') << "Avg 1/sec"
-			<< "\n";
-
-		for (auto i : TelemetryManager::metrics())
+		if (input.has("raw"))
 		{
+			oss << "=============================================\n"
+				<< "RAW METRICS\n"
+				<< "\n";
+
 			oss
-			<< std::setw(50) << std::left  << std::setfill(' ') << i.first << " "
-			<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->sum(1) << " "
-			<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->sum(std::chrono::seconds(15)) << " "
-			<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->avg(1) << " "
-			<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->avg(std::chrono::seconds(15)) << " "
-			<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->avgPerSec(std::chrono::seconds(15))
-			<< "\n";
+				<< std::setw(51) << std::left << std::setfill(' ') << "NAME"
+				<< std::setw(11) << std::right << std::setfill(' ') << "Sum"
+				<< std::setw(11) << std::right << std::setfill(' ') << "Sum 15s"
+				<< std::setw(11) << std::right << std::setfill(' ') << "Average"
+				<< std::setw(11) << std::right << std::setfill(' ') << "Avg 15s"
+				<< std::setw(11) << std::right << std::setfill(' ') << "Avg 1/sec"
+				<< "\n";
+
+			for (auto i : TelemetryManager::metrics())
+			{
+				oss
+					<< std::setw(50) << std::left << std::setfill(' ') << i.first << " "
+					<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->sum(1) << " "
+					<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->sum(std::chrono::seconds(15)) << " "
+					<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->avg(1) << " "
+					<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->avg(std::chrono::seconds(15)) << " "
+					<< std::setw(10) << std::right << std::setfill(' ') << std::fixed << i.second->avgPerSec(std::chrono::seconds(15))
+					<< "\n";
+			}
 		}
 
       	oss << "=============================================\n";
