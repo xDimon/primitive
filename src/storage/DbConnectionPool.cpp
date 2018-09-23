@@ -160,3 +160,31 @@ void DbConnectionPool::releaseDbConnection(const std::shared_ptr<DbConnection>& 
 
 	_pool.push_front(conn);
 }
+
+void DbConnectionPool::attachDbConnection(const std::shared_ptr<DbConnection>& conn)
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
+	auto i = _captured.find(std::this_thread::get_id());
+	if (i != _captured.end())
+	{
+		throw std::runtime_error("Thread already has attached database connection");
+	}
+
+	_captured.insert(std::make_pair(std::this_thread::get_id(), conn));
+}
+
+std::shared_ptr<DbConnection> DbConnectionPool::detachDbConnection()
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
+	auto i = _captured.find(std::this_thread::get_id());
+	if (i == _captured.end())
+	{
+		throw std::runtime_error("Thread already has not attached database connection");
+	}
+
+	_captured.erase(i);
+
+	return i->second;
+}

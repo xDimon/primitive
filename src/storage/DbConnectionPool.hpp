@@ -74,6 +74,10 @@ public:
 	void releaseDbConnection(const std::shared_ptr<DbConnection>& conn);
 
 	virtual void close() = 0;
+
+	void attachDbConnection(const std::shared_ptr<DbConnection>& conn);
+
+	std::shared_ptr<DbConnection> detachDbConnection();
 };
 
 #include "DbConnectionPoolFactory.hpp"

@@ -83,4 +83,27 @@ public:
 
 	bool query(const std::string& query, DbResult* res, size_t* affected, size_t* insertId) override;
 	bool multiQuery(const std::string& sql) override;
+
+private:
+	MYSQL* implConnect(
+		const char* host,
+		const char* user,
+		const char* passwd,
+		const char* db,
+		unsigned int port,
+		const char* unix_socket,
+		unsigned long clientflag
+	);
+
+	void implClose();
+
+	bool implQuery(const std::string& sql);
+
+	MYSQL_RES* implStoreResult();
+
+	int implNextResult();
+
+	void implFreeResult(MYSQL_RES* result);
+
+	void implWait(std::chrono::steady_clock::duration duration);
 };

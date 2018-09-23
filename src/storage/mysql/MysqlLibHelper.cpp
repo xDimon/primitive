@@ -26,7 +26,8 @@
 
 MysqlLibHelper::MysqlLibHelper()
 {
-	if (mysql_library_init(0, nullptr, nullptr))
+	static const char *my_groups[]= { "client", nullptr };
+	if (mysql_library_init(0, nullptr, (char**)my_groups))
 	{
 		_ready = false;
 		throw std::runtime_error("Could not initialize MySQL library");
