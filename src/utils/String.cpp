@@ -33,14 +33,15 @@ size_t String::utf8strlen(const char *s)
 	return j;
 }
 
-std::vector<std::string> String::split(const std::string& in, char separator)
+std::vector<std::string> String::split(const std::string& in, char separator, size_t count)
 {
 	std::istringstream iss(in);
 	std::vector<std::string> param;
 	std::string s;
-	while (std::getline(iss, s, separator))
+	size_t n = 0;
+	while (std::getline(iss, s, (++n < count) ? separator : '\0'))
 	{
 		param.push_back(std::move(s));
 	}
-	return std::move(param);
+	return param;
 }

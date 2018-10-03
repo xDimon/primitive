@@ -53,5 +53,5 @@ namespace String
 	    rtrim(s);
 	}
 
-	std::vector<std::string> split(const std::string& in, char separator = ' ');
+	std::vector<std::string> split(const std::string& in, char separator = ' ', size_t count = std::numeric_limits<size_t>::max());
 }
