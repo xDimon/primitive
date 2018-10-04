@@ -25,6 +25,13 @@
 #include "MysqlResult.hpp"
 #include "../../thread/Thread.hpp"
 
+#ifndef ASYNC_MYSQL
+#define ASYNC_MYSQL 0
+ #if MARIADB_BASE_VERSION // https://mariadb.com/kb/en/library/using-the-non-blocking-library/
+  #define ASYNC_MYSQL 1
+ #endif
+#endif
+
 void MysqlConnection::implWait(std::chrono::steady_clock::duration duration)
 {
 	auto pool = _pool.lock();
@@ -48,14 +55,14 @@ MYSQL* MysqlConnection::implConnect(
 {
 	my_bool on = true;
 	mysql_options(_mysql, MYSQL_OPT_RECONNECT, &on);
-#ifdef MARIADB_BASE_VERSION  // https://mariadb.com/kb/en/library/using-the-non-blocking-library/
+#if ASYNC_MYSQL
 	mysql_options(_mysql, MYSQL_OPT_NONBLOCK, nullptr);
-#endif
+#endif // ASYNC_MYSQL
 	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8"); // utf8mb4
 	mysql_options(_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+00:00';\n");
 
 	MYSQL *ret = nullptr;
-#ifdef MARIADB_BASE_VERSION  // https://mariadb.com/kb/en/library/using-the-non-blocking-library/
+#if ASYNC_MYSQL
 	auto status = mysql_real_connect_start(
 		&ret,
 		_mysql,
@@ -82,7 +89,7 @@ MYSQL* MysqlConnection::implConnect(
 		pool->log().warn("Return   CONNECT %p", this);
 	}
 
-#else
+#else // ASYNC_MYSQL
 	ret = mysql_real_connect(
 		_mysql,
 		host,
@@ -93,13 +100,13 @@ MYSQL* MysqlConnection::implConnect(
 		nullptr,
 		CLIENT_REMEMBER_OPTIONS
 	);
-#endif
+#endif // ASYNC_MYSQL
 	return ret;
 }
 
 void MysqlConnection::implClose()
 {
-#ifdef MARIADB_BASE_VERSION
+#if ASYNC_MYSQL
 	auto status = mysql_close_start(_mysql);
 	while (status != 0)
 	{
@@ -114,15 +121,15 @@ void MysqlConnection::implClose()
 	{
 		pool->log().warn("Return   CLOSE %p", this);
 	}
-#else
+#else // ASYNC_MYSQL
 	mysql_close(_mysql);
-#endif
+#endif // ASYNC_MYSQL
 }
 
 bool MysqlConnection::implQuery(const std::string& sql)
 {
 	// Выполнение запроса
-#ifdef MARIADB_BASE_VERSION
+#if ASYNC_MYSQL
 	int ret = 0;
 	auto status = mysql_real_query_start(&ret, _mysql, sql.c_str(), sql.length());
 	while (status != 0)
@@ -139,14 +146,14 @@ bool MysqlConnection::implQuery(const std::string& sql)
 		pool->log().warn("Return   QUERY %p", this);
 	}
 	return ret == 0;
-#else
+#else // ASYNC_MYSQL
 	return mysql_real_query(_mysql, sql.c_str(), sql.length()) == 0;
-#endif
+#endif // ASYNC_MYSQL
 }
 
 MYSQL_RES* MysqlConnection::implStoreResult()
 {
-#ifdef MARIADB_BASE_VERSION
+#if ASYNC_MYSQL
 	MYSQL_RES* ret;
 	auto status = mysql_store_result_start(&ret, _mysql);
 	while (status != 0)
@@ -163,14 +170,14 @@ MYSQL_RES* MysqlConnection::implStoreResult()
 		pool->log().warn("Return   STORE %p", this);
 	}
 	return ret;
-#else
+#else // ASYNC_MYSQL
 	return mysql_store_result(_mysql);
-#endif
+#endif // ASYNC_MYSQL
 }
 
 int MysqlConnection::implNextResult()
 {
-#ifdef MARIADB_BASE_VERSION
+#if ASYNC_MYSQL
 	int ret;
 	auto status = mysql_next_result_start(&ret, _mysql);
 	while (status != 0)
@@ -187,14 +194,14 @@ int MysqlConnection::implNextResult()
 		pool->log().warn("Return   NEXT %p", this);
 	}
 	return ret;
-#else
+#else // ASYNC_MYSQL
 	return mysql_next_result(_mysql);
-#endif
+#endif // ASYNC_MYSQL
 }
 
 void MysqlConnection::implFreeResult(MYSQL_RES* result)
 {
-#ifdef MARIADB_BASE_VERSION
+#if ASYNC_MYSQL
 	auto status = mysql_free_result_start(result);
 	while (status != 0)
 	{
@@ -209,9 +216,9 @@ void MysqlConnection::implFreeResult(MYSQL_RES* result)
 	{
 		pool->log().warn("Return   FREE %p", this);
 	}
-#else
+#else // ASYNC_MYSQL
 	mysql_free_result(result);
-#endif
+#endif // ASYNC_MYSQL
 }
 
 MysqlConnection::MysqlConnection(
