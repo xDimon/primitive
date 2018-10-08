@@ -1,4 +1,4 @@
-// Copyright © 2017-2018 Dmitriy Khaustov
+// Copyright © 2018 Dmitriy Khaustov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,25 +14,22 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.05.08
+// File created on: 2018.10.08
 
-// DbResult.hpp
+// DbRow.hpp
 
 
 #pragma once
 
-#include "DbRow.hpp"
 
-class DbResult
+class DbRow
 {
 public:
-	DbResult(DbResult&&) noexcept = delete; // Move-constructor
-	DbResult(const DbResult&) = delete; // Copy-constructor
-	DbResult& operator=(DbResult&&) noexcept = delete; // Move-assignment
-	DbResult& operator=(DbResult const&) = delete; // Copy-assignment
+	DbRow(DbRow&&) noexcept = delete; // Move-constructor
+	DbRow(const DbRow&) = delete; // Copy-constructor
+	DbRow& operator=(DbRow&&) noexcept = delete; // Move-assignment
+	DbRow& operator=(DbRow const&) = delete; // Copy-assignment
 
-	DbResult() = default; // Default-constructor
-	virtual ~DbResult() = default; // Destructor
-
-	virtual bool fetchRow(DbRow& row) = 0;
+	DbRow() = default; // Default-constructor
+	virtual ~DbRow() = default; // Destructor
 };

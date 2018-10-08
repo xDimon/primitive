@@ -23,6 +23,7 @@
 
 
 #include "../DbResult.hpp"
+#include "MysqlRow.hpp"
 
 #include <mysql.h>
 
@@ -64,5 +65,21 @@ public:
 	MYSQL_RES* get()
 	{
 		return _data;
+	}
+
+	bool fetchRow(DbRow& row_) override
+	{
+		if (_data)
+		{
+			return false;
+		}
+		auto mysqlRow = mysql_fetch_row(_data);
+		if (!mysqlRow)
+		{
+			return false;
+		}
+		auto& row = dynamic_cast<MysqlRow&>(row_);
+		row.set(mysqlRow);
+		return true;
 	}
 };
