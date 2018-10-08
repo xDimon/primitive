@@ -28,9 +28,13 @@
 
 class Application : public Shareable<Application>
 {
+public:
+	typedef std::string Type;
+	typedef std::string Id;
+
 protected:
-	std::string _type;
-	std::string _appId;
+	Type _type;
+	Id _appId;
 	bool _isProduction;
 
 public:
@@ -43,12 +47,12 @@ public:
 	explicit Application(const Setting& setting);
 	~Application() override = default;
 
-	const std::string& type() const
+	const Type& type() const
 	{
 		return _type;
 	}
 
-	const std::string& appId() const
+	const Id& appId() const
 	{
 		return _appId;
 	}
