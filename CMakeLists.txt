@@ -107,12 +107,13 @@ else()
 endif ()
 
 # Подключаем protobuf++
-find_package(Protobuf REQUIRED)
+find_package(Protobuf)
 if (NOT PROTOBUF_FOUND)
-    message(FATAL_ERROR "Protobuf not found")
+    message(WARNING "Protobuf not found")
+else()
+    list(APPEND "${CODENAME}_INCLUDES" ${PROTOBUF_INCLUDE_DIRS})
+    list(APPEND "${CODENAME}_LIBRARIES" ${PROTOBUF_LIBRARIES})
 endif ()
-list(APPEND "${CODENAME}_INCLUDES" ${PROTOBUF_INCLUDE_DIRS})
-list(APPEND "${CODENAME}_LIBRARIES" ${PROTOBUF_LIBRARIES})
 
 #message(STATUS "Project includes:")
 foreach(F ${${CODENAME}_INCLUDES})
