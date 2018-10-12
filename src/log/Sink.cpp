@@ -278,32 +278,35 @@ void Sink::push(Log::Detail level, const std::string& name, const std::string& f
 			}
 		}
 
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-		if ((_accum.length() + n + message.length() + 1) > (1<<14))
 		{
-			_mutex.unlock();
-			flush();
-			_mutex.lock();
-		}
-		_accum.append(buff);
-		_accum.append(message);
-		_accum.append("\n");
+			std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
-		if (!_flushTimeout)
-		{
-			_flushTimeout = std::make_shared<Timeout>(
-				[wp = std::weak_ptr<Sink>(std::dynamic_pointer_cast<Sink>(ptr()))]
-				{
-					auto iam = wp.lock();
-					if (!iam) return;
-					try
+			if ((_accum.length() + n + message.length() + 1) > (1<<14))
+			{
+				_mutex.unlock();
+				flush();
+				_mutex.lock();
+			}
+			_accum.append(buff);
+			_accum.append(message);
+			_accum.append("\n");
+
+			if (!_flushTimeout)
+			{
+				_flushTimeout = std::make_shared<Timeout>(
+					[wp = std::weak_ptr<Sink>(std::dynamic_pointer_cast<Sink>(ptr()))]
 					{
-						iam->flush();
-						iam->_flushTimeout->startOnce(std::chrono::milliseconds(250));
-					} catch (...) {}
-				},
-				"Timeout to flush sink"
-			);
+						auto iam = wp.lock();
+						if (!iam) return;
+						try
+						{
+							iam->flush();
+							iam->_flushTimeout->startOnce(std::chrono::milliseconds(250));
+						} catch (...) {}
+					},
+					"Timeout to flush sink"
+				);
+			}
 		}
 
 		_flushTimeout->startOnce(std::chrono::milliseconds(250));
