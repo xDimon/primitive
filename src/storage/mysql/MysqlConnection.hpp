@@ -48,15 +48,10 @@ public:
 		const std::string& dbuser,
 		const std::string& dbpass,
 		const std::string& dbserver,
-		unsigned int dbport
-	);
-
-	MysqlConnection(
-		const std::shared_ptr<DbConnectionPool>& pool,
-		const std::string& dbname,
-		const std::string& dbuser,
-		const std::string& dbpass,
-		const std::string& dbsocket
+		unsigned int dbport,
+		const std::string& dbsocket,
+		const std::string& charset,
+		const std::string& timezone
 	);
 
 	~MysqlConnection() override;
@@ -86,13 +81,15 @@ public:
 
 private:
 	MYSQL* implConnect(
-		const char* host,
-		const char* user,
-		const char* passwd,
-		const char* db,
+		const std::string& host,
+		const std::string& user,
+		const std::string& password,
+		const std::string& dbname,
 		unsigned int port,
-		const char* unix_socket,
-		unsigned long clientflag
+		const std::string& unixsocket,
+		unsigned long clientflags,
+		const std::string& charset,
+		const std::string& timezone
 	);
 
 	void implClose();

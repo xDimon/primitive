@@ -83,35 +83,31 @@ MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 	{
 		throw std::runtime_error(std::string("Undefined dbpass for dbpool '") + name() + "'");
 	}
+
+	if (setting.exists("dbcharset"))
+	{
+		setting.lookupValue("dbcharset", _charset);
+	}
+
+	if (setting.exists("dbtimezone"))
+	{
+		setting.lookupValue("dbtimezone", _timezone);
+	}
 }
 
 std::shared_ptr<DbConnection> MysqlConnectionPool::create()
 {
-	std::shared_ptr<DbConnection> newDbConnection;
-
-	if (!_dbsocket.empty())
-	{
-		newDbConnection = std::make_shared<MysqlConnection>(
-			ptr(),
-			_dbname,
-			_dbuser,
-			_dbpass,
-			_dbsocket
-		);
-	}
-	else
-	{
-		newDbConnection = std::make_shared<MysqlConnection>(
-			ptr(),
-			_dbname,
-			_dbuser,
-			_dbpass,
-			_dbserver,
-			_dbport
-		);
-	}
-
-	return newDbConnection;
+	return std::make_shared<MysqlConnection>(
+		ptr(),
+		_dbname,
+		_dbuser,
+		_dbpass,
+		_dbserver,
+		_dbport,
+		_dbsocket,
+		_charset,
+		_timezone
+	);
 }
 
 void MysqlConnectionPool::close()

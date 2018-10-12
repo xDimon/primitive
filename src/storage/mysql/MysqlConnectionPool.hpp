@@ -38,6 +38,8 @@ private:
 	std::string _dbuser;
 	std::string _dbpass;
 	unsigned int _dbport;
+	std::string _charset;
+	std::string _timezone;
 
 	std::shared_ptr<DbConnection> create() override;
 

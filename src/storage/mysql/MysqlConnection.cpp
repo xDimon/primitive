@@ -44,13 +44,15 @@ void MysqlConnection::implWait(std::chrono::steady_clock::duration duration)
 }
 
 MYSQL* MysqlConnection::implConnect(
-	const char* host,
-	const char* user,
-	const char* passwd,
-	const char* db,
+	const std::string& host,
+	const std::string& user,
+	const std::string& password,
+	const std::string& dbname,
 	unsigned int port,
-	const char* unix_socket,
-	unsigned long clientflag
+	const std::string& unix_socket,
+	unsigned long clientflag,
+	const std::string& charset,
+	const std::string& timezone
 )
 {
 	my_bool on = true;
@@ -58,8 +60,14 @@ MYSQL* MysqlConnection::implConnect(
 #if ASYNC_MYSQL
 	mysql_options(_mysql, MYSQL_OPT_NONBLOCK, nullptr);
 #endif // ASYNC_MYSQL
-	mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, "utf8"); // utf8mb4
-	mysql_options(_mysql, MYSQL_INIT_COMMAND, "SET time_zone='+00:00';\n");
+	if (!charset.empty())
+	{
+		mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, charset.c_str());
+	}
+	if (!timezone.empty())
+	{
+		mysql_options(_mysql, MYSQL_INIT_COMMAND, ("SET time_zone='" + timezone + "';\n").c_str());
+	}
 
 	MYSQL *ret = nullptr;
 #if ASYNC_MYSQL
@@ -92,12 +100,12 @@ MYSQL* MysqlConnection::implConnect(
 #else // ASYNC_MYSQL
 	ret = mysql_real_connect(
 		_mysql,
-		host,
-		user,
-		passwd,
-		db,
+		host.c_str(),
+		user.c_str(),
+		password.c_str(),
+		dbname.c_str(),
 		port,
-		nullptr,
+		unix_socket.c_str(),
 		CLIENT_REMEMBER_OPTIONS
 	);
 #endif // ASYNC_MYSQL
@@ -227,7 +235,10 @@ MysqlConnection::MysqlConnection(
 	const std::string& dbuser,
 	const std::string& dbpass,
 	const std::string& dbserver,
-	unsigned int dbport
+	unsigned int dbport,
+	const std::string& dbsocket,
+	const std::string& charset,
+	const std::string& timezone
 )
 : DbConnection(std::dynamic_pointer_cast<MysqlConnectionPool>(pool))
 , _mysql(nullptr)
@@ -240,47 +251,15 @@ MysqlConnection::MysqlConnection(
 	}
 
 	if (implConnect(
-		dbserver.c_str(),
-		dbuser.c_str(),
-		dbpass.c_str(),
-		dbname.c_str(),
+		dbserver,
+		dbuser,
+		dbpass,
+		dbname,
 		dbport,
-		nullptr,
-		CLIENT_REMEMBER_OPTIONS
-	) == nullptr)
-	{
-		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
-	}
-
-	unsigned int timeout = 900;
-	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
-}
-
-MysqlConnection::MysqlConnection(
-	const std::shared_ptr<DbConnectionPool>& pool,
-	const std::string& dbname,
-	const std::string& dbuser,
-	const std::string& dbpass,
-	const std::string& dbsocket
-)
-: DbConnection(pool)
-, _mysql(nullptr)
-, _transaction(0)
-{
-	_mysql = mysql_init(_mysql);
-	if (_mysql == nullptr)
-	{
-		throw std::runtime_error("Can't init mysql connection");
-	}
-
-	if (implConnect(
-		nullptr,
-		dbuser.c_str(),
-		dbpass.c_str(),
-		dbname.c_str(),
-		0,
-		dbsocket.c_str(),
-		CLIENT_REMEMBER_OPTIONS
+		dbsocket,
+		CLIENT_REMEMBER_OPTIONS,
+		charset,
+		timezone
 	) == nullptr)
 	{
 		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
