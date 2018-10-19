@@ -354,13 +354,16 @@ bool MysqlConnection::rollback()
 		}
 		return false;
 	}
-	if (DbConnection::query("ROLLBACK;"))
+	if (!DbConnection::query("ROLLBACK;"))
 	{
-		_transaction = 0;
-		return true;
+		if (auto pool = _pool.lock())
+		{
+			pool->log().warn("Internal error: Fail at rolling back");
+		}
 	}
 
-	return false;
+	_transaction = 0;
+	return true;
 }
 
 bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affected, size_t* insertId)
