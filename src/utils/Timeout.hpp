@@ -30,7 +30,7 @@ class Timeout final: public Shareable<Timeout>
 private:
 	friend class TimeoutWatcher;
 
-	std::mutex _mutex;
+	std::recursive_mutex _mutex;
 
 	std::chrono::steady_clock::time_point realExpireTime;
 	std::chrono::steady_clock::time_point nextExpireTime;

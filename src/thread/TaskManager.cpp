@@ -33,7 +33,7 @@ void TaskManager::enqueue(Task::Func&& func, Task::Time time, const char* label)
 {
 	auto& instance = getInstance();
 
-	std::lock_guard<std::mutex> lockGuard(instance._mutex);
+	std::lock_guard<std::recursive_mutex> lockGuard(instance._mutex);
 
 	instance._queue.emplace(std::forward<Task::Func>(func), time, label);
 
@@ -46,7 +46,7 @@ Task::Time TaskManager::waitUntil()
 {
 	auto& instance = getInstance();
 
-	std::lock_guard<std::mutex> lockGuard(instance._mutex);
+	std::lock_guard<std::recursive_mutex> lockGuard(instance._mutex);
 
 	return
 		instance._queue.empty()
@@ -123,7 +123,7 @@ bool TaskManager::empty()
 {
 	auto& instance = getInstance();
 
-	std::lock_guard<std::mutex> lockGuard(instance._mutex);
+	std::lock_guard<std::recursive_mutex> lockGuard(instance._mutex);
 
 	return instance._queue.empty();
 }
@@ -132,7 +132,7 @@ size_t TaskManager::queueSize()
 {
 	auto& instance = getInstance();
 
-	std::lock_guard<std::mutex> lockGuard(instance._mutex);
+	std::lock_guard<std::recursive_mutex> lockGuard(instance._mutex);
 
 	return instance._queue.size();
 }

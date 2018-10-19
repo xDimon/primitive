@@ -32,7 +32,7 @@ Timeout::Timeout(std::function<void()> handler, const char* label)
 
 void Timeout::startOnce(std::chrono::milliseconds duration)
 {
-	std::lock_guard<std::mutex> lockGuard(_mutex);
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
 	auto now = std::chrono::steady_clock::now();
 
@@ -55,7 +55,7 @@ void Timeout::startOnce(std::chrono::milliseconds duration)
 
 void Timeout::restart(std::chrono::milliseconds duration)
 {
-	std::lock_guard<std::mutex> lockGuard(_mutex);
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
 	auto now = std::chrono::steady_clock::now();
 	realExpireTime = now + duration;

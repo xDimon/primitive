@@ -51,7 +51,7 @@ public:
 
 private:
 	Log _log;
-	std::mutex _mutex;
+	std::recursive_mutex _mutex;
 	std::priority_queue<Task, std::deque<Task>> _queue;
 
 public:
