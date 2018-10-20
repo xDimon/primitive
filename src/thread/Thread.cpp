@@ -314,17 +314,23 @@ size_t Thread::getCurrContextCount()
 
 void Thread::postpone(Task::Duration duration)
 {
-	auto ctx = Thread::getCurrTaskContext();
-	Thread::setCurrTaskContext(nullptr);
-
-	TaskManager::enqueue(
-		[ctx]
+	auto holder = std::make_shared<Task::Func>(
+		[duration]
 		{
-			throw RollbackStackAndRestoreContext(ctx);
-		},
-		duration,
-		"Postpone some thing"
+			auto ctx = Thread::getCurrTaskContext();
+			Thread::setCurrTaskContext(nullptr);
+
+			TaskManager::enqueue(
+				[ctx]{ throw RollbackStackAndRestoreContext(ctx); },
+				duration,
+				"Postpone some thing"
+			);
+		}
 	);
+	auto& alarm = *holder;
+
+	// Выполняем асинхронно
+	Thread::self()->yield(alarm);
 }
 
 void Thread::doAtShutdown(std::function<void()>&& func)
