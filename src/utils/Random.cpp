@@ -39,16 +39,20 @@ std::string Random::generateSequence(const std::string& lookUpTable, size_t leng
 		auto rnd = static_cast<uint64_t>(
 			std::generate_canonical<long double, std::numeric_limits<long double>::digits>(generator) * std::numeric_limits<uint64_t>::max()
 		);
-		for (auto symbol = 0; symbol < 5; symbol++)
+		for (;;)
 		{
 			sequence.push_back(lookUpTable[rnd % 62]);
 			if (sequence.length() >= length)
 			{
-				break;
+				return sequence;
 			}
 			rnd /= 62;
+			if (rnd < lookUpTable.length())
+			{
+				break;
+			}
 		}
 	}
 
-	return nullptr;
+	return sequence;
 }
