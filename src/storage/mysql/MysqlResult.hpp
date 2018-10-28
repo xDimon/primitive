@@ -69,7 +69,7 @@ public:
 
 	bool fetchRow(DbRow& row_) override
 	{
-		if (_data)
+		if (_data == nullptr)
 		{
 			return false;
 		}

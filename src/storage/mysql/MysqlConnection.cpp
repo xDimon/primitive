@@ -465,7 +465,7 @@ bool MysqlConnection::multiQuery(const std::string& sql)
 		{
 			implFreeResult(result);
 		}
-		if (implNextResult() == 0)
+		if (implNextResult() != 0)
 		{
 			break;
 		}
