@@ -26,23 +26,29 @@
 #include <iomanip>
 
 // unreserved
-static const std::string unreserved =
+static const std::string unreserved(
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		"abcdefghijklmnopqrstuvwxyz"
-		"0123456789"
-		"-_.~";
+	"abcdefghijklmnopqrstuvwxyz"
+	"0123456789"
+	"-_.~"
+);
 
 // reserved
-static const std::string reserved =
-	"!*'();:@&=+$,/?%#[]";
+static const std::string reserved(
+	"!*'();:@&=+$,/?#[]"
+);
 
-inline static bool need_encode(char c)
+inline static bool need_encode(const char c)
 {
 	if (unreserved.find(c) != std::string::npos)
 	{
 		return false;
 	}
 	if (reserved.find(c) != std::string::npos)
+	{
+		return true;
+	}
+	if (c == '%')
 	{
 		return true;
 	}
@@ -256,7 +262,7 @@ std::string PercentEncoding::decode(const std::string& input)
 		}
 	}
 
-	return std::move(oss.str());
+	return oss.str();
 }
 
 std::string PercentEncoding::encode(const std::string& input)
@@ -286,5 +292,5 @@ std::string PercentEncoding::encode(const std::string& input)
 		}
 	}
 
-	return std::move(oss.str());
+	return oss.str();
 }
