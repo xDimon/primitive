@@ -28,6 +28,8 @@ public:
 
     void update(const std::string &s);
     void update(std::istream &is);
+	void update(void *data, size_t size);
+
 	std::string final();
 	std::string final_bin();
 

@@ -20,6 +20,8 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <cstring>
+#include <vector>
 
 static const size_t BLOCK_INTS = 16;  /* number of 32bit integers per SHA1 block */
 static const size_t BLOCK_BYTES = BLOCK_INTS * 4;
@@ -27,24 +29,22 @@ static const size_t BLOCK_BYTES = BLOCK_INTS * 4;
 
 static void reset(uint32_t digest[], std::string &buffer, uint64_t &transforms)
 {
-	/* SHA1 initialization constants */
+	// Initialization constants
 	digest[0] = 0x67452301;
 	digest[1] = 0xefcdab89;
 	digest[2] = 0x98badcfe;
 	digest[3] = 0x10325476;
 	digest[4] = 0xc3d2e1f0;
 
-	/* Reset counters */
+	// Reset counters
 	buffer = "";
 	transforms = 0;
 }
-
 
 static uint32_t rol(const uint32_t value, const size_t bits)
 {
 	return (value << bits) | (value >> (32 - bits));
 }
-
 
 static uint32_t blk(const uint32_t block[BLOCK_INTS], const size_t i)
 {
@@ -247,11 +247,27 @@ void SHA1::update(std::istream &is)
 	}
 }
 
+void SHA1::update(void *data_, size_t size)
+{
+	auto data = static_cast<char *>(data_);
+
+	struct membuf : std::streambuf
+	{
+		membuf(char* begin, char* end) {
+			this->setg(begin, begin, end);
+		}
+	};
+
+	membuf b(data, data + size);
+
+	std::istream in(&b);
+
+	update(in);
+}
 
 /*
  * Add padding and return the message digest.
  */
-
 std::string SHA1::final()
 {
 	auto str = final_bin();
