@@ -24,7 +24,7 @@
 #include "../../net/TcpConnection.hpp"
 #include "../http/HttpContext.hpp"
 #include "WsContext.hpp"
-#include "../../utils/Base64.hpp"
+#include "../../utils/encoding/Base64.hpp"
 #include "../../utils/hash/SHA1.hpp"
 
 bool WsClient::processing(const std::shared_ptr<Connection>& connection_)

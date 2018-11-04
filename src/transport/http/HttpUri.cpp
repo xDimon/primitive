@@ -21,7 +21,7 @@
 
 #include "HttpUri.hpp"
 
-#include "../../utils/PercentEncoding.hpp"
+#include "../../utils/encoding/PercentEncoding.hpp"
 
 #include <cstring>
 #include <stdexcept>

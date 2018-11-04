@@ -21,7 +21,7 @@
 
 #include "JsonSerializer.hpp"
 
-#include "../utils/Base64.hpp"
+#include "../utils/encoding/Base64.hpp"
 
 #include <iomanip>
 

@@ -21,10 +21,16 @@
 
 #include "Base64.hpp"
 
-static const std::string base64_chars =
+const std::string Base64::base64_chars(
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"abcdefghijklmnopqrstuvwxyz"
-	"0123456789+/";
+	"0123456789+/"
+);
+
+const std::string& Base64::charset()
+{
+	return base64_chars;
+}
 
 inline static bool is_base64(unsigned char c)
 {

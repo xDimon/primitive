@@ -1,4 +1,4 @@
-// Copyright © 2017-2018 Dmitriy Khaustov
+// Copyright © 2018 Dmitriy Khaustov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,17 +14,20 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.03.29
+// File created on: 2018.10.30
 
-// Base64.hpp
+// Base32.hpp
 
 
 #pragma once
 
 #include <string>
 
-class Base64 final
+class Base32 final
 {
+private:
+	static const std::string base32_chars;
+
 public:
 	static std::string encode(const void *data, size_t length);
 
@@ -34,4 +37,6 @@ public:
 	}
 
 	static std::string decode(std::string const &s);
+
+	static const std::string& charset();
 };

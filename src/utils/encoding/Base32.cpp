@@ -21,9 +21,15 @@
 
 #include "Base32.hpp"
 
-static const std::string base32_chars =
- 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"234567";
+const std::string Base32::base32_chars(
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"234567"
+);
+
+const std::string& Base32::charset()
+{
+	return base32_chars;
+}
 
 inline static bool is_base32(unsigned char c)
 {

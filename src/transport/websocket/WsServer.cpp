@@ -25,7 +25,7 @@
 #include "../../net/ConnectionManager.hpp"
 #include "../../net/TcpConnection.hpp"
 #include "../../server/Server.hpp"
-#include "../../utils/Base64.hpp"
+#include "../../utils/encoding/Base64.hpp"
 #include "../../utils/hash/SHA1.hpp"
 #include "WsContext.hpp"
 #include "WsServer.hpp"

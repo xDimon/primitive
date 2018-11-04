@@ -21,7 +21,7 @@
 
 #include <random>
 #include "WsContext.hpp"
-#include "../../utils/Base64.hpp"
+#include "../../utils/encoding/Base64.hpp"
 #include "WsPipe.hpp"
 
 const std::string& WsContext::key()
