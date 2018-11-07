@@ -21,7 +21,6 @@
 
 #include "Timer.hpp"
 #include "../thread/TaskManager.hpp"
-#include "Daemon.hpp"
 
 Timer::Helper::Helper(const std::shared_ptr<Timer>& timer)
 : _wp(timer)

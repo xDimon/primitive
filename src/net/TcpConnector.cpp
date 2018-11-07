@@ -20,11 +20,9 @@
 
 
 #include "TcpConnector.hpp"
-
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <cstring>
-
 #include "ConnectionManager.hpp"
 #include "../utils/Daemon.hpp"
 #include "../thread/Thread.hpp"

@@ -20,10 +20,8 @@
 
 
 #include "Buffer.hpp"
-
 #include <algorithm>
 #include <cstring>
-#include "../log/Log.hpp"
 
 Buffer::Buffer()
 : _getPosition(0)

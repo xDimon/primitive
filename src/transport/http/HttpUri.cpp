@@ -20,7 +20,6 @@
 
 
 #include "HttpUri.hpp"
-
 #include "../../utils/encoding/PercentEncoding.hpp"
 
 #include <cstring>

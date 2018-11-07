@@ -25,7 +25,6 @@
 #include <cstring>
 #include <sys/ioctl.h>
 #include "../transport/ServerTransport.hpp"
-#include "../thread/ThreadPool.hpp"
 
 TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr, bool outgoing)
 : Connection(transport)

@@ -21,7 +21,6 @@
 
 #include "ProtobufSerializer.hpp"
 
-#include <iomanip>
 #include "SObj.hpp"
 #include "SArr.hpp"
 

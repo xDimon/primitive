@@ -20,11 +20,9 @@
 
 
 #include "SslConnection.hpp"
-
 #include <cstring>
+#include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <sstream>
-
 #include "ConnectionManager.hpp"
 #include "../transport/ServerTransport.hpp"
 

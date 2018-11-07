@@ -24,8 +24,6 @@
 #include "../../net/SslConnector.hpp"
 #include "../../net/ConnectionManager.hpp"
 #include "HttpContext.hpp"
-#include "../../thread/Thread.hpp"
-#include "../../thread/ThreadPool.hpp"
 #include "../../thread/RollbackStackAndRestoreContext.hpp"
 
 HttpRequestExecutor::HttpRequestExecutor(

@@ -32,7 +32,6 @@
 #include <elf.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <cstring>
 #include <sys/resource.h>
 
 Daemon::Daemon()

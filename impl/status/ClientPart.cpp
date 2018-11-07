@@ -28,7 +28,6 @@
 #include "../../src/storage/DbManager.hpp"
 #include "../../src/transport/http/HttpContext.hpp"
 #include "../../src/telemetry/TelemetryManager.hpp"
-
 #include <iomanip>
 
 status::ClientPart::ClientPart(const std::shared_ptr<::Service>& service)

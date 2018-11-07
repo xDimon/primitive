@@ -21,7 +21,7 @@
 
 #include "Task.hpp"
 #include "../utils/Daemon.hpp"
-#include "TaskManager.hpp"
+#include "Thread.hpp"
 #include "ThreadPool.hpp"
 
 Task::Task(Func&& function, Time until, const char* label)

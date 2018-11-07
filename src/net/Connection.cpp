@@ -23,8 +23,6 @@
 #include "Connection.hpp"
 #include "ConnectionManager.hpp"
 
-#include <sstream>
-
 static uint64_t id4noname = 0;
 
 Connection::Connection(std::shared_ptr<Transport> transport)

@@ -21,7 +21,6 @@
 
 #include "TimeoutWatcher.hpp"
 #include "Timeout.hpp"
-#include "../thread/ThreadPool.hpp"
 #include "../thread/TaskManager.hpp"
 
 TimeoutWatcher::TimeoutWatcher(const std::shared_ptr<Timeout>& timeout)

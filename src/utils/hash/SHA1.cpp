@@ -18,10 +18,7 @@
 #include "SHA1.hpp"
 
 #include <sstream>
-#include <iomanip>
 #include <fstream>
-#include <cstring>
-#include <vector>
 
 static const size_t BLOCK_INTS = 16;  /* number of 32bit integers per SHA1 block */
 static const size_t BLOCK_BYTES = BLOCK_INTS * 4;

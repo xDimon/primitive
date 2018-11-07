@@ -20,7 +20,6 @@
 
 
 #include <sstream>
-#include <string.h>
 #include "HttpResponse.hpp"
 #include "../../server/Server.hpp"
 #include "../../utils/Time.hpp"

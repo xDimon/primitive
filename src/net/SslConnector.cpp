@@ -22,7 +22,6 @@
 #include <openssl/ossl_typ.h>
 #include "SslConnector.hpp"
 #include "SslConnection.hpp"
-#include "ConnectionManager.hpp"
 
 SslConnector::SslConnector(
 	const std::shared_ptr<ClientTransport>& transport,

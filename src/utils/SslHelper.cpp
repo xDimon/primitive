@@ -20,7 +20,6 @@
 
 
 #include "SslHelper.hpp"
-#include "../log/Log.hpp"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>

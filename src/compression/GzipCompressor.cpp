@@ -23,7 +23,6 @@
 
 #include <iomanip>
 #include <zlib.h>
-#include <iostream>
 
 REGISTER_COMPRESSOR(gzip, GzipCompressor);
 

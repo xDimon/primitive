@@ -21,11 +21,8 @@
 
 #include <stdexcept>
 #include "Sink.hpp"
-#include "Log.hpp"
 #include "../utils/Time.hpp"
 #include "../thread/Thread.hpp"
-#include <sstream>
-#include <mutex>
 #include <cstring>
 #include <cstdarg>
 #include <algorithm>

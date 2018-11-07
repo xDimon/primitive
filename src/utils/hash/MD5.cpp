@@ -20,8 +20,7 @@
 
 
 #include "MD5.hpp"
-
-#include <string.h>
+#include <cstring>
 
 #define T1 0xd76aa478
 #define T2 0xe8c7b756

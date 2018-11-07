@@ -22,7 +22,6 @@
 #include "HttpRequest.hpp"
 #include "HttpHelper.hpp"
 #include "../../utils/String.hpp"
-
 #include <memory.h>
 #include <sstream>
 

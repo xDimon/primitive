@@ -21,10 +21,8 @@
 
 #include "SysInfo.hpp"
 #include "TelemetryManager.hpp"
-#include "../thread/ThreadPool.hpp"
 #include "../utils/Daemon.hpp"
 #include "../thread/TaskManager.hpp"
-#include "../utils/Time.hpp"
 
 #include <sys/resource.h>
 #include <sys/time.h>

@@ -20,7 +20,6 @@
 
 
 #include "Thread.hpp"
-
 #include "ThreadPool.hpp"
 #include "../log/LoggerManager.hpp"
 #include "RollbackStackAndRestoreContext.hpp"
@@ -28,7 +27,6 @@
 
 #include <csignal>
 #include <sys/mman.h>
-
 thread_local Log Thread::_log("Thread");
 thread_local std::function<void()> Thread::_function;
 

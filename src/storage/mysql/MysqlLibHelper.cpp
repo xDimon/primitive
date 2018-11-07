@@ -23,7 +23,6 @@
 #include "../../thread/Thread.hpp"
 
 #include <mysql.h>
-
 MysqlLibHelper::MysqlLibHelper()
 {
 	static const char *my_groups[]= { "client", nullptr };

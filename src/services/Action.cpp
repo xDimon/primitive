@@ -19,7 +19,6 @@
 // Action.cpp
 
 
-#include <cxxabi.h>
 #include "Action.hpp"
 #include "../utils/NopeException.hpp"
 #include "../telemetry/TelemetryManager.hpp"
