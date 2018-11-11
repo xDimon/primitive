@@ -43,7 +43,7 @@ public:
 	{
 	}
 
-	virtual ~MysqlRow() override = default; // Destructor
+	~MysqlRow() override = default; // Destructor
 
 	void set(MYSQL_ROW value)
 	{
@@ -62,6 +62,11 @@ public:
 
 	public:
 		FieldValue(const char *const data): _data(data) {}
+
+		bool isNull() const
+		{
+			return _data == nullptr;
+		}
 
 		template<typename T, typename std::enable_if<std::is_integral<T>::value, void>::type* = nullptr>
 		operator T() const
