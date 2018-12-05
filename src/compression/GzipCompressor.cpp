@@ -76,7 +76,7 @@ void GzipCompressor::inflate(const std::vector<char>& in, std::vector<char>& out
 
 	if (flags == 1)
 	{
-		if (in.size() < sizeof(char) * sizeof(uint32_t))
+		if (in.size() < sizeof(char) + sizeof(uint32_t))
 		{
 			throw("Not anough data for decompress");
 		}
