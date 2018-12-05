@@ -90,6 +90,11 @@ public:
 		}
 	}
 
+	void closeAfterSend()
+	{
+		_noRead = true;
+	}
+
 	void close() override;
 
 	bool write(const void* data, size_t length) override;
