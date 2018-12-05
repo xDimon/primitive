@@ -96,6 +96,12 @@ void PacketServer::bindHandler(const std::string& selector, const std::shared_pt
 	throw std::runtime_error("Not implemented");
 }
 
+void PacketServer::unbindHandler(const std::string& selector)
+{
+	// TODO реализовать
+	throw std::runtime_error("Not implemented");
+}
+
 std::shared_ptr<ServerTransport::Handler> PacketServer::getHandler(const std::string& subject)
 {
 	// TODO реализовать

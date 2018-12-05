@@ -27,5 +27,6 @@ class HttpServer final : public ServerTransport
 {
 	DECLARE_TRANSPORT(HttpServer);
 
+	std::mutex _mutex;
 	std::map<std::string, std::shared_ptr<ServerTransport::Handler>> _handlers;
 };

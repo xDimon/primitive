@@ -27,5 +27,6 @@ class WsServer final : public ServerTransport
 {
 	DECLARE_TRANSPORT(WsServer);
 
+	std::mutex _mutex;
 	std::map<std::string, std::shared_ptr<ServerTransport::Handler>> _handlers;
 };

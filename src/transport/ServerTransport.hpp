@@ -60,6 +60,7 @@ public:
 	virtual bool disable() final;
 
 	virtual void bindHandler(const std::string& selector, const std::shared_ptr<Handler>& handler) = 0;
+	virtual void unbindHandler(const std::string& selector) = 0;
 	virtual std::shared_ptr<Handler> getHandler(const std::string& subject) = 0;
 };
 
@@ -97,6 +98,7 @@ public:                                                                         
                                                                                                 \
     bool processing(const std::shared_ptr<Connection>& connection) override;                    \
     void bindHandler(const std::string& selector, const std::shared_ptr<Handler>&) override;    \
+    void unbindHandler(const std::string& selector) override;                                   \
     std::shared_ptr<Handler> getHandler(const std::string& subject) override;                   \
                                                                                                 \
 private:                                                                                        \

@@ -277,12 +277,21 @@ bool WsServer::processing(const std::shared_ptr<Connection>& connection_)
 
 void WsServer::bindHandler(const std::string& selector, const std::shared_ptr<ServerTransport::Handler>& handler)
 {
+	std::lock_guard<std::mutex> lockGuard(_mutex);
+
 	if (_handlers.find(selector) != _handlers.end())
 	{
 		throw std::runtime_error("Handler already set early");
 	}
 
 	_handlers.emplace(selector, handler);
+}
+
+void WsServer::unbindHandler(const std::string& selector)
+{
+	std::lock_guard<std::mutex> lockGuard(_mutex);
+
+	_handlers.erase(selector);
 }
 
 std::shared_ptr<ServerTransport::Handler> WsServer::getHandler(const std::string& subject_)
