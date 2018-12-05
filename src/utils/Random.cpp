@@ -24,6 +24,11 @@
 #include <random>
 #include <chrono>
 
+Random::Random()
+: _generator(static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count()))
+{
+}
+
 #if __cplusplus >= 201703L
 std::string Random::generateSequence(const std::string_view& lookUpTable, size_t length)
 #else
@@ -32,12 +37,11 @@ std::string Random::generateSequence(const std::string& lookUpTable, size_t leng
 {
 	std::string sequence;
 
-	std::default_random_engine generator(static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count()));
-
 	for (;;)
 	{
 		auto rnd = static_cast<uint64_t>(
-			std::generate_canonical<long double, std::numeric_limits<long double>::digits>(generator) * std::numeric_limits<uint64_t>::max()
+			std::generate_canonical<long double, std::numeric_limits<long double>::digits>(getInstance()._generator)
+			    * std::numeric_limits<uint64_t>::max()
 		);
 		for (;;)
 		{

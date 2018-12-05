@@ -25,14 +25,45 @@
 #if __cplusplus >= 201703L
 #include <string_view>
 #endif
+#include <random>
 
-namespace Random
+class Random
 {
+public:
+	Random(const Random&) = delete; // Copy-constructor
+	Random& operator=(Random const&) = delete; // Copy-assignment
+	Random(Random&&) noexcept = delete; // Move-constructor
+	Random& operator=(Random&&) noexcept = delete; // Move-assignment
 
+private:
+	Random();
+	~Random() = default;
+
+public:
+	static Random& getInstance()
+	{
+		static Random instance;
+		return instance;
+	}
+
+private:
+	std::default_random_engine _generator;
+
+public:
 #if __cplusplus >= 201703L
-std::string generateSequence(const std::string_view& lookUpTable, size_t length);
+	static std::string generateSequence(const std::string_view& lookUpTable, size_t length);
 #else
-std::string generateSequence(const std::string& lookUpTable, size_t length);
+	static std::string generateSequence(const std::string& lookUpTable, size_t length);
 #endif
+
+	template <typename T>
+	static T generate(const T& minValue, const T& maxValue)
+	{
+		return static_cast<T>(
+			std::min(minValue, maxValue) +
+			std::generate_canonical<long double, std::numeric_limits<long double>::digits>(getInstance()._generator)
+			    * (std::max(minValue, maxValue) - std::min(minValue, maxValue))
+		);
+	}
 
 };
