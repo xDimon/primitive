@@ -54,4 +54,29 @@ namespace String
 	}
 
 	std::vector<std::string> split(const std::string& in, char separator = ' ', size_t count = std::numeric_limits<size_t>::max());
+
+	template <int B, typename T>
+	typename std::enable_if_t<std::is_integral<T>::value && (B > 1) && (B <= 62), std::string>
+	intToStringByBase(T number)
+	{
+		static const char symbol[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+		if (!number) return "0";
+
+		auto negative = number < 0;
+
+		std::string result;
+		while (number)
+		{
+			result = symbol[number % B] + result;
+			number /= B;
+		}
+
+		if (negative)
+		{
+			result = '-' + result;
+		}
+
+		return result;
+	}
 }
