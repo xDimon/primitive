@@ -90,7 +90,7 @@ public:
 		}
 	}
 
-	void close();
+	void close() override;
 
 	bool write(const void* data, size_t length) override;
 };

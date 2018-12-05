@@ -41,6 +41,6 @@ struct ConnectionEvent
 		if (events & static_cast<uint32_t>(Type::HALFHUP))	result.push_back('H');
 		if (events & static_cast<uint32_t>(Type::TIMEOUT))	result.push_back('T');
 		if (events & static_cast<uint32_t>(Type::ERROR))	result.push_back('E');
-		return std::move(result);
+		return result;
 	}
 };

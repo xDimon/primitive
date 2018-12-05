@@ -56,8 +56,7 @@ void Connection::setTtl(std::chrono::milliseconds ttl)
 	{
 		_timeoutForClose = std::make_shared<Timeout>(
 			[wp = std::weak_ptr<std::remove_reference<decltype(*this)>::type>(ptr())](){
-				auto connection = wp.lock();
-				if (connection)
+				if (auto connection = wp.lock())
 				{
 					ConnectionManager::timeout(connection);
 				}
