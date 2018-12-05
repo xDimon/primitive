@@ -38,13 +38,11 @@ std::shared_ptr<DbConnectionPool> DbManager::openPool(const Setting& setting, bo
 		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 		if (getInstance()._pools.find(name) != getInstance()._pools.end())
 		{
-			throw std::runtime_error(std::string("Already exists database connection pool with the same name ('") + name + "')");
+			throw std::runtime_error("Already exists database connection pool with the same name ('" + name + "')");
 		}
 	}
 
 	auto dbPool = DbConnectionPoolFactory::create(setting);
-
-	dbPool->touch();
 
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 	if (!replace)
@@ -58,7 +56,9 @@ std::shared_ptr<DbConnectionPool> DbManager::openPool(const Setting& setting, bo
 
 	getInstance()._pools.emplace(dbPool->name(), dbPool);
 
-	return std::move(dbPool);
+	dbPool->touch();
+
+	return dbPool;
 }
 
 std::shared_ptr<DbConnectionPool> DbManager::getPool(const std::string& name)
@@ -68,7 +68,7 @@ std::shared_ptr<DbConnectionPool> DbManager::getPool(const std::string& name)
 	const auto& i = getInstance()._pools.find(name);
 	if (i == getInstance()._pools.end())
 	{
-		return std::shared_ptr<DbConnectionPool>();
+		return nullptr;
 	}
 
 	return i->second;
