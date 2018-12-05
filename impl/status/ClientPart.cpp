@@ -40,30 +40,30 @@ status::ClientPart::ClientPart(const std::shared_ptr<::Service>& service)
 
 void status::ClientPart::init(const Setting& setting)
 {
+	std::lock_guard<std::mutex> lockGuard(_mutex);
+
 	try
 	{
-		std::string transportName;
-		if (!setting.lookupValue("transport", transportName) || transportName.empty())
+		if (!setting.lookupValue("transport", _transportName) || _transportName.empty())
 		{
 			throw std::runtime_error("Field transport undefined or empty");
 		}
 
-		std::string uri;
-		if (!setting.lookupValue("uri", uri) || uri.empty())
+		if (!setting.lookupValue("uri", _uri) || _uri.empty())
 		{
 			throw std::runtime_error("Field uri undefined or empty");
 		}
 
-		auto transport = Transports::get(transportName);
+		auto transport = Transports::get(_transportName);
 		if (!transport)
 		{
-			throw std::runtime_error(std::string("Transport '") + transportName + "' not found");
+			throw std::runtime_error(std::string("Transport '") + _transportName + "' not found");
 		}
 
 		try
 		{
 			transport->bindHandler(
-				uri,
+				_uri,
 				std::make_shared<ServerTransport::Handler>(
 					[wp = std::weak_ptr<ClientPart>(std::dynamic_pointer_cast<ClientPart>(ptr()))]
 					(const std::shared_ptr<Context>& context)
@@ -79,12 +79,23 @@ void status::ClientPart::init(const Setting& setting)
 		}
 		catch (const std::exception& exception)
 		{
-			throw std::runtime_error("Can't bind uri '" + uri + "' on transport '" + transportName + "': " + exception.what());
+			throw std::runtime_error("Can't bind uri '" + _uri + "' on transport '" + _transportName + "': " + exception.what());
 		}
 	}
 	catch (const std::exception& exception)
 	{
 		throw std::runtime_error("Fail init part '" + _name + "' ← " + exception.what());
+	}
+}
+
+void status::ClientPart::deinit()
+{
+	std::lock_guard<std::mutex> lockGuard(_mutex);
+
+	auto transport = Transports::get(_transportName);
+	if (transport)
+	{
+		transport->unbindHandler(_uri);
 	}
 }
 

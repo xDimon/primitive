@@ -35,12 +35,22 @@ class Service;
 class ClientPart : public ServicePart
 {
 private:
+	mutable std::mutex _mutex;
+
+	std::string _transportName;
+	std::string _uri;
+
 	void handle(const std::shared_ptr<Context>& context);
 
 public:
 	explicit ClientPart(const std::shared_ptr<::Service>& service);
+	~ClientPart() override
+	{
+		deinit();
+	}
 
 	void init(const Setting& setting) override;
+	void deinit() override;
 };
 
 }

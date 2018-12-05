@@ -56,22 +56,23 @@ void status::Service::activate()
 			{
 				throw std::runtime_error("Unknown part with type '" + type + "'");
 			}
-			auto insertResult = _parts.insert(part);
-			if (!insertResult.second)
-			{
-				part = *insertResult.first;
-			}
+
 			part->init(config);
-			part.reset();
+
+			_parts.emplace_back(part);
 		}
 	}
 	catch (const std::exception& exception)
 	{
-		throw std::runtime_error(std::string("Can't activate service '") + name() + "' ← " + exception.what());
+		throw std::runtime_error("Can't activate service '" + name() + "' ← " + exception.what());
 	}
 }
 
 void status::Service::deactivate()
 {
+	for (auto& part : _parts)
+	{
+		part->deinit();
+	}
 	_parts.clear();
 }

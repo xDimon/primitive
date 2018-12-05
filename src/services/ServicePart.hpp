@@ -45,7 +45,9 @@ public:
 	explicit ServicePart(const std::shared_ptr<Service>& service);
 	~ServicePart() override = default;
 
-	virtual void init(const Setting& setting) {};
+	virtual void init(const Setting& setting) = 0;
+	virtual void deinit() = 0;
+
 	virtual void postInit() {};
 
 	Log& log()
