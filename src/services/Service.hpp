@@ -36,7 +36,7 @@ protected:
 	mutable Log _log;
 	const Setting& _setting;
 
-	std::set<std::shared_ptr<ServicePart>, ServicePart::Comparator> _parts;
+	std::vector<std::shared_ptr<ServicePart>> _parts;
 
 	explicit Service(const Setting& setting);
 
@@ -46,7 +46,7 @@ public:
 	Service(Service&&) noexcept = delete;
 	Service& operator=(Service&&) noexcept = delete;
 
-	virtual ~Service();
+	~Service() override;
 
 	Log& log() const
 	{

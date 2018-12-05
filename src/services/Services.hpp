@@ -44,12 +44,15 @@ private:
 	}
 
 	std::map<std::string, const std::shared_ptr<Service>> _registry;
-	std::recursive_mutex _mutex;
+	std::mutex _mutex;
 
 public:
-	static std::shared_ptr<Service> add(const Setting& setting, bool replace = false);
-	static std::shared_ptr<Service> get(const std::string& name);
+	static void add(const Setting& setting, bool replace = false);
 	static void del(const std::string& name);
+
+	static std::shared_ptr<Service> get(const std::string& name);
+
+	static void activate(const std::shared_ptr<Service>& service, std::chrono::seconds delay = std::chrono::seconds(0));
 
 	static void activateAll();
 	static void deactivateAll();

@@ -20,8 +20,9 @@
 
 
 #include "Services.hpp"
+#include "../thread/TaskManager.hpp"
 
-std::shared_ptr<Service> Services::add(const Setting& setting, bool replace)
+void Services::add(const Setting& setting, bool replace)
 {
 	std::string name;
 	if (!setting.lookupValue("name", name) || name.empty())
@@ -31,7 +32,7 @@ std::shared_ptr<Service> Services::add(const Setting& setting, bool replace)
 
 	if (!replace)
 	{
-		std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
+		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 		if (getInstance()._registry.find(name) != getInstance()._registry.end())
 		{
 			throw std::runtime_error(std::string("Already exists service with the same name ('") + name + "')");
@@ -40,27 +41,27 @@ std::shared_ptr<Service> Services::add(const Setting& setting, bool replace)
 
 	auto entity = ServiceFactory::create(setting);
 
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
-
-	if (!replace)
 	{
-		auto i = getInstance()._registry.find(entity->name());
-		if (i != getInstance()._registry.end())
+		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+		if (!replace)
 		{
-			getInstance()._registry.erase(i);
+			auto i = getInstance()._registry.find(entity->name());
+			if (i != getInstance()._registry.end())
+			{
+				getInstance()._registry.erase(i);
+			}
 		}
+
+		getInstance()._registry.emplace(entity->name(), entity);
 	}
 
-	getInstance()._registry.emplace(entity->name(), entity);
-
-	entity->activate();
-
-	return std::move(entity);
+	activate(entity);
 }
 
 std::shared_ptr<Service> Services::get(const std::string& name)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
 	auto i = getInstance()._registry.find(name);
 	if (i == getInstance()._registry.end())
@@ -73,7 +74,7 @@ std::shared_ptr<Service> Services::get(const std::string& name)
 
 void Services::del(const std::string& name)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
 	auto i = getInstance()._registry.find(name);
 	if (i == getInstance()._registry.end())
@@ -86,9 +87,48 @@ void Services::del(const std::string& name)
 	getInstance()._registry.erase(i);
 }
 
+void Services::activate(const std::shared_ptr<Service>& service, std::chrono::seconds delay)
+{
+	{
+		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
+
+		auto i = getInstance()._registry.find(service->name());
+
+		if (i == getInstance()._registry.end() || i->second != service)
+		{
+			return;
+		}
+	}
+
+	try
+	{
+		service->activate();
+	}
+	catch (const std::exception& exception)
+	{
+		Log("Services").warn(exception.what());
+
+		service->deactivate();
+
+		if (delay < std::chrono::seconds(30))
+		{
+			delay += std::chrono::seconds(1);
+		}
+
+		TaskManager::enqueue(
+			[service, delay]
+			{
+				activate(service, delay);
+			},
+			delay,
+			"Retry activate service"
+		);
+	}
+}
+
 void Services::activateAll()
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
 	for (const auto& i : getInstance()._registry)
 	{
@@ -98,7 +138,7 @@ void Services::activateAll()
 
 void Services::deactivateAll()
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutex);
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
 	for (const auto& i : getInstance()._registry)
 	{
