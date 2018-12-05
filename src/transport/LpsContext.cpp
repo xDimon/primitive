@@ -95,18 +95,22 @@ void LpsContext::resetSession()
 
 SVal LpsContext::recv()
 {
-	std::string inString;
+	static Log log_("_lpsContext");
+	auto service = _service.lock();
+	Log& log = service ? service->log() : log_;
+
+	std::string in;
 
 	char context_ = '?';
 	if (auto wsContext = std::dynamic_pointer_cast<WsContext>(_context))
 	{
 		context_ = 'W';
-		inString.assign(wsContext->getFrame()->dataPtr(), wsContext->getFrame()->dataLen());
+		in.assign(wsContext->getFrame()->dataPtr(), wsContext->getFrame()->dataLen());
 	}
 	else if (auto httpContext = std::dynamic_pointer_cast<HttpContext>(_context))
 	{
 		context_ = 'H';
-		inString.assign(httpContext->getRequest()->dataPtr(), httpContext->getRequest()->dataLen());
+		in.assign(httpContext->getRequest()->dataPtr(), httpContext->getRequest()->dataLen());
 	}
 
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
@@ -114,16 +118,16 @@ SVal LpsContext::recv()
 	char compress_ = '?';
 	if (_compression)
 	{
-		if (inString[0] == 0 || inString[0] == 1)
+		if (in[0] == 0 || in[0] == 1)
 		{
-			compress_ = inString[0] ? 'C' : 'N';
+			compress_ = in[0] ? 'C' : 'N';
 
-			std::vector<char> out1(inString.begin(), inString.end());
+			std::vector<char> out1(in.begin(), in.end());
 			std::vector<char> out2;
 
 			CompressorFactory::create("gzip")->inflate(out1, out2);
 
-			inString.assign(out2.begin(), out2.end());
+			in.assign(out2.begin(), out2.end());
 		}
 		else
 		{
@@ -136,19 +140,26 @@ SVal LpsContext::recv()
 		compress_ = 'R';
 	}
 
-	if (auto service = _service.lock())
+	static const size_t maxLength = 2048;
+	if (in.size() > maxLength)
 	{
-		service->log().info("%c%c << %s", context_, compress_, inString.c_str());
+		std::string reduced;
+		static const std::string replacer("<...rejected...>");
+
+		std::copy(in.begin(), in.begin() + maxLength / 2 - replacer.size() / 2, std::inserter(reduced, reduced.end()));
+		std::copy(replacer.begin(), replacer.end(), std::inserter(reduced, reduced.end()));
+		std::copy(in.end() - maxLength / 2 + replacer.size() / 2, in.end(), std::inserter(reduced, reduced.end()));
+
+		log.info("%c%c%s << %s", context_, compress_, tag().c_str(), reduced.c_str());
 	}
 	else
 	{
-		static Log log("_lpsContext");
-		log.info("%c%c << %s", context_, compress_, inString.c_str());
+		log.info("%c%c%s << %s", context_, compress_, tag().c_str(), in.c_str());
 	}
 
-	auto&& input = SerializerFactory::create("json", Serializer::STRICT)->decode(inString);
+	auto result = SerializerFactory::create("json", Serializer::STRICT)->decode(in);
 
-	return std::move(input);
+	return result;
 }
 
 void LpsContext::out(SVal value, bool close)
@@ -197,6 +208,10 @@ void LpsContext::out(SVal value, bool close)
 
 void LpsContext::send()
 {
+	static Log log_("_lpsContext");
+	auto service = _service.lock();
+	Log& log = service ? service->log() : log_;
+
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
 	if (_closed)
@@ -294,7 +309,7 @@ void LpsContext::send()
 			CompressorFactory::create("gzip")->deflate(out1, out2);
 
 			compress_ = out[0] ? 'C' : 'N';
-			_context->transmit(out2, "application/octet-stream; charset=utf-8", true);
+			_context->transmit(out2, "application/octet-stream", true);
 		}
 		else
 		{
@@ -303,13 +318,14 @@ void LpsContext::send()
 		}
 	}
 
-	if (auto service = _service.lock())
+	static const size_t maxLength = 2048;
+	if (out.size() > maxLength)
 	{
-		service->log().info("%c%c >> %s", context_, compress_, out.c_str());
+		static const std::string replacer("<...rejected...>");
+		std::copy(replacer.begin(), replacer.end(), out.begin() + maxLength / 2 - replacer.size() / 2);
+		std::copy(out.end() - maxLength / 2 + replacer.size() / 2, out.end(), out.begin() + maxLength / 2 + replacer.size() / 2);
+		out.resize(maxLength);
 	}
-	else
-	{
-		static Log log("_lpsContext");
-		log.info("%c%c >> %s", context_, compress_, out.c_str());
-	}
+
+	log.info("%c%c%s >> %s", context_, compress_, tag().c_str(), out.c_str());
 }

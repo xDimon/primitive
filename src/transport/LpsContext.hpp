@@ -27,10 +27,10 @@
 #include "../serialization/SArr.hpp"
 #include "TransportContext.hpp"
 
-class LpsContext final: public Context
+class LpsContext: public Context
 {
 private:
-	std::recursive_mutex _mutex;
+	mutable std::recursive_mutex _mutex;
 	std::weak_ptr<ServicePart> _service;
 	std::shared_ptr<TransportContext> _context;
 	std::weak_ptr<Session> _session;
@@ -55,7 +55,7 @@ public:
 		bool compression = false
 	);
 
-	virtual ~LpsContext() override;
+	~LpsContext() override;
 
 	void assignContext(const std::shared_ptr<TransportContext>& context)
 	{
@@ -69,6 +69,11 @@ public:
 	void assignSession(const std::shared_ptr<Session>& session);
 	std::shared_ptr<Session> getSession();
 	void resetSession();
+
+	virtual std::string tag()
+	{
+		return "";
+	}
 
 	SVal recv();
 
