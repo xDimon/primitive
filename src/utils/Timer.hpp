@@ -27,11 +27,15 @@
 
 class Timer final: public Shareable<Timer>
 {
+public:
+	typedef std::chrono::steady_clock::time_point AlarmTime;
+
 private:
 	class Helper final: public Shareable<Helper>
 	{
 	private:
 		std::weak_ptr<Timer> _wp;
+		AlarmTime _time;
 
 		void onTime();
 
@@ -45,7 +49,12 @@ private:
 		explicit Helper(const std::shared_ptr<Timer>& timer);
 		~Helper() override = default;
 
-		void start(std::chrono::steady_clock::time_point time);
+		AlarmTime time() const
+		{
+			return _time;
+		}
+
+		void start(AlarmTime time);
 
 		void cancel();
 	};
@@ -75,7 +84,7 @@ public:
 		return _label;
 	}
 
-	void startOnce(std::chrono::milliseconds duration);
-	void restart(std::chrono::milliseconds duration);
+	AlarmTime startOnce(std::chrono::milliseconds duration);
+	AlarmTime restart(std::chrono::milliseconds duration);
 	void stop();
 };

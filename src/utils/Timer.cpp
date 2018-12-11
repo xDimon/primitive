@@ -24,6 +24,7 @@
 
 Timer::Helper::Helper(const std::shared_ptr<Timer>& timer)
 : _wp(timer)
+, _time(std::chrono::steady_clock::duration::zero())
 {
 }
 
@@ -47,6 +48,8 @@ void Timer::Helper::start(std::chrono::steady_clock::time_point time)
 	{
 		return;
 	}
+
+	_time = time;
 
 	TaskManager::enqueue(
 		[wp = std::weak_ptr<Timer::Helper>(ptr())]
@@ -85,21 +88,21 @@ void Timer::alarm()
 	_alarmHandler();
 }
 
-void Timer::startOnce(std::chrono::milliseconds duration)
+Timer::AlarmTime Timer::startOnce(std::chrono::milliseconds duration)
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
-	if (_helper)
+	if (!_helper)
 	{
-		return;
+		_helper = std::make_shared<Helper>(ptr());
+
+		_helper->start(std::chrono::steady_clock::now() + duration);
 	}
 
-	_helper = std::make_shared<Helper>(ptr());
-
-	_helper->start(std::chrono::steady_clock::now() + duration);
+	return _helper->time();
 }
 
-void Timer::restart(std::chrono::milliseconds duration)
+Timer::AlarmTime Timer::restart(std::chrono::milliseconds duration)
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
@@ -111,6 +114,8 @@ void Timer::restart(std::chrono::milliseconds duration)
 	_helper = std::make_shared<Helper>(ptr());
 
 	_helper->start(std::chrono::steady_clock::now() + duration);
+
+	return _helper->time();
 }
 
 void Timer::stop()
