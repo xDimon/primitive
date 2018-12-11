@@ -67,7 +67,7 @@ public:
 		return _data;
 	}
 
-	bool fetchRow(DbRow& row_) override
+	bool fetchRow(DbRow& row) override
 	{
 		if (_data == nullptr)
 		{
@@ -78,8 +78,8 @@ public:
 		{
 			return false;
 		}
-		auto& row = dynamic_cast<MysqlRow&>(row_);
-		row.set(mysqlRow);
+		auto& row_ = dynamic_cast<MysqlRow&>(row);
+		row_.set(mysqlRow);
 		return true;
 	}
 };
