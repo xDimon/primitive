@@ -21,6 +21,8 @@
 
 #pragma once
 
+#if __has_include(<google/protobuf/message.h>)
+
 #include <google/protobuf/message.h>
 #include "Serializer.hpp"
 
@@ -38,3 +40,5 @@ public:
 private:
 	SVal decodeField(const google::protobuf::Message& msg, const google::protobuf::FieldDescriptor* field, int index);
 };
+
+#endif

@@ -21,6 +21,8 @@
 
 #include "ProtobufSerializer.hpp"
 
+#if __has_include(<google/protobuf/message.h>)
+
 #include "SObj.hpp"
 #include "SArr.hpp"
 
@@ -172,3 +174,5 @@ std::string ProtobufSerializer::encode(const SVal& value)
 {
 	throw std::runtime_error("Can't encode into Protobuf ← Not implemented");
 }
+
+#endif
