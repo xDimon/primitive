@@ -85,6 +85,7 @@ Timer::Timer(std::function<void()> handler, const char* label)
 
 void Timer::alarm()
 {
+	_helper.reset();
 	_alarmHandler();
 }
 
