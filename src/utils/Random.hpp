@@ -51,7 +51,7 @@ private:
 
 public:
 #if __cplusplus >= 201703L
-	static std::string generateSequence(const std::string_view& lookUpTable, size_t length);
+	static std::string generateSequence(std::string_view lookUpTable, size_t length);
 #else
 	static std::string generateSequence(const std::string& lookUpTable, size_t length);
 #endif

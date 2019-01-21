@@ -30,7 +30,7 @@ Random::Random()
 }
 
 #if __cplusplus >= 201703L
-std::string Random::generateSequence(const std::string_view& lookUpTable, size_t length)
+std::string Random::generateSequence(std::string_view lookUpTable, size_t length)
 #else
 std::string Random::generateSequence(const std::string& lookUpTable, size_t length)
 #endif
