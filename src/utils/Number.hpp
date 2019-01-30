@@ -22,7 +22,7 @@
 #pragma once
 
 #include <climits>
-
+#include <cmath>
 
 namespace Number
 {
@@ -109,4 +109,64 @@ namespace Number
 
 		return d;
 	}
+
+	template<typename T>
+	double smartRound(
+		T srcValue,
+		size_t numberOfDigitForBegginerRound = 10,
+		size_t numberOfAllSagnifficantDigits = 10,
+		size_t factor = 1,
+		int lastDigitForPsychoRound = -1
+	)
+	{
+		typename std::enable_if<std::is_floating_point<T>::value, bool>::type detect();
+
+		if (srcValue < 0.01)
+		{
+			return std::ceil(srcValue * 100) / 100;
+		}
+		else if (srcValue < 0.10)
+		{
+			return std::round(srcValue * 100) / 100;
+		}
+		else if (srcValue < 1.00)
+		{
+			return std::floor(srcValue * 100) / 100;
+		}
+
+		// Формируем шаблон для сравнения
+		T threshold = std::pow(10, numberOfDigitForBegginerRound);
+
+		// Вычисляем множитель для округления до значащих цифр
+		T m1 = 1;
+
+		for (;;)
+		{
+			if (srcValue * m1 >= threshold) break;
+			m1 *= 10;
+		}
+		for (;;)
+		{
+			if (srcValue * m1 <= threshold) break;
+			m1 /= 10;
+		}
+
+		// Вычисляем множитель для значащих цифр после округления
+		T m2 = m1 * std::pow(10, numberOfAllSagnifficantDigits - numberOfDigitForBegginerRound);
+
+		// Выравниваем последний разряд
+		T t1 = std::round(srcValue * m2 + 1) / m2;
+
+		// Нормируем кратно в последнем значащем разряде
+		T t2 = std::floor(t1 * m1 / factor) * factor / m1;
+
+		// Психологическое округление
+		T t3 = (lastDigitForPsychoRound > 0 && lastDigitForPsychoRound <= 9) ? ((t2 * m2 - (10 - lastDigitForPsychoRound)) / m2) : t2;
+
+		// Отбрасываем дробную часть копеек
+		T t4 = std::floor(std::round(t3 * 1000) / 1000 * 100) / 100;
+
+		return t4;
+	}
+
 };
