@@ -86,7 +86,7 @@ void Log::trace(const char* fmt, ...)
 void Log::debug(const std::string& message)
 {
 #if defined(LOG_DEBUG_ON)
-	if (_detail == Detail::DEBUG)
+	if (_detail <= Detail::DEBUG)
 	{
 		_sink->push(Detail::DEBUG, _name, message);
 	}
@@ -96,7 +96,7 @@ void Log::debug(const std::string& message)
 void Log::debug(const char* fmt, ...)
 {
 #if defined(LOG_DEBUG_ON)
-	if (_detail == Detail::DEBUG)
+	if (_detail <= Detail::DEBUG)
 	{
 		va_list ap;
 		va_start(ap, fmt);
