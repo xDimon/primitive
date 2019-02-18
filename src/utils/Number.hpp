@@ -23,6 +23,8 @@
 
 #include <climits>
 #include <cmath>
+#include <iostream>
+#include <iomanip>
 
 namespace Number
 {
@@ -112,7 +114,7 @@ namespace Number
 
 	template<typename T>
 	double smartRound(
-		T srcValue,
+		T value,
 		size_t numberOfDigitForBegginerRound = 10,
 		size_t numberOfAllSagnifficantDigits = 10,
 		size_t factor = 1,
@@ -121,52 +123,39 @@ namespace Number
 	{
 		typename std::enable_if<std::is_floating_point<T>::value, bool>::type detect();
 
-		if (srcValue < 0.01)
+		if (value < 0.01)
 		{
-			return std::ceil(srcValue * 100) / 100;
+			return std::ceil(value * 100) / 100;
 		}
-		else if (srcValue < 0.10)
+		else if (value < 0.10)
 		{
-			return std::round(srcValue * 100) / 100;
-		}
-		else if (srcValue < 1.00)
-		{
-			return std::floor(srcValue * 100) / 100;
+			return std::round(value * 100) / 100;
 		}
 
-		// Формируем шаблон для сравнения
-		T threshold = std::pow(10, numberOfDigitForBegginerRound);
+		// Уменьшаем на единицу незначащего разряда ()
+		value -= std::pow(10, -static_cast<intmax_t>(numberOfAllSagnifficantDigits+1));
 
 		// Вычисляем множитель для округления до значащих цифр
-		T m1 = 1;
-
-		for (;;)
-		{
-			if (srcValue * m1 >= threshold) break;
-			m1 *= 10;
-		}
-		for (;;)
-		{
-			if (srcValue * m1 <= threshold) break;
-			m1 /= 10;
-		}
+		auto e1 = static_cast<intmax_t>(std::floor(numberOfDigitForBegginerRound - std::log10(value)));
 
 		// Вычисляем множитель для значащих цифр после округления
-		T m2 = m1 * std::pow(10, numberOfAllSagnifficantDigits - numberOfDigitForBegginerRound);
+		auto e2 = static_cast<intmax_t>(numberOfAllSagnifficantDigits - numberOfDigitForBegginerRound);
 
-		// Выравниваем последний разряд
-		T t1 = std::round(srcValue * m2 + 1) / m2;
+		// Нормируем делитель, для кратности
+		auto f = (e1 - e2 <= 0) ? (factor * std::pow(10, e2)) : std::pow(10, e2 + 1);
 
-		// Нормируем кратно в последнем значащем разряде
-		T t2 = std::floor(t1 * m1 / factor) * factor / m1;
+		// Кратное округление
+		auto factorRounded = static_cast<uintmax_t>(std::floor(std::round(value * std::pow(10, e1 + e2)) / f) * f);
 
 		// Психологическое округление
-		T t3 = (lastDigitForPsychoRound > 0 && lastDigitForPsychoRound <= 9) ? ((t2 * m2 - (10 - lastDigitForPsychoRound)) / m2) : t2;
+		auto psychoRounded = static_cast<uintmax_t>(
+			(lastDigitForPsychoRound > 0 && lastDigitForPsychoRound <= 9 && (e1 - e2) <= 1) ?
+			(factorRounded - 1) :
+			factorRounded
+		);
 
-		// Отбрасываем дробную часть копеек
-		T t4 = std::floor(std::round(t3 * 1000) / 1000 * 100) / 100;
+		auto moduloRounded = std::floor(psychoRounded / std::pow(10, e1 + e2 - 2)) / 100;
 
-		return t4;
+		return moduloRounded;
 	}
-
 };
