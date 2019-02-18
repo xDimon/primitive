@@ -95,9 +95,11 @@ Timer::AlarmTime Timer::startOnce(std::chrono::milliseconds duration)
 
 	if (!_helper)
 	{
+		Timer::AlarmTime alarmTime = std::chrono::steady_clock::now() + duration;
+
 		_helper = std::make_shared<Helper>(ptr());
 
-		_helper->start(std::chrono::steady_clock::now() + duration);
+		_helper->start(alarmTime);
 	}
 
 	return _helper->time();
@@ -107,6 +109,8 @@ Timer::AlarmTime Timer::restart(std::chrono::milliseconds duration)
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
+	Timer::AlarmTime alarmTime = std::chrono::steady_clock::now() + duration;
+
 	if (_helper)
 	{
 		_helper->cancel();
@@ -114,9 +118,55 @@ Timer::AlarmTime Timer::restart(std::chrono::milliseconds duration)
 
 	_helper = std::make_shared<Helper>(ptr());
 
-	_helper->start(std::chrono::steady_clock::now() + duration);
+	_helper->start(alarmTime);
 
-	return _helper->time();
+	return alarmTime;
+}
+
+Timer::AlarmTime Timer::prolong(std::chrono::milliseconds duration)
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
+	Timer::AlarmTime alarmTime = std::chrono::steady_clock::now() + duration;
+
+	if (_helper)
+	{
+		if (_helper->time() > alarmTime)
+		{
+			return _helper->time();
+		}
+
+		_helper->cancel();
+	}
+
+	_helper = std::make_shared<Helper>(ptr());
+
+	_helper->start(alarmTime);
+
+	return alarmTime;
+}
+
+Timer::AlarmTime Timer::shorten(std::chrono::milliseconds duration)
+{
+	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+
+	Timer::AlarmTime alarmTime = std::chrono::steady_clock::now() + duration;
+
+	if (_helper)
+	{
+		if (_helper->time() <= alarmTime)
+		{
+			return _helper->time();
+		}
+
+		_helper->cancel();
+	}
+
+	_helper = std::make_shared<Helper>(ptr());
+
+	_helper->start(alarmTime);
+
+	return alarmTime;
 }
 
 void Timer::stop()

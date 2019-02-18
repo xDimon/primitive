@@ -84,7 +84,14 @@ public:
 		return _label;
 	}
 
+	// Запустить, только если не запущено
 	AlarmTime startOnce(std::chrono::milliseconds duration);
+	// Перезапустить
 	AlarmTime restart(std::chrono::milliseconds duration);
+	// Продлить
+	AlarmTime prolong(std::chrono::milliseconds duration);
+	// Сократить
+	AlarmTime shorten(std::chrono::milliseconds duration);
+
 	void stop();
 };
