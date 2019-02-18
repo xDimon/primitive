@@ -26,7 +26,7 @@
 #include "../utils/Shareable.hpp"
 #include "../utils/Context.hpp"
 #include "../services/Service.hpp"
-#include "../utils/Timeout.hpp"
+#include "../utils/Timer.hpp"
 #include "Communicate.hpp"
 
 class Session : public Shareable<Session>, public Communicate
@@ -42,19 +42,31 @@ protected:
 protected:
 	std::shared_ptr<Service> _service;
 
-	/// Таймаут сохранения
-	virtual std::chrono::seconds saveDuration() const
+	[[deprecated]] virtual std::chrono::seconds saveDuration() const
 	{
 		return std::chrono::seconds(60);
 	}
-	std::shared_ptr<Timeout> _timeoutForSave;
 
-	/// Таймаут закрытия
-	virtual std::chrono::seconds timeoutDuration() const
+	[[deprecated]] virtual std::chrono::seconds timeoutDuration() const
 	{
 		return std::chrono::seconds(900);
 	}
-	std::shared_ptr<Timeout> _timeoutForClose;
+
+	virtual std::chrono::seconds delayBeforeSaving() const
+	{
+		return std::chrono::seconds(60);
+	}
+
+	virtual std::chrono::seconds delayBeforeUnload(bool isShort) const
+	{
+		return isShort ? std::chrono::seconds(15) : std::chrono::seconds(900);
+	}
+
+	/// Таймаут сохранения
+	std::shared_ptr<Timer> _timeoutForSave;
+
+	/// Таймаут выгрузки
+	std::shared_ptr<Timer> _timeoutForUnload;
 
 public:
 	const HID hid;
@@ -76,8 +88,8 @@ public:
 	);
 	~Session() override = default;
 
-	void changed();
-	void touch();
+	virtual void changed();
+	void touch(bool temporary = false);
 
 	const bool isReady() const
 	{

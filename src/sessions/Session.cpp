@@ -45,30 +45,30 @@ void Session::setSid(Session::SID sid)
 	_sid = std::move(sid);
 }
 
-void Session::touch()
+void Session::touch(bool temporary)
 {
-	if (!_timeoutForClose)
+	if (!_timeoutForUnload)
 	{
-		_timeoutForClose = std::make_shared<Timeout>(
-			[wp = std::weak_ptr<std::remove_reference<decltype(*this)>::type>(ptr())](){
+		_timeoutForUnload = std::make_shared<Timer>(
+			[wp = std::weak_ptr<std::remove_reference<decltype(*this)>::type>(ptr())]() {
 				auto session = wp.lock();
 				if (session)
 				{
-					session->close(Daemon::shutingdown()?"shuting down":"timeout");
+					session->close(Daemon::shutingdown() ? "shuting down" : "timeout");
 				}
 			},
 			"Timeout to close session"
 		);
 	}
 
-	_timeoutForClose->restart(timeoutDuration());
+	_timeoutForUnload->prolong(delayBeforeUnload(temporary));
 }
 
 void Session::changed()
 {
 	if (!_timeoutForSave)
 	{
-		_timeoutForSave = std::make_shared<Timeout>(
+		_timeoutForSave = std::make_shared<Timer>(
 			[wp = std::weak_ptr<std::remove_reference<decltype(*this)>::type>(ptr())](){
 				auto session = wp.lock();
 				if (session)
@@ -80,7 +80,7 @@ void Session::changed()
 		);
 	}
 
-	_timeoutForSave->startOnce(saveDuration());
+	_timeoutForSave->startOnce(delayBeforeSaving());
 }
 
 bool Session::load()

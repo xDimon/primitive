@@ -67,7 +67,7 @@ std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Sessio
 	if (i != getInstance()._sessions.end())
 	{
 		regSid(session);
-		i->second->touch();
+		i->second->touch(true);
 		return i->second;
 	}
 
@@ -80,7 +80,7 @@ std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Sessio
 
 	regSid(session);
 
-	session->touch();
+	session->touch(true);
 	return session;
 }
 
