@@ -185,7 +185,7 @@ void LpsContext::out(SVal value, bool close)
 	{
 		if (!_timeout)
 		{
-			_timeout = std::make_shared<Timeout>(
+			_timeout = std::make_shared<Timer>(
 				[wp = std::weak_ptr<LpsContext>(std::dynamic_pointer_cast<LpsContext>(ptr()))]
 				{
 					auto iam = wp.lock();
@@ -197,11 +197,11 @@ void LpsContext::out(SVal value, bool close)
 
 		if (dynamic_cast<WsContext*>(_context.get()))
 		{
-			_timeout->restart(std::chrono::milliseconds(50));
+			_timeout->startOnce(std::chrono::milliseconds(50));
 		}
 		else
 		{
-			_timeout->restart(std::chrono::milliseconds(500));
+			_timeout->startOnce(std::chrono::milliseconds(500));
 		}
 	}
 }

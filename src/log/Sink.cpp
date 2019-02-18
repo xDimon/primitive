@@ -290,7 +290,7 @@ void Sink::push(Log::Detail level, const std::string& name, const std::string& f
 
 			if (!_flushTimeout)
 			{
-				_flushTimeout = std::make_shared<Timeout>(
+				_flushTimeout = std::make_shared<Timer>(
 					[wp = std::weak_ptr<Sink>(std::dynamic_pointer_cast<Sink>(ptr()))]
 					{
 						auto iam = wp.lock();

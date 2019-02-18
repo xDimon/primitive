@@ -29,7 +29,7 @@
 #include "../transport/Transport.hpp"
 #include "../utils/Context.hpp"
 #include "ConnectionEvent.hpp"
-#include "../utils/Timeout.hpp"
+#include "../utils/Timer.hpp"
 #include <unistd.h>
 
 class Connection: public Shareable<Connection>, public Named
@@ -60,7 +60,7 @@ protected:
 	bool _error;
 
 	/// Таймаут закрытия
-	std::shared_ptr<Timeout> _timeoutForClose;
+	std::shared_ptr<Timer> _timeoutForClose;
 
 public:
 	Connection() = delete;

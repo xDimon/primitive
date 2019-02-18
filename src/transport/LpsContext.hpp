@@ -25,6 +25,7 @@
 #include "../utils/Context.hpp"
 #include "../sessions/Session.hpp"
 #include "../serialization/SArr.hpp"
+#include "../utils/Timer.hpp"
 #include "TransportContext.hpp"
 
 class LpsContext: public Context
@@ -35,7 +36,7 @@ private:
 	std::shared_ptr<TransportContext> _context;
 	std::weak_ptr<Session> _session;
 	std::queue<SVal> _output;
-	std::shared_ptr<Timeout> _timeout;
+	std::shared_ptr<Timer> _timeout;
 	bool _aggregation;
 	bool _compression;
 	bool _close;

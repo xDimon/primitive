@@ -24,7 +24,7 @@
 #include <mutex>
 #include "../configs/Setting.hpp"
 #include "Log.hpp"
-#include "../utils/Timeout.hpp"
+#include "../utils/Timer.hpp"
 
 #define PRE_ACCUMULATE_LOG
 
@@ -44,7 +44,7 @@ private:
 
 #ifdef	PRE_ACCUMULATE_LOG
 	std::string _accum;
-	std::shared_ptr<Timeout> _flushTimeout;
+	std::shared_ptr<Timer> _flushTimeout;
 #endif
 
 	FILE* _f;
