@@ -27,6 +27,21 @@
 #include <cstdarg>
 #include <algorithm>
 
+#if __cplusplus < 201703L
+#define constexpr
+#endif
+
+static const char *levelLabel[] = {
+	"TRC",
+	"DEB",
+	"INF",
+	"WRN",
+	"ERR",
+	"CRT"
+};
+
+const size_t Sink::accumucatorCapacity = 1<<14;
+
 Sink::Sink(const Setting& setting)
 {
 	_f = nullptr;
@@ -113,193 +128,166 @@ Sink::~Sink()
 
 void Sink::push(Log::Detail logLevel, const std::string& name, const std::string& message)
 {
-	char buff[1<<6]; // 64
-
-	time_t ts;
-	struct tm tm;
-
-	auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	ts = now / 1'000'000;
-	auto ms = static_cast<uint32_t>(now % 1'000'000 / 1000);
-	auto mcs = static_cast<uint32_t>(now % 1'000);
-
-	localtime_r(&ts, &tm);
-
 	const char* threadLabel = Thread::self()->name().c_str();
 
-	static const char *levelLabel[] = {
-		"TRC",
-		"DEB",
-		"INF",
-		"WRN",
-		"ERR",
-		"CRT"
-	};
+	auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	time_t ts = now / 1'000'000;
+	auto msec = static_cast<uint32_t>(now % 1'000'000 / 1000);
+	auto usec = static_cast<uint32_t>(now % 1'000);
+
+	tm tm{};
+	localtime_r(&ts, &tm);
 
 	int n = 0;
 
+	char buff[1<<6]; // 64
 	n = snprintf(buff, sizeof(buff),
 		"%02u-%02u-%02u %02u:%02u:%02u.%03u'%03u\t%s\t%s\t%s\t",
 		tm.tm_year%100, tm.tm_mon+1, tm.tm_mday,
 		tm.tm_hour, tm.tm_min, tm.tm_sec,
-		ms, mcs,
+		msec, usec,
 		threadLabel, name.c_str(), levelLabel[static_cast<int>(logLevel)]
 	);
 
+	std::lock_guard<mutex_t> lockGuard(_mutex);
+
 	if (_f == nullptr)
 	{
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 		_preInitBuff += buff + message + "\n";
 	}
 	else
 	{
-#ifdef	PRE_ACCUMULATE_LOG
-		_mutex.lock();
-		if ((_accum.length() + n + message.length() + 1) > (1<<14))
+		if constexpr (accumucatorCapacity > 0)
 		{
-			_mutex.unlock();
-			flush();
-			_mutex.lock();
+			if ((_accumulator.length() + n + message.length() + 1) > accumucatorCapacity)
+			{
+				_mutex.unlock();
+				flush();
+				_mutex.lock();
+			}
+			_accumulator.append(buff);
+			_accumulator.append(message);
+			_accumulator.append("\n");
 		}
-		_accum.append(buff);
-		_accum.append(message);
-		_accum.append("\n");
-		_mutex.unlock();
-#else
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-		fwrite(buff, n, 1, _f);
-		fwrite(message.data(), message.size(), 1, _f);
-		fputc('\n', _f);
-		fflush(_f);
-#endif
+		else
+		{
+			fwrite(buff, (n > 0) ? static_cast<size_t>(n) : 0, 1, _f);
+			fwrite(message.data(), message.size(), 1, _f);
+			fputc('\n', _f);
+			fflush(_f);
+		}
 	}
 }
 
 void Sink::push(Log::Detail level, const std::string& name, const std::string& format, va_list ap)
 {
-	time_t ts;
-	struct tm tm;
-
 	auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	ts = now / 1'000'000;
-	auto ms = static_cast<uint32_t>(now % 1'000'000 / 1000);
-	auto mcs = static_cast<uint32_t>(now % 1'000);
+	time_t ts = now / 1'000'000;
+	auto msec = static_cast<uint32_t>(now % 1'000'000 / 1000);
+	auto usec = static_cast<uint32_t>(now % 1'000);
 
+	tm tm{};
 	localtime_r(&ts, &tm);
 
 	const char* threadLabel = Thread::self()->name().c_str();
-
-	static const char *levelLabel[] = {
-		"TRC",
-		"DEB",
-		"INF",
-		"WRN",
-		"ERR",
-		"CRT"
-	};
 
 	if (_f == nullptr)
 	{
 		char buff[1<<6]; // 64
 
 		snprintf(buff, sizeof(buff),
-			 "%02u-%02u-%02u %02u:%02u:%02u.%03u'%03u\t%s\t%s\t%s\t",
-			 tm.tm_year%100, tm.tm_mon+1, tm.tm_mday,
-			 tm.tm_hour, tm.tm_min, tm.tm_sec,
-			 ms, mcs,
-			 threadLabel, name.c_str(), levelLabel[static_cast<int>(level)]
+			"%02u-%02u-%02u %02u:%02u:%02u.%03u'%03u\t%s\t%s\t%s\t",
+			tm.tm_year%100, tm.tm_mon+1, tm.tm_mday,
+			tm.tm_hour, tm.tm_min, tm.tm_sec,
+			msec, usec,
+			threadLabel, name.c_str(), levelLabel[static_cast<int>(level)]
 		);
 
-		int size = ((int)format.size()) * 2 + 50;   // Use a rubric appropriate for your code
+		auto size = format.size() * 2 + 64;
 		std::string message;
-		while (1) // Maximum two passes on a POSIX system...
+		for (;;)
 		{
 			message.resize(size);
 			va_list ap1;
 			va_copy(ap1, ap);
-			int n = vsnprintf((char *)message.data(), size, format.c_str(), ap1);
+			int n = vsnprintf(const_cast<char*>(message.data()), size, format.c_str(), ap1);
 			va_end(ap1);
-			if (n > -1 && n < size)
-			{  // Everything worked
-				message.resize(n);
-				break;
-			}
-			if (n > -1)  // Needed size returned
+			if (n > -1)
 			{
-				size = n + 1;   // For null char
+				if (static_cast<size_t>(n) < size)
+				{
+					// Everything worked
+					message.resize(static_cast<size_t>(n));
+					break;
+				}
+				size = static_cast<size_t>(n) + 1;
 			}
 			else
 			{
-				size *= 2;      // Guess at a larger size (OS specific)
+				size *= 2;
 			}
 		}
 
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+		std::lock_guard<mutex_t> lockGuard(_mutex);
 
 		_preInitBuff += buff + message + "\n";
 	}
-	else
+	else if constexpr (accumucatorCapacity > 0)
 	{
-#ifdef	PRE_ACCUMULATE_LOG
 		char buff[1<<6]; // 64
 
-		int n = snprintf(buff, sizeof(buff),
-				 "%02u-%02u-%02u %02u:%02u:%02u.%03u'%03u\t%s\t%s\t%s\t",
-				 tm.tm_year%100, tm.tm_mon+1, tm.tm_mday,
-				 tm.tm_hour, tm.tm_min, tm.tm_sec,
-				 ms, mcs,
-				 threadLabel, name.c_str(), levelLabel[static_cast<int>(level)]
+		int headerSize = snprintf(buff, sizeof(buff),
+			"%02u-%02u-%02u %02u:%02u:%02u.%03u'%03u\t%s\t%s\t%s\t",
+			tm.tm_year%100, tm.tm_mon+1, tm.tm_mday,
+			tm.tm_hour, tm.tm_min, tm.tm_sec,
+			msec, usec,
+			threadLabel, name.c_str(), levelLabel[static_cast<int>(level)]
 		);
 
-		int size = ((int)format.size()) * 2 + 64;
+		auto size = format.size() * 2 + 64;
 		std::string message;
-		for (;;) // Maximum two passes on a POSIX system...
+		for (;;)
 		{
 			message.resize(size);
 			va_list ap1;
 			va_copy(ap1, ap);
-			int n = vsnprintf((char *)message.data(), size, format.c_str(), ap1);
+			int n = vsnprintf(const_cast<char*>(message.data()), size, format.c_str(), ap1);
 			va_end(ap1);
-			if (n > -1 && n < size)
-			{  // Everything worked
-				message.resize(n);
-				break;
-			}
-			if (n > -1)  // Needed size returned
+			if (n > -1)
 			{
-				size = n + 1;   // For null char
+				if (static_cast<size_t>(n) < size)
+				{
+					// Everything worked
+					message.resize(static_cast<size_t>(n));
+					break;
+				}
+				size = static_cast<size_t>(n) + 1;
 			}
 			else
 			{
-				size *= 2;      // Guess at a larger size (OS specific)
+				size *= 2;
 			}
 		}
 
 		{
-			std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+			std::lock_guard<mutex_t> lockGuard(_mutex);
 
-			if ((_accum.length() + n + message.length() + 1) > (1<<14))
+			if ((_accumulator.length() + headerSize + message.length() + 1) > accumucatorCapacity)
 			{
 				_mutex.unlock();
 				flush();
 				_mutex.lock();
 			}
-			_accum.append(buff);
-			_accum.append(message);
-			_accum.append("\n");
+			_accumulator.append(buff);
+			_accumulator.append(message);
+			_accumulator.append("\n");
 
 			if (!_flushTimeout)
 			{
 				_flushTimeout = std::make_shared<Timer>(
 					[wp = std::weak_ptr<Sink>(std::dynamic_pointer_cast<Sink>(ptr()))]
 					{
-						auto iam = wp.lock();
-						if (!iam) return;
-						try
-						{
-							iam->flush();
-							iam->_flushTimeout->startOnce(std::chrono::milliseconds(250));
-						} catch (...) {}
+						try { if (auto iam = wp.lock()) iam->flush(); } catch (...) {}
 					},
 					"Timeout to flush sink"
 				);
@@ -307,43 +295,44 @@ void Sink::push(Log::Detail level, const std::string& name, const std::string& f
 		}
 
 		_flushTimeout->startOnce(std::chrono::milliseconds(250));
-#else
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	}
+	else
+	{
+		std::lock_guard<mutex_t> lockGuard(_mutex);
+
 		fprintf(_f, "%02u-%02u-%02u %02u:%02u:%02u.%03u'%03u\t%s\t%s\t%s\t",
 			tm.tm_year%100, tm.tm_mon+1, tm.tm_mday,
 			tm.tm_hour, tm.tm_min, tm.tm_sec,
-			ms, mcs,
+			msec, usec,
 			threadLabel, name.c_str(), levelLabel[static_cast<int>(level)]
 		);
 		vfprintf(_f, format.c_str(), ap);
 		fputc('\n', _f);
 		fflush(_f);
-#endif
 	}
 }
 
 // Принудительно сбросить на диск
 void Sink::flush()
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-
-#ifdef	PRE_ACCUMULATE_LOG
-	if (_accum.empty())
-	{
-		return;
-	}
-#endif
+	std::lock_guard<mutex_t> lockGuard(_mutex);
 
 	if (_f == nullptr)
 	{
 		return;
 	}
 
-#ifdef	PRE_ACCUMULATE_LOG
-	std::string chunk = std::move(_accum);
+	if constexpr (accumucatorCapacity > 0)
+	{
+		if (_accumulator.empty())
+		{
+			return;
+		}
 
-	fwrite(chunk.data(), chunk.size(), 1, _f);
-#endif
+		fwrite(_accumulator.data(), _accumulator.size(), 1, _f);
+
+		_accumulator.clear();
+	}
 
 	fflush(_f);
 }
@@ -354,22 +343,24 @@ void Sink::rotate()
 	{
 		push(Log::Detail::INFO, "Logger", "Close logfile for rotation");
 
-		std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-
-		auto f = fopen(_path.c_str(), "a+");
-		if (f == nullptr)
 		{
-			throw std::runtime_error("Can't reopen log-file (" + _path + "): " + strerror(errno));
+			std::lock_guard<mutex_t> lockGuard(_mutex);
+
+			auto f = fopen(_path.c_str(), "a+");
+			if (f == nullptr)
+			{
+				throw std::runtime_error("Can't reopen log-file (" + _path + "): " + strerror(errno));
+			}
+
+			if (_f != nullptr)
+			{
+				fflush(_f);
+				fclose(_f);
+			}
+
+			_f = f;
 		}
 
 		push(Log::Detail::INFO, "Logger", "Reopen logfile for rotation");
-
-		if (_f != nullptr)
-		{
-			fflush(_f);
-			fclose(_f);
-		}
-
-		_f = f;
 	}
 }

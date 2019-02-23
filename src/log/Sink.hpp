@@ -38,14 +38,14 @@ public:
 	};
 
 private:
-	std::recursive_mutex _mutex;
+	using mutex_t = std::mutex;
+	mutex_t _mutex;
 	std::string _name;
 	Type _type;
 
-#ifdef	PRE_ACCUMULATE_LOG
-	std::string _accum;
+	static const size_t accumucatorCapacity;
+	std::string _accumulator;
 	std::shared_ptr<Timer> _flushTimeout;
-#endif
 
 	FILE* _f;
 	std::string _path;
@@ -59,7 +59,7 @@ public:
 
 	Sink();
 	explicit Sink(const Setting& setting);
-	~Sink();
+	~Sink() override;
 
 	const std::string& name() const
 	{
