@@ -21,46 +21,56 @@
 
 #include "Timer.hpp"
 #include "../thread/TaskManager.hpp"
+#include "Daemon.hpp"
 
 Timer::Helper::Helper(const std::shared_ptr<Timer>& timer)
 : _wp(timer)
-, _time(std::chrono::steady_clock::duration::zero())
+, _refCounter(0)
 {
 }
 
 void Timer::Helper::onTime()
 {
-	auto timer = _wp.lock();
-	if (!timer)
+	auto timeout = _wp.lock();
+	if (!timeout)
 	{
 		return;
 	}
 
-	std::lock_guard<std::recursive_mutex> lockGuard(timer->_mutex);
+	timeout->_mutex.lock();
 
-	timer->alarm();
+	_refCounter--;
+
+	if (timeout->alarm())
+	{
+		return;
+	}
+
+	if (_refCounter == 0)
+	{
+		start(timeout->_actualAlarmTime);
+	}
+
+	timeout->_mutex.unlock();
 }
 
 void Timer::Helper::start(std::chrono::steady_clock::time_point time)
 {
-	auto timer = _wp.lock();
-	if (!timer)
+	auto timeout = _wp.lock();
+	if (!timeout)
 	{
 		return;
 	}
 
-	_time = time;
+	++_refCounter;
 
 	TaskManager::enqueue(
-		[wp = std::weak_ptr<Timer::Helper>(ptr())]
+		[p = ptr()]
 		{
-			if (auto iam = wp.lock())
-			{
-				iam->onTime();
-			}
+			p->onTime();
 		},
 		time,
-		timer->label()
+		timeout->label()
 	);
 }
 
@@ -72,110 +82,129 @@ void Timer::Helper::cancel()
 		return;
 	}
 
-	std::lock_guard<std::recursive_mutex> lockGuard(timer->_mutex);
-
+	timer->_helper.reset();
 	_wp.reset();
 }
 
+
 Timer::Timer(std::function<void()> handler, const char* label)
-: _alarmHandler(std::move(handler))
-, _label(label)
+: _label(label)
+, _handler(std::move(handler))
+, _actualAlarmTime(std::chrono::steady_clock::now())
+, _nextAlarmTime(std::chrono::time_point<std::chrono::steady_clock>::max())
 {
 }
 
-void Timer::alarm()
+bool Timer::alarm()
 {
-	_helper.reset();
-	_alarmHandler();
+	if (_actualAlarmTime > std::chrono::steady_clock::now() && !Daemon::shutingdown())
+	{
+		return false;
+	}
+
+	_mutex.unlock();
+	_handler();
+	return true;
 }
 
-Timer::AlarmTime Timer::startOnce(std::chrono::milliseconds duration)
+Timer::AlarmTime Timer::appoint(AlarmTime currentTime, AlarmTime alarmTime, bool once)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	if (once)
+	{
+		if (_actualAlarmTime > currentTime)
+		{
+			return _actualAlarmTime;
+		}
+
+		_actualAlarmTime = alarmTime;
+
+		_nextAlarmTime = _actualAlarmTime;
+	}
+	else
+	{
+		_actualAlarmTime = alarmTime;
+
+		auto prevExpireTime = _nextAlarmTime;
+
+		if (_actualAlarmTime < std::max(currentTime, _nextAlarmTime))
+		{
+			_nextAlarmTime = _actualAlarmTime;
+		}
+		else
+		{
+			_nextAlarmTime = std::max(currentTime, _nextAlarmTime);
+		}
+
+		if (prevExpireTime <= _nextAlarmTime)
+		{
+			return _actualAlarmTime;
+		}
+	}
 
 	if (!_helper)
 	{
-		Timer::AlarmTime alarmTime = std::chrono::steady_clock::now() + duration;
-
 		_helper = std::make_shared<Helper>(ptr());
-
-		_helper->start(alarmTime);
 	}
 
-	return _helper->time();
+	_helper->start(_nextAlarmTime);
+
+	return _actualAlarmTime;
 }
 
-Timer::AlarmTime Timer::restart(std::chrono::milliseconds duration)
+Timer::AlarmTime Timer::start(std::chrono::microseconds duration, bool once)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-
-	Timer::AlarmTime alarmTime = std::chrono::steady_clock::now() + duration;
-
-	if (_helper)
-	{
-		_helper->cancel();
-	}
-
-	_helper = std::make_shared<Helper>(ptr());
-
-	_helper->start(alarmTime);
-
-	return alarmTime;
+	std::lock_guard<mutex_t> lockGuard(_mutex);
+	auto now = std::chrono::steady_clock::now();
+	return appoint(now, now + duration, once);
 }
 
-Timer::AlarmTime Timer::prolong(std::chrono::milliseconds duration)
+Timer::AlarmTime Timer::startOnce(std::chrono::microseconds duration)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
-
-	Timer::AlarmTime alarmTime = std::chrono::steady_clock::now() + duration;
-
-	if (_helper)
-	{
-		if (_helper->time() > alarmTime)
-		{
-			return _helper->time();
-		}
-
-		_helper->cancel();
-	}
-
-	_helper = std::make_shared<Helper>(ptr());
-
-	_helper->start(alarmTime);
-
-	return alarmTime;
+	std::lock_guard<mutex_t> lockGuard(_mutex);
+	auto now = std::chrono::steady_clock::now();
+	return appoint(now, now + duration, true);
 }
 
-Timer::AlarmTime Timer::shorten(std::chrono::milliseconds duration)
+Timer::AlarmTime Timer::restart(std::chrono::microseconds duration)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	std::lock_guard<mutex_t> lockGuard(_mutex);
+	auto now = std::chrono::steady_clock::now();
+	return appoint(now, now + duration, false);
+}
 
-	Timer::AlarmTime alarmTime = std::chrono::steady_clock::now() + duration;
+Timer::AlarmTime Timer::prolong(std::chrono::microseconds duration)
+{
+	std::lock_guard<mutex_t> lockGuard(_mutex);
 
-	if (_helper)
+	auto now = std::chrono::steady_clock::now();
+	auto alarmTime = now + duration;
+
+	if (_actualAlarmTime >= alarmTime)
 	{
-		if (_helper->time() <= alarmTime)
-		{
-			return _helper->time();
-		}
-
-		_helper->cancel();
+		return _actualAlarmTime;
 	}
 
-	_helper = std::make_shared<Helper>(ptr());
+	return appoint(now, alarmTime, false);
+}
 
-	_helper->start(alarmTime);
+Timer::AlarmTime Timer::shorten(std::chrono::microseconds duration)
+{
+	std::lock_guard<mutex_t> lockGuard(_mutex);
 
-	return alarmTime;
+	auto now = std::chrono::steady_clock::now();
+	auto alarmTime = std::chrono::steady_clock::now() + duration;
+
+	if (_actualAlarmTime <= alarmTime)
+	{
+		return _actualAlarmTime;
+	}
+
+	return appoint(now, alarmTime, false);
 }
 
 void Timer::stop()
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	std::lock_guard<mutex_t> lockGuard(_mutex);
 
-	if (_helper)
-	{
-		_helper->cancel();
-		_helper.reset();
-	}
+	_helper->cancel();
 }

@@ -35,7 +35,7 @@ private:
 	{
 	private:
 		std::weak_ptr<Timer> _wp;
-		AlarmTime _time;
+		size_t _refCounter;
 
 		void onTime();
 
@@ -49,24 +49,25 @@ private:
 		explicit Helper(const std::shared_ptr<Timer>& timer);
 		~Helper() override = default;
 
-		AlarmTime time() const
-		{
-			return _time;
-		}
-
 		void start(AlarmTime time);
 
 		void cancel();
 	};
 
-	std::recursive_mutex _mutex;
 
-	std::function<void()> _alarmHandler;
+	using mutex_t = std::mutex;
+	mutex_t _mutex;
+
 	const char *_label;
+	std::function<void()> _handler;
+
+	AlarmTime _actualAlarmTime;
+	AlarmTime _nextAlarmTime;
 
 	std::shared_ptr<Helper> _helper;
 
-	void alarm();
+	AlarmTime appoint(AlarmTime currentTime, AlarmTime alarmTime, bool once);
+	bool alarm();
 
 public:
 	Timer() = delete; // Default-constructor
@@ -75,7 +76,7 @@ public:
 	Timer(Timer&&) noexcept = delete; // Move-constructor
 	Timer& operator=(Timer&&) noexcept = delete; // Move-assignment
 
-	explicit Timer(std::function<void()> handler, const char* label/* = "Timer"*/);
+	explicit Timer(std::function<void()> handler, const char* label);
 	~Timer() override = default;
 
 	// Метка задачи (имя, название и т.п., для отладки)
@@ -84,14 +85,19 @@ public:
 		return _label;
 	}
 
-	// Запустить, только если не запущено
-	AlarmTime startOnce(std::chrono::milliseconds duration);
-	// Перезапустить
-	AlarmTime restart(std::chrono::milliseconds duration);
-	// Продлить
-	AlarmTime prolong(std::chrono::milliseconds duration);
-	// Сократить
-	AlarmTime shorten(std::chrono::milliseconds duration);
+	// Запустить
+	AlarmTime start(std::chrono::microseconds duration, bool once);
 
+	// Запустить, только если не запущено
+	AlarmTime startOnce(std::chrono::microseconds duration);
+	// Перезапустить
+	AlarmTime restart(std::chrono::microseconds duration);
+
+	// Продлить
+	AlarmTime prolong(std::chrono::microseconds duration);
+	// Сократить
+	AlarmTime shorten(std::chrono::microseconds duration);
+
+	// Остановить
 	void stop();
 };
