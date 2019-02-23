@@ -90,7 +90,7 @@ void Thread::run(Thread* thread)
 		//execute(thread);
 		coroWrapper(thread, nullptr, nullptr);
 	}
-	while (thread->getCurrContextCount());
+	while (Thread::getCurrContextCount());
 
 	{
 		std::lock_guard<std::mutex> lockGuard(_atCloseMutex);

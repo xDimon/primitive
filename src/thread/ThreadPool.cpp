@@ -77,22 +77,24 @@ void ThreadPool::createThread()
 	std::function<void()> threadLoop =
 	[this]
 	{
-		Task::Time waitUntil = std::chrono::steady_clock::now() + std::chrono::seconds(1);//std::chrono::hours(24);
+		Task::Time waitUntil = std::chrono::steady_clock::now() + std::chrono::seconds(1);
 
-		auto continueCondition = [this,&waitUntil](){
-			std::lock_guard<std::mutex> lockGuard(_counterMutex);
-			if (Daemon::shutingdown())
+		auto continueCondition =
+			[this,&waitUntil]
 			{
-				return true;
-			}
-			if (TaskManager::empty())
-			{
-				return _hold == 0;
-			}
-			waitUntil = TaskManager::waitUntil();
+				std::lock_guard<std::mutex> lockGuard(_counterMutex);
+				if (Daemon::shutingdown())
+				{
+					return true;
+				}
+				if (TaskManager::empty())
+				{
+					return _hold == 0;
+				}
+				waitUntil = TaskManager::waitUntil();
 
-			return waitUntil <= std::chrono::steady_clock::now();
-		};
+				return waitUntil <= std::chrono::steady_clock::now();
+			};
 
 		_log.debug("Begin thread's loop");
 
@@ -104,7 +106,6 @@ void ThreadPool::createThread()
 				// Condition for run thread
 				if (!_workersWakeupCondition.wait_until(lock, waitUntil, continueCondition))
 				{
-					waitUntil = std::chrono::steady_clock::now() + std::chrono::seconds(1);//std::chrono::hours(24);
 					continue;
 				}
 			}
@@ -114,17 +115,17 @@ void ThreadPool::createThread()
 
 			std::lock_guard<std::mutex> lockGuard(_contextsMutex);
 
-			if (!_readyForContinueContexts.empty() && Thread::self()->getCurrContextCount() > Thread::self()->sizeContextForReplace())
+			if (!_readyForContinueContexts.empty() && Thread::getCurrContextCount() > Thread::sizeContextForReplace())
 			{
 				auto context = _readyForContinueContexts.front();
 				_readyForContinueContexts.pop();
 
-				Thread::self()->putContextForReplace(context);
+				Thread::putContextForReplace(context);
 
 //				_log.info("End continueContext => %p", context);
 			}
 
-			if (Thread::self()->sizeContextForReplace() > 0)
+			if (Thread::sizeContextForReplace() > 0)
 			{
 //				_log.info("End of secondary task");
 
@@ -137,8 +138,6 @@ void ThreadPool::createThread()
 		}
 
 		_log.debug("End thread's loop");
-
-//		_workersWakeupCondition.notify_one();
 	};
 
 	_log.debug("Thread create");
@@ -146,12 +145,6 @@ void ThreadPool::createThread()
 	auto thread = new Thread(threadLoop);
 
 	thread->waitStart();
-
-	if (thread->id() == 0)
-	{
-		int i = 1;
-		(void)i;
-	}
 
 	_workers.emplace(thread->id(), thread);
 
