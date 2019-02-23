@@ -59,7 +59,7 @@ public:
 		return _until;
 	}
 
-	// Метка задачи (иня, название и т.п., для отладки)
+	// Метка задачи (имя, название и т.п., для отладки)
 	const char* label() const
 	{
 		return _label;
@@ -74,7 +74,7 @@ public:
 	// Исполнение
 	void execute();
 
-	// Пустышка (остаток о перемещения)
+	// Пустышка (остаток от перемещения)
 	bool isDummy() const
 	{
 		return !_function;

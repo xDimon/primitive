@@ -50,8 +50,10 @@ public:
 	}
 
 private:
+	using mutex_t =	std::mutex;
+
 	Log _log;
-	std::recursive_mutex _mutex;
+	mutex_t _mutex;
 	std::priority_queue<Task, std::deque<Task>> _queue;
 
 public:
