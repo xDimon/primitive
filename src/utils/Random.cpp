@@ -23,6 +23,7 @@
 
 #include <random>
 #include <chrono>
+#include <stdexcept>
 
 Random::Random()
 : _generator(static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count()))
@@ -35,6 +36,11 @@ std::string Random::generateSequence(std::string_view lookUpTable, size_t length
 std::string Random::generateSequence(const std::string& lookUpTable, size_t length)
 #endif
 {
+	if (lookUpTable.empty())
+	{
+		throw std::runtime_error("lookUpTable mustn't be empty!");
+	}
+
 	std::string sequence;
 
 	for (;;)
@@ -45,18 +51,16 @@ std::string Random::generateSequence(const std::string& lookUpTable, size_t leng
 		);
 		for (;;)
 		{
-			sequence.push_back(lookUpTable[rnd % 62]);
+			sequence.push_back(lookUpTable[rnd % lookUpTable.size()]);
 			if (sequence.length() >= length)
 			{
 				return sequence;
 			}
-			rnd /= 62;
+			rnd /= lookUpTable.size();
 			if (rnd < lookUpTable.length())
 			{
 				break;
 			}
 		}
 	}
-
-	return sequence;
 }
