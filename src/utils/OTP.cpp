@@ -29,7 +29,7 @@
 
 std::string OTP::generateSecret()
 {
-	return Random::generateSequence(Base32::charset(), 20);
+	return Random::generateSequence(Base32::charset(), 32);
 }
 
 std::string OTP::getHOTP(uint64_t count)
