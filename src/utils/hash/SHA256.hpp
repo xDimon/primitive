@@ -1,20 +1,44 @@
-// Copyright © 2017-2019 Dmitriy Khaustov
+/*
+ * Updated to C++, zedwood.com 2012
+ * Based on Olivier Gay's version
+ * See Modified BSD License below:
+ *
+ * FIPS 180-2 SHA-224/256/384/512 implementation
+ * Issue date:  04/30/2005
+ * http://www.ouah.org/ogay/sha2/
+ *
+ * Copyright (C) 2005, 2007 Olivier Gay <olivier.gay@a3.epfl.ch>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+//  Adapt for project
+//      Dmitriy Khaustov <khaustov.dm@gmail.com>
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Author: Dmitriy Khaustov aka xDimon
-// Contacts: khaustov.dm@gmail.com
-// File created on: 2017.06.04
+// File created on: 2017.02.25
 
 // SHA256.hpp
 
@@ -23,6 +47,7 @@
 
 
 #include <string>
+#include <array>
 
 class SHA256
 {
@@ -39,8 +64,12 @@ public:
 
 	static const uint32_t DIGEST_SIZE = (256 / 8);
 
-	static std::string encode(const std::string &s);
-	static std::string encode_bin(const std::string &s);
+	static std::array<uint8_t, SHA256::DIGEST_SIZE> encode_bin(const void* data, size_t size);
+	static std::string encode(const void* data, size_t size);
+	static std::string encode(const std::string& str)
+	{
+		return encode(str.data(), str.size());
+	}
 
 protected:
 	void transform(const uint8_t* message, size_t block_nb);
