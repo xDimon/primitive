@@ -56,7 +56,13 @@ void Services::add(const Setting& setting, bool replace)
 		getInstance()._registry.emplace(entity->name(), entity);
 	}
 
-	activate(entity);
+	TaskManager::enqueue(
+		[entity]
+		{
+			activate(entity);
+		},
+		"Activate service"
+	);
 }
 
 std::shared_ptr<Service> Services::get(const std::string& name)
