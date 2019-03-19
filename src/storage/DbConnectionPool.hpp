@@ -31,6 +31,7 @@
 #include "../configs/Setting.hpp"
 #include "../log/Log.hpp"
 #include "../telemetry/Metric.hpp"
+#include "../thread/Thread.hpp"
 
 class DbConnection;
 
@@ -38,9 +39,10 @@ class DbConnectionPool : public Shareable<DbConnectionPool>, public Named
 {
 protected:
 	mutable Log _log;
-	std::recursive_mutex _mutex;
+	using mutex_t = std::mutex;
+	mutex_t _mutex;
 
-	std::map<std::thread::id, std::shared_ptr<DbConnection>> _captured;
+	std::map<Thread::Id, std::shared_ptr<DbConnection>> _captured;
 	std::deque<std::shared_ptr<DbConnection>> _pool;
 
 	virtual std::shared_ptr<DbConnection> create() = 0;

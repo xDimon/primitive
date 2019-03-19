@@ -24,222 +24,11 @@
 #include "MysqlConnectionPool.hpp"
 #include "MysqlResult.hpp"
 #include "../../thread/Thread.hpp"
+#include "../../net/ConnectionManager.hpp"
+#include "../../thread/TaskManager.hpp"
+#include "../../thread/RollbackStackAndRestoreContext.hpp"
 
-#ifndef ASYNC_MYSQL
-#define ASYNC_MYSQL 0
- #if MARIADB_BASE_VERSION // https://mariadb.com/kb/en/library/using-the-non-blocking-library/
-  #define ASYNC_MYSQL 1
- #endif
-#endif
-
-void MysqlConnection::implWait(std::chrono::steady_clock::duration duration)
-{
-	auto pool = _pool.lock();
-	if (pool)
-	{
-		auto iam = pool->detachDbConnection();
-		Thread::self()->postpone(duration);
-		pool->attachDbConnection(iam);
-	}
-}
-
-MYSQL* MysqlConnection::implConnect(
-	const std::string& host,
-	const std::string& user,
-	const std::string& password,
-	const std::string& dbname,
-	unsigned int port,
-	const std::string& unix_socket,
-	unsigned long clientflag,
-	const std::string& charset,
-	const std::string& timezone
-)
-{
-	my_bool on = true;
-	mysql_options(_mysql, MYSQL_OPT_RECONNECT, &on);
-#if ASYNC_MYSQL
-	mysql_options(_mysql, MYSQL_OPT_NONBLOCK, nullptr);
-#endif // ASYNC_MYSQL
-	if (!charset.empty())
-	{
-		mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, charset.c_str());
-	}
-	if (!timezone.empty())
-	{
-		mysql_options(_mysql, MYSQL_INIT_COMMAND, ("SET time_zone='" + timezone + "';\n").c_str());
-	}
-
-	MYSQL *ret = nullptr;
-#if ASYNC_MYSQL
-	auto status = mysql_real_connect_start(
-		&ret,
-		_mysql,
-		host,
-		user,
-		passwd,
-		db,
-		port,
-		unix_socket,
-		clientflag
-	);
-
-	while (status != 0)
-	{
-		if (auto pool = _pool.lock())
-		{
-			pool->log().warn("Postpone CONNECT %p", this);
-		}
-		Thread::self()->postpone(std::chrono::milliseconds(10));
-		status = mysql_real_connect_cont(&ret, _mysql, status);
-	}
-	if (auto pool = _pool.lock())
-	{
-		pool->log().warn("Return   CONNECT %p", this);
-	}
-
-#else // ASYNC_MYSQL
-	ret = mysql_real_connect(
-		_mysql,
-		host.c_str(),
-		user.c_str(),
-		password.c_str(),
-		dbname.c_str(),
-		port,
-		unix_socket.c_str(),
-		CLIENT_REMEMBER_OPTIONS
-	);
-#endif // ASYNC_MYSQL
-	return ret;
-}
-
-void MysqlConnection::implClose()
-{
-#if ASYNC_MYSQL
-	auto status = mysql_close_start(_mysql);
-	while (status != 0)
-	{
-		if (auto pool = _pool.lock())
-		{
-			pool->log().warn("Postpone CLOSE %p", this);
-		}
-		implWait(std::chrono::milliseconds(10));
-		status = mysql_close_cont(_mysql, status);
-	}
-	if (auto pool = _pool.lock())
-	{
-		pool->log().warn("Return   CLOSE %p", this);
-	}
-#else // ASYNC_MYSQL
-	mysql_close(_mysql);
-#endif // ASYNC_MYSQL
-}
-
-bool MysqlConnection::implQuery(const std::string& sql)
-{
-	// Выполнение запроса
-#if ASYNC_MYSQL
-	int ret = 0;
-	auto status = mysql_real_query_start(&ret, _mysql, sql.c_str(), sql.length());
-	while (status != 0)
-	{
-		if (auto pool = _pool.lock())
-		{
-			pool->log().warn("Postpone QUERY %p", this);
-		}
-		implWait(std::chrono::milliseconds(10));
-		status = mysql_real_query_cont(&ret, _mysql, status);
-	}
-	if (auto pool = _pool.lock())
-	{
-		pool->log().warn("Return   QUERY %p", this);
-	}
-	return ret == 0;
-#else // ASYNC_MYSQL
-	return mysql_real_query(_mysql, sql.c_str(), sql.length()) == 0;
-#endif // ASYNC_MYSQL
-}
-
-MYSQL_RES* MysqlConnection::implStoreResult()
-{
-#if ASYNC_MYSQL
-	MYSQL_RES* ret;
-	auto status = mysql_store_result_start(&ret, _mysql);
-	while (status != 0)
-	{
-		if (auto pool = _pool.lock())
-		{
-			pool->log().warn("Postpone STORE %p", this);
-		}
-		implWait(std::chrono::milliseconds(10));
-		status = mysql_store_result_cont(&ret, _mysql, status);
-	}
-	if (auto pool = _pool.lock())
-	{
-		pool->log().warn("Return   STORE %p", this);
-	}
-	return ret;
-#else // ASYNC_MYSQL
-	return mysql_store_result(_mysql);
-#endif // ASYNC_MYSQL
-}
-
-int MysqlConnection::implNextResult()
-{
-#if ASYNC_MYSQL
-	int ret;
-	auto status = mysql_next_result_start(&ret, _mysql);
-	while (status != 0)
-	{
-		if (auto pool = _pool.lock())
-		{
-			pool->log().warn("Postpone NEXT %p", this);
-		}
-		implWait(std::chrono::milliseconds(10));
-		status = mysql_next_result_cont(&ret, _mysql, status);
-	}
-	if (auto pool = _pool.lock())
-	{
-		pool->log().warn("Return   NEXT %p", this);
-	}
-	return ret;
-#else // ASYNC_MYSQL
-	return mysql_next_result(_mysql);
-#endif // ASYNC_MYSQL
-}
-
-void MysqlConnection::implFreeResult(MYSQL_RES* result)
-{
-#if ASYNC_MYSQL
-	auto status = mysql_free_result_start(result);
-	while (status != 0)
-	{
-		if (auto pool = _pool.lock())
-		{
-			pool->log().warn("Postpone FREE %p", this);
-		}
-		implWait(std::chrono::milliseconds(10));
-		status = mysql_free_result_cont(result, status);
-	}
-	if (auto pool = _pool.lock())
-	{
-		pool->log().warn("Return   FREE %p", this);
-	}
-#else // ASYNC_MYSQL
-	mysql_free_result(result);
-#endif // ASYNC_MYSQL
-}
-
-MysqlConnection::MysqlConnection(
-	const std::shared_ptr<DbConnectionPool>& pool,
-	const std::string& dbname,
-	const std::string& dbuser,
-	const std::string& dbpass,
-	const std::string& dbserver,
-	unsigned int dbport,
-	const std::string& dbsocket,
-	const std::string& charset,
-	const std::string& timezone
-)
+MysqlConnection::MysqlConnection(const std::shared_ptr<DbConnectionPool>& pool)
 : DbConnection(std::dynamic_pointer_cast<MysqlConnectionPool>(pool))
 , _mysql(nullptr)
 , _transaction(0)
@@ -250,28 +39,54 @@ MysqlConnection::MysqlConnection(
 		throw std::runtime_error("Can't init mysql connection");
 	}
 
-	if (implConnect(
-		dbserver,
-		dbuser,
-		dbpass,
-		dbname,
-		dbport,
-		dbsocket,
-		CLIENT_REMEMBER_OPTIONS,
-		charset,
-		timezone
-	) == nullptr)
-	{
-		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
-	}
-
 	unsigned int timeout = 900;
 	mysql_options(_mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
 }
 
 MysqlConnection::~MysqlConnection()
 {
-	implClose();
+	mysql_close(_mysql);
+}
+
+bool MysqlConnection::connect(
+	const std::string& dbname,
+	const std::string& dbuser,
+	const std::string& dbpass,
+	const std::string& dbserver,
+	unsigned int dbport,
+	const std::string& dbsocket,
+	const std::string& charset,
+	const std::string& timezone
+)
+{
+	my_bool on = true;
+	mysql_options(_mysql, MYSQL_OPT_RECONNECT, &on);
+
+	if (!charset.empty())
+	{
+		mysql_options(_mysql, MYSQL_SET_CHARSET_NAME, charset.c_str());
+	}
+	if (!timezone.empty())
+	{
+		mysql_options(_mysql, MYSQL_INIT_COMMAND, ("SET time_zone='" + timezone + "';\n").c_str());
+	}
+
+	if (mysql_real_connect(
+		_mysql,
+		dbserver.c_str(),
+		dbuser.c_str(),
+		dbpass.c_str(),
+		dbname.c_str(),
+		dbport,
+		dbsocket.c_str(),
+		CLIENT_REMEMBER_OPTIONS
+	) == nullptr)
+	{
+		throw std::runtime_error(std::string("Can't connect to database ← ") + mysql_error(_mysql));
+		return false;
+	}
+
+	return true;
 }
 
 std::string MysqlConnection::escape(const std::string& str)
@@ -283,7 +98,7 @@ std::string MysqlConnection::escape(const std::string& str)
 		mysql_escape_string(buff, str.c_str(), str.length());
 		std::string result(buff);
 		free(buff);
-		return std::move(result);
+		return result;
 	}
 	else
 	{
@@ -377,7 +192,8 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 
 	if (pool) pool->log().debug("MySQL query: %s", sql.c_str());
 
-	bool success = implQuery(sql);
+	// Выполнение запроса
+	bool success = mysql_real_query(_mysql, sql.c_str(), sql.length()) == 0;
 
 	auto now = std::chrono::steady_clock::now();
 	auto timeSpent =
@@ -403,6 +219,8 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 		return false;
 	}
 
+	if (pool) pool->log().debug("MySQL query success: " + sql);
+
 	if (affected != nullptr)
 	{
 		*affected = mysql_affected_rows(_mysql);
@@ -415,7 +233,7 @@ bool MysqlConnection::query(const std::string& sql, DbResult* res, size_t* affec
 
 	if (result != nullptr)
 	{
-		result->set(implStoreResult());
+		result->set(mysql_store_result(_mysql));
 
 		if (result->get() == nullptr && mysql_errno(_mysql) != 0)
 		{
@@ -438,7 +256,8 @@ bool MysqlConnection::multiQuery(const std::string& sql)
 	auto beginTime = std::chrono::steady_clock::now();
 	if (pool) pool->metricAvgQueryPerSec->addValue();
 
-	bool success = implQuery(sql);
+	// Выполнение запроса
+	bool success = mysql_real_query(_mysql, sql.c_str(), sql.length()) == 0;
 
 	auto now = std::chrono::steady_clock::now();
 	auto timeSpent =
@@ -460,12 +279,13 @@ bool MysqlConnection::multiQuery(const std::string& sql)
 
 	for(;;)
 	{
-		MYSQL_RES* result = implStoreResult();
+		MYSQL_RES* result = mysql_store_result(_mysql);
 		if (result != nullptr)
 		{
-			implFreeResult(result);
+			mysql_free_result(result);
 		}
-		if (implNextResult() != 0)
+
+		if (mysql_next_result(_mysql) != 0)
 		{
 			break;
 		}

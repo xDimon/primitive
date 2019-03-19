@@ -23,6 +23,7 @@
 #include "DbConnectionPool.hpp"
 #include "DbConnection.hpp"
 #include "../telemetry/TelemetryManager.hpp"
+#include "../thread/Thread.hpp"
 
 DbConnectionPool::DbConnectionPool(const Setting& setting)
 : _log("DbConnectionPool")
@@ -52,7 +53,7 @@ DbConnectionPool::DbConnectionPool(const Setting& setting)
 
 void DbConnectionPool::touch()
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	std::unique_lock<mutex_t> lock(_mutex);
 	if (_captured.empty() && _pool.empty())
 	{
 		auto conn = create();
@@ -62,29 +63,35 @@ void DbConnectionPool::touch()
 
 std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	std::shared_ptr<DbConnection> conn;
 
-	auto i = _captured.find(std::this_thread::get_id());
+	std::unique_lock<mutex_t> lock(_mutex);
+
+	auto i = _captured.find(Thread::self()->id());
 	if (i != _captured.end())
 	{
-		auto conn = std::move(i->second);
+		conn = std::move(i->second);
+
+		_log.trace("Detach #%u (check alive)", conn->id);
 
 		_captured.erase(i);
 
-		_mutex.unlock();
+		lock.unlock();
 
 		if (conn->alive())
 		{
-			_mutex.lock();
+			lock.lock();
 
-			_captured.insert(std::make_pair(std::this_thread::get_id(), conn));
+			_captured.emplace(Thread::self()->id(), conn);
 
 			conn->capture();
 
-			return std::move(conn);
+			_log.trace("Attach #%u (check alive)", conn->id);
+
+			return conn;
 		}
 
-		_mutex.lock();
+		lock.lock();
 
 		// Если соединение никем не захвачено - уничтожаем его
 		if (conn->captured() == 0)
@@ -95,23 +102,25 @@ std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 
 	while (!_pool.empty())
 	{
-		auto conn = std::move(_pool.front());
+		conn = std::move(_pool.front());
 		_pool.pop_front();
 
-		_mutex.unlock();
+		lock.unlock();
 
 		if (conn->alive())
 		{
-			_mutex.lock();
+			lock.lock();
+
+			_captured.emplace(Thread::self()->id(), conn);
 
 			conn->capture();
 
-			_captured.insert(std::make_pair(std::this_thread::get_id(), conn));
+			_log.trace("Attach #%u (get from pool)", conn->id);
 
-			return std::move(conn);
+			return conn;
 		}
 
-		_mutex.lock();
+		lock.lock();
 
 		// Если соединение никем не захвачено - уничтожаем его
 		if (conn->captured() == 0)
@@ -120,27 +129,30 @@ std::shared_ptr<DbConnection> DbConnectionPool::captureDbConnection()
 		}
 	}
 
-	try
-	{
-		auto conn = create();
+//	try
+//	{
+		conn = create();
+
+		_captured.emplace(Thread::self()->id(), conn);
 
 		conn->capture();
 
-		_captured.insert(std::make_pair(std::this_thread::get_id(), conn));
+		_log.trace("Attach #%u (new)", conn->id);
 
-		return std::move(conn);
-	}
-	catch (...)
-	{
-		return nullptr;
-	}
+		return conn;
+//	}
+//	catch (const std::exception& exception)
+//	{
+//		std::string err(exception.what());
+//		return nullptr;
+//	}
 }
 
 void DbConnectionPool::releaseDbConnection(const std::shared_ptr<DbConnection>& conn)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	std::unique_lock<mutex_t> lock(_mutex);
 
-	auto i = _captured.find(std::this_thread::get_id());
+	auto i = _captured.find(Thread::self()->id());
 	if (i == _captured.end())
 	{
 		return;
@@ -159,30 +171,37 @@ void DbConnectionPool::releaseDbConnection(const std::shared_ptr<DbConnection>& 
 	_captured.erase(i);
 
 	_pool.push_front(conn);
+
+	_log.trace("Detach #%u (return into pool)", conn->id);
 }
 
 void DbConnectionPool::attachDbConnection(const std::shared_ptr<DbConnection>& conn)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	std::unique_lock<mutex_t> lock(_mutex);
 
-	auto i = _captured.find(std::this_thread::get_id());
+	auto i = _captured.find(Thread::self()->id());
 	if (i != _captured.end())
 	{
 		throw std::runtime_error("Thread already has attached database connection");
 	}
 
-	_captured.insert(std::make_pair(std::this_thread::get_id(), conn));
+	_log.trace("Attach #%u", conn->id);
+
+	_captured.emplace(Thread::self()->id(), conn);
 }
 
 std::shared_ptr<DbConnection> DbConnectionPool::detachDbConnection()
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
+	std::unique_lock<mutex_t> lock(_mutex);
 
-	auto i = _captured.find(std::this_thread::get_id());
+	auto id = Thread::self()->id();
+	auto i = _captured.find(id);
 	if (i == _captured.end())
 	{
 		throw std::runtime_error("Thread already has not attached database connection");
 	}
+
+	_log.trace("Detach #%u", i->second->id);
 
 	_captured.erase(i);
 

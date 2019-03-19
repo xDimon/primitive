@@ -1,4 +1,4 @@
-// Copyright © 2017-2019 Dmitriy Khaustov
+// Copyright © 2019 Dmitriy Khaustov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,38 +14,69 @@
 //
 // Author: Dmitriy Khaustov aka xDimon
 // Contacts: khaustov.dm@gmail.com
-// File created on: 2017.05.08
+// File created on: 2019.03.16
 
-// MysqlConnection.hpp
+// MysqlAsyncConnection.hpp
 
 
 #pragma once
+
+#include <mysql.h>
+
+#ifndef MARIADB_BASE_VERSION // https://mariadb.com/kb/en/library/using-the-non-blocking-library/
+
+#include "MysqlConnection.hpp"
+using MysqlAsyncConnection = MysqlConnection;
+
+#else // MARIADB_BASE_VERSION
 
 #include "../DbConnection.hpp"
 #include "../../utils/Shareable.hpp"
 #include "../../net/TcpConnection.hpp"
 #include <memory>
-#include <mysql.h>
 
 class MysqlConnectionPool;
 
-class MysqlConnection final : public DbConnection
+class MysqlAsyncConnection final : public DbConnection
 {
 private:
+	class MysqlAsyncConnectionHelper: public Connection
+	{
+	private:
+		std::weak_ptr<MysqlAsyncConnection> _parent;
+	public:
+		explicit MysqlAsyncConnectionHelper(const std::shared_ptr<MysqlAsyncConnection>& parent, int sock)
+		: Connection(nullptr)
+		, _parent(parent)
+		{
+			_sock = sock;
+			if (_sock != -1)
+			{
+				_closed = false;
+			}
+			_name = "MysqlConnection[" + std::to_string(_sock) + "]";
+		}
+		void watch(epoll_event &ev) override;
+		bool processing() override;
+	};
+
 	mutable	MYSQL* _mysql;
 
+	std::shared_ptr<MysqlAsyncConnectionHelper> _helper;
 	size_t _transaction;
+	int _status;
+	ucontext_t* _ctx;
 
 public:
-	MysqlConnection() = delete;
-	MysqlConnection(const MysqlConnection&) = delete;
-	MysqlConnection& operator=(MysqlConnection const&) = delete;
-	MysqlConnection(MysqlConnection&&) noexcept = delete;
-	MysqlConnection& operator=(MysqlConnection&&) noexcept = delete;
+	MysqlAsyncConnection() = delete;
+	MysqlAsyncConnection(const MysqlAsyncConnection&) = delete;
+	MysqlAsyncConnection& operator=(MysqlAsyncConnection const&) = delete;
+	MysqlAsyncConnection(MysqlAsyncConnection&&) noexcept = delete;
+	MysqlAsyncConnection& operator=(MysqlAsyncConnection&&) noexcept = delete;
 
-	MysqlConnection(const std::shared_ptr<DbConnectionPool>& pool);
+	explicit MysqlAsyncConnection(const std::shared_ptr<DbConnectionPool>& pool);
 
-	~MysqlConnection() override;
+	~MysqlAsyncConnection() override;
 
 	bool connect(
 		const std::string& dbname,
@@ -80,4 +111,18 @@ public:
 
 	bool query(const std::string& query, DbResult* res, size_t* affected, size_t* insertId) override;
 	bool multiQuery(const std::string& sql) override;
+
+private:
+
+	bool implQuery(const std::string& sql);
+
+	MYSQL_RES* implStoreResult();
+
+	int implNextResult();
+
+	void implFreeResult(MYSQL_RES* result);
+
+	void implWait(bool isNew = false);
 };
+
+#endif // MARIADB_BASE_VERSION

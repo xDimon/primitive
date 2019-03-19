@@ -35,7 +35,11 @@ class DbConnection : public Shareable<DbConnection>
 {
 private:
 	static size_t _lastId;
+
+public:
 	const size_t id;
+
+private:
 	size_t _captured;
 
 protected:

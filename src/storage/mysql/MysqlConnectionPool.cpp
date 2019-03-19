@@ -23,12 +23,14 @@
 #include "MysqlConnectionPool.hpp"
 #include "MysqlConnection.hpp"
 #include "MysqlLibHelper.hpp"
+#include "MysqlAsyncConnection.hpp"
 
 REGISTER_DBCONNECTIONPOOL(mysql, MysqlConnectionPool)
 
 MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 : DbConnectionPool(setting)
 , _dbport(0)
+, _async(false)
 {
 	if (!MysqlLibHelper::isReady())
 	{
@@ -84,6 +86,11 @@ MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 		throw std::runtime_error(std::string("Undefined dbpass for dbpool '") + name() + "'");
 	}
 
+	if (setting.exists("async"))
+	{
+		setting.lookupValue("async", _async);
+	}
+
 	if (setting.exists("dbcharset"))
 	{
 		setting.lookupValue("dbcharset", _charset);
@@ -97,20 +104,46 @@ MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 
 std::shared_ptr<DbConnection> MysqlConnectionPool::create()
 {
-	return std::make_shared<MysqlConnection>(
-		ptr(),
-		_dbname,
-		_dbuser,
-		_dbpass,
-		_dbserver,
-		_dbport,
-		_dbsocket,
-		_charset,
-		_timezone
-	);
+	if (_async)
+	{
+		auto conn = std::make_shared<MysqlAsyncConnection>(ptr());
+
+		conn->connect(
+			_dbname,
+			_dbuser,
+			_dbpass,
+			_dbserver,
+			_dbport,
+			_dbsocket,
+			_charset,
+			_timezone
+		);
+
+		return conn;
+	}
+	else
+	{
+		auto conn = std::make_shared<MysqlConnection>(ptr());
+
+		conn->connect(
+			_dbname,
+			_dbuser,
+			_dbpass,
+			_dbserver,
+			_dbport,
+			_dbsocket,
+			_charset,
+			_timezone
+		);
+
+		return conn;
+	}
 }
 
 void MysqlConnectionPool::close()
 {
-	// TODO реализовать закрытие
+	std::unique_lock<mutex_t> lock(_mutex);
+
+	_pool.clear();
+	_captured.clear();
 }

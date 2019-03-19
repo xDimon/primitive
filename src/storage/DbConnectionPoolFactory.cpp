@@ -58,5 +58,5 @@ std::shared_ptr<DbConnectionPool> DbConnectionPoolFactory::create(const Setting&
 		throw std::runtime_error("Unknown type");
 	}
 
-	return std::move(i->second(setting));
+	return i->second(setting);
 }

@@ -38,6 +38,7 @@ private:
 	std::string _dbuser;
 	std::string _dbpass;
 	unsigned int _dbport;
+	bool _async;
 	std::string _charset;
 	std::string _timezone;
 

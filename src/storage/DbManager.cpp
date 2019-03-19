@@ -56,7 +56,7 @@ std::shared_ptr<DbConnectionPool> DbManager::openPool(const Setting& setting, bo
 
 	getInstance()._pools.emplace(dbPool->name(), dbPool);
 
-	dbPool->touch();
+//	dbPool->touch();
 
 	return dbPool;
 }
@@ -108,7 +108,7 @@ void DbManager::forEach(const std::function<void(const std::shared_ptr<DbConnect
 {
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
-	for (auto i : getInstance()._pools)
+	for (auto& i : getInstance()._pools)
 	{
 		handler(i.second);
 	}
