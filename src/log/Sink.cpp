@@ -138,10 +138,10 @@ void Sink::push(Log::Detail logLevel, const std::string& name, const std::string
 	tm tm{};
 	localtime_r(&ts, &tm);
 
-	int n = 0;
+	int headerSize = 0;
 
 	char buff[1<<6]; // 64
-	n = snprintf(buff, sizeof(buff),
+	headerSize = snprintf(buff, sizeof(buff),
 		"%02u-%02u-%02u %02u:%02u:%02u.%03u'%03u\t%s\t%s\t%s\t",
 		tm.tm_year%100, tm.tm_mon+1, tm.tm_mday,
 		tm.tm_hour, tm.tm_min, tm.tm_sec,
@@ -149,7 +149,7 @@ void Sink::push(Log::Detail logLevel, const std::string& name, const std::string
 		threadLabel, name.c_str(), levelLabel[static_cast<int>(logLevel)]
 	);
 
-	std::lock_guard<mutex_t> lockGuard(_mutex);
+	std::unique_lock<mutex_t> lock(_mutex);
 
 	if (_f == nullptr)
 	{
@@ -159,19 +159,32 @@ void Sink::push(Log::Detail logLevel, const std::string& name, const std::string
 	{
 		if constexpr (accumucatorCapacity > 0)
 		{
-			if ((_accumulator.length() + n + message.length() + 1) > accumucatorCapacity)
+			if ((_accumulator.length() + headerSize + message.length() + 1) > accumucatorCapacity)
 			{
-				_mutex.unlock();
+				lock.unlock();
 				flush();
-				_mutex.lock();
+				lock.lock();
 			}
 			_accumulator.append(buff);
 			_accumulator.append(message);
 			_accumulator.append("\n");
+
+			if (!_flushTimeout)
+			{
+				_flushTimeout = std::make_shared<Timer>(
+					[wp = std::weak_ptr<Sink>(std::dynamic_pointer_cast<Sink>(ptr()))]
+					{
+						try { if (auto iam = wp.lock()) iam->flush(); } catch (...) {}
+					},
+					"Timeout to flush sink"
+				);
+			}
+
+			_flushTimeout->startOnce(std::chrono::milliseconds(250));
 		}
 		else
 		{
-			fwrite(buff, (n > 0) ? static_cast<size_t>(n) : 0, 1, _f);
+			fwrite(buff, (headerSize > 0) ? static_cast<size_t>(headerSize) : 0, 1, _f);
 			fwrite(message.data(), message.size(), 1, _f);
 			fputc('\n', _f);
 			fflush(_f);
@@ -270,13 +283,13 @@ void Sink::push(Log::Detail level, const std::string& name, const std::string& f
 		}
 
 		{
-			std::lock_guard<mutex_t> lockGuard(_mutex);
+			std::unique_lock<mutex_t> lock(_mutex);
 
 			if ((_accumulator.length() + headerSize + message.length() + 1) > accumucatorCapacity)
 			{
-				_mutex.unlock();
+				lock.unlock();
 				flush();
-				_mutex.lock();
+				lock.lock();
 			}
 			_accumulator.append(buff);
 			_accumulator.append(message);
@@ -341,16 +354,17 @@ void Sink::rotate()
 {
 	if (_type == Type::FILE)
 	{
+		auto f = fopen(_path.c_str(), "a+");
+		if (f == nullptr)
+		{
+			push(Log::Detail::INFO, "Logger", "Close logfile for rotation");
+			throw std::runtime_error("Can't reopen log-file (" + _path + "): " + strerror(errno));
+		}
+
 		push(Log::Detail::INFO, "Logger", "Close logfile for rotation");
 
 		{
 			std::lock_guard<mutex_t> lockGuard(_mutex);
-
-			auto f = fopen(_path.c_str(), "a+");
-			if (f == nullptr)
-			{
-				throw std::runtime_error("Can't reopen log-file (" + _path + "): " + strerror(errno));
-			}
 
 			if (_f != nullptr)
 			{

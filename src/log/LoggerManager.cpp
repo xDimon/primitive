@@ -159,38 +159,6 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 			lm._loggers.emplace("*", std::make_tuple(lm._sinks[""], Log::Detail::INFO));
 		}
 	}
-
-	regThread("MainThread");
-}
-
-void LoggerManager::regThread(const std::string& threadName)
-{
-//	auto& lm = getInstance();
-//
-//	std::lock_guard<std::mutex> lockGuard(lm._mutex);
-//
-//	for (auto& i : lm._sinks)
-//	{
-//		auto& sink = i.second;
-//
-//		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
-//		sink->trace().Register_Thread(threadName.c_str(), tid);
-//	}
-}
-
-void LoggerManager::unregThread()
-{
-//	auto& lm = getInstance();
-//
-//	std::lock_guard<std::mutex> lockGuard(lm._mutex);
-//
-//	for (auto& i : lm._sinks)
-//	{
-//		auto& sink = i.second;
-//
-//		uint32_t tid = 0;//static_cast<uint32_t>(((pthread_self() >> 32) ^ pthread_self()) & 0xFFFFFFFF);
-//		sink->trace().Unregister_Thread(tid);
-//	}
 }
 
 const std::tuple<std::shared_ptr<Sink>, Log::Detail>& LoggerManager::getSinkAndLevel(const std::string& name)
@@ -239,7 +207,7 @@ void LoggerManager::finalFlush()
 
 	std::lock_guard<std::mutex> lockGuard(lm._mutex);
 
-	for (auto i : lm._sinks)
+	for (auto& i : lm._sinks)
 	{
 		i.second->flush();
 	}
@@ -251,7 +219,7 @@ void LoggerManager::rotate()
 
 	std::lock_guard<std::mutex> lockGuard(lm._mutex);
 
-	for (auto i : lm._sinks)
+	for (auto& i : lm._sinks)
 	{
 		i.second->rotate();
 	}

@@ -75,7 +75,6 @@ void Thread::run(Thread* thread)
 		snprintf(buff, sizeof(buff), "Worker#%zu", thread->id());
 
 		thread->_name = buff;
-		LoggerManager::regThread(buff);
 
 		// Блокируем реакцию на все сигналы
 		sigset_t sig{};
@@ -87,7 +86,6 @@ void Thread::run(Thread* thread)
 
 	do
 	{
-		//execute(thread);
 		coroWrapper(thread, nullptr, nullptr);
 	}
 	while (Thread::getCurrContextCount());
@@ -101,8 +99,6 @@ void Thread::run(Thread* thread)
 	}
 
 //	thread->_log.info("Thread 'Worker#%zu' exit", thread->_id);
-
-	LoggerManager::unregThread();
 
 	thread->_finished = true;
 }

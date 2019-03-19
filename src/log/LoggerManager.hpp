@@ -52,9 +52,6 @@ private:
 public:
 	static void init(const std::shared_ptr<Config>& configs);
 
-	static void regThread(const std::string& threadName);
-	static void unregThread();
-
 	static const std::tuple<std::shared_ptr<Sink>, Log::Detail>& getSinkAndLevel(const std::string& loggerName);
 	static std::shared_ptr<Sink> getSink(const std::string& sinkName);
 
