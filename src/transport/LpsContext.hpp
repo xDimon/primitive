@@ -42,6 +42,9 @@ private:
 	bool _close;
 	bool _closed;
 
+protected:
+	mutable std::string _tag;
+
 public:
 	LpsContext() = delete; // Default-constructor
 	LpsContext(const LpsContext&) = delete; // Copy-constructor
@@ -68,12 +71,12 @@ public:
 	}
 
 	void assignSession(const std::shared_ptr<Session>& session);
-	std::shared_ptr<Session> getSession();
+	std::shared_ptr<Session> getSession() const;
 	void resetSession();
 
-	virtual std::string tag()
+	virtual std::string tag() const
 	{
-		return "";
+		return _tag;
 	}
 
 	SVal recv();
