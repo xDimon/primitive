@@ -50,6 +50,12 @@ private:
 	std::default_random_engine _generator;
 
 public:
+	static const std::string lowerAlpha;
+	static const std::string upperAlpha;
+	static const std::string digits;
+	static const std::string alpha;
+	static const std::string alphaAndDigits;
+
 #if __cplusplus >= 201703L
 	static std::string generateSequence(std::string_view lookUpTable, size_t length);
 #else

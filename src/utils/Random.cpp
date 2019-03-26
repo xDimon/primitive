@@ -25,6 +25,12 @@
 #include <chrono>
 #include <stdexcept>
 
+const std::string Random::lowerAlpha("abcdefghjiklmnopqrstuvwxyz");
+const std::string Random::upperAlpha("ABCDEFGHJIKLMNOPQRSTUVWXYZ");
+const std::string Random::digits("0123456789");
+const std::string Random::alpha(lowerAlpha + upperAlpha);
+const std::string Random::alphaAndDigits(alpha + digits);
+
 Random::Random()
 : _generator(static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count()))
 {
