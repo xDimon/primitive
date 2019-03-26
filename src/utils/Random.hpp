@@ -68,7 +68,7 @@ public:
 		return static_cast<T>(
 			std::min(minValue, maxValue) +
 			std::generate_canonical<long double, std::numeric_limits<long double>::digits>(getInstance()._generator)
-			    * (std::max(minValue, maxValue) - std::min(minValue, maxValue))
+			    * (std::max(minValue, maxValue) - std::min(minValue, maxValue) + 1)
 		);
 	}
 
