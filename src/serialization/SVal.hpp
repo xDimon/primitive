@@ -185,16 +185,16 @@ public:
 		switch (that._type)
 		{
 			case Type::Null:
-				new (&_storage) SNull(std::move(that._storage.vNull));
+				new (&_storage) SNull(that._storage.vNull);
 				break;
 			case Type::Bool:
-				new (&_storage) SBool(std::move(that._storage.vBool));
+				new (&_storage) SBool(that._storage.vBool);
 				break;
 			case Type::Integer:
-				new (&_storage) SInt(std::move(that._storage.vInt));
+				new (&_storage) SInt(that._storage.vInt);
 				break;
 			case Type::Float:
-				new (&_storage) SFloat(std::move(that._storage.vFloat));
+				new (&_storage) SFloat(that._storage.vFloat);
 				break;
 			case Type::String:
 				new (&_storage) SStr(std::move(that._storage.vStr));
@@ -259,16 +259,16 @@ public:
 		switch (that._type)
 		{
 			case Type::Null:
-				new (&_storage) SNull(std::move(that._storage.vNull));
+				new (&_storage) SNull(that._storage.vNull);
 				break;
 			case Type::Bool:
-				new (&_storage) SBool(std::move(that._storage.vBool));
+				new (&_storage) SBool(that._storage.vBool);
 				break;
 			case Type::Integer:
-				new (&_storage) SInt(std::move(that._storage.vInt));
+				new (&_storage) SInt(that._storage.vInt);
 				break;
 			case Type::Float:
-				new (&_storage) SFloat(std::move(that._storage.vFloat));
+				new (&_storage) SFloat(that._storage.vFloat);
 				break;
 			case Type::String:
 				new (&_storage) SStr(std::move(that._storage.vStr));

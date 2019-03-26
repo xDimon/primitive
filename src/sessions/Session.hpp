@@ -44,12 +44,12 @@ protected:
 
 	[[deprecated]] virtual std::chrono::seconds saveDuration() const
 	{
-		return std::chrono::seconds(60);
+		return delayBeforeSaving();
 	}
 
 	[[deprecated]] virtual std::chrono::seconds timeoutDuration() const
 	{
-		return std::chrono::seconds(900);
+		return delayBeforeUnload(false);
 	}
 
 	virtual std::chrono::seconds delayBeforeSaving() const

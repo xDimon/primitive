@@ -56,7 +56,7 @@ std::shared_ptr<Session> SessionManager::sessionBySid(const Session::SID& sid)
 		getInstance()._sessionsBySid.erase(i);
 		return nullptr;
 	}
-	return std::move(session);
+	return session;
 }
 
 std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Session>& session)

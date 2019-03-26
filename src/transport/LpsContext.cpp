@@ -69,7 +69,7 @@ void LpsContext::assignSession(const std::shared_ptr<Session>& session)
 	_session = session;
 }
 
-std::shared_ptr<Session> LpsContext::getSession()
+std::shared_ptr<Session> LpsContext::getSession() const
 {
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 
@@ -234,7 +234,7 @@ void LpsContext::send()
 			auto output = std::move(_output.front());
 			_output.pop();
 
-			out = SerializerFactory::create("json")->encode(std::move(output));
+			out = SerializerFactory::create("json")->encode(output);
 
 			if (_compression)
 			{

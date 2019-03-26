@@ -69,7 +69,7 @@ public:
 	Connection(Connection&& tmp) noexcept = delete;
 	Connection& operator=(Connection&& tmp) noexcept = delete;
 
-	explicit Connection(std::shared_ptr<Transport> transport);
+	explicit Connection(const std::shared_ptr<Transport>& transport);
 	~Connection() override;
 
 	inline int fd() const

@@ -72,8 +72,8 @@ void SysInfo::collect()
 
 	rusage ru{};
 
-	timeval nTime;
-	timeval dTime;
+	timeval nTime{};
+	timeval dTime{};
 
 	timeval uTimeSpent{};
 	timeval sTimeSpent{};
@@ -108,8 +108,8 @@ void SysInfo::collect()
 	instance._voluntaryContextSwitches->setValue(ru.ru_nvcsw, now);
 	instance._involuntaryContextSwitches->setValue(ru.ru_nivcsw, now);
 
-    FILE* file = fopen("/proc/self/status", "r");
-    if (!file)
+	FILE* file = fopen("/proc/self/status", "r");
+	if (!file)
 	{
 		instance._log.error("Can't open /proc/self/status: %s", strerror(errno));
 	}
@@ -131,7 +131,7 @@ void SysInfo::collect()
 						const char* p = oneLine;
 						while (*p < '0' || *p > '9') p++;
 						oneLine[i - 3] = '\0';
-						i = atoi(p);
+						i = std::strtol(p, nullptr, 10);
 						return i;
 					} (line);
 				break;
