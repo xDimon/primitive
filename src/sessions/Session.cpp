@@ -26,12 +26,8 @@
 
 const char Session::_hidSeed[16] = {};
 
-Session::Session(
-	const std::shared_ptr<Service>& service,
-	Session::HID uid
-)
+Session::Session(const std::shared_ptr<Service>& service)
 : _service(service)
-, hid(uid)
 , _ready(false)
 {
 	if (!_service)
@@ -95,5 +91,5 @@ bool Session::save()
 
 void Session::close(const std::string& reason)
 {
-	SessionManager::closeSession(hid);
+	SessionManager::closeSession(ptr());
 }

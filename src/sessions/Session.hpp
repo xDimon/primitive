@@ -68,9 +68,6 @@ protected:
 	/// Таймаут выгрузки
 	std::shared_ptr<Timer> _timeoutForUnload;
 
-public:
-	const HID hid;
-
 protected:
 	SID _sid;
 	bool _ready;
@@ -82,10 +79,15 @@ public:
 	Session(Session&&) noexcept = delete;
 	Session& operator=(Session&&) noexcept = delete;
 
+	explicit Session(const std::shared_ptr<Service>& service);
+
+	[[deprecated]]
 	Session(
 		const std::shared_ptr<Service>& service,
 		HID hid
-	);
+	)
+	: Session(service) {};
+
 	~Session() override = default;
 
 	virtual void changed();

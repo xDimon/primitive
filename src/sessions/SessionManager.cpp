@@ -24,6 +24,11 @@
 bool SessionManager::regSid(const std::shared_ptr<Session>& session, const Session::SID& sid)
 {
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSessionsBySid);
+	auto i = getInstance()._sessionsBySid.find(sid);
+	if (i != getInstance()._sessionsBySid.end())
+	{
+		return false;
+	}
 	if (!session->sid().empty())
 	{
 		getInstance()._sessionsBySid.erase(session->sid());
@@ -31,11 +36,6 @@ bool SessionManager::regSid(const std::shared_ptr<Session>& session, const Sessi
 	if (sid.empty())
 	{
 		return true;
-	}
-	auto i = getInstance()._sessionsBySid.find(sid);
-	if (i != getInstance()._sessionsBySid.end())
-	{
-		return false;
 	}
 	session->setSid(sid);
 	getInstance()._sessionsBySid.emplace(session->sid(), session);
@@ -48,70 +48,86 @@ std::shared_ptr<Session> SessionManager::sessionBySid(const Session::SID& sid)
 	auto i = getInstance()._sessionsBySid.find(sid);
 	if (i == getInstance()._sessionsBySid.end())
 	{
-		return nullptr;
+		return {};
 	}
 	auto session = i->second.lock();
 	if (session->sid() != sid)
 	{
 		getInstance()._sessionsBySid.erase(i);
-		return nullptr;
+		return {};
 	}
 	return session;
 }
 
-std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Session>& session)
+std::shared_ptr<Session> SessionManager::putSession(const std::shared_ptr<Session>& session, Session::HID hid)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
-	auto i = getInstance()._sessions.find(session->hid);
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSessionsByHid);
 
-	if (i != getInstance()._sessions.end())
+	auto i = getInstance()._sessionsByHid.find(hid);
+
+	if (i != getInstance()._sessionsByHid.end())
 	{
-		regSid(session);
-		i->second->touch(true);
-		return i->second;
+		if (auto oldSession = i->second.lock())
+		{
+			regSid(oldSession);
+			oldSession->touch(true);
+			return oldSession;
+		}
+		getInstance()._sessionsByHid.erase(i);
 	}
 
 	if (!session->isReady())
 	{
-		return nullptr;
+		return {};
 	}
 
-	getInstance()._sessions.emplace(session->hid, session);
+	getInstance()._sessionsByHid.emplace(hid, session);
+	getInstance()._sessions.emplace(session);
 
 	regSid(session);
 
 	session->touch(true);
+
+
 	return session;
 }
 
-std::shared_ptr<Session> SessionManager::getSession(Session::HID hid)
+std::shared_ptr<Session> SessionManager::sessionByHid(Session::HID hid)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
-	auto i = getInstance()._sessions.find(hid);
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSessionsByHid);
+	auto i = getInstance()._sessionsByHid.find(hid);
 
-	if (i != getInstance()._sessions.end())
+	if (i != getInstance()._sessionsByHid.end())
 	{
-		return i->second;
+		if (auto session = i->second.lock())
+		{
+			return session;
+		}
+		getInstance()._sessionsByHid.erase(i);
 	}
 
 	return nullptr;
 }
 
-void SessionManager::closeSession(Session::HID uid)
+void SessionManager::closeSession(const std::shared_ptr<Session>& session)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
-	auto i = getInstance()._sessions.find(uid);
+	if (!session)
+	{
+		return;
+	}
 
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSessions);
+
+	auto i = getInstance()._sessions.find(session);
 	if (i == getInstance()._sessions.end())
 	{
 		return;
 	}
 
-	auto sid = i->second->sid();
-	if (!sid.empty())
+	if (!session->sid().empty())
 	{
 		std::lock_guard<std::mutex> lockGuard2(getInstance()._mutexSessionsBySid);
-		getInstance()._sessionsBySid.erase(sid);
+		getInstance()._sessionsBySid.erase(session->sid());
 	}
 
 	getInstance()._sessions.erase(i);
@@ -119,10 +135,10 @@ void SessionManager::closeSession(Session::HID uid)
 
 void SessionManager::forEach(const std::function<void(const std::shared_ptr<Session>&)>& handler)
 {
-	std::lock_guard<std::recursive_mutex> lockGuard(getInstance()._mutexSessions);
+	std::lock_guard<std::mutex> lockGuard(getInstance()._mutexSessions);
 
-	for (auto i : getInstance()._sessions)
+	for (auto& session : getInstance()._sessions)
 	{
-		handler(i.second);
+		handler(session);
 	}
 }

@@ -22,7 +22,8 @@
 #pragma once
 
 #include <mutex>
-#include <map>
+#include <unordered_set>
+#include <unordered_map>
 #include "Session.hpp"
 
 class SessionManager final
@@ -43,28 +44,52 @@ private:
 		return instance;
 	}
 
-	/// Сопоставление sid => session
-	std::map<Session::SID, const std::weak_ptr<Session>> _sessionsBySid;
-	std::mutex _mutexSessionsBySid;
+	struct SessionHash
+    {
+        size_t operator()(const std::shared_ptr<Session>& session) const
+        {
+            return reinterpret_cast<size_t>(session.get());
+        }
+    };
 
 	/// Пул сессий
-	std::map<Session::HID, const std::shared_ptr<Session>> _sessions;
-	std::recursive_mutex _mutexSessions;
+	std::unordered_set<std::shared_ptr<Session>, SessionHash> _sessions;
+	std::mutex _mutexSessions;
+
+	/// sid => session
+	std::unordered_map<Session::SID, const std::weak_ptr<Session>> _sessionsBySid;
+	std::mutex _mutexSessionsBySid;
+
+	/// hid => session
+	std::unordered_map<Session::HID, const std::weak_ptr<Session>> _sessionsByHid;
+	std::mutex _mutexSessionsByHid;
 
 public:
 	/// Зарегистрировать SID
-	static bool regSid(const std::shared_ptr<Session>& session, const Session::SID& sid = "");
+	static bool regSid(const std::shared_ptr<Session>& session, const Session::SID& sid = {});
 
 	/// Получить HID по SID
 	static std::shared_ptr<Session> sessionBySid(const Session::SID& sid);
 
 	/// Получить сессию по HID
-	static std::shared_ptr<Session> getSession(Session::HID hid);
+	static std::shared_ptr<Session> sessionByHid(Session::HID hid);
+
+	[[deprecated]]
+	static inline std::shared_ptr<Session> getSession(Session::HID hid)
+	{
+		return sessionByHid(hid);
+	}
 
 	/// Закрыть сессию
-	static void closeSession(Session::HID hid);
+	static void closeSession(const std::shared_ptr<Session>& session);
 
-	static std::shared_ptr<Session> putSession(const std::shared_ptr<Session>& session);
+	static std::shared_ptr<Session> putSession(const std::shared_ptr<Session>& session, Session::HID hid);
+
+	[[deprecated]]
+	static inline std::shared_ptr<Session> putSession(const std::shared_ptr<Session>& session)
+	{
+		return putSession(session, 0);
+	}
 
 	static void forEach(const std::function<void(const std::shared_ptr<Session>&)>& handler);
 };
