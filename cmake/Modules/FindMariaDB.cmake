@@ -10,7 +10,7 @@ if (MARIADB_INCLUDE_DIR)
     set(MARIADB_FIND_QUIETLY TRUE)
 endif (MARIADB_INCLUDE_DIR)
 
-find_path(MARIADB_INCLUDE_DIR mysql.h /usr/local/include/mysql /usr/include/mysql)
+find_path(MARIADB_INCLUDE_DIR mysql.h /usr/local/include/mariadb /usr/include/mariadb /usr/local/include/mysql /usr/include/mysql)
 
 set(MARIADB_NAMES mariadbclient mariadbclient_r)
 find_library(MARIADB_LIBRARY NAMES ${MARIADB_NAMES} PATHS /usr/lib /usr/local/lib PATH_SUFFIXES mariadb)
