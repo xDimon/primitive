@@ -20,18 +20,19 @@
 
 
 #include "SerializerFactory.hpp"
+#include <iostream>
 
-Dummy SerializerFactory::reg(const std::string& type, std::shared_ptr<Serializer> (* creator)(uint32_t flags)) noexcept
+Dummy SerializerFactory::reg(const std::string& type, std::function<std::shared_ptr<Serializer> (uint32_t flags)>&& builder) noexcept
 {
 	auto& factory = getInstance();
 
-	auto i = factory._creators.find(type);
-	if (i != factory._creators.end())
+	auto i = factory._builders.find(type);
+	if (i != factory._builders.end())
 	{
-		std::cerr << "Internal error: Attepmt to register serializer with the same type (" << type << ")" << std::endl;
+		std::cerr << "Internal error: Attempt to register serializer with the same type (" << type << ')' << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	factory._creators.emplace(type, creator);
+	factory._builders.emplace(type, std::move(builder));
 	return Dummy{};
 }
 
@@ -39,10 +40,10 @@ std::shared_ptr<Serializer> SerializerFactory::create(const std::string& type, u
 {
 	auto& factory = getInstance();
 
-	auto i = factory._creators.find(type);
-	if (i == factory._creators.end())
+	auto i = factory._builders.find(type);
+	if (i == factory._builders.end())
 	{
 		throw std::runtime_error("Unknown serializer type");
 	}
-	return std::move(i->second(flags));
+	return i->second(flags);
 }

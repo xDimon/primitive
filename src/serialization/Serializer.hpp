@@ -23,6 +23,8 @@
 
 #include "SVal.hpp"
 
+#include <sstream>
+
 class Serializer
 {
 public:
@@ -43,36 +45,49 @@ public:
 	{}
 	virtual ~Serializer() = default;
 
-	virtual SVal decode(const std::string &data) = 0;
-	virtual std::string encode(const SVal& value) = 0;
+	virtual SVal decode(std::istream &is) = 0;
+	virtual void encode(std::ostream &os, const SVal& value) = 0;
+
+	SVal decode(const std::string& data)
+	{
+		std::istringstream iss(data);
+		return decode(iss);
+	}
+
+	std::string encode(const SVal& value)
+	{
+		std::ostringstream os;
+		encode(os, value);
+		return os.str();
+	}
 };
 
 #include "SerializerFactory.hpp"
 
-#define REGISTER_SERIALIZER(Type,Class) const Dummy Class::__dummy = \
-    SerializerFactory::reg(                                                                     \
-        #Type,                                                                                  \
-        [](uint32_t flags){                                                                     \
-            return std::shared_ptr<Serializer>(new Class(flags));                               \
-        }                                                                                       \
+#define REGISTER_SERIALIZER(Type,Class) const Dummy Class::__dummy =     \
+    SerializerFactory::reg(                                              \
+        #Type,                                                           \
+        [](uint32_t flags){                                              \
+            return std::shared_ptr<Serializer>(new Class(flags));        \
+        }                                                                \
     );
 
 #define DECLARE_SERIALIZER(Class) \
-public:                                                                                         \
-	Class() = delete;                                                                           \
-	Class(const Class&) = delete;                                                               \
-    Class& operator=(Class const&) = delete;                                                    \
-	Class(Class&&) noexcept = delete;                                                           \
-	Class& operator=(Class&&) noexcept = delete;                                                \
-                                                                                                \
-private:                                                                                        \
-    explicit Class(uint32_t flags): Serializer(flags) {}                                        \
-                                                                                                \
-public:                                                                                         \
-    ~Class() override = default;                                                                \
-                                                                                                \
-	SVal decode(const std::string &data) override;                                              \
-	std::string encode(const SVal& value) override;                                             \
-                                                                                                \
-private:                                                                                        \
+public:                                                                  \
+	Class() = delete;                                                    \
+	Class(const Class&) = delete;                                        \
+    Class& operator=(const Class&) = delete;                             \
+	Class(Class&&) noexcept = delete;                                    \
+	Class& operator=(Class&&) noexcept = delete;                         \
+                                                                         \
+private:                                                                 \
+    explicit Class(uint32_t flags): Serializer(flags) {}                 \
+                                                                         \
+public:                                                                  \
+    ~Class() override = default;                                         \
+                                                                         \
+	SVal decode(std::istream &is) override;                              \
+	void encode(std::ostream &os, const SVal& value) override;           \
+                                                                         \
+private:                                                                 \
     static const Dummy __dummy;

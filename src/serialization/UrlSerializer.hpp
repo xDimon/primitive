@@ -38,25 +38,22 @@
 
 class UrlSerializer final: public Serializer
 {
-	std::istringstream _iss;
-	std::ostringstream _oss;
-
 	void emplace(SObj& obj, std::string& keyline, const std::string& val);
 
 	SVal decodeValue(const std::string& strval);
 
-	void encodeNull(const std::string& keyline, const SVal& value);
-	void encodeBool(const std::string& keyline, const SVal& value);
+	void encodeNull(std::ostream& os, const std::string& keyline, const SVal& value);
+	void encodeBool(std::ostream& os, const std::string& keyline, const SVal& value);
 
-	void encodeString(const std::string& keyline, const SVal& value);
-	void encodeBinary(const std::string& keyline, const SVal& value);
+	void encodeString(std::ostream& os, const std::string& keyline, const SVal& value);
+	void encodeBinary(std::ostream& os, const std::string& keyline, const SVal& value);
 
-	void encodeNumber(const std::string& keyline, const SVal& value);
+	void encodeNumber(std::ostream& os, const std::string& keyline, const SVal& value);
 
-	void encodeArray(const std::string& keyline, const SVal& value);
-	void encodeObject(const std::string& keyline, const SVal& value);
+	void encodeArray(std::ostream& os, const std::string& keyline, const SVal& value);
+	void encodeObject(std::ostream& os, const std::string& keyline, const SVal& value);
 
-	void encodeValue(const std::string& keyline, const SVal& value);
+	void encodeValue(std::ostream& os, const std::string& keyline, const SVal& value);
 
 DECLARE_SERIALIZER(UrlSerializer);
 };

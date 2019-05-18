@@ -27,6 +27,7 @@
 
 #include <memory>
 #include <map>
+#include <functional>
 #include "../utils/Dummy.hpp"
 
 class SerializerFactory final
@@ -46,9 +47,9 @@ private:
 		return instance;
 	}
 
-	std::map<const std::string, std::shared_ptr<Serializer>(*)(uint32_t)> _creators;
+	std::map<std::string, std::function<std::shared_ptr<Serializer> (uint32_t flags)>> _builders;
 
 public:
-	static Dummy reg(const std::string& type, std::shared_ptr<Serializer>(*)(uint32_t)) noexcept;
+	static Dummy reg(const std::string& type, std::function<std::shared_ptr<Serializer> (uint32_t flags)>&& builder) noexcept;
 	static std::shared_ptr<Serializer> create(const std::string& type, uint32_t flags = 0);
 };

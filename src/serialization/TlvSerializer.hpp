@@ -21,57 +21,39 @@
 
 #pragma once
 
-
 #include "Serializer.hpp"
-
-#include "SBool.hpp"
-#include "SObj.hpp"
-#include "SStr.hpp"
-#include "SVal.hpp"
-#include "SArr.hpp"
-#include "SNull.hpp"
-#include "SNum.hpp"
-#include "SInt.hpp"
-#include "SFloat.hpp"
-#include "SBinary.hpp"
-
-#include <sstream>
-#include <string>
 
 class TlvSerializer final: public Serializer
 {
 private:
-	std::istringstream _iss;
-	std::ostringstream _oss;
-
-	SVal decodeNull();
-	SVal decodeBool();
+	SVal decodeNull(std::istream& is);
+	SVal decodeBool(std::istream& is);
 
 	void putUtf8Symbol(SStr &str, uint32_t symbol);
-	SVal decodeString();
-	SVal decodeBinary();
+	SVal decodeString(std::istream& is);
+	SVal decodeBinary(std::istream& is);
 
-	SVal decodeInteger();
-	SVal decodeFloat();
+	SVal decodeInteger(std::istream& is);
+	SVal decodeFloat(std::istream& is);
 
-	SVal decodeArray();
-	SVal decodeObject();
+	SVal decodeArray(std::istream& is);
+	SVal decodeObject(std::istream& is);
 
-	SVal decodeValue();
+	SVal decodeValue(std::istream& is);
 
-	void encodeNull(const SVal& value);
-	void encodeBool(const SVal& value);
+	void encodeNull(std::ostream& os, const SVal& value);
+	void encodeBool(std::ostream& os, const SVal& value);
 
-	void encodeString(const SVal& value);
-	void encodeBinary(const SVal& value);
+	void encodeString(std::ostream& os, const SVal& value);
+	void encodeBinary(std::ostream& os, const SVal& value);
 
-	void encodeNumber(const SVal& value);
+	void encodeNumber(std::ostream& os, const SVal& value);
 
-	void encodeArray(const SVal& value);
-	void encodeKey(const std::string& key);
-	void encodeObject(const SVal& value);
+	void encodeArray(std::ostream& os, const SVal& value);
+	void encodeKey(std::ostream& os, const std::string& key);
+	void encodeObject(std::ostream& os, const SVal& value);
 
-	void encodeValue(const SVal& value);
+	void encodeValue(std::ostream& os, const SVal& value);
 
 DECLARE_SERIALIZER(TlvSerializer);
 };

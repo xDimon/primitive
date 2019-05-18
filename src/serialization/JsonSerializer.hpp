@@ -23,6 +23,9 @@
 
 #include "Serializer.hpp"
 
+#include <utility>
+#include <iostream>
+
 #include "SNull.hpp"
 #include "SBool.hpp"
 #include "SNum.hpp"
@@ -32,9 +35,6 @@
 #include "SArr.hpp"
 #include "SBase.hpp"
 
-#include <sstream>
-#include <string>
-
 class JsonSerializer final: public Serializer
 {
 public:
@@ -42,39 +42,89 @@ public:
 	static const uint32_t ESCAPED_SLASH = 1u<<30;
 
 private:
-	std::istringstream _iss;
-	std::ostringstream _oss;
+	void skipSpaces(std::istream& is);
 
-	void skipSpaces();
+	SVal decodeNull(std::istream& is);
+	SVal decodeBool(std::istream& is);
 
-	SVal decodeNull();
-	SVal decodeBool();
+	uint32_t decodeEscaped(std::istream& is);
+	void putUnicodeSymbolAsUtf8(SStr& str, uint32_t symbol);
+	SVal decodeString(std::istream& is);
 
-	uint32_t decodeEscaped();
-	void putUtf8Symbol(SStr &str, uint32_t symbol);
-	SVal decodeString();
+	SVal decodeBinary(std::istream& is);
 
-	SVal decodeBinary();
+	SVal decodeNumber(std::istream& is);
 
-	SVal decodeNumber();
+	SVal decodeArray(std::istream& is);
+	SVal decodeObject(std::istream& is);
 
-	SVal decodeArray();
-	SVal decodeObject();
+	SVal decodeValue(std::istream& is);
 
-	SVal decodeValue();
+	void encodeValue(std::ostream &os, const SVal& value);
 
-	void encodeValue(const SVal& value);
+	void encodeNull(std::ostream &os, const SVal& value);
+	void encodeBool(std::ostream &os, const SVal& value);
 
-	void encodeNull(const SVal& value);
-	void encodeBool(const SVal& value);
+	void encodeString(std::ostream &os, const SVal& value);
+	void encodeBinary(std::ostream &os, const SVal& value);
 
-	void encodeString(const SVal& value);
-	void encodeBinary(const SVal& value);
+	void encodeNumber(std::ostream &os, const SVal& value);
 
-	void encodeNumber(const SVal& value);
-
-	void encodeArray(const SVal& value);
-	void encodeObject(const SVal& value);
+	void encodeArray(std::ostream &os, const SVal& value);
+	void encodeObject(std::ostream &os, const SVal& value);
 
 DECLARE_SERIALIZER(JsonSerializer);
+};
+
+class JsonParseExeption final: public std::exception
+{
+	std::string _msg;
+
+public:
+	JsonParseExeption() = delete; // Default-constructor
+	JsonParseExeption(JsonParseExeption&&) noexcept = default; // Move-constructor
+	JsonParseExeption(const JsonParseExeption&) = delete; // Copy-constructor
+	~JsonParseExeption() override = default; // Destructor
+	JsonParseExeption& operator=(JsonParseExeption&&) noexcept = delete; // Move-assignment
+	JsonParseExeption& operator=(JsonParseExeption const&) = delete; // Copy-assignment
+
+	JsonParseExeption(std::string msg, size_t pos, std::istream& is)
+	: _msg(std::move(msg))
+	{
+		is.clear(std::istream::goodbit);
+		is.seekg(pos);
+
+		std::string nearPos;
+		while (!is.eof() && is.peek() != -1 && nearPos.size() < 20)
+		{
+			auto c = is.get();
+			switch (c)
+			{
+				case '\t': nearPos += "\\t"; break;
+				case '\n': nearPos += "\\n"; break;
+				case '\r': nearPos += "\\r"; break;
+				case '\b': nearPos += "\\b"; break;
+				case '\f': nearPos += "\\f"; break;
+				default: nearPos.push_back(c);
+			}
+		}
+
+		_msg += " at position " + std::to_string(pos) + " (remain: '" + nearPos + "')";
+	}
+
+	JsonParseExeption(std::string msg, size_t pos)
+	: _msg(std::move(msg))
+	{
+		_msg += " at position " + std::to_string(pos);
+	}
+
+	JsonParseExeption(std::string msg)
+	: _msg(std::move(msg))
+	{
+	}
+
+	const char* what() const noexcept override
+	{
+		return _msg.c_str();
+	}
 };

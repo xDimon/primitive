@@ -45,12 +45,11 @@ struct tokens: std::ctype<char>
     }
 };
 
-SVal UrlSerializer::decode(const std::string& data)
+SVal UrlSerializer::decode(std::istream& is)
 {
-	_iss.str(data);
-	_iss.imbue(std::locale(std::locale(), new tokens()));
+	is.imbue(std::locale(std::locale(), new tokens()));
 
-	std::vector<std::string> pairs(std::istream_iterator<std::string>(_iss), std::istream_iterator<std::string>{});
+	std::vector<std::string> pairs(std::istream_iterator<std::string>(is), std::istream_iterator<std::string>{});
 
 	SObj obj;
 
@@ -73,18 +72,16 @@ SVal UrlSerializer::decode(const std::string& data)
 	return obj;
 }
 
-std::string UrlSerializer::encode(const SVal& value)
+void UrlSerializer::encode(std::ostream& _oss, const SVal& value)
 {
 	try
 	{
-		encodeValue("", value);
+		encodeValue(_oss, "", value);
 	}
 	catch (std::runtime_error& exception)
 	{
 		throw std::runtime_error(std::string("Can't encode into URI ← ") + exception.what());
 	}
-
-	return std::move(_oss.str());
 }
 
 void UrlSerializer::emplace(SObj& parent, std::string& keyline, const std::string& val)
@@ -148,9 +145,9 @@ void UrlSerializer::emplace(SObj& parent, std::string& keyline, const std::strin
 SVal UrlSerializer::decodeValue(const std::string& strval)
 {
 	// Empty
-	if (!strval.length())
+	if (strval.empty())
 	{
-		return "";
+		return SStr();
 	}
 
 //	// Definitely not number
@@ -178,7 +175,7 @@ SVal UrlSerializer::decodeValue(const std::string& strval)
 		}
 		if (++i > 19)
 		{
-			return new SStr(strval);
+			return SStr(strval);
 		}
 	}
 
@@ -193,12 +190,12 @@ SVal UrlSerializer::decodeValue(const std::string& strval)
 		iss.seekg(p);
 		iss >> value;
 
-		return new SInt(value);
+		return SInt(value);
 	}
 
 	if (c != '.' && c != 'e' && c != 'E')
 	{
-		return new SStr(strval);
+		return SStr(strval);
 	}
 	iss.ignore();
 
@@ -228,125 +225,121 @@ SVal UrlSerializer::decodeValue(const std::string& strval)
 		iss.seekg(p);
 		iss >> value;
 
-		return new SFloat(value);
+		return SFloat(value);
 	}
 
 	// Remain data - it's not number
 
-	return new SStr(strval);
+	return SStr(strval);
 }
 
-void UrlSerializer::encodeNull(const std::string& keyline, const SVal&)
+void UrlSerializer::encodeNull(std::ostream& os, const std::string& keyline, const SVal&)
 {
-	_oss << keyline << "=" << "*null*";
+	os << keyline << "=" << "*null*";
 }
 
-void UrlSerializer::encodeBool(const std::string& keyline, const SVal& value)
+void UrlSerializer::encodeBool(std::ostream& os, const std::string& keyline, const SVal& value)
 {
-	_oss << keyline << "=" << (value.as<SBool>().value() ? "*true*" : "*false*");
+	os << keyline << "=" << (value.as<SBool>().value() ? "*true*" : "*false*");
 }
 
-void UrlSerializer::encodeString(const std::string& keyline, const SVal& value)
+void UrlSerializer::encodeString(std::ostream& os, const std::string& keyline, const SVal& value)
 {
-	_oss << keyline << "=" << HttpUri::urlencode(value.as<SStr>().value());
+	os << keyline << "=" << HttpUri::urlencode(value.as<SStr>().value());
 }
 
-void UrlSerializer::encodeBinary(const std::string& keyline, const SVal& value)
+void UrlSerializer::encodeBinary(std::ostream& os, const std::string& keyline, const SVal& value)
 {
-	_oss << "*binary*";
+	os << "*binary*";
 }
 
-void UrlSerializer::encodeNumber(const std::string& keyline, const SVal& value)
+void UrlSerializer::encodeNumber(std::ostream& os, const std::string& keyline, const SVal& value)
 {
 	if (value.is<SInt>())
 	{
-		_oss << keyline << "=" << value.as<SInt>().value();
+		os << keyline << "=" << value.as<SInt>().value();
 		return;
 	}
 	if (value.is<SFloat>())
 	{
-		_oss << keyline << "=" << std::setprecision(15) << value.as<SFloat>().value();
+		os << keyline << "=" << std::setprecision(15) << value.as<SFloat>().value();
 		return;
 	}
 }
 
-void UrlSerializer::encodeArray(const std::string& keyline, const SVal& value)
+void UrlSerializer::encodeArray(std::ostream& os, const std::string& keyline, const SVal& value)
 {
 	auto& array = value.as<SArr>();
 
-	int index = 0;
-	std::for_each(array.cbegin(), array.cend(),
-		[this, &keyline, &index]
-		(const SVal& element)
-		{
-			if (index > 0)
+	if (!array.empty())
+	{
+		int index = 0;
+		std::for_each(array.cbegin(), array.cend(),
+			[&]
+			(const SVal& element)
 			{
-				_oss << "&";
+				encodeValue(os, keyline + "[" + std::to_string(index++) + "]", element);
+				os << '&';
 			}
-			std::ostringstream oss;
-			oss << keyline << "[" << index++ << "]";
-			encodeValue(oss.str(), element);
-		}
-	);
+		);
+		os.seekp(-1, std::ios_base::cur);
+	}
 }
 
-void UrlSerializer::encodeObject(const std::string& keyline, const SVal& value)
+void UrlSerializer::encodeObject(std::ostream& os, const std::string& keyline, const SVal& value)
 {
 	auto& object = value.as<SObj>();
 
-	bool empty = true;
-	std::for_each(object.cbegin(), object.cend(),
-		[&]
-		(const std::pair<std::string, SVal>& element)
-		{
-			if (!empty)
+	if (!object.empty())
+	{
+		const auto& openBrace = keyline.empty() ? "" : "[";
+		const auto& closeBrace = keyline.empty() ? "" : "]";
+
+		std::for_each(object.cbegin(), object.cend(),
+			[&]
+			(const std::pair<std::string, SVal>& element)
 			{
-				_oss << "&";
+				encodeValue(os, keyline + openBrace + element.first + closeBrace, element.second);
+				os << '&';
 			}
-			else
-			{
-				empty = false;
-			}
-			std::ostringstream oss;
-			oss << keyline << (keyline.empty() ? "" : "[") << element.first << (keyline.empty() ? "" : "]");
-			encodeValue(oss.str(), element.second);
-		}
-	);
+		);
+		os.seekp(-1, std::ios_base::cur);
+	}
 }
 
-void UrlSerializer::encodeValue(const std::string& keyline, const SVal& value)
+void UrlSerializer::encodeValue(std::ostream& os, const std::string& keyline, const SVal& value)
 {
 	if (value.is<SStr>())
 	{
-		encodeString(keyline, value);
+		encodeString(os, keyline, value);
 	}
 	else if (value.is<SInt>())
 	{
-		encodeNumber(keyline, value);
+		encodeNumber(os, keyline, value);
 	}
 	else if (value.is<SFloat>())
 	{
-		encodeNumber(keyline, value);
+		encodeNumber(os, keyline, value);
 	}
 	else if (value.is<SObj>())
 	{
-		encodeObject(keyline, value);
+		encodeObject(os, keyline, value);
 	}
 	else if (value.is<SArr>())
 	{
-		encodeArray(keyline, value);
+		encodeArray(os, keyline, value);
 	}
 	else if (value.is<SBool>())
 	{
-		encodeBool(keyline, value);
+		encodeBool(os, keyline, value);
 	}
 	else if (value.is<SNull>())
 	{
-		encodeNull(keyline, value);
+		encodeNull(os, keyline, value);
 	}
 	else if (value.is<SBinary>())
 	{
-		encodeBinary(keyline, value);
+		encodeBinary(os, keyline, value);
 	}
 	else
 	{
