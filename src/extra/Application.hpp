@@ -40,7 +40,7 @@ protected:
 public:
 	Application() = delete;
 	Application(const Application&) = delete;
-    Application& operator=(Application const&) = delete;
+    Application& operator=(const Application&) = delete;
 	Application(Application&&) noexcept = delete;
 	Application& operator=(Application&&) noexcept = delete;
 
@@ -77,7 +77,7 @@ public:
 public:                                                                                         \
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
-    Class& operator=(Class const&) = delete;                                                    \
+    Class& operator=(const Class&) = delete;                                                    \
 	Class(Class&&) noexcept = delete;                                                           \
 	Class& operator=(Class&&) noexcept = delete;                                                \
     ~Class() override = default;                                                                \

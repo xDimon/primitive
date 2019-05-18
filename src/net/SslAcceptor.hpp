@@ -33,7 +33,7 @@ private:
 public:
 	SslAcceptor() = delete;
 	SslAcceptor(const SslAcceptor&) = delete;
-	SslAcceptor& operator=(SslAcceptor const&) = delete;
+	SslAcceptor& operator=(const SslAcceptor&) = delete;
 	SslAcceptor(SslAcceptor&& tmp) noexcept = delete;
 	SslAcceptor& operator=(SslAcceptor&& tmp) noexcept = delete;
 

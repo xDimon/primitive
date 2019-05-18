@@ -52,7 +52,7 @@ private:
 public:
 	Log() = delete;
 	Log(const Log&) = delete;
-	Log& operator=(Log const&) = delete;
+	Log& operator=(const Log&) = delete;
 	Log(Log&& tmp) noexcept = delete;
 	Log& operator=(Log&& tmp) noexcept = delete;
 

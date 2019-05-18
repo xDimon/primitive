@@ -34,7 +34,7 @@ class TaskManager final
 {
 public:
 	TaskManager(const TaskManager&) = delete; // Copy-constructor
-	TaskManager& operator=(TaskManager const&) = delete; // Copy-assignment
+	TaskManager& operator=(const TaskManager&) = delete; // Copy-assignment
 	TaskManager(TaskManager&&) noexcept = delete; // Move-constructor
 	TaskManager& operator=(TaskManager&&) noexcept = delete; // Move-assignment
 

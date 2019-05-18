@@ -30,7 +30,7 @@ class DbManager final
 {
 public:
 	DbManager(const DbManager&) = delete;
-	DbManager& operator=(DbManager const&) = delete;
+	DbManager& operator=(const DbManager&) = delete;
 	DbManager(DbManager&&) noexcept = delete;
 	DbManager& operator=(DbManager&&) noexcept = delete;
 

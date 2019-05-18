@@ -45,7 +45,7 @@ protected:
 
 public:
 	Buffer(const Buffer&) = delete;
-	Buffer& operator=(Buffer const&) = delete;
+	Buffer& operator=(const Buffer&) = delete;
 	Buffer(Buffer&&) noexcept = delete;
 	Buffer& operator=(Buffer&&) noexcept = delete;
 

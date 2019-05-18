@@ -32,7 +32,7 @@ class TransportFactory final
 {
 public:
 	TransportFactory(const TransportFactory&) = delete;
-	TransportFactory& operator=(TransportFactory const&) = delete;
+	TransportFactory& operator=(const TransportFactory&) = delete;
 	TransportFactory(TransportFactory&&) noexcept = delete;
 	TransportFactory& operator=(TransportFactory&&) noexcept = delete;
 

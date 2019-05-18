@@ -44,7 +44,7 @@ protected:
 public:
 	Event() = delete;
 	Event(const Event&) = delete;
-	Event& operator=(Event const&) = delete;
+	Event& operator=(const Event&) = delete;
 	Event(Event&&) noexcept = delete;
 	Event& operator=(Event&&) noexcept = delete;
 

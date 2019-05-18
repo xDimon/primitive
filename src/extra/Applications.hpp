@@ -30,7 +30,7 @@ class Applications final
 {
 public:
 	Applications(const Applications&) = delete;
-    Applications& operator=(Applications const&) = delete;
+    Applications& operator=(const Applications&) = delete;
 	Applications(Applications&&) noexcept = delete;
 	Applications& operator=(Applications&&) noexcept = delete;
 

@@ -51,7 +51,7 @@ private:
 
 public:
 	CounterManager(const CounterManager&) = delete; // Copy-constructor
-	CounterManager& operator=(CounterManager const&) = delete; // Copy-assignment
+	CounterManager& operator=(const CounterManager&) = delete; // Copy-assignment
 	CounterManager(CounterManager&&) noexcept = delete; // Move-constructor
 	CounterManager& operator=(CounterManager&&) noexcept = delete; // Move-assignment
 

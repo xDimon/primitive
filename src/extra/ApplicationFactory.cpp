@@ -29,7 +29,7 @@ Dummy ApplicationFactory::reg(const std::string& type, std::shared_ptr<Applicati
 	auto i = factory._creators.find(type);
 	if (i != factory._creators.end())
 	{
-		std::cerr << "Internal error: Attepmt to register application with the same type (" << type << ")" << std::endl;
+		std::cerr << "Internal error: Attempt to register application with the same type (" << type << ")" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 

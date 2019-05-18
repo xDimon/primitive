@@ -68,7 +68,7 @@ private:
 public:
 	HttpResponse() = delete;
 	HttpResponse(const HttpResponse&) = delete;
-	HttpResponse& operator=(HttpResponse const&) = delete;
+	HttpResponse& operator=(const HttpResponse&) = delete;
 	HttpResponse(HttpResponse&&) noexcept = delete;
 	HttpResponse& operator=(HttpResponse&&) noexcept = delete;
 

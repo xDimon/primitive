@@ -20,6 +20,7 @@
 
 
 #include "ActionFactory.hpp"
+#include <iostream>
 
 Dummy ActionFactory::reg(
 	const std::string& name,
@@ -35,7 +36,7 @@ Dummy ActionFactory::reg(
 	auto i = factory._creators.find(name);
 	if (i != factory._creators.end())
 	{
-		std::cerr << "Internal error: Attepmt to register action with the same name (" << name << ")" << std::endl;
+		std::cerr << "Internal error: Attempt to register action with the same name (" << name << ")" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	factory._creators.emplace(name, creator);

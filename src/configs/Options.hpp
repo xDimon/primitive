@@ -33,7 +33,7 @@ private:
 public:
 	Options() = delete;
 	Options(const Options&) = delete;
-	Options& operator=(Options const&) = delete;
+	Options& operator=(const Options&) = delete;
 	Options(Options&&) noexcept = delete;
 	Options& operator=(Options&&) noexcept = delete;
 

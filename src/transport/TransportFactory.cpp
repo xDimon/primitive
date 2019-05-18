@@ -20,6 +20,7 @@
 
 
 #include "TransportFactory.hpp"
+#include <iostream>
 
 Dummy TransportFactory::reg(const std::string& type, std::shared_ptr<ServerTransport> (* creator)(const Setting&))
 {
@@ -28,7 +29,7 @@ Dummy TransportFactory::reg(const std::string& type, std::shared_ptr<ServerTrans
 	auto i = factory._creators.find(type);
 	if (i != factory._creators.end())
 	{
-		std::cerr << "Internal error: Attepmt to register transport with the same type (" << type << ")" << std::endl;
+		std::cerr << "Internal error: Attempt to register transport with the same type (" << type << ")" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	factory._creators.emplace(type, creator);

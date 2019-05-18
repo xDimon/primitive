@@ -36,7 +36,7 @@ public:
 	MysqlRow(MysqlRow&&) noexcept = delete; // Move-constructor
 	MysqlRow(const MysqlRow&) = delete; // Copy-constructor
 	MysqlRow& operator=(MysqlRow&&) noexcept = delete; // Move-assignment
-	MysqlRow& operator=(MysqlRow const&) = delete; // Copy-assignment
+	MysqlRow& operator=(const MysqlRow&) = delete; // Copy-assignment
 
 	MysqlRow() // Default-constructor
 	: _data(nullptr)

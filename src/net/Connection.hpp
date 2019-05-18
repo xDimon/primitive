@@ -65,7 +65,7 @@ protected:
 public:
 	Connection() = delete;
 	Connection(const Connection&) = delete;
-	Connection& operator=(Connection const&) = delete;
+	Connection& operator=(const Connection&) = delete;
 	Connection(Connection&& tmp) noexcept = delete;
 	Connection& operator=(Connection&& tmp) noexcept = delete;
 

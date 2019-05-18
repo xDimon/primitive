@@ -30,7 +30,7 @@ Dummy CompressorFactory::reg(const std::string& type, std::shared_ptr<Compressor
 	auto i = factory._creators.find(type);
 	if (i != factory._creators.end())
 	{
-		std::cerr << "Internal error: Attepmt to register compressor with the same type (" << type << ")" << std::endl;
+		std::cerr << "Internal error: Attempt to register compressor with the same type (" << type << ")" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	factory._creators.emplace(type, creator);
@@ -46,5 +46,5 @@ std::shared_ptr<Compressor> CompressorFactory::create(const std::string& type, u
 	{
 		throw std::runtime_error("Unknown compressor type");
 	}
-	return std::move(i->second(flags));
+	return i->second(flags);
 }

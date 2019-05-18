@@ -105,5 +105,5 @@ std::string CRC32::getStringHash()
 {
 	std::ostringstream oss;
 	oss << std::setw(8) << std::setfill('0') << std::uppercase << std::hex << getBytesHash();
-	return std::move(oss.str());
+	return oss.str();
 }

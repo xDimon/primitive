@@ -32,7 +32,7 @@ private:
 
 public:
 	Config(const Config&) = delete;
-	Config& operator=(Config const&) = delete;
+	Config& operator=(const Config&) = delete;
 	Config(Config&&) noexcept = delete;
 	Config& operator=(Config&&) noexcept = delete;
 

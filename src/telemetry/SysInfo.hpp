@@ -34,7 +34,7 @@ private:
 
 public:
 	SysInfo(const SysInfo&) = delete; // Copy-constructor
-	SysInfo& operator=(SysInfo const&) = delete; // Copy-assignment
+	SysInfo& operator=(const SysInfo&) = delete; // Copy-assignment
 	SysInfo(SysInfo&&) noexcept = delete; // Move-constructor
 	SysInfo& operator=(SysInfo&&) noexcept = delete; // Move-assignment
 

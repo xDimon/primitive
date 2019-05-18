@@ -31,7 +31,7 @@ private:
 
 public:
 	WsClient(const WsClient&) = delete;
-	WsClient& operator=(WsClient const&) = delete;
+	WsClient& operator=(const WsClient&) = delete;
 	WsClient(WsClient&&) noexcept = delete;
 	WsClient& operator=(WsClient&&) noexcept = delete;
 

@@ -34,7 +34,7 @@ protected:
 public:
 	Serializer() = delete;
 	Serializer(const Serializer&) = delete;
-	Serializer& operator=(Serializer const&) = delete;
+	Serializer& operator=(const Serializer&) = delete;
 	Serializer(Serializer&&) noexcept = delete;
 	Serializer& operator=(Serializer&&) noexcept = delete;
 

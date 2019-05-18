@@ -28,7 +28,7 @@ public:
 	DbRow(DbRow&&) noexcept = delete; // Move-constructor
 	DbRow(const DbRow&) = delete; // Copy-constructor
 	DbRow& operator=(DbRow&&) noexcept = delete; // Move-assignment
-	DbRow& operator=(DbRow const&) = delete; // Copy-assignment
+	DbRow& operator=(const DbRow&) = delete; // Copy-assignment
 
 	DbRow() = default; // Default-constructor
 	virtual ~DbRow() = default; // Destructor

@@ -20,6 +20,7 @@
 
 
 #include "ServiceFactory.hpp"
+#include <iostream>
 
 Dummy ServiceFactory::reg(const std::string& type, std::shared_ptr<Service> (* creator)(const Setting&)) noexcept
 {
@@ -28,7 +29,7 @@ Dummy ServiceFactory::reg(const std::string& type, std::shared_ptr<Service> (* c
 	auto i = factory._creators.find(type);
 	if (i != factory._creators.end())
 	{
-		std::cerr << "Internal error: Attepmt to register service with the same type (" << type << ")" << std::endl;
+		std::cerr << "Internal error: Attempt to register service with the same type (" << type << ")" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	factory._creators.emplace(type, creator);

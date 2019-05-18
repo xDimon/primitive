@@ -24,7 +24,6 @@
 
 #include <cstdint>
 #include "../utils/Context.hpp"
-#include "../serialization/SBase.hpp"
 #include "../serialization/SObj.hpp"
 #include "../transport/ServerTransport.hpp"
 #include "Service.hpp"
@@ -52,13 +51,13 @@ protected:
 public:
 	Action() = delete;
 	Action(const Action&) = delete;
-	Action& operator=(Action const&) = delete;
+	Action& operator=(const Action&) = delete;
 	Action(Action&&) noexcept = delete;
 	Action& operator=(Action&&) noexcept = delete;
 
 	Action(
 		const std::shared_ptr<ServicePart>& servicePart,
-		const std::shared_ptr<Context>& context,
+		std::shared_ptr<Context> context,
 		const SVal& input
 	);
 	virtual ~Action() = default;
@@ -122,7 +121,7 @@ public:                                                                         
 	ActionName(ActionName&&) noexcept = delete;                                                 \
 	ActionName(const ActionName&) = delete;                                                     \
 	ActionName& operator=(ActionName&&) noexcept = delete;                                      \
-	ActionName& operator=(ActionName const&) = delete;                                          \
+	ActionName& operator=(const ActionName&) = delete;                                          \
                                                                                                 \
 private:                                                                                        \
     ActionName(                                                                                 \

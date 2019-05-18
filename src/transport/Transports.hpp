@@ -32,7 +32,7 @@ class Transports final
 {
 public:
 	Transports(Transports const&) = delete;
-	Transports& operator=(Transports const&) = delete;
+	Transports& operator=(const Transports&) = delete;
 	Transports(Transports&&) noexcept = delete;
 	Transports& operator=(Transports&&) noexcept = delete;
 

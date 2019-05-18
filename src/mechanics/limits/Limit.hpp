@@ -73,7 +73,7 @@ private:
 public:
 	Limit() = delete;
 	Limit(const Limit&) = delete; // Copy-constructor
-	Limit& operator=(Limit const&) = delete; // Copy-assignment
+	Limit& operator=(const Limit&) = delete; // Copy-assignment
 	Limit(Limit&&) noexcept = delete; // Move-constructor
 	Limit& operator=(Limit&&) noexcept = delete; // Move-assignment
 

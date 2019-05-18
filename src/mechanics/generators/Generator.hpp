@@ -48,7 +48,7 @@ public:
 	Generator() = delete;
 
 	Generator(const Generator&) = delete; // Copy-constructor
-	Generator& operator=(Generator const&) = delete; // Copy-assignment
+	Generator& operator=(const Generator&) = delete; // Copy-assignment
 	Generator(Generator&&) noexcept = delete; // Move-constructor
 	Generator& operator=(Generator&&) noexcept = delete; // Move-assignment
 

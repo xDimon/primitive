@@ -189,7 +189,7 @@ std::string SHA256::encode(const void* data, size_t size)
 	for (auto i = 0u; i < SHA256::DIGEST_SIZE; i++)
 	{
 		auto r = oss.str();
-		oss << std::setw(2) << std::setfill('0') << std::hex << (uint32_t)digest[i];
+		oss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (uint32_t)digest[i];
 	}
 	auto r = oss.str();
 	return r;

@@ -30,7 +30,7 @@ class LoggerManager final
 {
 public:
 	LoggerManager(const LoggerManager&) = delete;
-	LoggerManager& operator=(LoggerManager const&) = delete;
+	LoggerManager& operator=(const LoggerManager&) = delete;
 	LoggerManager(LoggerManager&& tmp) noexcept = delete;
 	LoggerManager& operator=(LoggerManager&& tmp) noexcept = delete;
 

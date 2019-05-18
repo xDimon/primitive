@@ -25,11 +25,11 @@
 
 Action::Action(
 	const std::shared_ptr<ServicePart>& servicePart,
-	const std::shared_ptr<Context>& context,
+	std::shared_ptr<Context> context,
 	const SVal& input_
 )
 : _servicePart(servicePart)
-, _context(context)
+, _context(std::move(context))
 , _requestId(0)
 , _lastConfirmedEvent(0)
 , _lastConfirmedResponse(0)
@@ -68,7 +68,7 @@ Action::Action(
 
 	if (input.has("data"))
 	{
-		_data = std::move(input.extract("data"));
+		_data = input.extract("data");
 	}
 }
 
@@ -97,7 +97,7 @@ SObj Action::response(SVal&& data) const
 
 	_answerSent = true;
 
-	return std::move(response);
+	return response;
 }
 
 SObj Action::error(const std::string& message, SVal&& data) const

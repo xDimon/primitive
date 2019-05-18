@@ -42,7 +42,7 @@ private:
 	public:
 		Helper() = delete; // Default-constructor
 		Helper(const Helper&) = delete; // Copy-constructor
-		Helper& operator=(Helper const&) = delete; // Copy-assignment
+		Helper& operator=(const Helper&) = delete; // Copy-assignment
 		Helper(Helper&&) noexcept = delete; // Move-constructor
 		Helper& operator=(Helper&&) noexcept = delete; // Move-assignment
 
@@ -72,7 +72,7 @@ private:
 public:
 	Timer() = delete; // Default-constructor
 	Timer(const Timer&) = delete; // Copy-constructor
-	Timer& operator=(Timer const&) = delete; // Copy-assignment
+	Timer& operator=(const Timer&) = delete; // Copy-assignment
 	Timer(Timer&&) noexcept = delete; // Move-constructor
 	Timer& operator=(Timer&&) noexcept = delete; // Move-assignment
 

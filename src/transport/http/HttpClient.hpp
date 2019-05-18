@@ -29,7 +29,7 @@ class HttpClient final : public ClientTransport
 {
 public:
 	HttpClient(const HttpClient&) = delete;
-	HttpClient& operator=(HttpClient const&) = delete;
+	HttpClient& operator=(const HttpClient&) = delete;
 	HttpClient(HttpClient&&) noexcept = delete;
 	HttpClient& operator=(HttpClient&&) noexcept = delete;
 

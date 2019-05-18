@@ -205,10 +205,10 @@ static void buffer_to_block(const std::string &buffer, uint32_t block[BLOCK_INTS
 	for (size_t i = 0; i < BLOCK_INTS; i++)
 	{
 		block[i] =
-			  (buffer[4*i+3] & 0xFF)
-			| (buffer[4*i+2] & 0xFF) << 8
-			| (buffer[4*i+1] & 0xff) << 16
-			| (buffer[4*i+0] & 0xff) << 24;
+			  static_cast<uint32_t>(buffer[4*i+3] & 0xFF)
+			| static_cast<uint32_t>(buffer[4*i+2] & 0xFF) << 8
+			| static_cast<uint32_t>(buffer[4*i+1] & 0xff) << 16
+			| static_cast<uint32_t>(buffer[4*i+0] & 0xff) << 24;
 	}
 }
 
@@ -307,8 +307,8 @@ std::string SHA1::final_bin()
 	}
 
 	/* Append total_bits, split this uint64_t into two uint32_t */
-	block[BLOCK_INTS - 1] = total_bits;
-	block[BLOCK_INTS - 2] = (total_bits >> 32);
+	block[BLOCK_INTS - 1] = static_cast<uint32_t>(total_bits & 0xFFFFFFFF);
+	block[BLOCK_INTS - 2] = static_cast<uint32_t>(total_bits >> 32u);
 	transform(digest, block, transforms);
 
 	/* Hex std::string */

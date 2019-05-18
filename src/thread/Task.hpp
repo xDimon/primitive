@@ -51,7 +51,7 @@ public:
 
 	// Запрещаем любое копирование
 	Task(const Task&) = delete;
-	Task& operator=(Task const&) = delete;
+	Task& operator=(const Task&) = delete;
 
 	// Планирование времени
 	const Time& until() const

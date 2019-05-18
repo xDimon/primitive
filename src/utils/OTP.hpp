@@ -34,7 +34,7 @@ public:
 	OTP(const OTP&) = delete; // Copy-constructor
 	~OTP() = default; // Destructor
 	OTP& operator=(OTP&&) noexcept = delete; // Move-assignment
-	OTP& operator=(OTP const&) = delete; // Copy-assignment
+	OTP& operator=(const OTP&) = delete; // Copy-assignment
 
 	OTP(std::string key)
 	: _key(std::move(key))

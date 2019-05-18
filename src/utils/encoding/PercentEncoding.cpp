@@ -279,7 +279,7 @@ std::string PercentEncoding::encode(const std::string& input)
 		}
 		if (need_encode(static_cast<uint8_t>(c)))
 		{
-			oss << "%"
+			oss << '%'
 				<< std::uppercase
 				<< std::setfill('0')
 				<< std::setw(2)

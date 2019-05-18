@@ -247,7 +247,7 @@ void HttpRequestExecutor::submit()
 			  ? "POST "
 			  : "UNKNOWN "
 		) << _uri.path() << (_uri.hasQuery() ? "?" : "") << (_uri.hasQuery() ? _uri.query() : "") << " HTTP/1.1\r\n"
-			<< "Host: " << _uri.host() << ":" << _uri.port() << "\r\n"
+			<< "Host: " << _uri.host() << ':' << _uri.port() << "\r\n"
 			<< "Connection: Close\r\n";
 		if (_method == HttpRequest::Method::POST)
 		{

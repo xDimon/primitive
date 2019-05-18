@@ -29,7 +29,7 @@ class ClientTransport : public Shareable<ClientTransport>, public Transport
 {
 public:
 	ClientTransport(const ClientTransport&) = delete;
-	ClientTransport& operator=(ClientTransport const&) = delete;
+	ClientTransport& operator=(const ClientTransport&) = delete;
 	ClientTransport(ClientTransport&&) noexcept = delete;
 	ClientTransport& operator=(ClientTransport&&) noexcept = delete;
 

@@ -38,7 +38,7 @@ private:
 
 public:
 	LimitContainer(const LimitContainer&) = delete; // Copy-constructor
-	LimitContainer& operator=(LimitContainer const&) = delete; // Copy-assignment
+	LimitContainer& operator=(const LimitContainer&) = delete; // Copy-assignment
 	LimitContainer(LimitContainer&&) noexcept = delete; // Move-constructor
 	LimitContainer& operator=(LimitContainer&&) noexcept = delete; // Move-assignment
 

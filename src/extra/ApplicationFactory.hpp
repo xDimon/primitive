@@ -31,7 +31,7 @@ class ApplicationFactory final
 {
 public:
 	ApplicationFactory(const ApplicationFactory&) = delete;
-	ApplicationFactory& operator=(ApplicationFactory const&) = delete;
+	ApplicationFactory& operator=(const ApplicationFactory&) = delete;
 	ApplicationFactory(ApplicationFactory&&) noexcept = delete;
 	ApplicationFactory& operator=(ApplicationFactory&&) noexcept = delete;
 

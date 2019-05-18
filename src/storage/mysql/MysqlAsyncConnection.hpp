@@ -70,7 +70,7 @@ private:
 public:
 	MysqlAsyncConnection() = delete;
 	MysqlAsyncConnection(const MysqlAsyncConnection&) = delete;
-	MysqlAsyncConnection& operator=(MysqlAsyncConnection const&) = delete;
+	MysqlAsyncConnection& operator=(const MysqlAsyncConnection&) = delete;
 	MysqlAsyncConnection(MysqlAsyncConnection&&) noexcept = delete;
 	MysqlAsyncConnection& operator=(MysqlAsyncConnection&&) noexcept = delete;
 

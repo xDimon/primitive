@@ -48,7 +48,7 @@ protected:
 public:
 	LpsContext() = delete; // Default-constructor
 	LpsContext(const LpsContext&) = delete; // Copy-constructor
-	LpsContext& operator=(LpsContext const&) = delete; // Copy-assignment
+	LpsContext& operator=(const LpsContext&) = delete; // Copy-assignment
 	LpsContext(LpsContext&&) noexcept = delete; // Move-constructor
 	LpsContext& operator=(LpsContext&&) noexcept = delete; // Move-assignment
 

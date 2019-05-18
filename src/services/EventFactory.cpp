@@ -20,6 +20,7 @@
 
 
 #include "EventFactory.hpp"
+#include <iostream>
 
 bool EventFactory::reg(const std::string& name, std::shared_ptr<Event>(* creator)(const std::shared_ptr<Context>&, const SVal*)) noexcept
 {
@@ -28,7 +29,7 @@ bool EventFactory::reg(const std::string& name, std::shared_ptr<Event>(* creator
 	auto i = factory._creators.find(name);
 	if (i != factory._creators.end())
 	{
-		std::cerr << "Internal error: Attepmt to register event with the same name (" << name << ")" << std::endl;
+		std::cerr << "Internal error: Attempt to register event with the same name (" << name << ")" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	factory._creators.emplace(name, creator);

@@ -35,7 +35,7 @@ protected:
 public:
 	Compressor() = delete;
 	Compressor(const Compressor&) = delete;
-	Compressor& operator=(Compressor const&) = delete;
+	Compressor& operator=(const Compressor&) = delete;
 	Compressor(Compressor&&) noexcept = delete;
 	Compressor& operator=(Compressor&&) noexcept = delete;
 
@@ -62,7 +62,7 @@ public:
 public:                                                                                         \
 	Class() = delete;                                                                           \
 	Class(const Class&) = delete;                                                               \
-    Class& operator=(Class const&) = delete;                                                    \
+    Class& operator=(const Class&) = delete;                                                    \
 	Class(Class&&) noexcept = delete;                                                           \
 	Class& operator=(Class&&) noexcept = delete;                                                \
                                                                                                 \

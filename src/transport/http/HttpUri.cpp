@@ -194,19 +194,19 @@ const std::string& HttpUri::str() const
 
 	if (_port != 0 && ((_scheme == Scheme::HTTP && _port != 80) || (_scheme == Scheme::HTTPS && _port != 443)))
 	{
-		ss << ":" << _port;
+		ss << ':' << _port;
 	}
 
 	ss << _path;
 
 	if (_hasQuery)
 	{
-		ss << "?" << _query;
+		ss << '?' << _query;
 	}
 
 	if (_hasFragment)
 	{
-		ss << "#" << _fragment;
+		ss << '#' << _fragment;
 	}
 
 	_thisAsString = std::move(ss.str());

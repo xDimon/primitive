@@ -41,7 +41,7 @@ public:
 
 public:
 	Transport(const Transport&) = delete;
-	Transport& operator=(Transport const&) = delete;
+	Transport& operator=(const Transport&) = delete;
 	Transport(Transport&& tmp) noexcept = delete;
 	Transport& operator=(Transport&& tmp) noexcept = delete;
 

@@ -36,7 +36,7 @@ public:
 
 public:
 	LimitConfig(const LimitConfig&) = delete; // Copy-constructor
-	LimitConfig& operator=(LimitConfig const&) = delete; // Copy-assignment
+	LimitConfig& operator=(const LimitConfig&) = delete; // Copy-assignment
 	LimitConfig(LimitConfig&&) noexcept = delete; // Move-constructor
 	LimitConfig& operator=(LimitConfig&&) noexcept = delete; // Move-assignment
 

@@ -32,7 +32,7 @@ class Acceptor : public Connection
 public:
 	Acceptor() = delete;
 	Acceptor(const Acceptor&) = delete;
-	Acceptor& operator=(Acceptor const&) = delete;
+	Acceptor& operator=(const Acceptor&) = delete;
 	Acceptor(Acceptor&& tmp) noexcept = delete;
 	Acceptor& operator=(Acceptor&& tmp) noexcept = delete;
 

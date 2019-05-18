@@ -75,7 +75,7 @@ protected:
 public:
 	Session() = delete;
 	Session(const Session&) = delete;
-	Session& operator=(Session const&) = delete;
+	Session& operator=(const Session&) = delete;
 	Session(Session&&) noexcept = delete;
 	Session& operator=(Session&&) noexcept = delete;
 

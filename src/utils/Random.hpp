@@ -31,7 +31,7 @@ class Random
 {
 public:
 	Random(const Random&) = delete; // Copy-constructor
-	Random& operator=(Random const&) = delete; // Copy-assignment
+	Random& operator=(const Random&) = delete; // Copy-assignment
 	Random(Random&&) noexcept = delete; // Move-constructor
 	Random& operator=(Random&&) noexcept = delete; // Move-assignment
 

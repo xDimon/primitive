@@ -53,7 +53,7 @@ public:
 	Communicate(const Communicate&) = delete; // Copy-constructor
 	~Communicate() = default; // Destructor
 	Communicate& operator=(Communicate&&) noexcept = delete; // Move-assignment
-	Communicate& operator=(Communicate const&) = delete; // Copy-assignment
+	Communicate& operator=(const Communicate&) = delete; // Copy-assignment
 
 	Communicate()
 	: _lastEventId(0)

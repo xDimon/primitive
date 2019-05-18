@@ -25,7 +25,6 @@
 
 #include <string>
 #include <memory>
-#include <mysql.h>
 
 class DbResult;
 
@@ -49,7 +48,7 @@ public:
 	DbConnection() = delete;
 	DbConnection(const DbConnection&) = delete;
 	DbConnection(DbConnection&&) noexcept = delete;
-	DbConnection& operator=(DbConnection const&) = delete;
+	DbConnection& operator=(const DbConnection&) = delete;
 	DbConnection& operator=(DbConnection&&) noexcept = delete;
 
 	explicit DbConnection(const std::shared_ptr<DbConnectionPool>& pool);

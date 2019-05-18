@@ -45,7 +45,7 @@ private:
 
 public:
 	Server(const Server&) = delete;
-	Server& operator=(Server const&) = delete;
+	Server& operator=(const Server&) = delete;
 	Server(Server&&) noexcept = delete;
 	Server& operator=(Server&&) noexcept = delete;
 

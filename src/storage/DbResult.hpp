@@ -29,7 +29,7 @@ public:
 	DbResult(DbResult&&) noexcept = delete; // Move-constructor
 	DbResult(const DbResult&) = delete; // Copy-constructor
 	DbResult& operator=(DbResult&&) noexcept = delete; // Move-assignment
-	DbResult& operator=(DbResult const&) = delete; // Copy-assignment
+	DbResult& operator=(const DbResult&) = delete; // Copy-assignment
 
 	DbResult() = default; // Default-constructor
 	virtual ~DbResult() = default; // Destructor

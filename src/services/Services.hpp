@@ -29,7 +29,7 @@ class Services final
 {
 public:
 	Services(const Services&) = delete; // Copy-constructor
-	Services& operator=(Services const&) = delete; // Copy-assignment
+	Services& operator=(const Services&) = delete; // Copy-assignment
 	Services(Services&&) noexcept = delete; // Move-constructor
 	Services& operator=(Services&&) noexcept = delete; // Move-assignment
 

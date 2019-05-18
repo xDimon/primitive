@@ -293,7 +293,7 @@ bool SslConnection::writeToSocket()
 			break;
 		}
 
-		int n = SSL_write(_sslConnect, _outBuff.dataPtr(), (_outBuff.dataLen() > 1ull<<12) ? (1ull<<12) : static_cast<int>(_outBuff.dataLen()));
+		int n = SSL_write(_sslConnect, _outBuff.dataPtr(), (_outBuff.dataLen() > 1ull<<12u) ? (1ull<<12u) : static_cast<int>(_outBuff.dataLen()));
 		if (n > 0)
 		{
 			_outBuff.skip(static_cast<size_t>(n));
@@ -364,9 +364,9 @@ bool SslConnection::readFromSocket()
 	{
 		std::lock_guard<std::recursive_mutex> guard(_inBuff.mutex());
 
-		_inBuff.prepare(1ull<<12);
+		_inBuff.prepare(1ull<<12u);
 
-		int n = SSL_read(_sslConnect, _inBuff.spacePtr(), (_inBuff.spaceLen() > 1ull<<12) ? (1ull<<12) : static_cast<int>(_inBuff.spaceLen()));
+		int n = SSL_read(_sslConnect, _inBuff.spacePtr(), (_inBuff.spaceLen() > 1ull<<12u) ? (1ull<<12u) : static_cast<int>(_inBuff.spaceLen()));
 		if (n > 0)
 		{
 			_inBuff.forward(static_cast<size_t>(n));

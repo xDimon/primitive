@@ -50,7 +50,7 @@ private:
 
 public:
 	CounterContainer(const CounterContainer&) = delete; // Copy-constructor
-	CounterContainer& operator=(CounterContainer const&) = delete; // Copy-assignment
+	CounterContainer& operator=(const CounterContainer&) = delete; // Copy-assignment
 	CounterContainer(CounterContainer&&) noexcept = delete; // Move-constructor
 	CounterContainer& operator=(CounterContainer&&) noexcept = delete; // Move-assignment
 

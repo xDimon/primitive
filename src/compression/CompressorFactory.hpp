@@ -31,7 +31,7 @@ class CompressorFactory final
 {
 public:
 	CompressorFactory(const CompressorFactory&) = delete;
-	CompressorFactory& operator=(CompressorFactory const&) = delete;
+	CompressorFactory& operator=(const CompressorFactory&) = delete;
 	CompressorFactory(CompressorFactory&&) noexcept = delete;
 	CompressorFactory& operator=(CompressorFactory&&) noexcept = delete;
 

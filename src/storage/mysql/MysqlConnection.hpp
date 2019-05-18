@@ -39,7 +39,7 @@ private:
 public:
 	MysqlConnection() = delete;
 	MysqlConnection(const MysqlConnection&) = delete;
-	MysqlConnection& operator=(MysqlConnection const&) = delete;
+	MysqlConnection& operator=(const MysqlConnection&) = delete;
 	MysqlConnection(MysqlConnection&&) noexcept = delete;
 	MysqlConnection& operator=(MysqlConnection&&) noexcept = delete;
 

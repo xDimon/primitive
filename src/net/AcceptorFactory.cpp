@@ -24,21 +24,6 @@
 #include "SslAcceptor.hpp"
 #include "../utils/SslHelper.hpp"
 
-std::shared_ptr<Acceptor> AcceptorFactory::create(const Setting& setting)
-{
-	std::shared_ptr<Creator> acceptorCreator;
-	try
-	{
-		acceptorCreator = getInstance().creator(setting);
-	}
-	catch (...)
-	{
-		throw;
-	}
-
-	return std::shared_ptr<Acceptor>();
-}
-
 std::shared_ptr<AcceptorFactory::Creator> AcceptorFactory::creator(const Setting& setting)
 {
 	std::string host;

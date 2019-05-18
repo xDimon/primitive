@@ -51,7 +51,7 @@ protected:
 public:
 	TcpConnection() = delete;
 	TcpConnection(const TcpConnection&) = delete;
-	TcpConnection& operator=(TcpConnection const&) = delete;
+	TcpConnection& operator=(const TcpConnection&) = delete;
 	TcpConnection(TcpConnection&& tmp) noexcept = delete;
 	TcpConnection& operator=(TcpConnection&& tmp) noexcept = delete;
 

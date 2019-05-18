@@ -50,7 +50,7 @@ private:
 public:
 	Metric() = delete;
 	Metric(const Metric&) = delete;
-	Metric& operator=(Metric const&) = delete;
+	Metric& operator=(const Metric&) = delete;
 	Metric(Metric&&) noexcept = delete;
 	Metric& operator=(Metric&&) noexcept = delete;
 
