@@ -21,10 +21,6 @@
 
 #pragma once
 
-#include <utility>
-#include <iostream>
-#include <typeinfo>
-
 class SBase
 {
 };

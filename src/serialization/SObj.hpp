@@ -140,7 +140,7 @@ public:
 		}
 		ret = std::move(i->second);
 		erase(i);
-		return std::move(ret);
+		return ret;
 	}
 
 	template <typename T>
@@ -186,6 +186,6 @@ public:
 	{
 		std::ostringstream oss;
 		oss << "[object#" << this << "(" << size() << ")]";
-		return std::move(oss.str());
+		return oss.str();
 	}
 };

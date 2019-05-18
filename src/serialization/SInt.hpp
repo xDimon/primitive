@@ -42,12 +42,6 @@ public:
 	{
 	}
 
-//	SInt& operator=(SInt const& that)
-//	{
-//		_value = that._value;
-//		return *this;
-//	}
-
 	type value() const
 	{
 		return _value;
@@ -59,10 +53,8 @@ public:
 		return _value;
 	}
 
-	operator std::string() const
+	explicit operator std::string() const
 	{
-		std::ostringstream oss;
-		oss << _value;
-		return std::move(oss.str());
+		return std::to_string(_value);
 	}
 };

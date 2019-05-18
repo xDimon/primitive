@@ -45,22 +45,14 @@ public:
 		return _value;
 	}
 
-//	SFloat& operator=(SFloat const& that)
-//	{
-//		_value = that._value;
-//		return *this;
-//	}
-
 	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
 	operator T() const
 	{
 		return _value;
 	}
 
-	operator std::string() const
+	explicit operator std::string() const
 	{
-		std::ostringstream oss;
-		oss << _value;
-		return std::move(oss.str());
+		return std::to_string(_value);
 	}
 };

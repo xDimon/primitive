@@ -34,7 +34,7 @@ private:
 public:
 	SBool(): _value(false) {};
 
-	SBool(bool value)
+	explicit SBool(bool value)
 	: _value(value)
 	{
 	}
@@ -44,11 +44,11 @@ public:
 		return _value;
 	}
 
-//	SBool& operator=(SBool const& tmp)
-//	{
-//		_value = tmp._value;
-//		return *this;
-//	}
+	SBool& operator=(const SBool& tmp)
+	{
+		_value = tmp._value;
+		return *this;
+	}
 
 	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
 	operator T() const
@@ -56,7 +56,7 @@ public:
 		return _value;
 	}
 
-	operator std::string() const
+	explicit operator std::string() const
 	{
 		return _value ? "true" : "false";
 	}

@@ -26,81 +26,59 @@
 #include <string>
 #include <sstream>
 
-class SStr final: public SBase
+class SStr final: public SBase, public std::string
 {
-public:
-	typedef std::string type;
-
-private:
-	type _value;
-
 public:
 	// Default-constructor
 	SStr() = default;
 
 	SStr(const std::string& value)
-	: _value(value)
+	: std::string(value)
 	{
 	}
 
 	SStr(std::string&& value)
-	: _value(std::move(value))
+	: std::string(std::move(value))
 	{
 	}
 
 	// Copy-constructor
 	SStr(const SStr& that)
-	: _value(that._value)
+	: std::string(static_cast<const std::string&>(that))
 	{
 	}
 
 	// Move-constructor
 	SStr(SStr&& that) noexcept
-	: _value(std::move(that._value))
+	: std::string(std::move(static_cast<std::string&>(that)))
 	{
 	}
 
 	// Copy-assignment
-	virtual SStr& operator=(SStr const& that)
+	SStr& operator=(SStr const& that)
 	{
-		_value = that._value;
+		static_cast<std::string&>(*this) = static_cast<const std::string&>(that);
 		return *this;
 	}
 
 	// Move-assignment
 	SStr& operator=(SStr&& that) noexcept
 	{
-		_value = std::move(that._value);
+		static_cast<std::string&>(*this) = std::move(static_cast<const std::string&>(that));
 		return *this;
-	}
-
-	// Compare
-	bool operator<(const SStr& other)
-	{
-		return _value < other._value;
-	}
-
-	void insert(uint32_t symbol)
-	{
-		_value.push_back(symbol);
 	}
 
 	const std::string& value() const
 	{
-		return _value;
+		return static_cast<const std::string&>(*this);
 	}
 
 	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
 	operator T() const
 	{
 		T ret = 0;
-		std::istringstream iss(_value);
+		std::istringstream iss(*this);
 		iss >> ret;
 		return ret;
-	}
-
-	operator std::string() const
-	{
-		return _value;
 	}
 };

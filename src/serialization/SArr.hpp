@@ -70,7 +70,7 @@ public:
 	operator std::string() const
 	{
 		std::ostringstream oss;
-		oss << "[array#" << this << "(" << size() << ")]";
-		return std::move(oss.str());
+		oss << "[array#" << this << '(' << size() << ")]";
+		return oss.str();
 	}
 };

@@ -21,92 +21,71 @@
 
 #pragma once
 
-class SBinary final: public SBase
+#include <iomanip>
+
+class SBinary final: public SBase, public std::vector<char>
 {
-public:
-	typedef std::vector<char> type;
-
-private:
-	type _value;
-
 public:
 	// Default-constructor
 	SBinary() = default;
 
-	SBinary(const void* data_, size_t size)
+	SBinary(const void* data, size_t size)
+	: std::vector<char>(reinterpret_cast<const char*>(data), reinterpret_cast<const char*>(data) + size)
 	{
-		auto data = reinterpret_cast<const char*>(data_);
-		_value.reserve(size + 1);
-		for (size_t i = 0; i < size; i++)
-		{
-			_value.push_back(data[i]);
-		}
 	}
 
 	SBinary(std::string&& value)
+	: std::vector<char>(value.begin(), value.end())
 	{
-		_value.reserve(value.length());
-		for (size_t i = 0; i < value.length(); i++)
-		{
-			_value.push_back(value[i]);
-		}
 	}
 
 	SBinary(const std::string& value)
 	{
-		_value.reserve(value.length());
-		for (size_t i = 0; i < value.length(); i++)
-		{
-			_value.push_back(value[i]);
-		}
+		reserve(value.length());
+		std::copy(value.begin(), value.end(), begin());
 	}
 
 	// Copy-constructor
 	SBinary(const SBinary& that)
-	: _value(that._value)
+	: std::vector<char>(that)
 	{
 	}
 
 	// Move-constructor
 	SBinary(SBinary&& that) noexcept
-	: _value(std::move(that._value))
+	: std::vector<char>(std::move(that))
 	{
 	}
 
 	// Copy-assignment
-	virtual SBinary& operator=(SBinary const& that)
+	SBinary& operator=(SBinary const& that)
 	{
-		_value = that._value;
+		dynamic_cast<std::vector<char>&>(*this) = dynamic_cast<const std::vector<char>&>(that);
 		return *this;
 	}
 
 	// Move-assignment
 	SBinary& operator=(SBinary&& that) noexcept
 	{
-		_value = std::move(that._value);
+		dynamic_cast<std::vector<char>&>(*this) = std::move(dynamic_cast<const std::vector<char>&>(that));
 		return *this;
-	}
-
-	const auto& value() const
-	{
-		return _value;
 	}
 
 	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
 	operator T() const
 	{
-		return _value.size();
+		return size();
 	}
 
-	operator std::string() const
+	explicit operator std::string() const
 	{
 		std::ostringstream oss;
-		oss << "[";
-		for (size_t i = 0; i < _value.size(); ++i)
+		oss << '[';
+		for (char i : *this)
 		{
-			oss << std::hex << _value[i];
+			oss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << i;
 		}
-		oss << "]";
-		return std::move(oss.str());
+		oss << ']';
+		return oss.str();
 	}
 };

@@ -57,8 +57,8 @@ private:
 		SBool vBool;
 		SInt vInt;
 		SFloat vFloat;
-		SStr vStr;
 		SBinary vBin;
+		std::string vStr;
 		std::vector<SVal> vArr;
 		std::map<std::string, SVal> vObj;
 
@@ -76,7 +76,7 @@ public:
 	template<typename T, typename std::enable_if<std::is_base_of<SBase, T>::value, void>::type* = nullptr>
 	SVal(T&& value) noexcept
 	{
-		new (&_storage) T(std::move(value));
+		new (&_storage) T(value);
 		_type = type(value);
 	}
 
@@ -87,13 +87,13 @@ public:
 		_type = type(value);
 	}
 
-	SVal(nullptr_t)
+	explicit SVal(nullptr_t)
 	{
 		new (&_storage) SNull();
 		_type = Type::Null;
 	}
 
-	SVal(bool value)
+	explicit SVal(bool value)
 	{
 		new (&_storage) SBool(value);
 		_type = Type::Bool;
@@ -115,9 +115,9 @@ public:
 		_type = Type::Float;
 	}
 
-	SVal(const char* value)
+	explicit SVal(const char* value)
 	{
-		new (&_storage) SStr(value);
+		new (&_storage) std::string(value);
 		_type = Type::String;
 	}
 
@@ -161,11 +161,11 @@ public:
 			case Type::Float:
 				new (&_storage) SFloat(that._storage.vFloat);
 				break;
-			case Type::String:
-				new (&_storage) SStr(that._storage.vStr);
-				break;
 			case Type::Binary:
 				new (&_storage) SBinary(that._storage.vBin);
+				break;
+			case Type::String:
+				new (&_storage) std::string(that._storage.vStr);
 				break;
 			case Type::Array:
 				new (&_storage) std::vector<SVal>(that._storage.vArr);
@@ -196,11 +196,11 @@ public:
 			case Type::Float:
 				new (&_storage) SFloat(that._storage.vFloat);
 				break;
-			case Type::String:
-				new (&_storage) SStr(std::move(that._storage.vStr));
-				break;
 			case Type::Binary:
 				new (&_storage) SBinary(std::move(that._storage.vBin));
+				break;
+			case Type::String:
+				new (&_storage) std::string(std::move(that._storage.vStr));
 				break;
 			case Type::Array:
 				new (&_storage) std::vector<SVal>(std::move(that._storage.vArr));
@@ -233,11 +233,11 @@ public:
 			case Type::Float:
 				new (&_storage) SFloat(that._storage.vFloat);
 				break;
-			case Type::String:
-				new (&_storage) SStr(that._storage.vStr);
-				break;
 			case Type::Binary:
 				new (&_storage) SBinary(that._storage.vBin);
+				break;
+			case Type::String:
+				new (&_storage) std::string(that._storage.vStr);
 				break;
 			case Type::Array:
 				new (&_storage) std::vector<SVal>(that._storage.vArr);
@@ -270,11 +270,11 @@ public:
 			case Type::Float:
 				new (&_storage) SFloat(that._storage.vFloat);
 				break;
-			case Type::String:
-				new (&_storage) SStr(std::move(that._storage.vStr));
-				break;
 			case Type::Binary:
 				new (&_storage) SBinary(std::move(that._storage.vBin));
+				break;
+			case Type::String:
+				new (&_storage) std::string(std::move(that._storage.vStr));
 				break;
 			case Type::Array:
 				new (&_storage) std::vector<SVal>(std::move(that._storage.vArr));
@@ -303,10 +303,10 @@ public:
 				return _storage.vInt;
 			case Type::Float:
 				return _storage.vFloat;
-			case Type::String:
-				return _storage.vStr;
 			case Type::Binary:
 				return _storage.vBin;
+			case Type::String:
+				return static_cast<const SStr&>(_storage.vStr);
 			case Type::Array:
 				return _storage.vArr.size();
 			case Type::Object:
@@ -321,28 +321,28 @@ public:
 		switch (_type)
 		{
 			case Type::Null:
-				return _storage.vNull;
+				return (std::string)_storage.vNull;
 			case Type::Bool:
-				return _storage.vBool;
+				return (std::string)_storage.vBool;
 			case Type::Integer:
-				return _storage.vInt;
+				return (std::string)_storage.vInt;
 			case Type::Float:
-				return _storage.vFloat;
+				return (std::string)_storage.vFloat;
+			case Type::Binary:
+				return (std::string)_storage.vBin;
 			case Type::String:
 				return _storage.vStr;
-			case Type::Binary:
-				return _storage.vBin;
 			case Type::Array:
 			{
 				std::ostringstream oss;
-				oss << "[array#" << this << "(" << _storage.vArr.size() << ")]";
-				return std::move(oss.str());
+				oss << "[array#" << this << '(' << _storage.vArr.size() << ")]";
+				return oss.str();
 			}
 			case Type::Object:
 			{
 				std::ostringstream oss;
-				oss << "[object#" << this << "(" << _storage.vObj.size() << ")]";
-				return std::move(oss.str());
+				oss << "[object#" << this << '(' << _storage.vObj.size() << ")]";
+				return oss.str();
 			}
 			default:
 				return std::string();
@@ -365,11 +365,11 @@ public:
 			case Type::Float:
 				_storage.vFloat.~SFloat();
 				break;
-			case Type::String:
-				_storage.vStr.~SStr();
-				break;
 			case Type::Binary:
 				_storage.vBin.~SBinary();
+				break;
+			case Type::String:
+				_storage.vStr.std::string::~basic_string();
 				break;
 			case Type::Array:
 				_storage.vArr.std::vector<SVal>::~vector();
@@ -444,8 +444,7 @@ public:
 		return _type == Type::Object;
 	}
 
-	// Representation
-	template<typename T, typename std::enable_if<std::is_base_of<SBase, T>::value, bool>::type* = nullptr>
+ 	template<typename T, typename std::enable_if<std::is_base_of<SBase, T>::value, bool>::type* = nullptr>
 	const T& as() const
 	{
 		if (type(*(T*)nullptr) == _type)
@@ -471,12 +470,11 @@ public:
 	{
 		if (_type == Type::String)
 		{
-			return _storage.vStr.value();
+			return _storage.vStr;
 		}
 		throw std::runtime_error("Value has other type");
 	}
 
-	// Representation
 	template<typename T, typename std::enable_if<std::is_base_of<SBase, T>::value, bool>::type* = nullptr>
 	T& as()
 	{
@@ -503,11 +501,15 @@ public:
 	{
 		if (_type == Type::String)
 		{
-			return _storage.vStr.value();
+			return _storage.vStr;
 		}
 		throw std::runtime_error("Value has other type");
 	}
 
+	Type type() const
+	{
+		return _type;
+	}
 
 private:
 	template<typename T>

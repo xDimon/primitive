@@ -30,7 +30,7 @@ public:
 	// Default-constructor
 	SNull() = default;
 
-	SNull(nullptr_t)
+	explicit SNull(nullptr_t)
 	{
 	}
 
@@ -40,7 +40,7 @@ public:
 		return 0;
 	}
 
-	operator std::string() const
+	explicit operator std::string() const
 	{
 		return "null";
 	}
