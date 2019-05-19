@@ -76,7 +76,7 @@ public:
 	template<typename T, typename std::enable_if<std::is_base_of<SBase, T>::value, void>::type* = nullptr>
 	SVal(T&& value) noexcept
 	{
-		new (&_storage) T(value);
+		new (&_storage) T(std::forward<T>(value));
 		_type = type(value);
 	}
 
@@ -123,7 +123,7 @@ public:
 
 	SVal(std::string&& value)
 	{
-		new (&_storage) SStr(std::move(value));
+		new (&_storage) SStr(std::forward<std::string>(value));
 		_type = Type::String;
 	}
 

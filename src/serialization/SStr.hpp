@@ -38,7 +38,7 @@ public:
 	}
 
 	SStr(std::string&& value)
-	: std::string(std::move(value))
+	: std::string(std::forward<std::string>(value))
 	{
 	}
 
