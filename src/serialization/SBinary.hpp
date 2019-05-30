@@ -83,7 +83,7 @@ public:
 		oss << '[';
 		for (char i : *this)
 		{
-			oss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << i;
+			oss << std::setw(2) << std::setfill('0') << std::hex << i;
 		}
 		oss << ']';
 		return oss.str();
