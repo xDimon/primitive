@@ -43,9 +43,9 @@ std::shared_ptr<DbConnectionPool> DbConnectionPoolFactory::create(const Setting&
 	std::string type;
 	try
 	{
-		setting.lookupValue("type", type);
+		type = setting.getAs<SStr>("type");
 	}
-	catch (const libconfig::SettingNotFoundException& exception)
+	catch (const std::exception& exception)
 	{
 		throw std::runtime_error("Bad config or type undefined");
 	}

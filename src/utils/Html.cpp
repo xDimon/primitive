@@ -61,7 +61,7 @@ std::string escape(const std::string& string)
 		}
 	}
 
-	return std::move(ret);
+	return ret;
 }
 
 }

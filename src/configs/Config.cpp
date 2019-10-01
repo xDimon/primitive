@@ -21,6 +21,9 @@
 
 #include "Config.hpp"
 
+#include <fstream>
+#include <serialization/JsonSerializer.hpp>
+
 Config::Config(const std::shared_ptr<Options>& options)
 : _options(options)
 {
@@ -29,20 +32,25 @@ Config::Config(const std::shared_ptr<Options>& options)
 		throw std::runtime_error("Bad options");
 	}
 
-	auto& configPath = _options->configFile();
-
 	try
 	{
-		libconfig::Config::readFile(configPath.c_str());
-	}
-	catch (const libconfig::ParseException& exception)
-	{
-		std::ostringstream ss;
-		ss << "Parse error at " << exception.getFile() << ":" << exception.getLine() << " - " << exception.getError();
-		throw std::runtime_error(ss.str());
+		auto& configFile = _options->configFile();
+		if (configFile.empty())
+		{
+			throw std::runtime_error("Filename of config is empty");
+		}
+
+		std::ifstream ifs(configFile);
+
+		if (!ifs.is_open())
+		{
+			throw std::runtime_error("Can't open config file '" + configFile + "' ← " + strerror(errno));
+		}
+
+		_settings = SerializerFactory::create("json")->decode(ifs).as<SObj>();
 	}
 	catch (const std::exception& exception)
 	{
-		throw std::runtime_error(std::string() + "Can't read config file: " + exception.what());
+		throw std::runtime_error(std::string() + "Can't get config ← " + exception.what());
 	}
 }

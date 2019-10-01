@@ -113,7 +113,7 @@ SObj Action::error(const std::string& message, SVal&& data) const
 
 	error.emplace("error", _actionName);
 
-	error.emplace("message", message);
+	error.emplace("messages", message);
 
 	if (!data.isUndefined())
 	{
@@ -127,7 +127,7 @@ SObj Action::error(const std::string& message, SVal&& data) const
 
 	_answerSent = true;
 
-	return std::move(error);
+	return error;
 }
 
 bool Action::doIt(const std::string& where, std::chrono::steady_clock::time_point beginExecTime)

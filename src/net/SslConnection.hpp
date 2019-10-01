@@ -56,7 +56,7 @@ public:
 	SslConnection(
 		const std::shared_ptr<Transport>& transport,
 		int fd,
-		const sockaddr_in& cliaddr,
+		const struct sockaddr& address,
 		const std::shared_ptr<SSL_CTX>& sslContext,
 		bool isOutgoing
 	);

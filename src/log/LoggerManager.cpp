@@ -22,36 +22,21 @@
 #include <stdexcept>
 #include <thread>
 #include "LoggerManager.hpp"
+#include <serialization/SArr.hpp>
 
-void LoggerManager::init(const std::shared_ptr<Config> &configs)
+void LoggerManager::init(const Setting &configs)
 {
 	auto& lm = getInstance();
 
-	const Setting* loggingSetting;
-	try
-	{
-		loggingSetting = &configs->getRoot()["logs"];
-	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
-		loggingSetting = nullptr;
-	}
-	catch (const std::exception& exception)
-	{
-		throw std::runtime_error(std::string() + "Can't get configuration ← " + exception.what());
-	}
+	std::lock_guard<std::mutex> lockGuard(lm._mutex);
 
-	if (loggingSetting != nullptr)
+	if (configs.has("sinks"))
 	{
-		std::lock_guard<std::mutex> lockGuard(lm._mutex);
-
 		try
 		{
-			const auto& settings = (*loggingSetting)["sinks"];
-
-			for (const auto& setting : settings)
+			for (const auto& [name, setting] : configs.getAs<SObj>("sinks"))
 			{
-				auto sink = std::make_shared<Sink>(setting);
+				auto sink = std::make_shared<Sink>(name, setting.as<SObj>());
 
 				if (lm._sinks.find(sink->name()) != lm._sinks.end())
 				{
@@ -61,32 +46,31 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 				lm._sinks.emplace(sink->name(), sink);
 			}
 		}
-		catch (const libconfig::SettingNotFoundException& exception)
-		{
-		}
 		catch (const std::exception& exception)
 		{
-			throw std::runtime_error(std::string() + "Can't make sink ← " + exception.what());
+			throw std::runtime_error(std::string() + "Fail configure sinks ← " + exception.what());
 		}
+	}
 
+	if (configs.has("loggers"))
+	{
 		try
 		{
-			const auto& settings = (*loggingSetting)["loggers"];
-
-			for (const auto& setting : settings)
+			for (const auto& [name, setting_] : configs.getAs<SObj>("loggers"))
 			{
-				std::string name;
-				if (!setting.lookupValue("name", name))
-				{
-					throw std::runtime_error("Not found name for one of loggers");
-				}
+				const auto& setting = setting_.as<SObj>();
+
 				if (lm._loggers.find(name) != lm._loggers.end())
 				{
 					throw std::runtime_error("Duplicate logger with name '" + name + "'");
 				}
 
 				std::string sinkname;
-				if (!setting.lookupValue("sink", sinkname))
+				try
+				{
+					sinkname = setting.getAs<SStr>("sink");
+				}
+				catch (const std::exception& exception)
 				{
 					throw std::runtime_error("Undefined sink for logger '" + name + "'");
 				}
@@ -98,9 +82,13 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 				auto sink = i->second;
 
 				std::string level;
-				if (!setting.lookupValue("level", level))
+				try
 				{
-					throw std::runtime_error("Undefined level for logger '" + level + "'");
+					level = setting.getAs<SStr>("level");
+				}
+				catch (const std::exception& exception)
+				{
+					throw std::runtime_error("Undefined level for logger '" + name + "'");
 				}
 				Log::Detail detail = Log::Detail::UNDEFINED;
 				if (level == "trace")
@@ -139,24 +127,21 @@ void LoggerManager::init(const std::shared_ptr<Config> &configs)
 				lm._loggers.emplace(name, std::make_tuple(sink, detail));
 			}
 		}
-		catch (const libconfig::SettingNotFoundException& exception)
-		{
-		}
 		catch (const std::exception& exception)
 		{
-			throw std::runtime_error(std::string() + "Invalid configuration ← " + exception.what());
+			throw std::runtime_error(std::string() + "Fail configure loggers ← " + exception.what());
 		}
+	}
+	else if (!lm._sinks.empty())
+	{
+		throw std::runtime_error(std::string() + "Configured sink(s) without anyone loggers");
 	}
 
 	{
-		std::lock_guard<std::mutex> lockGuard(lm._mutex);
-		if (lm._sinks.empty())
-		{
-			lm._sinks.emplace("", std::make_shared<Sink>());
-		}
+//		std::lock_guard<std::mutex> lockGuard(lm._mutex);
 		if (lm._loggers.empty())
 		{
-			lm._loggers.emplace("*", std::make_tuple(lm._sinks[""], Log::Detail::INFO));
+			lm._loggers.emplace("*", std::make_tuple(std::make_shared<Sink>(), Log::Detail::INFO));
 		}
 	}
 }

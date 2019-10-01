@@ -46,7 +46,7 @@ bool PacketServer::processing(const std::shared_ptr<Connection>& connection_)
 		{
 			if (connection->dataLen())
 			{
-				_log.debug("Not anough data for read packet size (%zu < 2)", connection->dataLen());
+				_log.debug("Not anough data for read messages size (%zu < 2)", connection->dataLen());
 			}
 			else
 			{
@@ -54,15 +54,15 @@ bool PacketServer::processing(const std::shared_ptr<Connection>& connection_)
 			}
 			break;
 		}
-		_log.debug("Read 2 bytes of packet size: %hu bytes", packetSize);
+		_log.debug("Read 2 bytes of messages size: %hu bytes", packetSize);
 
 		// Недостаточно данных для формирования пакета (не все данные получены)
 		if (connection->dataLen() < sizeof(packetSize) + packetSize)
 		{
-			_log.debug("Not anough data for read packet body (%zu < %hu)", connection->dataLen() - sizeof(packetSize), packetSize);
+			_log.debug("Not anough data for read messages body (%zu < %hu)", connection->dataLen() - sizeof(packetSize), packetSize);
 			break;
 		}
-		_log.debug("Read %hu bytes of packet body", packetSize);
+		_log.debug("Read %hu bytes of messages body", packetSize);
 
 		// Пропускаем байты размера пакета
 		connection->skip(sizeof(packetSize));
@@ -74,7 +74,7 @@ bool PacketServer::processing(const std::shared_ptr<Connection>& connection_)
 		connection->skip(packetSize);
 
 		std::stringstream ss;
-		ss << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Processed packet (len=" << packetSize << ")\r\n";
+		ss << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Processed messages (len=" << packetSize << ")\r\n";
 
 		// Формируем пакет
 		Packet response(ss.str().c_str(), ss.str().size());

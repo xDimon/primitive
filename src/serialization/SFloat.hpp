@@ -32,6 +32,12 @@ public:
 private:
 	type _value;
 
+protected:
+	void convertionHelper(SNum::Buffer& data) const override
+	{
+		data.i = _value;
+	}
+
 public:
 	SFloat(): _value(0) {};
 
@@ -44,12 +50,12 @@ public:
 	{
 		return _value;
 	}
-
-	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
-	operator T() const
-	{
-		return _value;
-	}
+//
+//	template<typename T, typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, void>::type* = nullptr>
+//	operator T() const
+//	{
+//		return _value;
+//	}
 
 	explicit operator std::string() const
 	{

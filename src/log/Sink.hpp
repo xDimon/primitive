@@ -26,8 +26,6 @@
 #include "Log.hpp"
 #include "../utils/Timer.hpp"
 
-#define PRE_ACCUMULATE_LOG
-
 class Sink final: public Shareable<Sink>
 {
 public:
@@ -58,7 +56,7 @@ public:
 	Sink& operator=(Sink&&) noexcept = delete; // Move-assignment
 
 	Sink();
-	explicit Sink(const Setting& setting);
+	explicit Sink(std::string  name, const Setting& setting);
 	~Sink() override;
 
 	const std::string& name() const

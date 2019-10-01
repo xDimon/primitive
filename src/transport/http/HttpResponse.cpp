@@ -20,6 +20,7 @@
 
 
 #include <sstream>
+#include <string.h>
 #include "HttpResponse.hpp"
 #include "../../server/Server.hpp"
 #include "../../utils/Time.hpp"
@@ -200,7 +201,7 @@ const char* HttpResponse::parseResponseLine(const char *string, const char *end)
 		}
 		if (*s != '\r' || *(s + 1) != '\n')
 		{
-			throw std::runtime_error("Bad status message");
+			throw std::runtime_error("Bad status messages");
 		}
 
 		if (!HttpHelper::isCrlf(s))

@@ -263,7 +263,7 @@ void SHA1::update(void *data_, size_t size)
 }
 
 /*
- * Add padding and return the message digest.
+ * Add padding and return the messages digest.
  */
 std::string SHA1::final()
 {

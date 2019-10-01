@@ -29,9 +29,9 @@ DbConnectionPool::DbConnectionPool(const Setting& setting)
 : _log("DbConnectionPool")
 {
 	std::string name;
-	if (setting.exists("name"))
+	if (setting.hasOf<SStr>("name"))
 	{
-		setting.lookupValue("name", name);
+		name = setting.getAs<SStr>("name");
 	}
 	else
 	{

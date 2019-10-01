@@ -21,29 +21,30 @@
 
 #include "Service.hpp"
 #include "ClientPart.hpp"
+#include <serialization/SArr.hpp>
 
 REGISTER_SERVICE(status)
 
 status::Service::Service(const Setting& setting)
 : ::Service(setting)
 {
-}
+	SArr partsConfig;
 
-void status::Service::activate()
-{
 	try
 	{
-		if (!_setting.exists("parts"))
+		if (!setting.has("parts"))
 		{
 			throw std::runtime_error("Not found parts' configs");
 		}
 
-		for (const auto& config : _setting["parts"])
+		for (const auto& config_ : setting.getAs<SArr>("parts"))
 		{
-			std::string type;
-			if (!config.lookupValue("type", type) || type.empty())
+			auto& config = config_.as<SObj>();
+
+			const std::string& type = config.getAs<SStr>("type");
+			if (type.empty())
 			{
-				throw std::runtime_error("Field type undefined or empty");
+				throw std::runtime_error("Field type is empty");
 			}
 
 			std::shared_ptr<ServicePart> part;
@@ -59,7 +60,35 @@ void status::Service::activate()
 
 			part->init(config);
 
-			_parts.emplace_back(part);
+			partsConfig.push_back(config);
+		}
+	}
+	catch (const std::exception& exception)
+	{
+		throw std::runtime_error("Can't set up service '" + name() + "' ← " + exception.what());
+	}
+
+	_partsConfig = std::move(partsConfig);
+}
+
+void status::Service::activate()
+{
+	try
+	{
+		for (const auto& config_ : _partsConfig)
+		{
+			auto& config = config_.as<SObj>();
+
+			const std::string& type = config.getAs<SStr>("type");
+
+			std::shared_ptr<ServicePart> part;
+
+			if (type == "client")
+			{
+				part = std::make_shared<ClientPart>(ptr());
+			}
+
+			part->init(config);
 		}
 	}
 	catch (const std::exception& exception)

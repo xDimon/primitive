@@ -56,6 +56,21 @@ private:
 		ERROR		= 255
 	} _state;
 
+	static std::string stateToString(State state)
+	{
+		switch (state)
+		{
+			case State::INIT:       { static const std::string s("INIT");       return s;}
+			case State::CONNECT:    { static const std::string s("CONNECT");    return s;}
+			case State::CONNECTED:  { static const std::string s("CONNECTED");  return s;}
+			case State::SUBMIT:     { static const std::string s("SUBMIT");     return s;}
+			case State::SUBMITED:   { static const std::string s("SUBMITED");   return s;}
+			case State::COMPLETE:   { static const std::string s("COMPLETE");   return s;}
+			case State::ERROR:      { static const std::string s("ERROR");      return s;}
+			default:                { static const std::string s("UNKNOWN");    return s; }
+		}
+	}
+
 	void onConnected();
 	void failConnect();
 	void exceptionAtConnect();
@@ -94,7 +109,7 @@ public:
 	{
 		return _error;
 	}
-	const bool hasFailed() const
+	bool hasFailed() const
 	{
 		return !_error.empty();
 	}

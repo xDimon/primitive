@@ -26,7 +26,7 @@
 #include <sys/ioctl.h>
 #include "../transport/ServerTransport.hpp"
 
-TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr_in &sockaddr, bool outgoing)
+TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr &sockaddr, bool outgoing)
 : Connection(transport)
 , _outgoing(outgoing)
 , _noRead(false)
@@ -39,12 +39,29 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 
 	_closed = _sock < 0;
 
-	memcpy(&_sockaddr, &sockaddr, sizeof(_sockaddr));
+	memcpy(&_address, &sockaddr, sizeof(_address));
 
-	char ip[64];
-	inet_ntop(AF_INET, &_sockaddr.sin_addr, ip, sizeof(ip));
+	char ip[64]{};
+	uint16_t port = 0;
+	switch (_address.sa_family)
+	{
+		case AF_INET:
+		{
+			auto ip4 = reinterpret_cast<const sockaddr_in*>(&_address)->sin_addr.s_addr;
+			inet_ntop(AF_INET, &ip4, ip, sizeof(ip));
+			port = be16toh(reinterpret_cast<const sockaddr_in*>(&_address)->sin_port);
+			break;
+		}
+		case AF_INET6:
+		{
+			auto ip6 = reinterpret_cast<const sockaddr_in6*>(&_address)->sin6_addr.__in6_u.__u6_addr8;
+			inet_ntop(AF_INET6, &ip6, ip, sizeof(ip));
+			port = be16toh(reinterpret_cast<const sockaddr_in6*>(&_address)->sin6_port);
+			break;
+		}
+	}
 
-	_name = "TcpConnection[" + std::to_string(_sock) + "][" + ip + ":" + std::to_string(htons(_sockaddr.sin_port)) + "]";
+	_name = "TcpConnection[" + std::to_string(_sock) + "][" + ip + ":" + std::to_string(port) + "]";
 
 	_log.debug("%s created", name().c_str());
 }
@@ -105,24 +122,24 @@ bool TcpConnection::processing()
 			break;
 		}
 
-		if (isReadyForWrite() && hasDataForSend())
+		if (isReadyForWrite() && !_noWrite)
 		{
 			writeToSocket();
 		}
 
-		if (isReadyForRead())
+		if (isReadyForRead() && !_noRead)
 		{
 			readFromSocket();
 		}
 
-		if (hasDataForSend())
+		if (hasDataForSend() && !_noWrite)
 		{
 			writeToSocket();
 		}
 
 		ConnectionManager::rotateEvents(this->ptr());
 	}
-	while (isReadyForRead() || (isReadyForWrite() && hasDataForSend()) || wasFailure() || timeIsOut());
+	while (isReadyForRead() || (isReadyForWrite() && hasDataForSend()) || wasFailure() || isHup() || timeIsOut());
 
 	if (_timeout)
 	{
@@ -150,6 +167,19 @@ bool TcpConnection::processing()
 		ConnectionManager::remove(ptr());
 
 		_log.debug("End processing on %s: Closed", name().c_str());
+
+		if (_timeout || _error)
+		{
+			onError();
+		}
+		else if (_noRead)
+		{
+			onComplete();
+		}
+		else
+		{
+			throw std::exception();
+		}
 		return true;
 	}
 
@@ -161,6 +191,7 @@ bool TcpConnection::processing()
 	}
 
 	_log.debug("End processing on %s: Ready", name().c_str());
+
 	return true;
 }
 
@@ -177,6 +208,15 @@ bool TcpConnection::writeToSocket()
 	for (;;)
 	{
 		std::lock_guard<std::recursive_mutex> guard(_outBuff.mutex());
+
+		// Соединение закрыто
+		if (isHup())
+		{
+			_log.trace("Socket closed on %s",  name().c_str());
+			_noWrite = true;
+			_closed = true;
+			break;
+		}
 
 		// Нечего отправлять
 		if (!hasDataForSend())
@@ -207,6 +247,8 @@ bool TcpConnection::writeToSocket()
 		}
 
 		_outBuff.skip(static_cast<size_t>(n));
+
+		_log.debug("Wrote %d bytes on %s", n, name().c_str());
 	}
 
 	return true;
@@ -219,23 +261,35 @@ bool TcpConnection::readFromSocket()
 	// Пытаемся полностью заполнить буфер
 	for (;;)
 	{
-		size_t bytes_available = 0;
-		ioctl(_sock, FIONREAD, &bytes_available);
+		size_t bytesAvailable = 0;
+		ioctl(_sock, FIONREAD, &bytesAvailable);
+
+		// Данных больше не будет
+		if (isHalfHup() || isHup())
+		{
+			_log.trace("Available final %zu bytes for reading from socket on %s", bytesAvailable, name().c_str());
+			_noRead = true;
+			if (isHup())
+			{
+				_log.trace("Socket closed on %s", name().c_str());
+				_noWrite = true;
+				_closed = true;
+			}
+		}
+		else
+		{
+			_log.trace("Available %zu bytes for reading from socket on %s", bytesAvailable, name().c_str());
+		}
 
 		// Нет данных на сокете
-		if (bytes_available == 0)
+		if (bytesAvailable == 0)
 		{
-			// И больше не будет
-			if (isHalfHup() || isHup())
-			{
-				_noRead = true;
-			}
 			break;
 		}
 
 		std::lock_guard<std::recursive_mutex> guard(_inBuff.mutex());
 
-		_inBuff.prepare(bytes_available);
+		_inBuff.prepare(bytesAvailable);
 
 		ssize_t n = ::read(_sock, _inBuff.spacePtr(), _inBuff.spaceLen());
 		if (n == -1)
@@ -270,7 +324,7 @@ bool TcpConnection::readFromSocket()
 
 		_inBuff.forward(static_cast<size_t>(n));
 
-		_log.debug("Read %d bytes (summary %d) on %s", n, _inBuff.dataLen(), name().c_str());
+		_log.debug("Read %d bytes on %s", n, name().c_str());
 	}
 
 	if (_inBuff.dataLen() > 0)

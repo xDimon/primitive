@@ -1,8 +1,8 @@
 file(GLOB_RECURSE src_files *.cpp)
 
-#message(STATUS "Found source files:")
+#messages(STATUS "Found source files:")
 #foreach(F ${src_files})
-#    message(STATUS "  ${F}")
+#    messages(STATUS "  ${F}")
 #endforeach()
 
 list(APPEND SOURCE_FILES ${src_files})

@@ -23,11 +23,7 @@
 
 std::shared_ptr<Application> Applications::add(const Setting& setting, bool replace)
 {
-	std::string appId;
-	if (!setting.lookupValue("appId", appId) || appId.empty())
-	{
-		throw std::runtime_error("Field appId undefined");
-	}
+	std::string appId = setting.getAs<SStr>("appId");
 
 	if (!replace)
 	{
@@ -52,7 +48,7 @@ std::shared_ptr<Application> Applications::add(const Setting& setting, bool repl
 
 	getInstance()._apps.emplace(application->appId(), application);
 
-	return std::move(application);
+	return application;
 }
 
 std::shared_ptr<Application> Applications::get(const std::string& appId)

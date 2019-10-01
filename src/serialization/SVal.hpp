@@ -87,7 +87,7 @@ public:
 		_type = type(value);
 	}
 
-	explicit SVal(nullptr_t)
+	explicit SVal(std::nullptr_t)
 	{
 		new (&_storage) SNull();
 		_type = Type::Null;
@@ -102,7 +102,6 @@ public:
 	template<typename T, typename std::enable_if<std::is_integral<T>::value, void>::type* = nullptr>
 	SVal(T value)
 	{
-		typename std::enable_if<std::is_integral<T>::value, bool>::type detect();
 		new (&_storage) SInt(value);
 		_type = Type::Integer;
 	}
@@ -110,7 +109,6 @@ public:
 	template<typename T, typename std::enable_if<std::is_floating_point<T>::value, void>::type* = nullptr>
 	SVal(T value)
 	{
-		typename std::enable_if<std::is_floating_point<T>::value, bool>::type detect();
 		new (&_storage) SFloat(value);
 		_type = Type::Float;
 	}
@@ -403,6 +401,13 @@ public:
 	}
 
 	template<typename T>
+	typename std::enable_if_t<std::is_same<SNum, T>::value, bool>
+	is() const
+	{
+		return _type == Type::Integer || _type == Type::Float;
+	}
+
+	template<typename T>
 	typename std::enable_if_t<std::is_same<SInt, T>::value, bool>
 	is() const
 	{
@@ -447,7 +452,7 @@ public:
  	template<typename T, typename std::enable_if<std::is_base_of<SBase, T>::value, bool>::type* = nullptr>
 	const T& as() const
 	{
-		if (type(*(T*)nullptr) == _type)
+		if (type(*reinterpret_cast<T*>(1)) == _type)
 		{
 			return *reinterpret_cast<const T*>(&_storage);
 		}
@@ -478,7 +483,7 @@ public:
 	template<typename T, typename std::enable_if<std::is_base_of<SBase, T>::value, bool>::type* = nullptr>
 	T& as()
 	{
-		if (type(*(T*)nullptr) == _type)
+		if (type(*reinterpret_cast<T*>(1)) == _type)
 		{
 			return *reinterpret_cast<T*>(&_storage);
 		}

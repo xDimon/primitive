@@ -25,9 +25,9 @@ Application::Application(const Setting& setting)
 : _isProduction(false)
 {
 	std::string type;
-	if (setting.exists("type"))
+	if (setting.has("type"))
 	{
-		setting.lookupValue("type", type);
+		setting.lookup("type", type);
 	}
 	else
 	{
@@ -36,9 +36,9 @@ Application::Application(const Setting& setting)
 	_type = std::move(type);
 
 	std::string appId;
-	if (setting.exists("appId"))
+	if (setting.has("appId"))
 	{
-		setting.lookupValue("appId", appId);
+		setting.lookup("appId", appId);
 	}
 	else
 	{
@@ -46,8 +46,8 @@ Application::Application(const Setting& setting)
 	}
 	_appId = std::move(appId);
 
-	if (setting.exists("isProduction"))
+	if (setting.has("isProduction"))
 	{
-		setting.lookupValue("isProduction", _isProduction);
+		setting.lookup("isProduction", _isProduction);
 	}
 }

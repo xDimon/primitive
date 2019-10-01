@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "../utils/Buffer.hpp"
-#include "../utils/Writer.hpp"
+#include <utils/Buffer.hpp>
+#include <utils/Writer.hpp>
 
 class WriterConnection : public Writer
 {

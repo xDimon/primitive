@@ -50,7 +50,7 @@ private:
 	std::mutex _mutex;
 
 public:
-	static std::shared_ptr<ServerTransport> add(const Setting& setting, bool replace = false);
+	static std::shared_ptr<ServerTransport> add(const std::string& name, const Setting& setting, bool replace = false);
 	static std::shared_ptr<ServerTransport> get(const std::string& name);
 	static void del(const std::string& name);
 

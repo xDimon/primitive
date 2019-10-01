@@ -23,8 +23,9 @@
 
 #include <cstddef>
 #include <string>
+#include <ostream>
 
-class Writer
+class Writer : public std::ostream
 {
 public:
 	virtual char * spacePtr() const = 0;
@@ -37,5 +38,12 @@ public:
 	inline bool write(const std::string& str)
 	{
 		return write(str.c_str(), str.length());
+	}
+
+	template<typename T>
+	Writer& operator<<(const T& object)
+	{
+		object.Serialize(*this);
+		return *this;
 	}
 };

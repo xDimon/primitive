@@ -108,7 +108,7 @@ void TaskManager::executeOne()
 		}
 	}
 
-	Task task{const_cast<Task&&>(instance._queue.top())};
+	Task task(std::move(const_cast<Task&>(instance._queue.top())));
 
 	while (!instance._queue.empty() && instance._queue.top().isDummy())
 	{

@@ -26,18 +26,16 @@ static uint32_t id4noname = 0;
 
 Service::Service(const Setting& setting)
 : _log("service[" + std::to_string(++id4noname) + "_unknown]")
-, _setting(setting)
 {
-	if (setting.exists("name"))
+	if (setting.has("name"))
 	{
-		setting.lookupValue("name", _name);
+		_name = setting.getAs<SStr>("name");
 	}
 	if (_name.empty())
 	{
-		if (setting.exists("type"))
+		if (setting.has("type"))
 		{
-			std::string type;
-			setting.lookupValue("type", type);
+			std::string type = setting.getAs<SStr>("type");
 
 			_name = "service[" + std::to_string(id4noname) + "_" + type + "]";
 		}

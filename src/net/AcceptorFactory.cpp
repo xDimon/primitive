@@ -27,34 +27,38 @@
 std::shared_ptr<AcceptorFactory::Creator> AcceptorFactory::creator(const Setting& setting)
 {
 	std::string host;
-	if (!setting.lookupValue("host", host) || host.empty())
+	try
 	{
-		throw std::runtime_error("Bad config or host undefined");
+		host = setting.getAs<SStr>("host");
+		if (host.empty())
+		{
+			throw std::runtime_error("Empty value");
+		}
+	}
+	catch (const std::exception& exception)
+	{
+		throw std::runtime_error(std::string() + "Can't get host ← " + exception.what());
 	}
 
 	uint16_t port;
 	try
 	{
-		int port0;
-		setting.lookupValue("port", port0);
+		int port0 = setting.getAs<SInt>("port");
 		if (port0 <= 0 || port0 > 0xFFFF)
 		{
-			throw std::runtime_error("Bad config: wrong port");
+			throw std::runtime_error("Wrong value");
 		}
 		port = static_cast<uint16_t>(port0);
 	}
-	catch (const libconfig::SettingNotFoundException& exception)
+	catch (const std::exception& exception)
 	{
-		throw std::runtime_error("Bad config: port undefined");
+		throw std::runtime_error(std::string() + "Can't get port ← " + exception.what());
 	}
 
 	bool secure = false;
-	try
+	if (setting.has("secure"))
 	{
-		setting.lookupValue("secure", secure);
-	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
+		setting.lookup("secure", secure);
 	}
 
 	if (secure)

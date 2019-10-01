@@ -22,6 +22,7 @@
 #pragma once
 
 #include <queue>
+#include <log/LogHolder.hpp>
 #include "../utils/Context.hpp"
 #include "../sessions/Session.hpp"
 #include "../serialization/SArr.hpp"
@@ -32,7 +33,7 @@ class LpsContext: public Context
 {
 private:
 	mutable std::recursive_mutex _mutex;
-	std::weak_ptr<ServicePart> _service;
+	std::weak_ptr<LogHolder> _logHolder;
 	std::shared_ptr<TransportContext> _context;
 	std::weak_ptr<Session> _session;
 	std::queue<SVal> _output;
@@ -53,8 +54,8 @@ public:
 	LpsContext& operator=(LpsContext&&) noexcept = delete; // Move-assignment
 
 	LpsContext(
-		const std::shared_ptr<ServicePart>& servicePart,
-		const std::shared_ptr<TransportContext>& context,
+		const std::shared_ptr<LogHolder>& logHolder,
+		std::shared_ptr<TransportContext>  context,
 		bool aggregation = false,
 		bool compression = false
 	);

@@ -50,7 +50,7 @@ private:
 	std::map<std::string, std::tuple<std::shared_ptr<Sink>, Log::Detail>> _loggers;
 
 public:
-	static void init(const std::shared_ptr<Config>& configs);
+	static void init(const Setting& configs);
 
 	static const std::tuple<std::shared_ptr<Sink>, Log::Detail>& getSinkAndLevel(const std::string& loggerName);
 	static std::shared_ptr<Sink> getSink(const std::string& sinkName);

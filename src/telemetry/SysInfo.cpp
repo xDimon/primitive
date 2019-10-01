@@ -19,10 +19,10 @@
 // SysInfo.cpp
 
 
-#include "SysInfo.hpp"
-#include "TelemetryManager.hpp"
-#include "../utils/Daemon.hpp"
-#include "../thread/TaskManager.hpp"
+#include <telemetry/SysInfo.hpp>
+#include <telemetry/TelemetryManager.hpp>
+#include <utils/Daemon.hpp>
+#include <thread/TaskManager.hpp>
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -58,6 +58,8 @@ void SysInfo::start()
 	instance._voluntaryContextSwitches		= TelemetryManager::metric("core/ipc/vol_cnt_sw", 1);
 	instance._involuntaryContextSwitches	= TelemetryManager::metric("core/ipc/invol_cnt_sw", 1);
 	instance._run = true;
+
+	instance._log.debug("Collect of system metrics is started");
 
 	TaskManager::enqueue(
 		SysInfo::collect,
@@ -146,12 +148,15 @@ void SysInfo::collect()
 	instance._prevUTime = ru.ru_utime;
 	instance._prevSTime = ru.ru_stime;
 
-	if (!Daemon::shutingdown())
+	if (Daemon::shutingdown())
 	{
-		TaskManager::enqueue(
-			SysInfo::collect,
-			std::chrono::seconds(1),
-			"Collect system metrics"
-		);
+		instance._log.debug("Collect of system metrics is stopped");
+		return;
 	}
+
+	TaskManager::enqueue(
+		SysInfo::collect,
+		std::chrono::seconds(1),
+		"Collect system metrics"
+	);
 }

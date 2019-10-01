@@ -19,25 +19,25 @@
 // Server.cpp
 
 
-#include "../net/SslAcceptor.hpp"
-#include "../thread/ThreadPool.hpp"
+#include <utils/Daemon.hpp>
+#include <log/LoggerManager.hpp>
 #include "Server.hpp"
-#include "../net/ConnectionManager.hpp"
-#include "../storage/DbManager.hpp"
-#include "../extra/Applications.hpp"
-#include "../transport/Transports.hpp"
-#include "../telemetry/SysInfo.hpp"
-#include "../services/Services.hpp"
-#include "../utils/Daemon.hpp"
-#include "../thread/TaskManager.hpp"
-#include "../log/LoggerManager.hpp"
+#include <serialization/SArr.hpp>
+#include <extra/Applications.hpp>
+#include <storage/DbManager.hpp>
+#include <transport/Transports.hpp>
+#include <services/Services.hpp>
+#include <telemetry/SysInfo.hpp>
+#include <net/ConnectionManager.hpp>
+#include <thread/TaskManager.hpp>
+#include <thread/ThreadPool.hpp>
+
 
 Server* Server::_instance = nullptr;
 
-Server::Server(const std::shared_ptr<Config>& configs)
+Server::Server(const SObj& configs)
 : _log("Server")
-, _workerCount(std::thread::hardware_concurrency())
-, _configs(configs)
+, _workerCount(0)
 {
 	if (_instance != nullptr)
 	{
@@ -50,30 +50,44 @@ Server::Server(const std::shared_ptr<Config>& configs)
 
 	try
 	{
-		const auto& settings = _configs->getRoot()["core"];
+		const auto& settings = configs.getAs<SObj>("core");
 
-		std::string timeZone;
-		if (settings.lookupValue("timeZone", timeZone) && !timeZone.empty())
+		if (settings.has("timeZone"))
 		{
-			setenv("TZ", timeZone.c_str(), 1);
-			tzset();
+			std::string timeZone;
+			settings.lookup("timeZone", timeZone);
+			if (!timeZone.empty())
+			{
+				setenv("TZ", timeZone.c_str(), 1);
+				tzset();
+			}
 		}
 
-		std::string processName;
-		if (settings.lookupValue("processName", processName) && !processName.empty())
+		if (settings.has("processName"))
 		{
-			Daemon::SetProcessName(processName);
+			std::string processName;
+			settings.lookup("processName", processName);
+			if (!processName.empty())
+			{
+				Daemon::SetProcessName(processName);
+			}
 		}
 
-		settings.lookupValue("workers", _workerCount);
-		if (_workerCount < 2)
+		if (settings.hasOf<SStr>("workers"))
 		{
-			throw std::runtime_error("Count of workers too few. Programm won't be work correctly");
+			if (settings.getAs<SStr>("workers") == "auto")
+			{
+				_workerCount = std::max<size_t>(2, std::thread::hardware_concurrency());
+			}
 		}
-	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
-		_log.warn("Core config not found");
+		if (_workerCount == 0)
+		{
+			_workerCount = settings.getAs<SInt>("workers");
+			if (_workerCount < 2)
+			{
+				throw std::runtime_error("Count of workers too few. Programm won't be work correctly");
+			}
+		}
 	}
 	catch (const std::exception& exception)
 	{
@@ -82,33 +96,28 @@ Server::Server(const std::shared_ptr<Config>& configs)
 		exit(EXIT_FAILURE);
 	}
 
-	try
+	if (configs.has("applications"))
 	{
-		const auto& settings = _configs->getRoot()["applications"];
-
-		for (const auto& setting : settings)
+		try
 		{
-			Applications::add(setting);
+			for (const auto& setting : configs.getAs<SArr>("applications"))
+			{
+				Applications::add(setting.as<SObj>());
+			}
+		}
+		catch (const std::exception& exception)
+		{
+			_log.error("Can't init one of application ← %s", exception.what());
 		}
 	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
-		_log.warn("Applications' config not found");
-	}
-	catch (const std::exception& exception)
-	{
-		_log.error("Can't init one of application ← %s", exception.what());
-	}
 
-	try
+	if (configs.has("databases"))
 	{
-		const auto& settings = _configs->getRoot()["databases"];
-
-		for (const auto& setting : settings)
+		for (const auto& setting : configs.getAs<SArr>("databases"))
 		{
 			try
 			{
-				DbManager::openPool(setting);
+				DbManager::openPool(setting.as<SObj>());
 			}
 			catch (const std::exception& exception)
 			{
@@ -116,51 +125,35 @@ Server::Server(const std::shared_ptr<Config>& configs)
 			}
 		}
 	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
-		_log.warn("Databases' config not found");
-	}
 
-	try
+	if (configs.has("transports"))
 	{
-		const auto& settings = _configs->getRoot()["transports"];
-
-		for (const auto& setting : settings)
+		for (const auto& [name, setting] : configs.getAs<SObj>("transports"))
 		{
 			try
 			{
-				Transports::add(setting);
+				Transports::add(name, setting.as<SObj>());
 			}
 			catch (const std::exception& exception)
 			{
-				_log.warn("Can't init one of transport ← %s", exception.what());
+				_log.warn("Can't init transport '%s' ← %s", name.c_str(), exception.what());
 			}
 		}
 	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
-		_log.warn("Transports' config not found");
-	}
 
-	try
+	if (configs.has("services"))
 	{
-		const auto& settings = _configs->getRoot()["services"];
-
-		for (const auto& setting : settings)
+		for (const auto& setting : configs.getAs<SArr>("services"))
 		{
 			try
 			{
-				Services::add(setting);
+				Services::add(setting.as<SObj>());
 			}
 			catch (const std::exception& exception)
 			{
 				_log.error("Can't init one of service ← %s", exception.what());
 			}
 		}
-	}
-	catch (const libconfig::SettingNotFoundException& exception)
-	{
-		_log.error("Services' config not found");
 	}
 
 	SysInfo::start();

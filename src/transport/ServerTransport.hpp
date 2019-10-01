@@ -34,6 +34,7 @@
 
 #include <memory>
 #include <functional>
+#include <arpa/inet.h>
 
 class ServerTransport : public Shareable<ServerTransport>, public Transport
 {
@@ -48,7 +49,7 @@ public:
 	ServerTransport(ServerTransport&&) noexcept = delete;
 	ServerTransport& operator=(ServerTransport&&) noexcept = delete;
 
-	explicit ServerTransport(const Setting& setting);
+	explicit ServerTransport(const std::string& name, const Setting& setting);
 	~ServerTransport() override = default;
 
 	std::shared_ptr<Metric> metricConnectCount;
@@ -56,8 +57,14 @@ public:
 	std::shared_ptr<Metric> metricAvgRequestPerSec;
 	std::shared_ptr<Metric> metricAvgExecutionTime;
 
-	virtual bool enable() final;
-	virtual bool disable() final;
+	const sockaddr& address() const;
+
+	bool isEnabled() const
+	{
+		return !_acceptor.expired();
+	}
+	bool enable();
+	bool disable();
 
 	virtual void bindHandler(const std::string& selector, const std::shared_ptr<Handler>& handler) = 0;
 	virtual void unbindHandler(const std::string& selector) = 0;
@@ -69,8 +76,9 @@ public:
 #define REGISTER_TRANSPORT(Type,Class) const Dummy Class::__dummy = \
     TransportFactory::reg(                                                                      \
         #Type,                                                                                  \
-        [](const Setting& setting){                                                             \
-            return std::shared_ptr<ServerTransport>(new Class(setting));                        \
+        [](const std::string& name, const Setting& setting)                                     \
+        {                                                                                       \
+            return std::shared_ptr<ServerTransport>(new Class(name, setting));                  \
         }                                                                                       \
     );
 
@@ -83,17 +91,17 @@ public:                                                                         
 	Class& operator=(Class&&) noexcept = delete;                                                \
                                                                                                 \
 private:                                                                                        \
-    explicit Class(const Setting& setting)                                                      \
-    : ServerTransport(setting)                                                                  \
+    explicit Class(const std::string& name, const Setting& setting)                             \
+    : ServerTransport(name, setting)                                                            \
     {                                                                                           \
         _log.setName(#Class);                                                                   \
-        _log.debug("Transport '%s' created", name().c_str());                                   \
+        _log.debug("Transport '%s' created", _name.c_str());                                    \
     }                                                                                           \
                                                                                                 \
 public:                                                                                         \
     ~Class() override                                                                           \
     {                                                                                           \
-        _log.debug("Transport '%s' destroyed", name().c_str());                                 \
+        _log.debug("Transport '%s' destroyed", _name.c_str());                                  \
     }                                                                                           \
                                                                                                 \
     bool processing(const std::shared_ptr<Connection>& connection) override;                    \

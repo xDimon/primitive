@@ -28,9 +28,9 @@ Admin::Admin(const Setting& setting)
 : Application(setting)
 {
 	std::string appKey;
-	if (setting.exists("appKey"))
+	if (setting.has("appKey"))
 	{
-		setting.lookupValue("appKey", appKey);
+		setting.lookup("appKey", appKey);
 	}
 	else
 	{

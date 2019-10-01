@@ -73,20 +73,20 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 		const auto& addr = *_addressesIterator;
 
 		// Инициализируем структуру нулями
-		memset(&_sockaddr, 0, sizeof(_sockaddr));
+		memset(&_address, 0, sizeof(_address));
 
 		// Задаем семейство сокетов (IPv4)
-		_sockaddr.sin_family = AF_INET;
+		_address.sa_family = AF_INET;
 
 		// Задаем хост
-		memcpy(&_sockaddr.sin_addr.s_addr, &addr, sizeof(_sockaddr.sin_addr.s_addr));
+		memcpy(&reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr, &addr, sizeof(reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr));
 
 		// Задаем порт
-		_sockaddr.sin_port = htons(_port);
+		reinterpret_cast<sockaddr_in*>(&_address)->sin_port = htons(_port);
 
 		// Подключаемся
 		again:
-		if (connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)) == 0)
+		if (connect(_sock, reinterpret_cast<sockaddr*>(&_address), sizeof(_address)) == 0)
 		{
 			throw std::runtime_error(std::string("Too fast connect to ") + _host);
 		}
@@ -196,20 +196,20 @@ bool TcpConnector::processing()
 		const auto& addr = *_addressesIterator;
 
 		// Инициализируем структуру нулями
-		memset(&_sockaddr, 0, sizeof(_sockaddr));
+		memset(&_address, 0, sizeof(_address));
 
 		// Задаем семейство сокетов (IPv4)
-		_sockaddr.sin_family = AF_INET;
+		reinterpret_cast<sockaddr_in*>(&_address)->sin_family = AF_INET;
 
 		// Задаем хост
-		memcpy(&_sockaddr.sin_addr.s_addr, &addr, sizeof(_sockaddr.sin_addr.s_addr));
+		memcpy(&reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr, &addr, sizeof(reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr));
 
 		// Задаем порт
-		_sockaddr.sin_port = htons(_port);
+		reinterpret_cast<sockaddr_in*>(&_address)->sin_port = htons(_port);
 
 		again:
 		// Подключаемся
-		if (connect(_sock, reinterpret_cast<sockaddr*>(&_sockaddr), sizeof(_sockaddr)) == 0)
+		if (connect(_sock, reinterpret_cast<sockaddr*>(&_address), sizeof(_address)) == 0)
 		{
 			// Подключились сразу?!
 			goto connected;
@@ -247,7 +247,7 @@ bool TcpConnector::processing()
 
 std::shared_ptr<TcpConnection> TcpConnector::createConnection(const std::shared_ptr<Transport>& transport)
 {
-	return std::make_shared<TcpConnection>(transport, _sock, _sockaddr, true);
+	return std::make_shared<TcpConnection>(transport, _sock, _address, true);
 }
 
 void TcpConnector::addConnectedHandler(std::function<void(const std::shared_ptr<TcpConnection>&)> handler)

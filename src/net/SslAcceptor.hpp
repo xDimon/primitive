@@ -40,7 +40,7 @@ public:
 	SslAcceptor(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext);
 	~SslAcceptor() override = default;
 
-	void createConnection(int sock, const sockaddr_in& cliaddr) override;
+	void createConnection(int sock, const sockaddr& cliaddr) override;
 
 	static std::shared_ptr<Connection> create(const std::shared_ptr<ServerTransport>& transport, const std::string& host, std::uint16_t port, const std::shared_ptr<SSL_CTX>& sslContext)
 	{

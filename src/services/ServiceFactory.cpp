@@ -41,11 +41,15 @@ std::shared_ptr<Service> ServiceFactory::create(const Setting& setting)
 	std::string type;
 	try
 	{
-		setting.lookupValue("type", type);
+		type = setting.getAs<SStr>("type");
+		if (type.empty())
+		{
+			throw std::runtime_error("Empty value");
+		}
 	}
-	catch (const libconfig::SettingNotFoundException& exception)
+	catch (const std::exception& exception)
 	{
-		throw std::runtime_error("Bad config or type undefined");
+		throw std::runtime_error(std::string() + "Can't get type ← " + exception.what());
 	}
 
 	auto& factory = getInstance();

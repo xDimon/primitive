@@ -34,7 +34,6 @@ class Service : public Shareable<Service>, public Named
 {
 protected:
 	mutable Log _log;
-	const Setting& _setting;
 
 	std::vector<std::shared_ptr<ServicePart>> _parts;
 

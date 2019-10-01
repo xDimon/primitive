@@ -22,9 +22,8 @@
 #pragma once
 
 #include <mutex>
+#include <netinet/in.h>
 #include "Acceptor.hpp"
-
-struct sockaddr_in;
 
 class TcpAcceptor : public Acceptor
 {
@@ -45,7 +44,7 @@ public:
 
 	void watch(epoll_event &ev) override;
 
-	virtual void createConnection(int sock, const sockaddr_in &cliaddr);
+	virtual void createConnection(int sock, const struct sockaddr& cliaddr);
 
 	bool processing() override;
 

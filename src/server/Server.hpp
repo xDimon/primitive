@@ -21,14 +21,10 @@
 
 #pragma once
 
-#include <memory>
-#include <map>
-#include "../configs/Config.hpp"
-#include "../transport/ServerTransport.hpp"
-#include "../storage/DbConnectionPool.hpp"
-#include "../services/Service.hpp"
-#include <map>
-#include "../telemetry/Metric.hpp"
+#include <thread>
+#include <mutex>
+#include <serialization/SObj.hpp>
+#include <log/Log.hpp>
 
 class Server final
 {
@@ -41,15 +37,13 @@ private:
 
 	uint32_t _workerCount;
 
-	std::shared_ptr<Config> _configs;
-
 public:
 	Server(const Server&) = delete;
 	Server& operator=(const Server&) = delete;
 	Server(Server&&) noexcept = delete;
 	Server& operator=(Server&&) noexcept = delete;
 
-	explicit Server(const std::shared_ptr<Config> &configs);
+	explicit Server(const SObj& configs);
 	~Server();
 
 	static std::string httpName()

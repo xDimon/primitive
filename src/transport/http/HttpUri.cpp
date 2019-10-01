@@ -31,6 +31,7 @@
 
 HttpUri::HttpUri()
 : _scheme(Scheme::UNDEFINED)
+, _secure(false)
 , _port(0)
 , _hasQuery(false)
 , _hasFragment(false)
@@ -39,6 +40,7 @@ HttpUri::HttpUri()
 
 HttpUri::HttpUri(const std::string& uri)
 : _scheme(Scheme::UNDEFINED)
+, _secure(false)
 , _port(0)
 , _hasQuery(false)
 , _hasFragment(false)
@@ -69,15 +71,43 @@ void HttpUri::parse(const char *string, size_t length)
 		_scheme = Scheme::UNDEFINED;
 		goto path;
 	}
+	else if (length >= 5 && strncasecmp(s, "ws://", 5) == 0)
+	{
+		_scheme = Scheme::WEBSOCKET;
+		_secure = false;
+		_port = 80;
+		s += 5;
+	}
+	else if (length >= 6 && strncasecmp(s, "wss://", 6) == 0)
+	{
+		_scheme = Scheme::WEBSOCKET;
+		_secure = true;
+		_port = 443;
+		s += 6;
+	}
+	else if (length >= 6 && strncasecmp(s, "tcp://", 6) == 0)
+	{
+		_scheme = Scheme::TCP;
+		_port = 0;
+		s += 6;
+	}
+	else if (length >= 6 && strncasecmp(s, "udp://", 6) == 0)
+	{
+		_scheme = Scheme::UDP;
+		_port = 0;
+		s += 6;
+	}
 	else if (length >= 7 && strncasecmp(s, "http://", 7) == 0)
 	{
 		_scheme = Scheme::HTTP;
+		_secure = false;
 		_port = 80;
 		s += 7;
 	}
 	else if (length >= 8 && strncasecmp(s, "https://", 8) == 0)
 	{
-		_scheme = Scheme::HTTPS;
+		_scheme = Scheme::HTTP;
+		_secure = true;
 		_port = 443;
 		s += 8;
 	}
@@ -186,15 +216,29 @@ const std::string& HttpUri::str() const
 {
 	std::stringstream ss;
 
-	if (_scheme == Scheme::HTTP) ss << "http://";
-	if (_scheme == Scheme::HTTPS) ss << "https://";
+	if (_scheme == Scheme::HTTP && !_secure) ss << "http://";
+	if (_scheme == Scheme::HTTP && _secure) ss << "https://";
+	if (_scheme == Scheme::WEBSOCKET && !_secure) ss << "ws://";
+	if (_scheme == Scheme::WEBSOCKET && _secure) ss << "wss://";
+	if (_scheme == Scheme::TCP) ss << "tcp://";
+	if (_scheme == Scheme::UDP) ss << "udp://";
 	if (_scheme == Scheme::UNDEFINED && !_host.empty()) ss << "//";
 
 	ss << _host;
 
-	if (_port != 0 && ((_scheme == Scheme::HTTP && _port != 80) || (_scheme == Scheme::HTTPS && _port != 443)))
+	if (_port != 0)
 	{
-		ss << ':' << _port;
+		if (_scheme == Scheme::HTTP || _scheme == Scheme::WEBSOCKET)
+		{
+			if ((!_secure && _port != 80) || (_secure && _port != 443))
+			{
+				ss << ':' << _port;
+			}
+		}
+		else
+		{
+			ss << ':' << _port;
+		}
 	}
 
 	ss << _path;
@@ -209,7 +253,7 @@ const std::string& HttpUri::str() const
 		ss << '#' << _fragment;
 	}
 
-	_thisAsString = std::move(ss.str());
+	_thisAsString = ss.str();
 
 	return _thisAsString;
 }

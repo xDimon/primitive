@@ -30,7 +30,7 @@ public:
 	// Default-constructor
 	SNull() = default;
 
-	explicit SNull(nullptr_t)
+	explicit SNull(std::nullptr_t)
 	{
 	}
 

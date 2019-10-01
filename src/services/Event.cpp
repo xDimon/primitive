@@ -50,7 +50,7 @@ SObj Event::event()
 		event.emplace("data", _data);
 	}
 
-	return std::move(event);
+	return event;
 }
 
 const char* Event::getName() const

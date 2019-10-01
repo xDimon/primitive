@@ -26,6 +26,7 @@
 #include <cstring>
 #include <cstdarg>
 #include <algorithm>
+#include <utility>
 
 #if __cplusplus < 201703L
 #define constexpr
@@ -40,22 +41,22 @@ static const char *levelLabel[] = {
 	"CRT"
 };
 
-const size_t Sink::accumucatorCapacity = 1<<14;
+const size_t Sink::accumucatorCapacity = 1u << 14u;
 
-Sink::Sink(const Setting& setting)
+Sink::Sink(std::string name, const Setting& setting)
+: _name(std::move(name))
+, _f(nullptr)
 {
-	_f = nullptr;
-
-	if (!setting.lookupValue("name", _name))
-	{
-		throw std::runtime_error("Not found name for one of sinks");
-	}
-
 	std::string type;
-	if (!setting.lookupValue("type", type))
+	try
 	{
-		throw std::runtime_error("Undefined type for sink '" + _name + "'");
+		type = setting.getAs<SStr>("type").value();
 	}
+	catch (const std::exception& exception)
+	{
+		throw std::runtime_error("Can't get type of sink '" + _name + "' ← " + exception.what());
+	}
+
 	if (type == "console")
 	{
 		_type = Type::CONSOLE;
@@ -70,29 +71,37 @@ Sink::Sink(const Setting& setting)
 	}
 	else
 	{
-		throw std::runtime_error("Unknown type ('" + type + "') for sink '" + _name + "'");
+		throw std::runtime_error("Unknown type ('" + type + "') of sink '" + _name + "'");
 	}
 
 	if (_type == Type::FILE)
 	{
 		std::string directory;
-		if (!setting.lookupValue("directory", directory))
+		try
 		{
-			throw std::runtime_error("Undefined directory for sink '" + _name + "'");
+			directory = setting.getAs<SStr>("directory");
+		}
+		catch (const std::exception& exception)
+		{
+			throw std::runtime_error("Can't get directory for sink '" + _name + "' ← " + exception.what());
 		}
 		if (directory.empty() || directory[0] != '/')
 		{
-			throw std::runtime_error("Invalid directory for sink '" + _name + "': path must be absolute");
+			throw std::runtime_error("Wrong directory for sink '" + _name + "' ← No absolute path");
 		}
 
 		std::string filename;
-		if (!setting.lookupValue("filename", filename))
+		try
 		{
-			throw std::runtime_error("Undefined filename for sink '" + _name + "'");
+			filename = setting.getAs<SStr>("filename");
+		}
+		catch (const std::exception& exception)
+		{
+			throw std::runtime_error("Can't get filename of sink '" + _name + "' ← " + exception.what());
 		}
 		if (filename.empty() || std::find_if(filename.begin(), filename.end(), [](const auto& s){ return s == '/'; }) != filename.end())
 		{
-			throw std::runtime_error("Invalid filename for sink '" + _name + "'");
+			throw std::runtime_error("Wrong filename of sink '" + _name + "' ← Bad filename");
 		}
 
 		_path = directory + "/" + filename;
@@ -100,7 +109,7 @@ Sink::Sink(const Setting& setting)
 
 		if (_f == nullptr)
 		{
-			throw std::runtime_error("Can't open log-file (" + _path + "): " + strerror(errno));
+			throw std::runtime_error("Can't open log-file (" + _path + ") ← " + strerror(errno));
 		}
 	}
 	else if (_type == Type::CONSOLE)
@@ -110,8 +119,9 @@ Sink::Sink(const Setting& setting)
 }
 
 Sink::Sink()
+: _type(Type::BLACKHOLE)
+, _f(nullptr)
 {
-	_type = Type::BLACKHOLE;
 }
 
 Sink::~Sink()
@@ -358,7 +368,7 @@ void Sink::rotate()
 		if (f == nullptr)
 		{
 			push(Log::Detail::INFO, "Logger", "Close logfile for rotation");
-			throw std::runtime_error("Can't reopen log-file (" + _path + "): " + strerror(errno));
+			throw std::runtime_error("Can't reopen log-file (" + _path + ") ← " + strerror(errno));
 		}
 
 		push(Log::Detail::INFO, "Logger", "Close logfile for rotation");

@@ -43,4 +43,25 @@ struct ConnectionEvent
 		if (events & static_cast<uint32_t>(Type::ERROR))	result.push_back('E');
 		return result;
 	}
+
+	static std::string epoolEventCode(uint32_t events)
+	{
+		std::string result;
+		if (events & EPOLLIN) result += "In";
+		if (events & EPOLLPRI) result += "Pri";
+		if (events & EPOLLOUT) result += "Out";
+		if (events & EPOLLERR) result += "Err";
+		if (events & EPOLLHUP) result += "Hup";
+		if (events & EPOLLRDNORM) result += "Rn";
+		if (events & EPOLLRDBAND) result += "Rb";
+		if (events & EPOLLWRNORM) result += "Wn";
+		if (events & EPOLLWRBAND) result += "Wb";
+		if (events & EPOLLMSG) result += "Msg";
+		if (events & EPOLLRDHUP) result += "Rhup";
+		if (events & EPOLLEXCLUSIVE) result += "Ex";
+		if (events & EPOLLWAKEUP) result += "Wup";
+		if (events & EPOLLONESHOT) result += "Os";
+		if (events & EPOLLET) result += "Et";
+		return result;
+	}
 };

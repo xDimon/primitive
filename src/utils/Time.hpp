@@ -68,6 +68,6 @@ Timestamp interval(Time::Interval interval, size_t number = 1);
 
 Timestamp trim(Timestamp value, Time::Interval quantity);
 
-std::string httpDate(std::time_t* ts = nullptr);
+std::string httpDate(const std::time_t* ts = nullptr);
 
 };

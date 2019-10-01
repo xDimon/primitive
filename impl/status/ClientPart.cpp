@@ -44,14 +44,16 @@ void status::ClientPart::init(const Setting& setting)
 
 	try
 	{
-		if (!setting.lookupValue("transport", _transportName) || _transportName.empty())
+		_transportName = setting.getAs<SStr>("transport");
+		if (_transportName.empty())
 		{
-			throw std::runtime_error("Field transport undefined or empty");
+			throw std::runtime_error("Field transport is empty");
 		}
 
-		if (!setting.lookupValue("uri", _uri) || _uri.empty())
+		_uri = setting.getAs<SStr>("uri");
+		if (_uri.empty())
 		{
-			throw std::runtime_error("Field uri undefined or empty");
+			throw std::runtime_error("Field uri is empty");
 		}
 
 		auto transport = Transports::get(_transportName);
@@ -256,7 +258,7 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 
 		SObj output;
 		output.emplace("status", false);
-		output.emplace("message", exception.what());
+		output.emplace("messages", exception.what());
 		std::string out(serializer->encode(output));
 
 		httpContext->transmit(out, "text/plain; charset=utf-8", true);

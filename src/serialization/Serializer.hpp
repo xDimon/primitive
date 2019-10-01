@@ -81,7 +81,7 @@ public:                                                                  \
 	Class& operator=(Class&&) noexcept = delete;                         \
                                                                          \
 private:                                                                 \
-    explicit Class(uint32_t flags): Serializer(flags) {}                 \
+    explicit Class(uint32_t flags = 0): Serializer(flags) {}             \
                                                                          \
 public:                                                                  \
     ~Class() override = default;                                         \

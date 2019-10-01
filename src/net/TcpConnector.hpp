@@ -40,8 +40,6 @@ protected:
 	std::vector<in_addr> _addresses;
 	std::vector<in_addr>::const_iterator _addressesIterator;
 
-	sockaddr_in _sockaddr;
-
 	virtual std::shared_ptr<TcpConnection> createConnection(const std::shared_ptr<Transport>& transport);
 
 	std::function<void(const std::shared_ptr<TcpConnection>&)> _connectHandler;

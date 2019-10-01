@@ -71,21 +71,21 @@ public:
 		template<typename T, typename std::enable_if<std::is_integral<T>::value, void>::type* = nullptr>
 		operator T() const
 		{
-			typename std::enable_if<std::is_integral<T>::value, bool>::type detect();
+			typename std::enable_if<std::is_integral<T>::value, void>::type{};
 			return static_cast<T>(_data ? std::atoll(_data) : 0);
 		}
 
 		template<typename T, typename std::enable_if<std::is_floating_point<T>::value, void>::type* = nullptr>
 		operator T() const
 		{
-			typename std::enable_if<std::is_floating_point<T>::value, bool>::type detect();
+			typename std::enable_if<std::is_floating_point<T>::value, void>::type{};
 			return static_cast<T>(_data ? std::atof(_data) : 0);
 		}
 
 		template<typename T, typename std::enable_if<std::is_same<std::string, T>::value, void>::type* = nullptr>
 		operator T() const
 		{
-			typename std::enable_if<std::is_same<std::string, T>::value, void>::type detect();
+			typename std::enable_if<std::is_same<std::string, T>::value, void>::type{};
 			return T(_data ? _data : "");
 		}
 	};

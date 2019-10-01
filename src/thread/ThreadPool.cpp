@@ -83,13 +83,13 @@ void ThreadPool::createThread()
 			[this,&waitUntil]
 			{
 				std::lock_guard<std::mutex> lockGuard(_counterMutex);
-				if (Daemon::shutingdown())
+				if (
+					Daemon::shutingdown() &&
+					TaskManager::empty() &&
+					_hold == 0
+				)
 				{
 					return true;
-				}
-				if (TaskManager::empty())
-				{
-					return _hold == 0;
 				}
 				waitUntil = TaskManager::waitUntil();
 
@@ -98,7 +98,7 @@ void ThreadPool::createThread()
 
 		_log.debug("Begin thread's loop");
 
-		while (!TaskManager::empty() || _hold)
+		while (!TaskManager::empty() || !Daemon::shutingdown() || _hold)
 		{
 			{
 				std::unique_lock<std::mutex> lock(_workerMutex);

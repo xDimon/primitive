@@ -25,4 +25,30 @@
 
 class SNum: public SBase
 {
+protected:
+	union Buffer
+	{
+		intmax_t i;
+		long double f;
+	};
+
+	virtual void convertionHelper(Buffer& data) const = 0;
+
+public:
+	template<typename T, typename std::enable_if<std::is_integral<T>::value, void>::type* = nullptr>
+	operator T() const
+	{
+		Buffer data{};
+		convertionHelper(data);
+		return data.i;
+	}
+
+	template<typename T, typename std::enable_if<std::is_floating_point<T>::value, void>::type* = nullptr>
+	operator T() const
+	{
+		Buffer data{};
+		convertionHelper(data);
+		return data.f;
+	}
 };
+

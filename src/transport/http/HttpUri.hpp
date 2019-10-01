@@ -28,12 +28,15 @@ class HttpUri final
 public:
 	enum class Scheme {
 		UNDEFINED,
+		TCP,
+		UDP,
 		HTTP,
-		HTTPS
+		WEBSOCKET
 	};
 
 private:
 	Scheme _scheme;
+	bool _secure;
 	std::string _host;
 	uint16_t _port;
 	std::string _path;
@@ -56,22 +59,24 @@ public:
 
 	const std::string& str() const;
 
+	bool isSecure() const
+	{
+		return _secure;
+	}
+
 	Scheme scheme() const
 	{
 		return _scheme;
 	}
-	void setScheme(Scheme scheme)
+	void setScheme(Scheme scheme, bool secure)
 	{
 		_scheme = scheme;
+		_secure = secure;
 		if (_port == 0)
 		{
-			if (_scheme == Scheme::HTTP)
+			if (_scheme == Scheme::HTTP || _scheme == Scheme::WEBSOCKET)
 			{
-				_port = 80;
-			}
-			else if (_scheme == Scheme::HTTPS)
-			{
-				_port = 443;
+				_port = _secure ? 443 : 80;
 			}
 		}
 	}

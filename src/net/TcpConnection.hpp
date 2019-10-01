@@ -27,13 +27,12 @@
 #include "WriterConnection.hpp"
 
 #include <netinet/in.h>
+#include <ostream>
 
 class TcpConnection : public Connection, public ReaderConnection, public WriterConnection
 {
 protected:
 	bool _outgoing;
-
-	sockaddr_in _sockaddr;
 
 	/// Данных больше не будет
 	bool _noRead;
@@ -55,7 +54,7 @@ public:
 	TcpConnection(TcpConnection&& tmp) noexcept = delete;
 	TcpConnection& operator=(TcpConnection&& tmp) noexcept = delete;
 
-	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr_in& cliaddr, bool outgoing);
+	TcpConnection(const std::shared_ptr<Transport>& transport, int fd, const sockaddr& cliaddr, bool outgoing);
 	~TcpConnection() override;
 
 	bool noRead() const

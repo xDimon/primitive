@@ -69,6 +69,7 @@ public:
 
 	static void hold();
 	static void unhold();
+	static bool isHolden();
 
 public:// TODO временно
 	std::mutex _contextsMutex;

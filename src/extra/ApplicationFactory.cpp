@@ -41,7 +41,8 @@ Dummy ApplicationFactory::reg(const std::string& type, std::shared_ptr<Applicati
 std::shared_ptr<Application> ApplicationFactory::create(const Setting& setting)
 {
 	std::string type;
-	if (!setting.lookupValue("type", type) || type.empty())
+	setting.lookup("type", type);
+	if (type.empty())
 	{
 		throw std::runtime_error("Type undefined");
 	}
@@ -54,5 +55,5 @@ std::shared_ptr<Application> ApplicationFactory::create(const Setting& setting)
 		throw std::runtime_error("Unknown type ('" + type + "')");
 	}
 
-	return std::move(i->second(setting));
+	return i->second(setting);
 }

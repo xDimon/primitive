@@ -21,6 +21,6 @@
 
 #pragma once
 
-#include <libconfig.h++>
+#include <serialization/SObj.hpp>
 
-typedef libconfig::Setting Setting;
+using Setting = SObj;

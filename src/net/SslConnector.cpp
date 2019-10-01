@@ -37,5 +37,5 @@ SslConnector::SslConnector(
 
 std::shared_ptr<TcpConnection> SslConnector::createConnection(const std::shared_ptr<Transport>& transport)
 {
-	return std::make_shared<SslConnection>(transport, _sock, _sockaddr, _sslContext, true);
+	return std::make_shared<SslConnection>(transport, _sock, _address, _sslContext, true);
 }

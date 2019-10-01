@@ -21,12 +21,11 @@
 
 #include "Transports.hpp"
 
-std::shared_ptr<ServerTransport> Transports::add(const Setting& setting, bool replace)
+std::shared_ptr<ServerTransport> Transports::add(const std::string& name, const Setting& setting, bool replace)
 {
-	std::string name;
-	if (!setting.lookupValue("name", name) || name.empty())
+	if (name.empty())
 	{
-		throw std::runtime_error("Field name undefined");
+		throw std::runtime_error("Empty value");
 	}
 
 	if (!replace)
@@ -38,7 +37,7 @@ std::shared_ptr<ServerTransport> Transports::add(const Setting& setting, bool re
 		}
 	}
 
-	auto entity = TransportFactory::create(setting);
+	auto entity = TransportFactory::create(name, setting);
 
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 	if (!replace)
@@ -52,7 +51,7 @@ std::shared_ptr<ServerTransport> Transports::add(const Setting& setting, bool re
 
 	getInstance()._registry.emplace(entity->name(), entity);
 
-	return std::move(entity);
+	return entity;
 }
 
 std::shared_ptr<ServerTransport> Transports::get(const std::string& name)
@@ -106,7 +105,7 @@ void Transports::disable(const std::string& name)
 bool Transports::enableAll()
 {
 	bool result = true;
-	for (auto i : getInstance()._registry)
+	for (const auto& i : getInstance()._registry)
 	{
 		result = i.second->enable() && result;
 	}
@@ -115,7 +114,7 @@ bool Transports::enableAll()
 
 void Transports::disableAll()
 {
-	for (auto i : getInstance()._registry)
+	for (const auto& i : getInstance()._registry)
 	{
 		i.second->disable();
 	}
@@ -125,7 +124,7 @@ void Transports::forEach(const std::function<void(const std::shared_ptr<ServerTr
 {
 	std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
 
-	for (auto i : getInstance()._registry)
+	for (const auto& i : getInstance()._registry)
 	{
 		handler(i.second);
 	}

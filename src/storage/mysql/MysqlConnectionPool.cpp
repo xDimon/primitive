@@ -37,17 +37,17 @@ MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 		throw std::runtime_error("MySQL library isn't ready");
 	}
 
-	if (setting.exists("dbsocket"))
+	if (setting.hasOf<SStr>("dbsocket"))
 	{
-		setting.lookupValue("dbsocket", _dbsocket);
+		_dbsocket = setting.getAs<SStr>("dbsocket");
 	}
-	else if (setting.exists("dbserver"))
+	else if (setting.hasOf<SStr>("dbserver"))
 	{
-		setting.lookupValue("dbserver", _dbserver);
+		_dbserver = setting.getAs<SStr>("dbserver");
 
-		if (setting.exists("dbport"))
+		if (setting.has("dbport"))
 		{
-			setting.lookupValue("dbport", _dbport);
+			setting.lookup("dbport", _dbport);
 		}
 		else
 		{
@@ -59,46 +59,46 @@ MysqlConnectionPool::MysqlConnectionPool(const Setting& setting)
 		throw std::runtime_error(std::string("Undefined dbserver/dbsocket for dbpool '") + name() + "'");
 	}
 
-	if (setting.exists("dbname"))
+	if (setting.hasOf<SStr>("dbname"))
 	{
-		setting.lookupValue("dbname", _dbname);
+		_dbname = setting.getAs<SStr>("dbname");
 	}
 	else
 	{
 		throw std::runtime_error(std::string("Undefined dbname for dbpool '") + name() + "'");
 	}
 
-	if (setting.exists("dbuser"))
+	if (setting.hasOf<SStr>("dbuser"))
 	{
-		setting.lookupValue("dbuser", _dbuser);
+		_dbuser = setting.getAs<SStr>("dbuser");
 	}
 	else
 	{
 		throw std::runtime_error(std::string("Undefined dbuser for dbpool '") + name() + "'");
 	}
 
-	if (setting.exists("dbpass"))
+	if (setting.hasOf<SStr>("dbpass"))
 	{
-		setting.lookupValue("dbpass", _dbpass);
+		_dbpass = setting.getAs<SStr>("dbpass");
 	}
 	else
 	{
 		throw std::runtime_error(std::string("Undefined dbpass for dbpool '") + name() + "'");
 	}
 
-	if (setting.exists("async"))
+	if (setting.has("async"))
 	{
-		setting.lookupValue("async", _async);
+		setting.lookup("async", _async);
 	}
 
-	if (setting.exists("dbcharset"))
+	if (setting.hasOf<SStr>("dbcharset"))
 	{
-		setting.lookupValue("dbcharset", _charset);
+		_charset = setting.getAs<SStr>("dbcharset");
 	}
 
-	if (setting.exists("dbtimezone"))
+	if (setting.hasOf<SStr>("dbtimezone"))
 	{
-		setting.lookupValue("dbtimezone", _timezone);
+		_timezone = setting.getAs<SStr>("dbtimezone");
 	}
 }
 

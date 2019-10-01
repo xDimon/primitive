@@ -20,18 +20,20 @@
 
 
 #include "LpsContext.hpp"
+
+#include <utility>
 #include "http/HttpContext.hpp"
 #include "websocket/WsContext.hpp"
 #include "../compression/CompressorFactory.hpp"
 
 LpsContext::LpsContext(
-	const std::shared_ptr<ServicePart>& servicePart,
-	const std::shared_ptr<TransportContext>& context,
+	const std::shared_ptr<LogHolder>& logHolder,
+	std::shared_ptr<TransportContext> context,
 	bool aggregation,
 	bool compression
 )
-: _service(servicePart)
-, _context(context)
+: _logHolder(logHolder)
+, _context(std::move(context))
 , _aggregation(aggregation)
 , _compression(compression)
 , _close(false)
@@ -96,8 +98,8 @@ void LpsContext::resetSession()
 SVal LpsContext::recv()
 {
 	static Log log_("_lpsContext");
-	auto service = _service.lock();
-	Log& log = service ? service->log() : log_;
+	auto logHolder = _logHolder.lock();
+	Log& log = logHolder ? logHolder->log() : log_;
 
 	std::string in;
 
@@ -209,7 +211,7 @@ void LpsContext::out(SVal value, bool close)
 void LpsContext::send()
 {
 	static Log log_("_lpsContext");
-	auto service = _service.lock();
+	auto service = _logHolder.lock();
 	Log& log = service ? service->log() : log_;
 
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);

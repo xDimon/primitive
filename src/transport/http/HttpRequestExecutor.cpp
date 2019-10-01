@@ -52,7 +52,7 @@ HttpRequestExecutor::~HttpRequestExecutor()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::ERROR && _state != State::COMPLETE)
 	{
-		_log.warn("Destruct when step: %d", static_cast<int>(_state));
+		_log.warn("Destruct on step '" + std::to_string(static_cast<int>(_state)) + "'");
 	}
 }
 
@@ -82,7 +82,7 @@ void HttpRequestExecutor::operator()()
 	{
 		_state = State::CONNECT;
 
-		if (_uri.scheme() == HttpUri::Scheme::HTTPS)
+		if (_uri.isSecure())
 		{
 			auto context = SslHelper::getClientContext();
 			_connector = std::make_shared<SslConnector>(_clientTransport, _uri.host(), _uri.port(), context);
@@ -110,7 +110,7 @@ void HttpRequestExecutor::operator()()
 		_connector->addErrorHandler(
 			[wp = std::weak_ptr<HttpRequestExecutor>(ptr())]
 			{
-				auto iam = std::dynamic_pointer_cast<HttpRequestExecutor>(wp.lock());
+				auto iam = wp.lock();
 				if (iam)
 				{
 					iam->_connector.reset();
@@ -370,6 +370,8 @@ void HttpRequestExecutor::onComplete()
 		onError();
 		return;
 	}
+
+	_connection->setTtl(std::chrono::seconds(10));
 
 	_error.clear();
 

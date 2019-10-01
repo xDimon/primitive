@@ -20,6 +20,7 @@
 
 
 #include <unistd.h>
+#include <cstring>
 #include "Connection.hpp"
 #include "ConnectionManager.hpp"
 
@@ -29,6 +30,7 @@ Connection::Connection(const std::shared_ptr<Transport>& transport)
 : _log("Connection")
 , _transport(transport)
 , _sock(-1)
+, _address{}
 , _timeout(false)
 , _closed(true)
 , _error(false)
@@ -64,6 +66,8 @@ void Connection::setTtl(std::chrono::milliseconds ttl)
 			"Timeout to close connection"
 		);
 	}
+
+//	Log("DEBUG").trace("> Restart timer on " + _name + " for " + std::to_string(ttl.count()));
 
 	_timeoutForClose->restart(ttl);
 }

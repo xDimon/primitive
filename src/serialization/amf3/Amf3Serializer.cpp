@@ -194,8 +194,8 @@ void Amf3Serializer::decodeMessages(Amf3Context& ctx)
 
 		auto messageBody = decodeValue(ctx);
 
-//		var message = new a3d.AMFMessage(targetURI, responseURI, messageBody);
-//		response.messages.push(message);
+//		var messages = new a3d.AMFMessage(targetURI, responseURI, messageBody);
+//		response.messages.push(messages);
 	}
 }
 
@@ -419,7 +419,7 @@ SVal Amf3Serializer::decodeObject(Amf3Context& ctx)
 		}
 		catch (const Amf3Exeption& exception)
 		{
-			throw Amf3Exeption(std::string("Can't parse key of object field (prev field: " + prevKey + ") ← ") + exception.what());
+			throw Amf3Exeption(std::string() + "Can't parse key of object field (prev field: " + prevKey + ") ← " + exception.what());
 		}
 
 		if (key.empty())

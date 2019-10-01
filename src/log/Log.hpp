@@ -21,9 +21,6 @@
 
 #pragma once
 
-#define LOG_TRACE_ON
-#define LOG_DEBUG_ON
-
 #include <string>
 #include <thread>
 
@@ -43,6 +40,8 @@ public:
 		OFF,
 		UNDEFINED
 	};
+
+	static constexpr Detail minimalDetalizationLevel = Detail::TRACE;
 
 private:
 	std::string _name;

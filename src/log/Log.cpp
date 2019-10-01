@@ -43,8 +43,6 @@ Log::Log(const std::string& name, Detail detail, const std::string& sink)
 		_detail = detail;
 	}
 
-//	module = nullptr;
-
 	setName(name);
 }
 
@@ -57,71 +55,79 @@ void Log::setName(const std::string& name)
 {
 	_name = name;
 	_name.resize(18, ' ');
-
-//	_sink->trace().Register_Module(name.c_str(), &module);
 }
 
 void Log::trace(const std::string& message)
 {
-#if defined(LOG_TRACE_ON)
-	if (_detail == Detail::TRACE)
+	if constexpr (minimalDetalizationLevel <= Detail::TRACE)
 	{
-		_sink->push(Detail::TRACE, _name, message);
+		if (_detail == Detail::TRACE)
+		{
+			_sink->push(Detail::TRACE, _name, message);
+		}
 	}
-#endif // defined(LOG_TRACE_ON)
 }
 
 void Log::trace(const char* fmt, ...)
 {
-#if defined(LOG_TRACE_ON)
-	if (_detail == Detail::TRACE)
+	if constexpr (minimalDetalizationLevel <= Detail::TRACE)
 	{
-		va_list ap;
-		va_start(ap, fmt);
-		_sink->push(Detail::TRACE, _name, fmt, ap);
+		if (_detail == Detail::TRACE)
+		{
+			va_list ap;
+			va_start(ap, fmt);
+			_sink->push(Detail::TRACE, _name, fmt, ap);
+		}
 	}
-#endif // defined(LOG_TRACE_ON)
 }
 
 void Log::debug(const std::string& message)
 {
-#if defined(LOG_DEBUG_ON)
-	if (_detail <= Detail::DEBUG)
+	if constexpr (minimalDetalizationLevel <= Detail::DEBUG)
 	{
-		_sink->push(Detail::DEBUG, _name, message);
+		if (_detail <= Detail::DEBUG)
+		{
+			_sink->push(Detail::DEBUG, _name, message);
+		}
 	}
-#endif // defined(LOG_DEBUG_ON)
 }
 
 void Log::debug(const char* fmt, ...)
 {
-#if defined(LOG_DEBUG_ON)
-	if (_detail <= Detail::DEBUG)
+	if constexpr (minimalDetalizationLevel <= Detail::DEBUG)
 	{
-		va_list ap;
-		va_start(ap, fmt);
-		_sink->push(Detail::DEBUG, _name, fmt, ap);
-		va_end(ap);
+		if (_detail <= Detail::DEBUG)
+		{
+			va_list ap;
+			va_start(ap, fmt);
+			_sink->push(Detail::DEBUG, _name, fmt, ap);
+			va_end(ap);
+		}
 	}
-#endif // defined(LOG_DEBUG_ON)
 }
 
 void Log::info(const std::string& message)
 {
-	if (_detail <= Detail::INFO)
+	if constexpr (minimalDetalizationLevel <= Detail::INFO)
 	{
-		_sink->push(Detail::INFO, _name, message);
+		if (_detail <= Detail::INFO)
+		{
+			_sink->push(Detail::INFO, _name, message);
+		}
 	}
 }
 
 void Log::info(const char* fmt, ...)
 {
-	if (_detail <= Detail::INFO)
+	if constexpr (minimalDetalizationLevel <= Detail::INFO)
 	{
-		va_list ap;
-		va_start(ap, fmt);
-		_sink->push(Detail::INFO, _name, fmt, ap);
-		va_end(ap);
+		if (_detail <= Detail::INFO)
+		{
+			va_list ap;
+			va_start(ap, fmt);
+			_sink->push(Detail::INFO, _name, fmt, ap);
+			va_end(ap);
+		}
 	}
 }
 

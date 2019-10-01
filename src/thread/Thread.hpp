@@ -92,7 +92,8 @@ public:
 
 	inline auto name() const
 	{
-		return (this != nullptr) ? _name : std::string("MainThread");
+		auto ptr = this;
+		return (ptr != nullptr) ? _name : std::string("MainThread");
 	}
 
 	// Кладем указатель на контекст в буффер потока

@@ -138,7 +138,7 @@ void ConnectionManager::watch(const std::shared_ptr<Connection>& connection)
 	}
 	else
 	{
-		getInstance()._log.trace("Modify watching on %s", connection->name().c_str());
+		getInstance()._log.trace("Set watching for '%s' on %s", ConnectionEvent::epoolEventCode(ev.events).c_str(), connection->name().c_str());
 	}
 }
 
@@ -251,7 +251,7 @@ void ConnectionManager::wait()
 			events |= static_cast<uint32_t>(ConnectionEvent::Type::ERROR);
 		}
 
-		_log.trace("Catch events `%s` (%04x) on %s", ConnectionEvent::code(events).c_str(), fdEvent, connection->name().c_str());
+		_log.trace("Catch events `%s` (as '%s') on %s", ConnectionEvent::code(events).c_str(), ConnectionEvent::epoolEventCode(fdEvent).c_str(), connection->name().c_str());
 
 		connection->appendEvents(events);
 
@@ -337,7 +337,7 @@ std::shared_ptr<Connection> ConnectionManager::capture()
 
 	connection->setCaptured();
 
-	return std::move(connection);
+	return connection;
 }
 
 /// Освободить соединение
@@ -380,7 +380,7 @@ void ConnectionManager::dispatch()
 					return;
 				}
 
-				getInstance()._log.trace("Begin processing on %s", connection->name().c_str());
+				getInstance()._log.trace("Enter to processing on %s", connection->name().c_str());
 
 				bool status;
 				try
@@ -400,7 +400,7 @@ void ConnectionManager::dispatch()
 
 				getInstance().release(connection);
 
-				getInstance()._log.trace("End processing on %s: %s", connection->name().c_str(), status ? "success" : "fail");
+				getInstance()._log.trace("Return from processing on %s: %s", connection->name().c_str(), status ? "success" : "fail");
 			},
 			"Dispatch event on Connection"
 		);

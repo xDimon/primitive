@@ -27,7 +27,7 @@ namespace Time
 std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 std::chrono::steady_clock::time_point stStartTime = std::chrono::steady_clock::now();
 
-std::string httpDate(std::time_t* ts_)
+std::string httpDate(const std::time_t* ts_)
 {
 	std::time_t ts;
 	if (ts_)
@@ -44,7 +44,7 @@ std::string httpDate(std::time_t* ts_)
 	char buff[40];
 	std::strftime(buff, sizeof(buff), "%a, %d %b %Y %H:%M:%S %Z", &tm);
 
-	return std::move(std::string(buff));
+	return buff;
 }
 
 Timestamp interval(Time::Interval interval, size_t number)
@@ -76,7 +76,7 @@ Timestamp interval(Time::Interval interval, size_t number)
 
 			localtime_r(&ts, &tm);
 
-			tm.tm_mon += ((number!=0) ? number : 1);
+			tm.tm_mon += number != 0 ? number : 1ul;
 
 			time_t ts2 = mktime(&tm);
 			ts2 += tm.tm_gmtoff;
@@ -91,7 +91,7 @@ Timestamp interval(Time::Interval interval, size_t number)
 
 			localtime_r(&ts, &tm);
 
-			tm.tm_year += ((number!=0) ? number : 1);
+			tm.tm_year += number != 0 ? number : 1ul;
 
 			time_t ts2 = mktime(&tm);
 			ts2 += tm.tm_gmtoff;

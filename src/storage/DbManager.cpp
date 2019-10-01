@@ -26,11 +26,15 @@ std::shared_ptr<DbConnectionPool> DbManager::openPool(const Setting& setting, bo
 	std::string name;
 	try
 	{
-		setting.lookupValue("name", name);
+		name = setting.getAs<SStr>("name");
+		if (name.empty())
+		{
+			throw std::runtime_error("Empty value");
+		}
 	}
-	catch (const libconfig::SettingNotFoundException& exception)
+	catch (const std::exception& exception)
 	{
-		throw std::runtime_error("Bad config or name undefined");
+		throw std::runtime_error(std::string() + "Can't get name ← " + exception.what());
 	}
 
 	if (!replace)

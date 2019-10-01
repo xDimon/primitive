@@ -48,9 +48,9 @@ void MysqlAsyncConnection::implWait(bool isNew)
 					ConnectionManager::watch(iam->_helper);
 				}
 			);
-			auto& alarm = *holder;
-
-			// Выполняем асинхронно
+//			auto& alarm = *holder;
+//
+//			// Выполняем асинхронно
 //			Thread::self()->yield(alarm);
 
 			pool->log().warn("Return implWait #%zu (new)", id);
@@ -68,9 +68,9 @@ void MysqlAsyncConnection::implWait(bool isNew)
 					ConnectionManager::watch(_helper);
 				}
 			);
-			auto& alarm = *holder;
-
-			// Выполняем асинхронно
+//			auto& alarm = *holder;
+//
+//			// Выполняем асинхронно
 //			Thread::self()->yield(alarm);
 
 			pool->attachDbConnection(DbConnection::ptr());

@@ -29,6 +29,11 @@ REGISTER_SERIALIZER(json, JsonSerializer);
 
 SVal JsonSerializer::decode(std::istream& is)
 {
+	if (is.bad())
+	{
+		throw JsonParseExeption("Can't get data");
+	}
+
 	if (is.eof())
 	{
 		throw JsonParseExeption("No data for parsing");

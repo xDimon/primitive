@@ -23,12 +23,13 @@
 
 #include <memory>
 #include "Options.hpp"
-#include <libconfig.h++>
+#include <serialization/SObj.hpp>
 
-class Config: public libconfig::Config
+class Config
 {
 private:
 	std::shared_ptr<Options> _options;
+	SObj _settings;
 
 public:
 	Config(const Config&) = delete;
@@ -37,5 +38,11 @@ public:
 	Config& operator=(Config&&) noexcept = delete;
 
 	explicit Config(const std::shared_ptr<Options>& options);
-	~Config() override = default;
+	~Config() = default;
+
+	[[nodiscard]]
+	const SObj& settings() const
+	{
+		return _settings;
+	}
 };

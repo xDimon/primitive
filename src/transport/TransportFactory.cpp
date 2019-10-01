@@ -22,7 +22,7 @@
 #include "TransportFactory.hpp"
 #include <iostream>
 
-Dummy TransportFactory::reg(const std::string& type, std::shared_ptr<ServerTransport> (* creator)(const Setting&))
+Dummy TransportFactory::reg(const std::string& type, std::shared_ptr<ServerTransport> (* creator)(const std::string&, const Setting&))
 {
 	auto& factory = getInstance();
 
@@ -36,16 +36,20 @@ Dummy TransportFactory::reg(const std::string& type, std::shared_ptr<ServerTrans
 	return Dummy{};
 }
 
-std::shared_ptr<ServerTransport> TransportFactory::create(const Setting& setting)
+std::shared_ptr<ServerTransport> TransportFactory::create(const std::string& name, const Setting& setting)
 {
 	std::string type;
 	try
 	{
-		setting.lookupValue("type", type);
+		type = setting.getAs<SStr>("type");
+		if (type.empty())
+		{
+			throw std::runtime_error("Empty value");
+		}
 	}
-	catch (const libconfig::SettingNotFoundException& exception)
+	catch (const std::exception& exception)
 	{
-		throw std::runtime_error("Bad config or transport type undefined");
+		throw std::runtime_error(std::string() + "Can't get transport type ← " + exception.what());
 	}
 
 	auto& factory = getInstance();
@@ -55,5 +59,5 @@ std::shared_ptr<ServerTransport> TransportFactory::create(const Setting& setting
 	{
 		throw std::runtime_error("Unknown transport type");
 	}
-	return i->second(setting);
+	return i->second(name, setting);
 }

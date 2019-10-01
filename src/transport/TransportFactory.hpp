@@ -46,9 +46,12 @@ private:
 		return instance;
 	}
 
-	std::map<std::string, std::shared_ptr<ServerTransport>(*)(const Setting &setting)> _creators;
+	std::map<std::string, std::shared_ptr<ServerTransport>(*)(
+		const std::string& name,
+		const Setting &setting
+	)> _creators;
 
 public:
-	static Dummy reg(const std::string& type, std::shared_ptr<ServerTransport>(*)(const Setting &setting));
-	static std::shared_ptr<ServerTransport> create(const Setting& setting);
+	static Dummy reg(const std::string& type, std::shared_ptr<ServerTransport>(*)(const std::string& name, const Setting &setting));
+	static std::shared_ptr<ServerTransport> create(const std::string& name, const Setting& setting);
 };

@@ -47,37 +47,36 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 
 	setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
 
-	sockaddr_in servaddr{};
-	socklen_t addrlen = sizeof(sockaddr_in);
+	socklen_t addrlen = sizeof(sockaddr);
 
 	// Инициализируем структуру нулями
-	memset(&servaddr, 0, sizeof(servaddr));
+	memset(&_address, 0, sizeof(_address));
 
 	// Задаем семейство сокетов (IPv4)
-	servaddr.sin_family = AF_INET;
+	_address.sa_family = AF_INET;
 
 	// Задаем хост
 	if (!_host.empty())
 	{
-		if (inet_aton(_host.c_str(), &servaddr.sin_addr) == 0)
+		if (inet_pton(reinterpret_cast<sockaddr_in*>(&_address)->sin_family, _host.c_str(), &reinterpret_cast<sockaddr_in*>(&_address)->sin_addr) == 0)
 		{
 			_log.debug("Can't convert host to binary IPv4 address (error '%s'). I'll use universal address.", strerror(errno));
 
 			// Задаем хост (INADDR_ANY - универсальный)
-			servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+			reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr = htonl(INADDR_ANY);
 		}
 	}
 	else
 	{
 		// Задаем хост (INADDR_ANY - универсальный)
-		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr = htonl(INADDR_ANY);
 	}
 
 	// Задаем порт
-	servaddr.sin_port = htons(_port);
+	reinterpret_cast<sockaddr_in*>(&_address)->sin_port = htons(_port);
 
 	// Связываем сокет с локальным адресом протокола
-	if (bind(_sock, (struct sockaddr *) &servaddr, addrlen) != 0)
+	if (bind(_sock, &_address, addrlen) != 0)
 	{
 		throw std::runtime_error(std::string("Can't bind socket ← ") + strerror(errno));
 	}
@@ -134,11 +133,11 @@ bool TcpAcceptor::processing()
 			throw std::runtime_error("Error on TcpAcceptor");
 		}
 
-		sockaddr_in cliaddr{};
+		sockaddr cliaddr{};
 		socklen_t clilen = sizeof(cliaddr);
 		memset(&cliaddr, 0, clilen);
 
-		int sock = ::accept(fd(), (sockaddr *)&cliaddr, &clilen);
+		int sock = ::accept(fd(), &cliaddr, &clilen);
 		if (sock == -1)
 		{
 			// Вызов прерван сигналом - повторяем
@@ -178,7 +177,7 @@ bool TcpAcceptor::processing()
 	}
 }
 
-void TcpAcceptor::createConnection(int sock, const sockaddr_in &cliaddr)
+void TcpAcceptor::createConnection(int sock, const struct sockaddr &cliaddr)
 {
 	auto transport = std::dynamic_pointer_cast<ServerTransport>(_transport.lock());
 	if (!transport)

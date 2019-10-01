@@ -31,6 +31,7 @@
 #include "ConnectionEvent.hpp"
 #include "../utils/Timer.hpp"
 #include <unistd.h>
+#include <arpa/inet.h>
 
 class Connection: public Shareable<Connection>, public Named
 {
@@ -46,6 +47,8 @@ protected:
 	std::shared_ptr<Context> _context;
 
 	int _sock;
+
+	sockaddr _address;
 
 	/// Соединение готово
 	bool _ready;
@@ -75,6 +78,11 @@ public:
 	inline int fd() const
 	{
 		return _sock;
+	}
+
+	const sockaddr& address() const
+	{
+		return _address;
 	}
 
 	void setTtl(std::chrono::milliseconds ttl);
@@ -141,7 +149,6 @@ public:
 		_postponedEvents = 0;
 		return _events;
 	}
-
 
 	inline bool isReadyForRead() const
 	{

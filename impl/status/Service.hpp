@@ -24,6 +24,7 @@
 #include "../../src/services/Service.hpp"
 
 #include <set>
+#include <serialization/SArr.hpp>
 
 namespace status
 {
@@ -31,6 +32,7 @@ namespace status
 class Service : public ::Service
 {
 DECLARE_SERVICE();
+	SArr _partsConfig;
 };
 
 }

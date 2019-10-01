@@ -19,9 +19,9 @@ get_directory_property(hasParent PARENT_DIRECTORY)
 # Подключаем внешние модули cmake
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/)
 
-#message(STATUS "Module paths:")
+#messages(STATUS "Module paths:")
 #foreach(F ${CMAKE_MODULE_PATH})
-#    message(STATUS "  ${F}")
+#    messages(STATUS "  ${F}")
 #endforeach()
 
 # Включаем использование ccache, если установлен
@@ -34,14 +34,15 @@ else ()
 endif ()
 
 # Выбираем стандарт С++
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -rdynamic -O0 -g")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O0 -g")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -rdynamic -O0 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O0 -g")
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
 
 if (NOT PROJECT_NAME)
     set(PROJECT_NAME ${CODENAME})
@@ -80,14 +81,6 @@ list(APPEND "${CODENAME}_LIBRARIES" ${CMAKE_THREAD_LIBS_INIT})
 # Подключаем cxxopts
 list(APPEND "${CODENAME}_INCLUDES" ${CMAKE_CURRENT_SOURCE_DIR}/lib/cxxopts/include)
 
-# Подключаем libconfig++
-find_package(Libconfig++)
-if (NOT LIBCONFIG++_FOUND)
-    message(FATAL_ERROR "libconfig++ not found")
-endif ()
-list(APPEND "${CODENAME}_INCLUDES" ${LIBCONFIG++_INCLUDE_DIR})
-list(APPEND "${CODENAME}_LIBRARIES" ${LIBCONFIG++_LIBRARIES})
-
 # Подключаем openssl
 find_package(OpenSSL)
 if (NOT OPENSSL_FOUND)
@@ -120,15 +113,17 @@ else()
     list(APPEND "${CODENAME}_LIBRARIES" ${PROTOBUF_LIBRARIES})
 endif ()
 
-#message(STATUS "Project includes:")
+list(APPEND "${CODENAME}_INCLUDES" ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+#messages(STATUS "Project includes:")
 foreach(F ${${CODENAME}_INCLUDES})
-#	message(STATUS "  ${F}")
+#	messages(STATUS "  ${F}")
 	include_directories(${F})
 endforeach()
 
-#message(STATUS "Project libraries:")
+#messages(STATUS "Project libraries:")
 #foreach(F ${${CODENAME}_LIBRARIES})
-#	message(STATUS "  ${F}")
+#	messages(STATUS "  ${F}")
 #endforeach()
 
 add_subdirectory(src)

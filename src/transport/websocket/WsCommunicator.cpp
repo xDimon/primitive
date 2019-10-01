@@ -68,7 +68,7 @@ void WsCommunicator::operator()()
 	{
 		_state = State::CONNECT;
 
-		if (_uri.scheme() == HttpUri::Scheme::HTTPS)
+		if (_uri.isSecure())
 		{
 			auto context = SslHelper::getClientContext();
 			_connector = std::make_shared<SslConnector>(_websocketClient, _uri.host(), _uri.port(), context);
@@ -317,7 +317,8 @@ void WsCommunicator::onComplete()
 	std::lock_guard<std::recursive_mutex> lockGuard(_mutex);
 	if (_state != State::SUBMITED)
 	{
-		_log.warn("Bad step: complete");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at onComplete(), but expected "
+			"SUBMITED(" + std::to_string(static_cast<int>(State::SUBMITED)) + ")");
 		return;
 	}
 
@@ -338,15 +339,22 @@ void WsCommunicator::onError()
 		_state != State::CONNECTED &&
 		_state != State::SUBMIT &&
 		_state != State::SUBMITED
-		)
+	)
 	{
-		_log.warn("Bad step: onError");
+		badStep("Step " + std::to_string(static_cast<int>(_state)) + " at onError(), but expected "
+			"CONNECTED(" + std::to_string(static_cast<int>(State::CONNECTED)) + "), "
+			"SUBMIT(" + std::to_string(static_cast<int>(State::SUBMIT)) + "), "
+			"SUBMITED(" + std::to_string(static_cast<int>(State::SUBMITED)) + ")");
 		return;
 	}
 
 	_log.trace("Error at processing");
 
 	_state = State::ERROR;
+	if (_error.empty())
+	{
+		_error = "Error at processing";
+	}
 
 	_connection->setTtl(std::chrono::milliseconds(50));
 
@@ -381,7 +389,6 @@ void WsCommunicator::done()
 	{
 		_connection.reset();
 	}
-
 	_connector.reset();
 
 	_log.trace("Done");

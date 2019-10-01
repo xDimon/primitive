@@ -25,22 +25,14 @@
 #include "../thread/ThreadPool.hpp"
 #include "../telemetry/TelemetryManager.hpp"
 
-static uint32_t id4noname = 0;
-
-ServerTransport::ServerTransport(const Setting& setting)
+ServerTransport::ServerTransport(const std::string& name, const Setting& setting)
 {
-	std::string name;
-	if (setting.exists("name"))
-	{
-		setting.lookupValue("name", name);
-	}
+	_name = name;
 
-	if (name.empty())
+	if (_name.empty())
 	{
-		name = "server[" + std::to_string(++id4noname) + "_unknown]";
+		throw std::runtime_error("Empty name");
 	}
-
-	_name = std::move(name);
 
 	_acceptorCreator = AcceptorFactory::creator(setting);
 
@@ -48,6 +40,13 @@ ServerTransport::ServerTransport(const Setting& setting)
 	metricRequestCount = TelemetryManager::metric("transport/" + _name + "/requests", 1);
 	metricAvgRequestPerSec = TelemetryManager::metric("transport/" + _name + "/requests_per_second", std::chrono::seconds(15));
 	metricAvgExecutionTime = TelemetryManager::metric("transport/" + _name + "/requests_exec_time", std::chrono::seconds(15));
+}
+
+const sockaddr& ServerTransport::address() const
+{
+	static const sockaddr nulladdr{};
+	auto acceptor = _acceptor.lock();
+	return acceptor ? acceptor->address() : nulladdr;
 }
 
 bool ServerTransport::enable()
@@ -60,8 +59,7 @@ bool ServerTransport::enable()
 
 	try
 	{
-		auto t = this->ptr();
-		auto acceptor = (*_acceptorCreator)(t);
+		auto acceptor = (*_acceptorCreator)(ptr());
 
 		_acceptor = acceptor->ptr();
 
@@ -69,7 +67,7 @@ bool ServerTransport::enable()
 
 		ConnectionManager::add(_acceptor.lock());
 
-		_log.debug("Transport '%s' enabled", name().c_str());
+		_log.debug("Transport '%s' is enabled", name().c_str());
 
 		return true;
 	}
@@ -85,7 +83,7 @@ bool ServerTransport::disable()
 {
 	if (_acceptor.expired())
 	{
-		_log.debug("Transport '%s' not enable", name().c_str());
+		_log.trace("Transport '%s' wasn't enabled", name().c_str());
 		return true;
 	}
 
@@ -95,6 +93,6 @@ bool ServerTransport::disable()
 
 	_acceptor.reset();
 
-	_log.debug("Transport '%s' disabled", name().c_str());
+	_log.debug("Transport '%s' is disabled", name().c_str());
 	return true;
 }

@@ -25,9 +25,17 @@
 void Services::add(const Setting& setting, bool replace)
 {
 	std::string name;
-	if (!setting.lookupValue("name", name) || name.empty())
+	try
 	{
-		throw std::runtime_error("Field name undefined");
+		name = setting.getAs<SStr>("name");
+		if (name.empty())
+		{
+			throw std::runtime_error("Empty value");
+		}
+	}
+	catch (const std::exception& exception)
+	{
+		throw std::runtime_error(std::string() + "Can't get name ← " + exception.what());
 	}
 
 	if (!replace)
