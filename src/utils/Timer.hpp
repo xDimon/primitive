@@ -85,6 +85,11 @@ public:
 		return _label;
 	}
 
+	bool isActive() const
+	{
+		return _helper != nullptr;
+	}
+
 	// Запустить
 	AlarmTime start(std::chrono::microseconds duration, bool once);
 
