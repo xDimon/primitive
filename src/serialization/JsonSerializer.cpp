@@ -24,6 +24,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <iterator>
 
 REGISTER_SERIALIZER(json, JsonSerializer);
 
@@ -31,12 +32,12 @@ SVal JsonSerializer::decode(std::istream& is)
 {
 	if (is.bad())
 	{
-		throw JsonParseExeption("Can't get data");
+		throw JsonParseException("Can't get data");
 	}
 
 	if (is.eof())
 	{
-		throw JsonParseExeption("No data for parsing");
+		throw JsonParseException("No data for parsing");
 	}
 
 	SVal value;
@@ -47,7 +48,7 @@ SVal JsonSerializer::decode(std::istream& is)
 	}
 	catch (std::exception& exception)
 	{
-		throw JsonParseExeption(std::string("Can't decode JSON ← ") + exception.what());
+		throw JsonParseException(std::string("Can't decode JSON ← ") + exception.what());
 	}
 
 	// Check for redundant data at end
@@ -55,7 +56,7 @@ SVal JsonSerializer::decode(std::istream& is)
 
 	if (!is.eof() && (_flags & Serializer::STRICT) != 0)
 	{
-		throw JsonParseExeption("Redundant bytes after parsed data", is.tellg(), is);
+		throw JsonParseException("Redundant bytes after parsed data", is.tellg(), is);
 	}
 
 	return value;
@@ -69,7 +70,7 @@ void JsonSerializer::encode(std::ostream &os, const SVal& value)
 	}
 	catch (std::exception& exception)
 	{
-		throw JsonParseExeption(std::string("Can't encode into JSON ← ") + exception.what());
+		throw JsonParseException(std::string("Can't encode into JSON ← ") + exception.what());
 	}
 }
 
@@ -87,7 +88,7 @@ SVal JsonSerializer::decodeValue(std::istream& is)
 
 	if (is.eof())
 	{
-		throw JsonParseExeption("Unexpected out of data during parse value", is.tellg());
+		throw JsonParseException("Unexpected out of data during parse value", is.tellg());
 	}
 
 	switch (is.peek())
@@ -139,7 +140,7 @@ SVal JsonSerializer::decodeValue(std::istream& is)
 			return decodeNull(is);
 
 		default:
-			throw JsonParseExeption("Unknown token at parse value", is.tellg(), is);
+			throw JsonParseException("Unknown token at parse value", is.tellg(), is);
 	}
 }
 
@@ -148,7 +149,7 @@ SVal JsonSerializer::decodeObject(std::istream& is)
 	if (is.get() != '{')
 	{
 		is.seekg(-1, std::iostream::cur);
-		throw JsonParseExeption("Wrong token for open object", is.tellg(), is);
+		throw JsonParseException("Wrong token for open object", is.tellg(), is);
 	}
 
 	skipSpaces(is);
@@ -170,7 +171,7 @@ SVal JsonSerializer::decodeObject(std::istream& is)
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw JsonParseExeption(std::string("Can't parse field-key of object ← ") + exception.what());
+			throw JsonParseException(std::string("Can't parse field-key of object ← ") + exception.what());
 		}
 
 		skipSpaces(is);
@@ -178,7 +179,7 @@ SVal JsonSerializer::decodeObject(std::istream& is)
 		if (is.get() != ':')
 		{
 			is.seekg(-1, std::iostream::cur);
-			throw JsonParseExeption("Wrong token after field-key of object", is.tellg(), is);
+			throw JsonParseException("Wrong token after field-key of object", is.tellg(), is);
 		}
 
 		skipSpaces(is);
@@ -189,7 +190,7 @@ SVal JsonSerializer::decodeObject(std::istream& is)
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw JsonParseExeption(std::string("Can't parse field-value of object ← ") + exception.what());
+			throw JsonParseException(std::string("Can't parse field-value of object ← ") + exception.what());
 		}
 
 		skipSpaces(is);
@@ -207,10 +208,10 @@ SVal JsonSerializer::decodeObject(std::istream& is)
 		}
 
 		is.seekg(-1, std::iostream::cur);
-		throw JsonParseExeption("Wrong token after field-value of object", is.tellg(), is);
+		throw JsonParseException("Wrong token after field-value of object", is.tellg(), is);
 	}
 
-	throw JsonParseExeption("Unexpected out of data during parse object", is.tellg());
+	throw JsonParseException("Unexpected out of data during parse object", is.tellg());
 }
 
 SVal JsonSerializer::decodeArray(std::istream& is)
@@ -218,7 +219,7 @@ SVal JsonSerializer::decodeArray(std::istream& is)
 	if (is.get() != '[')
 	{
 		is.seekg(-1, std::iostream::cur);
-		throw JsonParseExeption("Wrong token for open array", is.tellg(), is);
+		throw JsonParseException("Wrong token for open array", is.tellg(), is);
 	}
 
 	skipSpaces(is);
@@ -239,7 +240,7 @@ SVal JsonSerializer::decodeArray(std::istream& is)
 		}
 		catch (const std::runtime_error& exception)
 		{
-			throw JsonParseExeption(std::string("Can't parse element of array ← ") + exception.what());
+			throw JsonParseException(std::string("Can't parse element of array ← ") + exception.what());
 		}
 
 		skipSpaces(is);
@@ -257,10 +258,10 @@ SVal JsonSerializer::decodeArray(std::istream& is)
 		}
 
 		is.seekg(-1, std::iostream::cur);
-		throw JsonParseExeption("Wrong token after element of array", is.tellg(), is);
+		throw JsonParseException("Wrong token after element of array", is.tellg(), is);
 	}
 
-	throw JsonParseExeption("Unexpected out of data during parse array", is.tellg());
+	throw JsonParseException("Unexpected out of data during parse array", is.tellg());
 }
 
 SVal JsonSerializer::decodeString(std::istream& is)
@@ -268,7 +269,7 @@ SVal JsonSerializer::decodeString(std::istream& is)
 	if (is.get() != '"')
 	{
 		is.seekg(-1, std::iostream::cur);
-		throw JsonParseExeption("Wrong token for open string", is.tellg(), is);
+		throw JsonParseException("Wrong token for open string", is.tellg(), is);
 	}
 
 	SStr str;
@@ -294,12 +295,12 @@ SVal JsonSerializer::decodeString(std::istream& is)
 			{
 				if ((symbol & 0b1111'1100'0000'0000) != 0b1101'1000'0000'0000)
 				{
-					throw JsonParseExeption("Bad escaped symbol: wrong for first byte of utf-16 surrogate pair", pos);
+					throw JsonParseException("Bad escaped symbol: wrong for first byte of utf-16 surrogate pair", pos);
 				}
 				uint32_t symbol2 = decodeEscaped(is);
 				if ((symbol2 & 0b1111'1100'0000'0000) != 0b1101'1100'0000'0000)
 				{
-					throw JsonParseExeption("Bad escaped symbol: wrong for second byte of utf-16 surrogate pair", pos);
+					throw JsonParseException("Bad escaped symbol: wrong for second byte of utf-16 surrogate pair", pos);
 				}
 				symbol = ((((symbol >> 6) & 0b1111) + 1) << 16) | ((symbol & 0b11'1111) << 10) | (symbol2 & 0b0011'1111'1111);
 			}
@@ -310,13 +311,13 @@ SVal JsonSerializer::decodeString(std::istream& is)
 		else if (c < ' ' && !std::isspace(c))
 		{
 			is.seekg(-1, std::iostream::cur);
-			throw JsonParseExeption("Bad symbol in string value: control symbol", is.tellg());
+			throw JsonParseException("Bad symbol in string value: control symbol", is.tellg());
 		}
 		// Некорректный символ
 		else if (c > 0b1111'1101)
 		{
 			is.seekg(-1, std::iostream::cur);
-			throw JsonParseExeption("Bad symbol in string value: prohibited utf8 byte", is.tellg());
+			throw JsonParseException("Bad symbol in string value: prohibited utf8 byte", is.tellg());
 		}
 		// Однобайтовый символ
 		else if (c < 0b1000'0000)
@@ -355,20 +356,20 @@ SVal JsonSerializer::decodeString(std::istream& is)
 			else
 			{
 				is.seekg(-1, std::iostream::cur);
-				throw JsonParseExeption("Bad symbol in string value: invalid utf8 byte", is.tellg());
+				throw JsonParseException("Bad symbol in string value: invalid utf8 byte", is.tellg());
 			}
 			while (--bytes > 0)
 			{
 				if (is.eof())
 				{
-					throw JsonParseExeption("Unxpected end of data during parse utf8 symbol", is.tellg());
+					throw JsonParseException("Unxpected end of data during parse utf8 symbol", is.tellg());
 				}
 
 				c = is.get();
 				if ((c & 0b11000000) != 0b10000000)
 				{
 					is.seekg(-1, std::iostream::cur);
-					throw JsonParseExeption("Bad symbol in string value: invalid utf8 byte", is.tellg());
+					throw JsonParseException("Bad symbol in string value: invalid utf8 byte", is.tellg());
 				}
 
 				chr = (chr << 6) | (c & 0b0011'1111);
@@ -377,7 +378,7 @@ SVal JsonSerializer::decodeString(std::istream& is)
 		}
 	}
 
-	throw JsonParseExeption("Unexpected out of data during parse string value", is.tellg());
+	throw JsonParseException("Unexpected out of data during parse string value", is.tellg());
 }
 
 SVal JsonSerializer::decodeBinary(std::istream& is)
@@ -390,7 +391,7 @@ SVal JsonSerializer::decodeBinary(std::istream& is)
 		is.get() != '?'
 	)
 	{
-		throw JsonParseExeption("Wrong token for open base64-encoded binary string", pos, is);
+		throw JsonParseException("Wrong token for open base64-encoded binary string", pos, is);
 	}
 
 	std::string b64;
@@ -401,7 +402,7 @@ SVal JsonSerializer::decodeBinary(std::istream& is)
 		if (c == '"')
 		{
 			is.seekg(-1, std::iostream::cur);
-			throw JsonParseExeption("Wrong token for close base64-encoded binary string", is.tellg(), is);
+			throw JsonParseException("Wrong token for close base64-encoded binary string", is.tellg(), is);
 		}
 
 		if (c == '?')
@@ -409,13 +410,13 @@ SVal JsonSerializer::decodeBinary(std::istream& is)
 			if (is.get() != '=')
 			{
 				is.seekg(-2, std::iostream::cur);
-				throw JsonParseExeption("Wrong token for close base64-encoded binary string", is.tellg(), is);
+				throw JsonParseException("Wrong token for close base64-encoded binary string", is.tellg(), is);
 			}
 
 			if (is.get() != '"')
 			{
 				is.seekg(-3, std::iostream::cur);
-				throw JsonParseExeption("Wrong token for close base64-encoded binary string", is.tellg(), is);
+				throw JsonParseException("Wrong token for close base64-encoded binary string", is.tellg(), is);
 			}
 
 			return std::forward<SBinary>(Base64::decode(b64));
@@ -429,7 +430,7 @@ SVal JsonSerializer::decodeBinary(std::istream& is)
 		b64.push_back(static_cast<uint8_t>(c));
 	}
 
-	throw JsonParseExeption("Unexpected out of data during parse base64-encoded binary string", is.tellg());
+	throw JsonParseException("Unexpected out of data during parse base64-encoded binary string", is.tellg());
 }
 
 SVal JsonSerializer::decodeBool(std::istream& is)
@@ -452,11 +453,11 @@ SVal JsonSerializer::decodeBool(std::istream& is)
 
 	if (is.eof())
 	{
-		throw JsonParseExeption("Unexpected end of data during try parse boolean value", is.tellg());
+		throw JsonParseException("Unexpected end of data during try parse boolean value", is.tellg());
 	}
 
 	is.seekg(-1, std::iostream::cur);
-	throw JsonParseExeption("Wrong token for boolean value", is.tellg(), is);
+	throw JsonParseException("Wrong token for boolean value", is.tellg(), is);
 }
 
 SVal JsonSerializer::decodeNull(std::istream& is)
@@ -473,11 +474,11 @@ SVal JsonSerializer::decodeNull(std::istream& is)
 
 	if (is.eof())
 	{
-		throw JsonParseExeption("Unexpected end of data during try parse null value", is.tellg());
+		throw JsonParseException("Unexpected end of data during try parse null value", is.tellg());
 	}
 
 	is.seekg(-1, std::iostream::cur);
-	throw JsonParseExeption("Wrong token for null value", is.tellg(), is);
+	throw JsonParseException("Wrong token for null value", is.tellg(), is);
 }
 
 uint32_t JsonSerializer::decodeEscaped(std::istream& is)
@@ -485,12 +486,12 @@ uint32_t JsonSerializer::decodeEscaped(std::istream& is)
 	if (is.get() != '\\')
 	{
 		is.seekg(-1, std::iostream::cur);
-		throw JsonParseExeption("Wrong token for start escaped-sequence", is.tellg(), is);
+		throw JsonParseException("Wrong token for start escaped-sequence", is.tellg(), is);
 	}
 
 	if (is.eof())
 	{
-		throw JsonParseExeption("Unexpected end of data during try parse escaped symbol", is.tellg());
+		throw JsonParseException("Unexpected end of data during try parse escaped symbol", is.tellg());
 	}
 	auto c = is.get();
 	switch (c)
@@ -515,7 +516,7 @@ uint32_t JsonSerializer::decodeEscaped(std::istream& is)
 			break;
 		default:
 			is.seekg(-1, std::iostream::cur);
-			throw JsonParseExeption("Wrong token for escaped-sequece", is.tellg(), is);
+			throw JsonParseException("Wrong token for escaped-sequece", is.tellg(), is);
 	}
 
 	uint32_t val = 0;
@@ -523,7 +524,7 @@ uint32_t JsonSerializer::decodeEscaped(std::istream& is)
 	{
 		if (is.eof())
 		{
-			throw JsonParseExeption("Unxpected end of data during parse escaped-sequence of utf8 symbol", is.tellg());
+			throw JsonParseException("Unxpected end of data during parse escaped-sequence of utf8 symbol", is.tellg());
 		}
 		c = is.get();
 		if (c >= '0' && c <= '9')
@@ -541,7 +542,7 @@ uint32_t JsonSerializer::decodeEscaped(std::istream& is)
 		else
 		{
 			is.seekg(-1, std::iostream::cur);
-			throw JsonParseExeption("Wrong token for escaped-sequece of utf8 symbol", is.tellg(), is);
+			throw JsonParseException("Wrong token for escaped-sequece of utf8 symbol", is.tellg(), is);
 		}
 	}
 
@@ -561,7 +562,7 @@ SVal JsonSerializer::decodeNumber(std::istream& is)
 	// Наличие цифр в начале
 	if (!std::isdigit(is.peek()))
 	{
-		throw JsonParseExeption("Wrong token for numeric value", is.tellg(), is);
+		throw JsonParseException("Wrong token for numeric value", is.tellg(), is);
 	}
 
 	while (std::isdigit(is.peek()))
@@ -576,7 +577,7 @@ SVal JsonSerializer::decodeNumber(std::istream& is)
 			is.ignore();
 			if (!std::isdigit(is.peek()))
 			{
-				throw JsonParseExeption("Wrong token for numeric value", is.tellg(), is);
+				throw JsonParseException("Wrong token for numeric value", is.tellg(), is);
 			}
 			while (std::isdigit(is.peek()))
 			{
@@ -594,7 +595,7 @@ SVal JsonSerializer::decodeNumber(std::istream& is)
 			}
 			if (!std::isdigit(is.peek()))
 			{
-				throw JsonParseExeption("Wrong token for numeric value", is.tellg(), is);
+				throw JsonParseException("Wrong token for numeric value", is.tellg(), is);
 			}
 			while (std::isdigit(is.peek()))
 			{
@@ -624,7 +625,7 @@ SVal JsonSerializer::decodeNumber(std::istream& is)
 		return SInt(value);
 	}
 
-	throw JsonParseExeption("Wrong token for numeric value", is.tellg(), is);
+	throw JsonParseException("Wrong token for numeric value", is.tellg(), is);
 }
 
 void JsonSerializer::encodeNull(std::ostream &os, const SVal&)
@@ -777,15 +778,25 @@ void JsonSerializer::encodeArray(std::ostream &os, const SVal& value)
 
 	if (!array.empty())
 	{
+		bool pnec = false;
+		++_indent;
 		std::for_each(array.begin(), array.end(),
-			[this, &os]
+			[this, &os, &pnec]
 			(auto& element)
 			{
+				const SVal& v = element;
+				bool nec =
+					(v.is<SObj>() && !v.as<SObj>().empty()) ||
+					(v.is<SArr>() && !v.as<SArr>().empty());
+				if (!nec || !pnec) indent(os);
+				pnec = nec;
 				this->encodeValue(os, element);
 				os << ',';
 			}
 		);
 		os.seekp(-1, std::ios_base::cur);
+		--_indent;
+		indent(os);
 	}
 
 	os << ']';
@@ -799,17 +810,22 @@ void JsonSerializer::encodeObject(std::ostream &os, const SVal& value)
 
 	if (!object.empty())
 	{
+		++_indent;
 		std::for_each(object.begin(), object.end(),
 			[this, &os]
 			(auto& element)
 			{
+				indent(os);
 				this->encodeString(os, element.first);
 				os << ':';
+				if (_flags & INDENT) os << ' ';
 				this->encodeValue(os, element.second);
 				os << ',';
 			}
 		);
 		os.seekp(-1, std::ios_base::cur);
+		--_indent;
+		indent(os);
 	}
 
 	os << '}';
@@ -900,4 +916,16 @@ void JsonSerializer::putUnicodeSymbolAsUtf8(SStr& str, uint32_t symbol)
 		str.push_back(0b1000'0000 | (0b0011'1111 & (symbol >> 6)));
 		str.push_back(0b1000'0000 | (0b0011'1111 & (symbol >> 0)));
 	}
+}
+
+void JsonSerializer::indent(std::ostream& os)
+{
+	if (!(_flags & PRETTY))
+	{
+		return;
+	}
+
+	os << '\n';
+
+	std::fill_n(std::ostream_iterator<char>(os), _indent<<1u, ' ');
 }

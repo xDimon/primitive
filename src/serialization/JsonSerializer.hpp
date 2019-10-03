@@ -40,8 +40,13 @@ class JsonSerializer final: public Serializer
 public:
 	static const uint32_t ESCAPED_UNICODE = 1u<<31;
 	static const uint32_t ESCAPED_SLASH = 1u<<30;
+	static const uint32_t PRETTY = 1u<<29;
+	static const uint32_t INDENT = 1u<<28;
+	static const uint32_t ALLOW_COMMENT = 1u<<27;
 
 private:
+	size_t _indent = 0;
+
 	void skipSpaces(std::istream& is);
 
 	SVal decodeNull(std::istream& is);
@@ -60,6 +65,8 @@ private:
 
 	SVal decodeValue(std::istream& is);
 
+	void indent(std::ostream& os);
+
 	void encodeValue(std::ostream &os, const SVal& value);
 
 	void encodeNull(std::ostream &os, const SVal& value);
@@ -76,19 +83,19 @@ private:
 DECLARE_SERIALIZER(JsonSerializer);
 };
 
-class JsonParseExeption final: public std::exception
+class JsonParseException final: public std::exception
 {
 	std::string _msg;
 
 public:
-	JsonParseExeption() = delete; // Default-constructor
-	JsonParseExeption(JsonParseExeption&&) noexcept = default; // Move-constructor
-	JsonParseExeption(const JsonParseExeption&) = delete; // Copy-constructor
-	~JsonParseExeption() override = default; // Destructor
-	JsonParseExeption& operator=(JsonParseExeption&&) noexcept = delete; // Move-assignment
-	JsonParseExeption& operator=(JsonParseExeption const&) = delete; // Copy-assignment
+	JsonParseException() = delete; // Default-constructor
+	JsonParseException(JsonParseException&&) noexcept = default; // Move-constructor
+	JsonParseException(const JsonParseException&) = delete; // Copy-constructor
+	~JsonParseException() override = default; // Destructor
+	JsonParseException& operator=(JsonParseException&&) noexcept = delete; // Move-assignment
+	JsonParseException& operator=(JsonParseException const&) = delete; // Copy-assignment
 
-	JsonParseExeption(std::string msg, size_t pos, std::istream& is)
+	JsonParseException(std::string msg, size_t pos, std::istream& is)
 	: _msg(std::move(msg))
 	{
 		is.clear(std::istream::goodbit);
@@ -112,13 +119,13 @@ public:
 		_msg += " at position " + std::to_string(pos) + " (remain: '" + nearPos + "')";
 	}
 
-	JsonParseExeption(std::string msg, size_t pos)
+	JsonParseException(std::string msg, size_t pos)
 	: _msg(std::move(msg))
 	{
 		_msg += " at position " + std::to_string(pos);
 	}
 
-	JsonParseExeption(std::string msg)
+	JsonParseException(std::string msg)
 	: _msg(std::move(msg))
 	{
 	}
