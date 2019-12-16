@@ -22,11 +22,12 @@
 #include "TcpConnection.hpp"
 #include "ConnectionManager.hpp"
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <cstring>
 #include <sys/ioctl.h>
 #include "../transport/ServerTransport.hpp"
 
-TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr &sockaddr, bool outgoing)
+TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int sock, const sockaddr_storage &sockaddr, bool outgoing)
 : Connection(transport)
 , _outgoing(outgoing)
 , _noRead(false)
@@ -43,7 +44,7 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 
 	char ip[64]{};
 	uint16_t port = 0;
-	switch (_address.sa_family)
+	switch (_address.ss_family)
 	{
 		case AF_INET:
 		{
@@ -61,7 +62,7 @@ TcpConnection::TcpConnection(const std::shared_ptr<Transport>& transport, int so
 		}
 	}
 
-	_name = "TcpConnection[" + std::to_string(_sock) + "][" + ip + ":" + std::to_string(port) + "]";
+	_name = std::string() + "TcpConnection[" + ip + ":" + std::to_string(port) + "](" + std::to_string(_sock) + ")";
 
 	_log.debug("%s created", name().c_str());
 }

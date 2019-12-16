@@ -48,7 +48,7 @@ protected:
 
 	int _sock;
 
-	sockaddr _address;
+	sockaddr_storage _address;
 
 	/// Соединение готово
 	bool _ready;
@@ -80,7 +80,7 @@ public:
 		return _sock;
 	}
 
-	const sockaddr& address() const
+	const auto& address() const
 	{
 		return _address;
 	}

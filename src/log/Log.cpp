@@ -34,7 +34,7 @@ Log::Log(const std::string& name, Detail detail, const std::string& sink)
 	}
 	else
 	{
-		_sink = LoggerManager::getSink("");
+		_sink = LoggerManager::getSink(sink);
 		_detail = Detail::INFO;
 	}
 

@@ -33,56 +33,22 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 , _host(hostname)
 , _port(port)
 {
-	// Создаем сокет
-	_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (_sock == -1)
+	_name = "TcpConnector[" + _host + ":" + std::to_string(port) + "]";
+
+	const char* status;
+	std::tie(status, _addresses) = HostnameResolver::resolve(_host, _port);
+	if (status != nullptr)
 	{
-		throw std::runtime_error("Can't create socket");
-	}
-	_closed = false;
-
-	_name = "TcpConnector[" + std::to_string(_sock) + "][" + _host + ":" + std::to_string(port) + "]";
-
-	const int val = 1;
-	setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
-
-	// Включем неблокирующий режим
-	int rrc = fcntl(_sock, F_GETFL, 0);
-	fcntl(_sock, F_SETFL, rrc | O_NONBLOCK);
-
-	auto resolvingResult = HostnameResolver::resolve(_host);
-	switch (std::get<0>(resolvingResult))
-	{
-		case 0: break;
-		case HOST_NOT_FOUND:
-			throw std::runtime_error("Host not found " + _host);
-		case NO_ADDRESS:
-			throw std::runtime_error("The requested name ("  + _host + ") does not have an IP address");
-		case NO_RECOVERY:
-			throw std::runtime_error("A non-recoverable name server error occurred while resolving '"  + _host + "'");
-		case TRY_AGAIN:
-			throw std::runtime_error("A temporary error occurred on an authoritative name server while resolving '"  + _host + "'");
-		default:
-			throw std::runtime_error("Unknown error code from gethostbyname_r for '" + _host + "'");
+		throw std::runtime_error("Can't get address for '" + _host + "': " + status);
 	}
 
-	_addresses = std::move(std::get<1>(resolvingResult));
+	_addressesIterator = _addresses.begin();
 
-	for (_addressesIterator = _addresses.begin() ; _addressesIterator != _addresses.end(); ++_addressesIterator)
+	while (_addressesIterator != _addresses.end())
 	{
-		const auto& addr = *_addressesIterator;
+		_address = reinterpret_cast<const sockaddr_storage&>(*_addressesIterator++);
 
-		// Инициализируем структуру нулями
-		memset(&_address, 0, sizeof(_address));
-
-		// Задаем семейство сокетов (IPv4)
-		_address.sa_family = AF_INET;
-
-		// Задаем хост
-		memcpy(&reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr, &addr, sizeof(reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr));
-
-		// Задаем порт
-		reinterpret_cast<sockaddr_in*>(&_address)->sin_port = htons(_port);
+		_sock = getSocket(_address.ss_family);
 
 		// Подключаемся
 		again:
@@ -115,12 +81,39 @@ TcpConnector::TcpConnector(const std::shared_ptr<ClientTransport>& transport, co
 
 	end:
 
+	_name += "(" + std::to_string(_sock) + ")";
+
 	_log.debug("%s created", name().c_str());
 }
 
 TcpConnector::~TcpConnector()
 {
 	_log.debug("%s destroyed", name().c_str());
+}
+
+int TcpConnector::getSocket(int family)
+{
+	if (_sock != -1)
+	{
+		::close(_sock);
+	}
+
+	// Создаем сокет
+	_sock = socket(family, SOCK_STREAM, IPPROTO_TCP);
+	if (_sock == -1)
+	{
+		throw std::runtime_error("Can't create socket");
+	}
+	_closed = false;
+
+	const int val = 1;
+	setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+
+	// Включаем неблокирующий режим
+	int rrc = fcntl(_sock, F_GETFL, 0);
+	fcntl(_sock, F_SETFL, rrc | O_NONBLOCK);
+
+	return _sock;
 }
 
 void TcpConnector::watch(epoll_event& ev)
@@ -143,12 +136,17 @@ bool TcpConnector::processing()
 	if (Daemon::shutingdown())
 	{
 		_log.debug("Interrupt processing on %s (shutingdown)", name().c_str());
-		ConnectionManager::remove(this->ptr());
+		ConnectionManager::remove(ptr());
 		return false;
 	}
 
 	int result;
 	socklen_t result_len = sizeof(result);
+
+	if (!isReadyForWrite() || isHup() || wasFailure())
+	{
+		goto nextAddress;
+	}
 
 	if (getsockopt(_sock, SOL_SOCKET, SO_ERROR, &result, &result_len) == 0)
 	{
@@ -191,21 +189,16 @@ bool TcpConnector::processing()
 		}
 	}
 
-	for ( ; _addressesIterator != _addresses.end(); ++_addressesIterator)
+	nextAddress:
+	while (_addressesIterator != _addresses.end())
 	{
-		const auto& addr = *_addressesIterator;
+		_address = *_addressesIterator++;
 
-		// Инициализируем структуру нулями
-		memset(&_address, 0, sizeof(_address));
+		ConnectionManager::remove(ptr());
 
-		// Задаем семейство сокетов (IPv4)
-		reinterpret_cast<sockaddr_in*>(&_address)->sin_family = AF_INET;
+		_sock = getSocket(_address.ss_family);
 
-		// Задаем хост
-		memcpy(&reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr, &addr, sizeof(reinterpret_cast<sockaddr_in*>(&_address)->sin_addr.s_addr));
-
-		// Задаем порт
-		reinterpret_cast<sockaddr_in*>(&_address)->sin_port = htons(_port);
+		ConnectionManager::add(ptr());
 
 		again:
 		// Подключаемся
@@ -242,6 +235,10 @@ bool TcpConnector::processing()
 
 	shutdown(_sock, SHUT_RDWR);
 	onError();
+
+	_closed = true;
+	_sock = -1;
+
 	return false;
 }
 

@@ -27,7 +27,7 @@
 #include "../../thread/RollbackStackAndRestoreContext.hpp"
 
 HttpRequestExecutor::HttpRequestExecutor(
-	const HttpUri& uri,
+	const URI& uri,
 	HttpRequest::Method method,
 	const std::string& body,
 	const std::string& contentType,

@@ -28,7 +28,7 @@
 #include "HostnameResolver.hpp"
 #include "../log/Log.hpp"
 
-std::tuple<int, std::vector<in_addr>> HostnameResolver::resolve(std::string host)
+std::tuple<const char*, std::vector<sockaddr_storage>> HostnameResolver::resolve(std::string host, uint16_t port)
 {
 	std::transform(host.begin(), host.end(), host.begin(), ::tolower);
 
@@ -42,36 +42,40 @@ std::tuple<int, std::vector<in_addr>> HostnameResolver::resolve(std::string host
 		}
 	}
 
-	std::vector<char> _buff(1024, 0);
+	int status;
+	addrinfo hints{};
+	addrinfo *servinfo;  // указатель на результаты вызова
 
-	int herr = 0;
-	hostent _hostbuf{};
-	hostent* _hostptr;
+	memset(&hints, 0, sizeof hints); // убедимся, что структура пуста
+	hints.ai_family = AF_UNSPEC;     // неважно, IPv4 или IPv6
+	hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
 
-	// Список адресов по хосту
-	while (gethostbyname_r(host.c_str(), &_hostbuf, _buff.data(), _buff.size(), &_hostptr, &herr) == ERANGE)
+	status = getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &servinfo);
+
+	auto statusMsg = status ? gai_strerror(status) : nullptr;
+
+	std::vector<sockaddr_storage> addrs;
+
+	if (status == 0)
 	{
-		try
+		for (auto info = servinfo; info;  info = info->ai_next)
 		{
-			_buff.resize(_buff.size() << 1);
-		}
-		catch (const std::bad_alloc& )
-		{
-			_buff.resize(_buff.size() + 64);
+			sockaddr_storage ss;
+			memset(&ss, 0, sizeof(ss));
+			if (info->ai_family == AF_INET)
+			{
+				memcpy(&ss, info->ai_addr, sizeof(sockaddr_in));
+				addrs.emplace_back(ss);
+			}
+			else if (info->ai_family == AF_INET6)
+			{
+				memcpy(&ss, info->ai_addr, sizeof(sockaddr_in6));
+				addrs.emplace_back(ss);
+			}
 		}
 	}
 
-	std::vector<in_addr> addrs;
-
-	if (_hostptr != nullptr)
-	{
-		for (auto i = _hostptr->h_addr_list; *i; ++i)
-		{
-			in_addr addr;
-			memcpy(&addr, *i, sizeof(addr));
-			addrs.push_back(addr);
-		}
-	}
+	freeaddrinfo(servinfo);
 
 	{
 		std::lock_guard<std::mutex> lockGuard(getInstance()._mutex);
@@ -80,9 +84,9 @@ std::tuple<int, std::vector<in_addr>> HostnameResolver::resolve(std::string host
 		{
 			getInstance()._cache.erase(i);
 		}
-		getInstance()._cache.emplace(host, std::make_tuple(herr, addrs, time(nullptr) + 3600));
+		getInstance()._cache.emplace(host, std::make_tuple(statusMsg, addrs, time(nullptr) + 3600));
 	}
 
 //	Log("HostnameResolver").info("Resolve for '%s' - renew in cache", host.c_str());
-	return std::make_tuple(herr, std::move(addrs));
+	return std::make_tuple(statusMsg, std::move(addrs));
 }

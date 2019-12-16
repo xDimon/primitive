@@ -16,11 +16,11 @@
 // Contacts: khaustov.dm@gmail.com
 // File created on: 2017.03.26
 
-// HttpUri.cpp
+// URI.cpp
 
 
-#include "HttpUri.hpp"
-#include "../../utils/encoding/PercentEncoding.hpp"
+#include "URI.hpp"
+#include "utils/encoding/PercentEncoding.hpp"
 
 #include <cstring>
 #include <stdexcept>
@@ -29,7 +29,7 @@
 #include <vector>
 #include <algorithm>
 
-HttpUri::HttpUri()
+URI::URI()
 : _scheme(Scheme::UNDEFINED)
 , _secure(false)
 , _port(0)
@@ -38,7 +38,7 @@ HttpUri::HttpUri()
 {
 }
 
-HttpUri::HttpUri(const std::string& uri)
+URI::URI(std::string_view uri)
 : _scheme(Scheme::UNDEFINED)
 , _secure(false)
 , _port(0)
@@ -55,7 +55,7 @@ HttpUri::HttpUri(const std::string& uri)
 	}
 }
 
-void HttpUri::parse(const char *string, size_t length)
+void URI::parse(const char *string, size_t length)
 {
 	auto s = string;
 	auto end = string + length;
@@ -111,23 +111,46 @@ void HttpUri::parse(const char *string, size_t length)
 		_port = 443;
 		s += 8;
 	}
-	else
+	else if (length >= 3 && strstr(s, "://") != 0)
 	{
 		throw std::runtime_error("Wrong scheme");
+	}
+	else
+	{
+		_scheme = Scheme::UNDEFINED;
 	}
 
 	// Читаем хост
 	//host:
-	while (*s != 0 && *s != ':' && *s != '/' && *s != '?' && *s != '#' && isspace(*s) == 0)
+	if (*s == '[') // IPv6
 	{
-		if (isalnum(*s) == 0 && *s != '.' && *s != '-')
+		while (*s != ']')
 		{
-			throw std::runtime_error("Wrong hostname");
+			if (isxdigit(*s) == 0 && *s != ':')
+			{
+				throw std::runtime_error("Wrong hostname");
+			}
+			_host.push_back(static_cast<char>(tolower(*s)));
+			if (++s > end)
+			{
+				throw std::runtime_error("Out of data");
+			}
 		}
-		_host.push_back(static_cast<char>(tolower(*s)));
-		if (++s > end)
+		s++;
+	}
+	else
+	{
+		while (*s != 0 && *s != ':' && *s != '/' && *s != '?' && *s != '#' && isspace(*s) == 0)
 		{
-			throw std::runtime_error("Out of data");
+			if (isalnum(*s) == 0 && *s != '.' && *s != '-')
+			{
+				throw std::runtime_error("Wrong hostname");
+			}
+			_host.push_back(static_cast<char>(tolower(*s)));
+			if (++s > end)
+			{
+				throw std::runtime_error("Out of data");
+			}
 		}
 	}
 
@@ -212,7 +235,7 @@ void HttpUri::parse(const char *string, size_t length)
 	}
 }
 
-const std::string& HttpUri::str() const
+const std::string& URI::str() const
 {
 	std::stringstream ss;
 
@@ -224,7 +247,14 @@ const std::string& HttpUri::str() const
 	if (_scheme == Scheme::UDP) ss << "udp://";
 	if (_scheme == Scheme::UNDEFINED && !_host.empty()) ss << "//";
 
-	ss << _host;
+	if (_host.find(':') == std::string::npos)
+	{
+		ss << _host;
+	}
+	else
+	{
+		ss << '[' << _host << ']';
+	}
 
 	if (_port != 0)
 	{
@@ -258,14 +288,14 @@ const std::string& HttpUri::str() const
 	return _thisAsString;
 }
 
-std::string HttpUri::urldecode(const std::string& input_)
+std::string URI::urldecode(const std::string& input_)
 {
 	std::string input(input_);
 	std::replace(input.begin(), input.end(), '+', ' ');
 	return PercentEncoding::decode(input);
 }
 
-std::string HttpUri::urlencode(const std::string& input)
+std::string URI::urlencode(const std::string& input)
 {
 	return PercentEncoding::encode(input);
 }

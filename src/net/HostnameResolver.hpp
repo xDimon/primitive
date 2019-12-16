@@ -38,7 +38,7 @@ private:
 	~HostnameResolver() = default;
 
 	std::mutex _mutex;
-	std::map<std::string, std::tuple<int, std::vector<in_addr>, time_t>> _cache;
+	std::map<std::string, std::tuple<const char*, std::vector<sockaddr_storage>, time_t>> _cache;
 
 public:
 	static HostnameResolver& getInstance()
@@ -47,5 +47,5 @@ public:
 		return instance;
 	}
 
-	static std::tuple<int, std::vector<in_addr>> resolve(std::string host);
+	static std::tuple<const char*, std::vector<sockaddr_storage>> resolve(std::string host, uint16_t port);
 };

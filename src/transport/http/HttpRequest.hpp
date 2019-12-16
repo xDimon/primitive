@@ -25,7 +25,7 @@
 #include <memory>
 #include "../../log/Log.hpp"
 #include "../../utils/Buffer.hpp"
-#include "HttpUri.hpp"
+#include "transport/URI.hpp"
 
 class HttpRequest final : public Buffer
 {
@@ -43,7 +43,7 @@ public:
 
 private:
 	Method _method;
-	HttpUri _uri;
+	URI _uri;
 	uint8_t _protocolVersion;
 
 	std::multimap<std::string, std::string> _headers;
@@ -68,7 +68,7 @@ public:
 	HttpRequest(const char *begin, const char *end);
 	~HttpRequest() override = default;
 
-	const HttpUri& uri() const
+	const URI& uri() const
 	{
 		return _uri;
 	}

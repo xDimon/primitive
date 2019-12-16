@@ -25,24 +25,36 @@
 #include "Options.hpp"
 #include <serialization/SObj.hpp>
 
-class Config
+class Config final
 {
-private:
-	std::shared_ptr<Options> _options;
-	SObj _settings;
-
 public:
 	Config(const Config&) = delete;
 	Config& operator=(const Config&) = delete;
 	Config(Config&&) noexcept = delete;
 	Config& operator=(Config&&) noexcept = delete;
 
-	explicit Config(const std::shared_ptr<Options>& options);
+private:
+	Config() = default;
 	~Config() = default;
 
-	[[nodiscard]]
-	const SObj& settings() const
+	static Config& getInstance()
 	{
-		return _settings;
+		static Config instance;
+		return instance;
+	}
+
+	std::shared_ptr<Options> _options;
+	SObj _settings;
+
+	static SObj read(std::string path);
+	static void processIncludes(SObj& config);
+
+public:
+	static void init(const std::shared_ptr<Options>& options);
+
+	[[nodiscard]]
+	static const SObj& settings()
+	{
+		return getInstance()._settings;
 	}
 };

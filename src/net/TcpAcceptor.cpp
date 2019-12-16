@@ -41,7 +41,7 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 		throw std::runtime_error("Can't create socket");
 	}
 
-	_name = "TcpAcceptor[" + std::to_string(_sock) + "][" + host + ":" + std::to_string(port) + "]";
+	_name = "TcpAcceptor[" + host + ":" + std::to_string(port) + "](" + std::to_string(_sock) + ")";
 
 	const int val = 1;
 
@@ -53,7 +53,7 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 	memset(&_address, 0, sizeof(_address));
 
 	// Задаем семейство сокетов (IPv4)
-	_address.sa_family = AF_INET;
+	_address.ss_family = AF_INET;
 
 	// Задаем хост
 	if (!_host.empty())
@@ -76,7 +76,7 @@ TcpAcceptor::TcpAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 	reinterpret_cast<sockaddr_in*>(&_address)->sin_port = htons(_port);
 
 	// Связываем сокет с локальным адресом протокола
-	if (bind(_sock, &_address, addrlen) != 0)
+	if (bind(_sock, reinterpret_cast<const sockaddr*>(&_address), addrlen) != 0)
 	{
 		throw std::runtime_error(std::string("Can't bind socket ← ") + strerror(errno));
 	}
@@ -133,11 +133,11 @@ bool TcpAcceptor::processing()
 			throw std::runtime_error("Error on TcpAcceptor");
 		}
 
-		sockaddr cliaddr{};
+		sockaddr_storage cliaddr{};
 		socklen_t clilen = sizeof(cliaddr);
 		memset(&cliaddr, 0, clilen);
 
-		int sock = ::accept(fd(), &cliaddr, &clilen);
+		int sock = ::accept(fd(), reinterpret_cast<sockaddr*>(&cliaddr), &clilen);
 		if (sock == -1)
 		{
 			// Вызов прерван сигналом - повторяем
@@ -177,7 +177,7 @@ bool TcpAcceptor::processing()
 	}
 }
 
-void TcpAcceptor::createConnection(int sock, const struct sockaddr &cliaddr)
+void TcpAcceptor::createConnection(int sock, const sockaddr_storage& cliaddr)
 {
 	auto transport = std::dynamic_pointer_cast<ServerTransport>(_transport.lock());
 	if (!transport)

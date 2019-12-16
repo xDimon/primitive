@@ -57,7 +57,7 @@ public:
 	std::shared_ptr<Metric> metricAvgRequestPerSec;
 	std::shared_ptr<Metric> metricAvgExecutionTime;
 
-	const sockaddr& address() const;
+	const sockaddr_storage& address() const;
 
 	bool isEnabled() const
 	{

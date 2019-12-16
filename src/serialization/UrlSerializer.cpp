@@ -23,7 +23,7 @@
 #include <cstring>
 #include <iomanip>
 #include "UrlSerializer.hpp"
-#include "../transport/http/HttpUri.hpp"
+#include "transport/URI.hpp"
 
 REGISTER_SERIALIZER(uri, UrlSerializer);
 
@@ -118,7 +118,7 @@ void UrlSerializer::emplace(SObj& parent, std::string& keyline, const std::strin
 		}
 	}
 
-	auto oKey = HttpUri::urldecode(key);
+	auto oKey = URI::urldecode(key);
 	if (keyline.length())
 	{
 		if (!parent.get(oKey).is<SObj>())
@@ -136,7 +136,7 @@ void UrlSerializer::emplace(SObj& parent, std::string& keyline, const std::strin
 	}
 	else
 	{
-		auto oVal = decodeValue(HttpUri::urldecode(val));
+		auto oVal = decodeValue(URI::urldecode(val));
 
 		parent.emplace(oKey, oVal);
 	}
@@ -245,7 +245,7 @@ void UrlSerializer::encodeBool(std::ostream& os, const std::string& keyline, con
 
 void UrlSerializer::encodeString(std::ostream& os, const std::string& keyline, const SVal& value)
 {
-	os << keyline << "=" << HttpUri::urlencode(value.as<SStr>().value());
+	os << keyline << "=" << URI::urlencode(value.as<SStr>().value());
 }
 
 void UrlSerializer::encodeBinary(std::ostream& os, const std::string& keyline, const SVal& value)

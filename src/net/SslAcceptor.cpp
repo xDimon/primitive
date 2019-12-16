@@ -30,7 +30,7 @@ SslAcceptor::SslAcceptor(const std::shared_ptr<ServerTransport>& transport, cons
 	_name = "SslAcceptor" + _name.substr(11);
 }
 
-void SslAcceptor::createConnection(int sock, const sockaddr &cliaddr)
+void SslAcceptor::createConnection(int sock, const sockaddr_storage &cliaddr)
 {
 	auto transport = std::dynamic_pointer_cast<ServerTransport>(_transport.lock());
 	if (!transport)

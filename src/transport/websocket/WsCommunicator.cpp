@@ -29,7 +29,7 @@
 #include "WsContext.hpp"
 
 WsCommunicator::WsCommunicator(
-	const HttpUri& uri,
+	const URI& uri,
 	const std::shared_ptr<Transport::Handler>& handler
 )
 : _savedCtx(nullptr)

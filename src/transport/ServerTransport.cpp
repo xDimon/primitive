@@ -42,9 +42,9 @@ ServerTransport::ServerTransport(const std::string& name, const Setting& setting
 	metricAvgExecutionTime = TelemetryManager::metric("transport/" + _name + "/requests_exec_time", std::chrono::seconds(15));
 }
 
-const sockaddr& ServerTransport::address() const
+const sockaddr_storage& ServerTransport::address() const
 {
-	static const sockaddr nulladdr{};
+	static const sockaddr_storage nulladdr{};
 	auto acceptor = _acceptor.lock();
 	return acceptor ? acceptor->address() : nulladdr;
 }

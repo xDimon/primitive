@@ -44,7 +44,7 @@ public:
 
 	void watch(epoll_event &ev) override;
 
-	virtual void createConnection(int sock, const struct sockaddr& cliaddr);
+	virtual void createConnection(int sock, const sockaddr_storage& cliaddr);
 
 	bool processing() override;
 

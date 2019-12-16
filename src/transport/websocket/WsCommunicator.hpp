@@ -26,7 +26,7 @@
 #include "../../utils/Shareable.hpp"
 #include "../../log/Log.hpp"
 #include "WsClient.hpp"
-#include "../http/HttpUri.hpp"
+#include "transport/URI.hpp"
 #include "../../net/TcpConnector.hpp"
 
 class WsCommunicator: public Shareable<WsCommunicator>
@@ -35,7 +35,7 @@ private:
 	ucontext_t* _savedCtx;
 	Log _log;
 	std::shared_ptr<WsClient> _websocketClient;
-	HttpUri _uri;
+	URI _uri;
 	std::string _error;
 	std::recursive_mutex _mutex;
 	std::shared_ptr<TcpConnector> _connector;
@@ -67,7 +67,7 @@ private:
 
 public:
 	WsCommunicator(
-		const HttpUri& uri,
+		const URI& uri,
 		const std::shared_ptr<Transport::Handler>& handler
 	);
 	~WsCommunicator() override;

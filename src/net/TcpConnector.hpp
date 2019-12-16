@@ -37,13 +37,15 @@ protected:
 	std::uint16_t _port;
 	std::mutex _mutex;
 
-	std::vector<in_addr> _addresses;
-	std::vector<in_addr>::const_iterator _addressesIterator;
+	std::vector<sockaddr_storage> _addresses;
+	std::vector<sockaddr_storage>::const_iterator _addressesIterator;
 
 	virtual std::shared_ptr<TcpConnection> createConnection(const std::shared_ptr<Transport>& transport);
 
 	std::function<void(const std::shared_ptr<TcpConnection>&)> _connectHandler;
 	std::function<void()> _errorHandler;
+
+	int getSocket(int family);
 
 public:
 	TcpConnector() = delete;

@@ -233,7 +233,7 @@ void status::ClientPart::handle(const std::shared_ptr<Context>& context)
 				<< std::setw(11) << std::right << std::setfill(' ') << "Avg 1/sec"
 				<< "\n";
 
-			for (auto i : TelemetryManager::metrics())
+			for (const auto& i : TelemetryManager::metrics())
 			{
 				oss
 					<< std::setw(50) << std::left << std::setfill(' ') << i.first << " "

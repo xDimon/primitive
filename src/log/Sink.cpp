@@ -27,6 +27,8 @@
 #include <cstdarg>
 #include <algorithm>
 #include <utility>
+#include <climits>
+#include <unistd.h>
 
 #if __cplusplus < 201703L
 #define constexpr
@@ -87,7 +89,8 @@ Sink::Sink(std::string name, const Setting& setting)
 		}
 		if (directory.empty() || directory[0] != '/')
 		{
-			throw std::runtime_error("Wrong directory for sink '" + _name + "' ← No absolute path");
+			char path[PATH_MAX];
+			directory = getcwd(path, sizeof(path));
 		}
 
 		std::string filename;

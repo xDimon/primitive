@@ -35,7 +35,7 @@ private:
 	Log _log;
 	std::shared_ptr<HttpClient> _clientTransport;
 	HttpRequest::Method _method;
-	HttpUri _uri;
+	URI _uri;
 	std::string _body;
 	std::string _contentType;
 	std::chrono::milliseconds _timeout;
@@ -86,7 +86,7 @@ private:
 
 public:
 	HttpRequestExecutor(
-		const HttpUri& uri,
+		const URI& uri,
 		HttpRequest::Method method = HttpRequest::Method::GET,
 		const std::string& body = "",
 		const std::string& contentType = "",
